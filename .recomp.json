@@ -1,0 +1,31 @@
+
+{
+  "$schema": "https://recomp.fyi/schema/v1.json",
+  "game": "Rayman 3 HD",
+  "system": "Xbox 360",
+  "type": "recomp",
+  "original": {
+    "region": "Worldwide",
+    "serial": "5841123F"
+  },
+  "project": "Rayman 3 HD Recompiled",
+  "status": "released",
+  "targets": [
+    "Windows"
+  ],
+  "toolchain": "Rexglue",
+  "approach": "Static recompilation of the Xbox 360 PowerPC executable using ReXGlue, with a native Windows runtime and D3D12 rendering.",
+  "maintainers": [
+    {
+      "name": "MysteriousAeon",
+      "link": "https://github.com/MysteriousAeon"
+    }
+  ],
+  "links": [
+    {
+      "label": "GitHub Releases",
+      "url": "https://github.com/MysteriousAeon/rayman3-hd-recompiled/releases"
+    }
+  ],
+  "notes": "Public Windows release v1.0.1. The game has been completed from start to finish. Includes optional HD+ visual corrections, Turkish localization, achievements, mod support and DualSense enhancements."
+}
