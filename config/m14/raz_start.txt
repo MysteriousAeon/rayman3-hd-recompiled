@@ -1,0 +1,9 @@
+# M14 raz_map (bonus minigame): the bonus interface waits in a start menu. A opens the help page, Start and A
+# begin the minigame.
+wait 14
+press 44
+wait 4
+press 40
+wait 4
+press 44
+wait 20

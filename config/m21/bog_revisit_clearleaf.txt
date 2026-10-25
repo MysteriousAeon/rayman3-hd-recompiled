@@ -1,0 +1,54 @@
+# M21: revisit from the third world into the second, on a working copy of the swamp_60 save of the human
+# session 20261011-143342.
+#   title -> Load -> slot -> swamp_60 -> Start (pause menu, page "Game") -> LT x3 (pages Bonus, The Bog of Murk,
+#   Clearleaf Forest) -> A (Revisit) -> "quit the current game and revisit a previous level?" (cursor on No)
+#   -> left + A -> wood_11 in revisit mode -> Start -> LT x2 (The Bog of Murk: the interrupted game) -> A (Load)
+#   -> "quit the return visit and continue your game?" -> left + A -> swamp_60.
+# Regression: python tools/m21_campaign_check.py TAG bog_revisit_clearleaf
+log VIDEOS\ubi.bik result=00000000
+log menumap\menumap.lvl result=00000000
+wait 10
+press 40
+wait 12
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 2
+press 44
+wait 8
+press 44
+log swamp_60\swamp_60.lvl result=00000000 60
+wait 35
+press 40
+wait 3
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 44
+wait 2
+axis 300 -32767
+wait 0.3
+axis 300 0
+wait 1.2
+press 44
+wait 2
+log wood_11\wood_11.lvl result=00000000 40
+wait 35
+press 40
+wait 3
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 44
+wait 2
+axis 300 -32767
+wait 0.3
+axis 300 0
+wait 1.2
+press 44
+wait 2
+wait 40

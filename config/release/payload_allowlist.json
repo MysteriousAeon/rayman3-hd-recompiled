@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "note": "M29 (D-066): allowlist of the PRIVATE installer payload written by tools/r3hd_stage.py, used by tools/r3hd_release_audit.py payload. Text files: the 'allow' globs and every text rule of the source audit. Binaries: only the exact paths under 'binaries', each with its role (native = the runtime binaries built from the SDK and the translated code, including the M46 LGPL DLLs ffmpeg.dll / mspack.dll: private, never publishable; launcher_native = the M30 Settings launcher built from tools/launcher alone (D-067), checked for developer paths like a native binary; python_runtime / python_stdlib = the bundled Python, pinned by hash in config/release/payload.json). Every file must also be listed in the payload's own payload.json with its size and SHA-256. Debug symbols, maps, test executables and game data have no entry and fail. A PASS is technical only and is NOT a legal clearance.",
+  "max_text_file_bytes": 4194304,
+  "deny_paths": [],
+  "deny_segments": [".git", "__pycache__", "private", "external", "generated"],
+  "allow": [
+    {"glob": "payload.json", "kind": "json"},
+    {"glob": "app/*.cmd", "kind": "batch"},
+    {"glob": "app/*.txt", "kind": "text"},
+    {"glob": "app/MODDING.md", "kind": "markdown"},
+    {"glob": "app/tools/*.py", "kind": "python"},
+    {"glob": "app/licenses/*.txt", "kind": "text"},
+    {"glob": "app/licenses/*.md", "kind": "markdown"},
+    {"glob": "app/tools/*.ps1", "kind": "powershell"},
+    {"glob": "app/config/intake/known_releases.json", "kind": "json"},
+    {"glob": "app/config/settings/registry.json", "kind": "json"},
+    {"glob": "app/config/settings/ui_strings.json", "kind": "json"},
+    {"glob": "app/config/controls/keymap.json", "kind": "json"},
+    {"glob": "app/reports/milestone1/data/content_manifest.tsv", "kind": "tsv"},
+    {"glob": "app/python/python311._pth", "kind": "text"},
+    {"glob": "app/python/LICENSE.txt", "kind": "text"}
+  ],
+  "binaries": {
+    "bin/r3hd.exe": "native",
+    "bin/rexruntime.dll": "native",
+    "bin/rexgpu-xenos.dll": "native",
+    "bin/ffmpeg.dll": "native",
+    "bin/mspack.dll": "native",
+    "app/r3hd_launcher.exe": "launcher_native",
+    "app/python/python.exe": "python_runtime",
+    "app/python/python311.dll": "python_runtime",
+    "app/python/python3.dll": "python_runtime",
+    "app/python/python311.zip": "python_stdlib"
+  }
+}

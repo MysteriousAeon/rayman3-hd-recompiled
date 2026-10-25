@@ -1,0 +1,16 @@
+# M12 measurement scenario: relaunch on a profile holding an intro_15 save -> Load -> slot -> stand in intro_15
+# for 70 s. Same input as config/m11/perf_load_intro15.txt, shorter. No frames, no probes.
+log VIDEOS\ubi.bik result=00000000
+log menumap\menumap.lvl result=00000000
+wait 10
+press 40
+wait 12
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 2
+press 44
+wait 8
+press 44
+log intro_15\intro_15.lvl result=00000000 60
+wait 70

@@ -1,0 +1,72 @@
+# M12: level teardown paths from the pause menu, on a profile holding an intro_15 save.
+#   load intro_15 -> wait out the opening cinematic -> Start (pause menu: Resume Game, Help & Options, Load,
+#   Achievements, Leaderboards, Exit Game) -> Load -> slot -> "Are you sure you want to quit the current game
+#   and load a new game?" (cursor on No) -> left + A -> intro_15 loads a second time in the same process
+#   -> cinematic again -> Start -> Exit Game -> A ->
+#   "Current game will be lost. Continue anyway?" (cursor on No) -> left + A -> title screen.
+# No frames. Regression: python tools/m12_save_entry.py scenario intro_15_start RUN --steps
+#   config/m12/pause_reload_exit.txt --seconds 300 --expect menumap,intro_15,intro_15,menumap
+log VIDEOS\ubi.bik result=00000000
+log menumap\menumap.lvl result=00000000
+wait 10
+press 40
+wait 12
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 2
+press 44
+wait 8
+press 44
+log intro_15\intro_15.lvl result=00000000 60
+wait 75
+press 40
+wait 3
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.5
+press 44
+wait 6
+press 44
+wait 3
+axis 300 -32767
+wait 0.3
+axis 300 0
+wait 1.5
+press 44
+wait 95
+press 40
+wait 3
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.5
+press 44
+wait 4
+axis 300 -32767
+wait 0.3
+axis 300 0
+wait 1.5
+press 44
+wait 18

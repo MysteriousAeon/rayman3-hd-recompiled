@@ -1,0 +1,2 @@
+# M14: no input for 170 s (boss observation).
+wait 170

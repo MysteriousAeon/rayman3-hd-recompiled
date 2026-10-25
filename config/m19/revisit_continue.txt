@@ -1,0 +1,33 @@
+# M19: relaunch on the profile whose save the title wrote in revisit mode (resume level intro_15):
+#   title -> Load -> intro_15 (opening cinematic, Start is accepted after about 75 s) -> Start -> LT x2 (the
+#   campaign's world page, Clearleaf Forest) -> A (Load) -> left + A ("continue your game") -> wood_11.
+log VIDEOS\ubi.bik result=00000000
+log menumap\menumap.lvl result=00000000
+wait 10
+press 40
+wait 12
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 2
+press 44
+wait 8
+press 44
+log intro_15\intro_15.lvl result=00000000 60
+wait 90
+press 40
+wait 3
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 44
+wait 2
+axis 300 -32767
+wait 0.3
+axis 300 0
+wait 1.2
+press 44
+wait 2
+log wood_11\wood_11.lvl result=00000000 40
+wait 30

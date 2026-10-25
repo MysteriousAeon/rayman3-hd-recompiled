@@ -1,0 +1,84 @@
+# M14 knaar_69: straight fists (X taps, no lock-on, no stick). The hoodlum reaches the spawn about 14 s after the
+# level opens and parries straight fists (YAM_C_CagouSnipeBase3SnipeCogne); one that arrives before the parry can land.
+wait 16
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+press 15 0.12
+wait 0.4
+wait 20

@@ -1,0 +1,16 @@
+# Milestone 1 experiment E-07: narrowly scoped function-boundary hints.
+# Each entry is a tiny non-.pdata leaf / adjustor thunk that is only reached by a
+# tail-branch from another thunk, so ReXGlue c94f5eb never registers it as a
+# function start. Boundaries verified by disassembly (see RE_NOTES.md).
+
+[functions]
+0x8215F098 = { size = 0xC }   # lis/addi/blr (returns address of a static)
+0x821DFFD0 = { size = 0x20 }  # small dispatcher: cmp/beq/bnelr/b ... blr
+0x824A58C0 = { size = 0x4 }   # b 0x824A2E38
+0x824A3C48 = { size = 0x4 }   # b 0x824A2E38
+0x824A6BF8 = { size = 0x4 }   # b 0x824A2E38
+
+# E-08: two non-.pdata leaf functions that the gap-filler split at an internal
+# early-return (blr) so a backward conditional branch crossed the split.
+0x8249D658 = { size = 0x44 }  # 0x8249D658..0x8249D69C, ends in vtable tail call (bctr)
+0x825783D8 = { size = 0x3C }  # 0x825783D8..0x82578414

@@ -1,0 +1,63 @@
+# M24: pause-exit variants on a working copy of the genuine swamp_60 save (entry swamp_60_human), to find
+# what a pause exit needs to be followed by slow frames. After the level opening, in this order:
+#   1 pause 15 s, A            2 pause, cursor down and up, A      3 pause, next page (RT), back (LT), A
+#   4 pause while running, A   5 pause 6 s, Start                  6 pause 6 s, B          7 pause 45 s, A
+# No frames. Run: python tools/m24_pause_resume.py run TAG --steps config/m24/pause_variants_swamp60.txt --seconds 290
+log VIDEOS\ubi.bik result=00000000
+log menumap\menumap.lvl result=00000000
+wait 10
+press 40
+wait 12
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 2
+press 44
+wait 8
+press 44
+log swamp_60\swamp_60.lvl result=00000000 60
+wait 40
+press 40
+wait 15
+press 44
+wait 7
+press 40
+wait 2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.5
+axis 301 32767
+wait 0.3
+axis 301 0
+wait 2
+press 44
+wait 7
+press 40
+wait 2
+press 8
+wait 3
+press 20
+wait 3
+press 44
+wait 7
+axis 301 32767
+wait 1
+press 40
+wait 6
+press 44
+wait 1.5
+axis 301 0
+wait 6
+press 40
+wait 6
+press 40
+wait 7
+press 40
+wait 6
+press 52
+wait 7
+press 40
+wait 45
+press 44
+wait 12

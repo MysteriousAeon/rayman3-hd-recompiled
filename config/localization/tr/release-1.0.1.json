@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "id": "tr.full.dev",
+  "name": "Türkçe",
+  "version": "1.0.1",
+  "file": "rayman3hd-turkish-1.0.1.zip",
+  "bytes": 83259,
+  "sha256": "348b1ea7584fd2f0cc6cd9cb1cdcfaa7e4ab5378b5c6a7f3c97cc278f7789f97",
+  "manifest_sha256": "ab236b42b40582d74d0ea91337884f5a95c0f82e2c6be833f36390d1b1b58cc2",
+  "entries": ["mod.json", "achievements/achievements.json"],
+  "achievements_sha256": "684f409680b895aad7fd2669cad2a9a98d2bca714e67f5f098e1732ee63660b3",
+  "target": {
+    "title_id": "5841123F",
+    "releases": ["x360-xbla-5841123F-v1"],
+    "min_port_version": "0.36.0"
+  },
+  "overrides": {"glyph": 7, "text": 1051, "subtitle": 69},
+  "bundled_with": "Rayman3HDRecompiled-1.0.1-setup.exe (SHA-256 2496c2e999c01d513edbe79a7a20a47d4febb56ba95ea49f393c8d54f37989c0)",
+  "release_asset": "the same file is the standalone release download",
+  "needs_mod_tools": "1.0.1 (the U+2026 glyph override)",
+  "manifest_authors": ["MysteriousAeon"],
+  "manifest_license": "No license is granted. Turkish translation of Rayman 3 game text; the original text belongs to Ubisoft. Not covered by the project's MIT license. For use with your own copy of the game.",
+  "manifest_metadata_status": "final: author named by the maintainer; the license field is a rights notice that grants nothing and claims nothing of the game's text",
+  "metadata_source": "the approved candidate 16c754e34e840680b1493e4c03f30ef31229e109adc10d8d1c4652b3e416aa0d with only authors and license changed (tools/release_turkish_metadata.py); overrides and achievements byte-identical",
+  "publication": "prepared as a release asset of 1.0.1; not yet published",
+  "license": "not assigned; excluded from project MIT license"
+}

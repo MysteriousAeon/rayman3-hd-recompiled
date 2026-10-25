@@ -1,0 +1,17 @@
+# Performance scenario B: fresh profile -> New -> name -> intro.bik (40 s of it) -> Start -> intro_10 flight.
+# No frames, no probes. The flight is not steered: the level loops until six lums are collected.
+log VIDEOS\ubi.bik result=00000000
+log menumap\menumap.lvl result=00000000
+wait 10
+press 40
+wait 12
+press 44
+wait 8
+press 44
+wait 8
+press 44
+log VIDEOS\intro.bik result=00000000 60
+wait 40
+press 40
+log intro_10\intro_10.lvl result=00000000 60
+wait 100

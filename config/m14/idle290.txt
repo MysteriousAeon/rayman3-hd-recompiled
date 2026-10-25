@@ -1,0 +1,3 @@
+# M17: no input for 290 s. With the constant 16 ms step the hoodlums of menu_10 need 2 .. 4 minutes to kill an idle
+# player (most of their shots strike the platform edge); observed deaths 124, 159 and 216 s into the watch.
+wait 290

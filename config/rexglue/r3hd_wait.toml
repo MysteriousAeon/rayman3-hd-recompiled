@@ -1,0 +1,8 @@
+# M11 (D-037): host wait at the title's GPU-progress spin step. No return / jump flags, no guest state writes:
+# the hook only decides how the host thread passes the time before the guest's own hint-nop loop runs.
+# 0x82316B58 is the first instruction of the spin step in 0x82316B40 (reached only while the awaited
+# command-buffer position has not been passed yet).
+[[midasm_hook]]
+address = 0x82316B58
+name = "M11GpuWaitStep"
+registers = ["r3"]

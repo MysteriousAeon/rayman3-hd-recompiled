@@ -1,0 +1,62 @@
+# M18: Revisit chosen again from inside revisit mode. Isolated test-only entry into endgame (D-040): the hub
+#   opens on the page "Game" with every world page available.
+#   LT x9 (Clearleaf Forest) -> A (Revisit) -> left + A -> Wood_11 in revisit mode -> Start -> LT x8 (The Bog of
+#   Murk) -> A (Revisit) -> left + A.
+# Regression: python tools/m18_revisit_check.py TAG rechoose_fixed rechoose_original
+log endgame\endgame.lvl result=00000000 60
+wait 15
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 44
+wait 2
+axis 300 -32767
+wait 0.3
+axis 300 0
+wait 1.2
+press 44
+wait 2
+log wood_11\wood_11.lvl result=00000000 60
+wait 35
+press 40
+wait 3
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 44
+wait 2
+axis 300 -32767
+wait 0.3
+axis 300 0
+wait 1.2
+press 44
+wait 2
+wait 30

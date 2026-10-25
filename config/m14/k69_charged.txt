@@ -1,0 +1,68 @@
+# M14 knaar_69: the hoodlum reaches the spawn about 14 s after the level opens. Charged fists (X held 1.6 s),
+# then double taps; no stick input.
+wait 16
+press 15 1.6
+wait 0.9
+press 15 1.6
+wait 0.9
+press 15 1.6
+wait 0.9
+press 15 1.6
+wait 0.9
+press 15 1.6
+wait 0.9
+press 15 1.6
+wait 0.9
+press 15 1.6
+wait 0.9
+press 15 1.6
+wait 0.9
+press 15 0.08
+wait 0.12
+press 15 0.08
+wait 0.6
+press 15 0.08
+wait 0.12
+press 15 0.08
+wait 0.6
+press 15 0.08
+wait 0.12
+press 15 0.08
+wait 0.6
+press 15 0.08
+wait 0.12
+press 15 0.08
+wait 0.6
+press 15 0.08
+wait 0.12
+press 15 0.08
+wait 0.6
+press 15 0.08
+wait 0.12
+press 15 0.08
+wait 0.6
+press 15 0.08
+wait 0.12
+press 15 0.08
+wait 0.6
+press 15 0.08
+wait 0.12
+press 15 0.08
+wait 0.6
+press 15 0.08
+wait 0.12
+press 15 0.08
+wait 0.6
+press 15 0.08
+wait 0.12
+press 15 0.08
+wait 0.6
+press 15 0.08
+wait 0.12
+press 15 0.08
+wait 0.6
+press 15 0.08
+wait 0.12
+press 15 0.08
+wait 0.6
+wait 10

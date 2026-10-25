@@ -1,0 +1,1 @@
+# Empty initial schedule: m6_pilot_run.py appends startup input from observed state.

@@ -1,0 +1,30 @@
+{
+  "comment": "M34: the six Turkish letters the game's font lacks, as r3hd_mods.py glyph overrides. Each is composed at plan time from the font's own glyphs in the person's game data (crops, cell coordinates as in RE_NOTES M33/M34) and a breve drawn here; no game pixels are stored. Metrics follow the shipped accented letters: a lowercase accent tops out 32 texels above the baseline (like e-acute), an uppercase one 40 (like I-acute), the cedillas are the font's own from c/C-cedilla.",
+  "breve": [
+    "@#.     .#@",
+    "@@*     *@@",
+    "%@@+. .+@@%",
+    ":@@@@@@@@@:",
+    " :#@@@@@#: ",
+    "   .:-:.   "
+  ],
+  "glyphs": [
+    {"type": "glyph", "char": "ı", "width": 8, "height": 24, "descent": 0,
+     "layers": [{"glyph": "i", "crop": [0, 10, 8, 34], "x": 0, "y": 0}]},
+    {"type": "glyph", "char": "İ", "width": 8, "height": 40, "descent": 0,
+     "layers": [{"glyph": "i", "crop": [0, 2, 8, 9], "x": 0, "y": 0},
+                {"glyph": "I", "x": 0, "y": 9}]},
+    {"type": "glyph", "char": "ş", "width": 15, "height": 32, "descent": 9,
+     "layers": [{"glyph": "s", "crop": [0, 11, 15, 34], "x": 0, "y": 0},
+                {"glyph": "ç", "crop": [5, 33, 12, 42], "x": 4, "y": 23}]},
+    {"type": "glyph", "char": "Ş", "width": 16, "height": 39, "descent": 8,
+     "layers": [{"glyph": "S", "x": 0, "y": 0},
+                {"glyph": "Ç", "crop": [7, 39, 15, 47], "x": 4, "y": 31}]},
+    {"type": "glyph", "char": "ğ", "width": 18, "height": 43, "descent": 11,
+     "layers": [{"breve": true, "x": 4, "y": 0},
+                {"glyph": "g", "crop": [0, 10, 18, 45], "x": 0, "y": 8}]},
+    {"type": "glyph", "char": "Ğ", "width": 23, "height": 42, "descent": 3,
+     "layers": [{"breve": true, "x": 6, "y": 0},
+                {"glyph": "G", "x": 0, "y": 8}]}
+  ]
+}

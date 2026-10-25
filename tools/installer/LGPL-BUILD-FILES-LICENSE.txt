@@ -1,0 +1,22 @@
+Licence of the Rayman 3 HD Recompiled build files in this archive
+=================================================================
+
+Copyright (C) 2026 The Rayman 3 HD Recompiled contributors
+
+The following files were written for Rayman 3 HD Recompiled to build bin\ffmpeg.dll and bin\mspack.dll. They are
+licensed under the GNU Lesser General Public License, version 2.1 or (at your option) any later version, the same
+terms as the FFmpeg and libmspack code they build (FFmpeg\COPYING.LGPLv2.1, libmspack\libmspack\COPYING.LIB):
+
+  ffmpeg-overlay\m46_ffmpeg_def.cmake   writes the export list of ffmpeg.dll
+  ffmpeg-overlay\m46_ffmpeg_dll.c       the DLL's only translation unit (it defines nothing)
+  CMakeLists.txt                        this project's header comment and its change of the libmspack path
+
+SPDX-License-Identifier: LGPL-2.1-or-later
+
+The rest of CMakeLists.txt and the files ffmpeg-overlay\codec_list.c, parser_list.c and bsf_list.c come from the
+ReXGlue SDK and are under its licence (ReXGlue-SDK-LICENSE.txt, BSD-3-Clause). FFmpeg\ and libmspack\ are under
+their own licences, as stated in their trees.
+
+This library is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License for more
+details.

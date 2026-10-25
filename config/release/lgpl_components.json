@@ -1,0 +1,56 @@
+{
+  "schema": 1,
+  "note": "M46 (D-084): the LGPL libraries of the Windows runtime, as checked by tools/m46_lgpl.py. Each is its own DLL in bin/ that rexruntime.dll imports by name (LGPL-2.1 section 6(b)); no other shipped binary contains their code. The corresponding source archive is built by 'tools/m46_lgpl.py package' and must be distributed with the program from the same place. Human-readable form: tools/installer/LGPL-SOURCE.txt (staged as app/licenses/LGPL-SOURCE.txt). Technical record only, NOT a legal clearance.",
+  "components": {
+    "ffmpeg": {
+      "dll": "ffmpeg.dll",
+      "contains": "FFmpeg libavutil + libavcodec (static archives of the SDK's own source lists, linked into one DLL; exports: every av* symbol, as upstream libavutil.v / libavcodec.v)",
+      "sdk_path": "thirdparty/FFmpeg",
+      "repository": "https://github.com/wmarti/FFmpeg",
+      "branch": "xenia-ffmpeg-canary-full",
+      "commit": "0604b464c7cb4ebc94940cf1f324a3b26b87717c",
+      "base": "FFmpeg 4.4 (RELEASE file) with the Xenia XMA 'xmaframes' decoder",
+      "spdx": "LGPL-2.1-or-later",
+      "licence_files": ["COPYING.LGPLv2.1", "LICENSE.md"],
+      "local_patches": "none: the submodule is clean at the pin; the build adds only the SDK's ffmpeg-overlay lists and the M46 DLL files",
+      "config_header": "config_windows_x86_64.h",
+      "config_required": {
+        "CONFIG_GPL": "0", "CONFIG_NONFREE": "0", "CONFIG_VERSION3": "0", "CONFIG_GPLV3": "0", "CONFIG_LGPLV3": "0",
+        "CONFIG_SHARED": "0", "CONFIG_STATIC": "1",
+        "FFMPEG_LICENSE": "\"LGPL version 2.1 or later\""
+      },
+      "config_enabled": ["CONFIG_ASF_DEMUXER", "CONFIG_FILE_PROTOCOL", "CONFIG_MP3FLOAT_DECODER", "CONFIG_MP3_DECODER",
+                         "CONFIG_MP3_DEMUXER", "CONFIG_MPEGAUDIO_PARSER", "CONFIG_NULL_BSF", "CONFIG_WMAPRO_DECODER",
+                         "CONFIG_WMAV2_DECODER", "CONFIG_XMAFRAMES_DECODER"],
+      "compiled_sources_without_lgpl_header": {
+        "libavutil/adler32.c": "zlib-style permissive notice in the file",
+        "libavutil/avsscanf.c": "musl, MIT notice in the file",
+        "libavcodec/faandct.c": "permissive notice in the file",
+        "libavcodec/jfdctfst.c": "Independent JPEG Group notice in the file",
+        "libavcodec/jrevdct.c": "Independent JPEG Group notice in the file",
+        "libavcodec/file_open.c": "only #includes libavutil/file_open.c (LGPL)"
+      },
+      "imported_by_rexruntime": ["av_buffer_alloc", "av_frame_alloc", "av_frame_free", "av_log_set_callback",
+                                 "av_packet_alloc", "av_strerror", "avcodec_alloc_context3", "avcodec_find_decoder",
+                                 "avcodec_free_context", "avcodec_open2", "avcodec_receive_frame", "avcodec_send_packet"],
+      "markers": ["xmaframes", "--toolchain=msvc --arch=x86_64 --disable-everything"]
+    },
+    "libmspack": {
+      "dll": "mspack.dll",
+      "contains": "libmspack lzxd.c (the LZX decompressor; exports lzxd_*)",
+      "sdk_path": "thirdparty/libmspack",
+      "repository": "https://github.com/kyz/libmspack",
+      "commit": "305907723a4e7ab2018e58040059ffb5e77db837",
+      "spdx": "LGPL-2.1-only",
+      "licence_files": ["libmspack/COPYING.LIB"],
+      "local_patches": "none: lzxd.c and its headers equal libmspack/mspack/* at the pin; the SDK builds them through cabextract/mspack, whose git symlinks are file copies on Windows (E-06)",
+      "files": ["libmspack/mspack/lzxd.c"],
+      "imported_by_rexruntime": ["lzxd_decompress", "lzxd_free", "lzxd_init"],
+      "exports": ["lzxd_decompress", "lzxd_free", "lzxd_init", "lzxd_set_output_length", "lzxd_set_reference_data"],
+      "markers": ["invalid reset interval detected during LZX decompression"]
+    }
+  },
+  "shipped_without_lgpl_code": ["r3hd.exe", "rexruntime.dll", "rexgpu-xenos.dll"],
+  "system_imports_allowed": ["KERNEL32.dll", "bcrypt.dll", "VCRUNTIME140.dll", "api-ms-win-crt-*"],
+  "package": {"name": "r3hd-lgpl-source", "dir": "private/work/m46/package"}
+}

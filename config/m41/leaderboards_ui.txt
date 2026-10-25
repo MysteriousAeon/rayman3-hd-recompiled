@@ -1,0 +1,88 @@
+# M41: Title -> main menu -> Leaderboards (sixth entry in the full-version menu) -> A, then Album -> A, then Exit Game.
+# Neither entry had been opened by a person or a test before M41. With a profile that is not Xbox LIVE enabled (every
+# local profile of this port) the title answers Leaderboards with its own notice "You must be signed in with an Xbox
+# LIVE enabled gamer profile to enter this section. Press A to continue." (title behaviour; it calls no stats import).
+# That notice takes A only: the first M41 version sent B there and failed (run m41_lb_base, kept in the M41 report).
+# A leaves the notice with the cursor still on Leaderboards; B leaves the Album with the cursor back on New (the title
+# rebuilds the menu page; the second M41 version assumed otherwise and failed, run m41_lb_fix1), so Exit Game is six
+# entries down from there. The run passes only on exit code 0 through Exit Game, as in config/m16/achievements_ui.txt.
+# Frames: menu, notice, menu after it, Album, menu after it.
+log VIDEOS\ubi.bik result=00000000
+log menumap\menumap.lvl result=00000000
+scale
+wait 10
+press 40
+wait 12
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 2
+frame menu_on_leaderboards
+press 44
+wait 4
+frame leaderboards_notice
+press 44
+wait 3
+frame menu_after_notice
+axis 301 32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 32767
+wait 0.3
+axis 301 0
+wait 2
+press 44
+wait 5
+frame album
+press 42
+wait 4
+frame menu_after_album
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 2
+press 44
+wait 3
+axis 300 -32767
+wait 0.3
+axis 300 0
+wait 1.5
+press 44
+exit 30

@@ -1,0 +1,34 @@
+# M15: one run through the representative front-end surfaces, on a profile holding an intro_15 save.
+#   start-up movie -> title -> main menu -> Load -> slot -> intro_15 opening cinematic -> player control (HUD)
+#   -> Start (pause menu). Six explicit private frames (cap 8), compared between --resolution_scale=1 and 2.
+# python tools/m12_save_entry.py scenario intro_15_start RUN --steps config/m15/front_to_pause.txt
+#   --seconds 200 --expect menumap,intro_15
+log VIDEOS\ubi.bik result=00000000
+wait 3
+frame movie
+log menumap\menumap.lvl result=00000000
+wait 10
+frame title
+press 40
+wait 12
+frame main_menu
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 2
+press 44
+wait 8
+press 44
+log intro_15\intro_15.lvl result=00000000 60
+wait 20
+frame cinematic
+wait 58
+axis 300 20000
+wait 1.5
+axis 300 0
+wait 1
+frame gameplay
+press 40
+wait 3
+frame pause
+wait 2

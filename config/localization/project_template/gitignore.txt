@@ -1,0 +1,8 @@
+# Everything that holds the game's English (inventory, batches, model answers, review and decision sheets, queues)
+/private/
+# Built mods (preview builds contain unreviewed text; release builds are shared only by the person)
+/build/
+# Temporary files of the tools
+.tmp_*
+.build_*
+*.bak

@@ -1,0 +1,15 @@
+# M23: tail for m23_trace_entry.py: idle view, then two views after walking forward (left stick up, the same
+# open-loop input as config/m21/bog_hazard_restart.txt). Open loop: where the player ends up is not asserted.
+wait 75
+frame idle
+axis 301 32767
+wait 5
+axis 301 0
+wait 2
+frame walk1
+axis 301 32767
+wait 6
+axis 301 0
+wait 2
+frame walk2
+wait 5

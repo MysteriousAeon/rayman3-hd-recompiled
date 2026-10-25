@@ -1,0 +1,13 @@
+# Observational hooks only: no return/jump flags and no guest state writes.
+[[midasm_hook]]
+address = 0x823E4BE8
+name = "M2ObjectCallA"
+registers = ["r31", "r3", "r1"]
+[[midasm_hook]]
+address = 0x823E4BF0
+name = "M2ObjectCallB"
+registers = ["r31", "r3", "r1"]
+[[midasm_hook]]
+address = 0x823E4BFC
+name = "M2ObjectRead"
+registers = ["r31", "r3", "r1"]

@@ -1,0 +1,18 @@
+# M33: title -> main menu, the cursor moved twice to Help & Options; two frames. Used by tools/m33_mod_game.py for the
+# baseline, mod, disabled and refused-plan runs (same steps for each).
+log VIDEOS\ubi.bik result=00000000
+log menumap\menumap.lvl result=00000000
+wait 10
+press 40
+wait 12
+frame main_menu
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.5
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 2
+frame options_selected
+wait 2

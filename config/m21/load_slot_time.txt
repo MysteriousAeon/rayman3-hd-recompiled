@@ -1,0 +1,15 @@
+# M21 (D-050): title -> Load -> slot list, one frame of the list (the slot line shows the save's date and time).
+# Run on a working copy whose save file has a known modification time; the frame stays private.
+log VIDEOS\ubi.bik result=00000000
+log menumap\menumap.lvl result=00000000
+wait 10
+press 40
+wait 12
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 2
+press 44
+wait 8
+frame slot_list
+wait 3

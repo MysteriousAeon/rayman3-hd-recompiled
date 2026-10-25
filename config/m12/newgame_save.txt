@@ -1,0 +1,15 @@
+# M12 round-trip run A: fresh profile -> title -> New Game -> confirm name -> intro movie starts (save written
+# by the title at name confirmation), then the runner's timed close ends the game. No frames, no probes.
+# Use with --user-root RUN on an absent profile directory.
+log VIDEOS\ubi.bik result=00000000
+log menumap\menumap.lvl result=00000000
+wait 10
+press 40
+wait 12
+press 44
+wait 8
+press 44
+wait 8
+press 44
+log VIDEOS\intro.bik result=00000000 60
+wait 6

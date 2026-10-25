@@ -1,0 +1,6 @@
+# E-20: native trace shows a nonlocal return through 0x826BE1B0.
+# Matched save/restore layout: f14-f31, r14-r31, r1 at +144,
+# CR at +304, LR at +308, unwind flag at +312, VMX state at +320.
+# Use the existing SDK call-site setjmp/longjmp lowering, not ordinary PPC returns.
+setjmp_address = 0x826BE4D0
+longjmp_address = 0x826BE1B0

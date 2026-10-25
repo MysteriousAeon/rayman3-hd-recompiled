@@ -1,0 +1,25 @@
+# E-24 (Milestone 3): callable targets whose address is only ever synthesised by
+# instructions (lis+addi), found by tools/m3_target_audit.py. Same class as the two
+# M2 runtime misses (r3hd_runtime_targets.toml) but on paths not yet executed.
+# Evidence per group is in RE_NOTES.md (Milestone 3, callback audit).
+[functions]
+# Virtual-call forwarding thunks (load vtable slot, bctr) passed in r4 to 0x82409958.
+0x824003C8 = {}
+0x824003D8 = {}
+0x824003E8 = {}
+0x824003F8 = {}
+0x82400408 = {}
+0x82400418 = {}
+0x82400428 = {}
+0x82400438 = {}
+0x82400448 = {}
+0x82400458 = {}
+# Routine pointers returned by the selector at 0x82547F3C..0x82547F58.
+0x82546CB0 = {}
+0x82546CC0 = {}
+# "return 0" callback stored into a stack descriptor at 0x82554664.
+0x82550A20 = { size = 0x8 }
+# Virtual-call thunk stored into a stack descriptor at 0x826E83A0.
+0x826E6D00 = { size = 0x10 }
+# Argument-shuffling thunk passed in r5 to 0x827E9448 at 0x8273E4D0.
+0x82735BA8 = {}

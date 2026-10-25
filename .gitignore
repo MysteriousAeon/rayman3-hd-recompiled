@@ -1,0 +1,12 @@
+# Copyrighted / private inputs and derived material: never commit
+/private/
+# Third-party tool checkouts and builds (pinned by commit in PROJECT_STATE.md)
+/external/
+/build/
+# Generated translated game code
+/generated/
+*.xex
+*.xexp
+*.pdb
+__pycache__/
+*.pyc

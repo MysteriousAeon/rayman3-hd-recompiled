@@ -1,0 +1,60 @@
+# Title -> main menu -> Achievements (fifth entry in the full-version menu) -> A. The title calls
+# XamShowAchievementsUI; the runtime shows its local achievements dialog (D-044) and gives the title a neutral
+# pad while it is open. Down is sent while the dialog is open (must not move the menu cursor), then B closes it.
+# The same Achievements entry is then opened and closed a second time, and the run leaves through Exit Game
+# (two entries further down): if the cursor had moved under the dialog, or the closing B had also reached the
+# menu, the final A would not land on Exit Game and the run would not end with exit code 0.
+log VIDEOS\ubi.bik result=00000000
+log menumap\menumap.lvl result=00000000
+scale
+wait 10
+press 40
+wait 12
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 2
+press 44
+wait 3
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+press 42
+wait 3
+press 44
+wait 3
+press 42
+wait 3
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 2
+press 44
+wait 3
+axis 300 -32767
+wait 0.3
+axis 300 0
+wait 1.5
+press 44
+exit 30

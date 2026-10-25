@@ -1,0 +1,34 @@
+# M19: on a working copy of the wood_11 save: title -> Load -> wood_11 -> Start -> LT x3 (The Fairy Council) ->
+#   A (Revisit) -> left + A -> Intro_10 in revisit mode. The driver (tools/m19_campaign_check.py) then flies
+#   Intro_10 with the M5 flight pilot (normal input) to its end; the title saves at the level change.
+log VIDEOS\ubi.bik result=00000000
+log menumap\menumap.lvl result=00000000
+wait 10
+press 40
+wait 12
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 2
+press 44
+wait 8
+press 44
+log wood_11\wood_11.lvl result=00000000 60
+wait 35
+press 40
+wait 3
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 44
+wait 2
+axis 300 -32767
+wait 0.3
+axis 300 0
+wait 1.2
+press 44
+wait 2
+log intro_10\intro_10.lvl result=00000000 40

@@ -1,0 +1,53 @@
+# M18: legitimate revisit and the title's own way back, on a working copy of the wood_11 save.
+#   title -> Load -> slot -> wood_11 -> Start (pause menu, page "Game") -> LT x3 (pages Bonus, Clearleaf Forest,
+#   The Fairy Council) -> A (Revisit) -> "quit the current game and revisit a previous level?" (cursor on No)
+#   -> left + A -> Intro_10 in revisit mode -> Start -> LT x2 (Clearleaf Forest: the interrupted game) -> A (Load)
+#   -> "quit the return visit and continue your game?" -> left + A -> wood_11.
+# Regression: python tools/m18_revisit_check.py TAG enter_return
+log VIDEOS\ubi.bik result=00000000
+log menumap\menumap.lvl result=00000000
+wait 10
+press 40
+wait 12
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 2
+press 44
+wait 8
+press 44
+log wood_11\wood_11.lvl result=00000000 60
+wait 35
+press 40
+wait 3
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 44
+wait 2
+axis 300 -32767
+wait 0.3
+axis 300 0
+wait 1.2
+press 44
+wait 2
+log intro_10\intro_10.lvl result=00000000 40
+wait 20
+press 40
+wait 3
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 44
+wait 2
+axis 300 -32767
+wait 0.3
+axis 300 0
+wait 1.2
+press 44
+wait 2
+wait 30

@@ -1,0 +1,29 @@
+# M21: death and level restart at the start of The Bog of Murk, on a working copy of the swamp_60 save of the
+# human session 20261011-143342. After the load the left stick is held forward into the toxic water (the input
+# of the M13 control check and of config/m19/revisit_death.txt) until the player dies and the title restarts
+# the level. The campaign is not in revisit mode here. Two pushes: open-loop timing against the opening scene
+# (one run with a single 5 s push at +30 s did not die, another at +28 s did); a push that falls into the
+# restarted level's opening scene does nothing.
+# Regression: python tools/m21_campaign_check.py TAG bog_hazard_restart
+log VIDEOS\ubi.bik result=00000000
+log menumap\menumap.lvl result=00000000
+wait 10
+press 40
+wait 12
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 2
+press 44
+wait 8
+press 44
+log swamp_60\swamp_60.lvl result=00000000 60
+wait 30
+axis 301 32767
+wait 8
+axis 301 0
+wait 7
+axis 301 32767
+wait 8
+axis 301 0
+wait 45

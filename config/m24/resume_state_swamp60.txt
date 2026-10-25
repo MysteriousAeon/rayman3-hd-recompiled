@@ -1,0 +1,75 @@
+# M24 follow-up: what the game state does across a pause, on a working copy of the genuine swamp_60 save
+# (entry swamp_60_human). After the level opening:
+#   standing still:        pauses of 3 and 10 s
+#   right stick held:      pauses of 3 and 10 s (camera turning; the stick stays held in the menu)
+#   left stick held:       right with a pause of 3 s, back left with a pause of 10 s (short walks: the toxic
+#                          water is a second's walk to the right)
+#   control:               the same stick movements without a pause
+# Every pause is left with A on Resume Game. No frames.
+# Run: python tools/m24_resume_state.py run TAG ; python tools/m24_resume_state.py analyze TAG
+log VIDEOS\ubi.bik result=00000000
+log menumap\menumap.lvl result=00000000
+wait 10
+press 40
+wait 12
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 2
+press 44
+wait 8
+press 44
+log swamp_60\swamp_60.lvl result=00000000 60
+wait 45
+press 40
+wait 3
+press 44
+wait 5
+press 40
+wait 10
+press 44
+wait 5
+axis 302 32767
+wait 1
+press 40
+wait 3
+press 44
+wait 1
+axis 302 0
+wait 3
+axis 302 -32767
+wait 1
+press 40
+wait 10
+press 44
+wait 1
+axis 302 0
+wait 3
+axis 300 32767
+wait 0.5
+press 40
+wait 3
+press 44
+wait 0.4
+axis 300 0
+wait 3
+axis 300 -32767
+wait 0.5
+press 40
+wait 10
+press 44
+wait 0.4
+axis 300 0
+wait 3
+axis 302 32767
+wait 2
+axis 302 0
+wait 2
+axis 300 32767
+wait 0.7
+axis 300 0
+wait 2
+axis 300 -32767
+wait 0.7
+axis 300 0
+wait 6

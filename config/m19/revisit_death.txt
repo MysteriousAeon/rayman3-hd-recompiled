@@ -1,0 +1,37 @@
+# M19: death restart in the first level of a revisited world (M18 path c). Isolated test-only entry into
+#   endgame (D-040): LT x8 (The Bog of Murk) -> A (Revisit) -> left + A -> Swamp_60 in revisit mode; then the
+#   left stick is held forward into the toxic water (the M13 control check's input) until the player dies and
+#   the title restarts the level. Regression: python tools/m19_campaign_check.py TAG revisit_death_fixed
+#   revisit_death_original
+log endgame\endgame.lvl result=00000000 60
+wait 15
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 44
+wait 2
+axis 300 -32767
+wait 0.3
+axis 300 0
+wait 1.2
+press 44
+wait 2
+log swamp_60\swamp_60.lvl result=00000000 60
+wait 30
+axis 301 32767
+wait 5
+axis 301 0
+wait 45

@@ -1,0 +1,12 @@
+{
+  "kind": "r3hd-glossary",
+  "format": 1,
+  "comment": "Terminology of this translation. A term is matched in the English (case-insensitive, at a word start); the Turkish should then contain one of 'tr' (Turkish-aware, so suffixes such as -'ın / -lar still match) and none of 'avoid'. 'status': 'approved' = the person's decision (tools never change it), 'proposed' = a suggestion (from a model or a reviewer) waiting for a decision. Mismatches are warnings in validate and in the review queue, never errors.",
+  "terms": [
+    {"en": "Rayman", "tr": ["Rayman"], "avoid": [], "status": "proposed", "note": "a name: keep it; suffix with an apostrophe (Rayman'ın)"},
+    {"en": "Globox", "tr": ["Globox"], "avoid": [], "status": "proposed", "note": "a name: keep it; suffix with an apostrophe"}
+  ],
+  "speakers": {
+    "comment": "What the speaker codes of the voice files (column 'speakers', a four-letter code) mean to you, once you know. The tools never guess them."
+  }
+}

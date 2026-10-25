@@ -1,0 +1,25 @@
+# M18: what the end-of-game hub offers while the campaign is unfinished. Isolated test-only entry into
+#   endgame (D-040). LT x2 (The Tower of the Leptys) -> A (nothing may happen) ->
+#   LT (Hoodlum Headquarters) -> A (Revisit) -> left + A -> Fact_40 in revisit mode.
+# Regression: python tools/m18_revisit_check.py TAG hub_tower
+log endgame\endgame.lvl result=00000000 60
+wait 15
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 44
+wait 2
+wait 3
+press 20
+wait 1.5
+press 44
+wait 2
+axis 300 -32767
+wait 0.3
+axis 300 0
+wait 1.2
+press 44
+wait 2
+log fact_40\fact_40.lvl result=00000000 40
+wait 10

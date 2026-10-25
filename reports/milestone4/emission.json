@@ -1,0 +1,20 @@
+{
+  "seh_owners": 103,
+  "scopes": 114,
+  "inline_bodies": 37,
+  "same_frame_unwind_labels": 4,
+  "fixture_functions": [
+    "sub_82821618",
+    "sub_82821684",
+    "sub_820E7CE0",
+    "sub_820E7D2C",
+    "sub_826D5BB0"
+  ],
+  "fixture_function_sha256": {
+    "sub_82821618": "9806888ac7f8b657038b482d22998ce7670ca1229247736c2bffb46ae7edd22a",
+    "sub_82821684": "8747c3cb260cc27087a46baf7dabfa884811c780d99d00b9e56d9453fae82766",
+    "sub_820E7CE0": "d8b4cf174ef8df513827642e0c3b226e89cf6978067bac296e525c63e0618ffc",
+    "sub_820E7D2C": "33f780d49d8511715d6c8573e451d56d9d4cecf9ef3d9fcc2fa5ceaa91a89101",
+    "sub_826D5BB0": "c1c77e078de887a727a79973db7223359a3cba8feebabef1511c18ad506b2c64"
+  }
+}

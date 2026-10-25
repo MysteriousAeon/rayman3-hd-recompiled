@@ -1,0 +1,9 @@
+# E-17: first native run, CRT thread notification callback.
+# Constructed at 0x820E7860 (lis/addi), stored in callback node 0x82874D38+8.
+# Called at 0x820E22E4 by the Xapi thread-startup notification path.
+# Frameless leaf: conditional return then tail branch to 0x820E7748.
+[functions]
+0x820EB140 = { size = 0xC }
+# E-18: qsort comparator constructed at 0x825CA254, passed in r6 to
+# 0x826B94C8, invoked at 0x826B960C. Two return sites; not an SEH block.
+0x825AE9B8 = { size = 0x88 }

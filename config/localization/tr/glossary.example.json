@@ -1,0 +1,12 @@
+{
+  "kind": "r3hd-glossary",
+  "format": 1,
+  "comment": "Optional and yours to maintain: copy it beside your project (e.g. glossary.json) and pass --glossary to r3hd_locflow.py validate. A term is matched in the English (case-insensitive, at a word start); the Turkish must then contain one of 'tr' (Turkish-aware case-insensitive, so suffixes such as -lar / -'ı still match) and none of 'avoid'. Results are warnings, never errors. The entries below only show the format: they are names a translation usually keeps, not suggested translations. Add your own decisions (abilities, enemies, worlds, menu verbs) as you make them.",
+  "terms": [
+    {"en": "Rayman", "tr": ["Rayman"], "avoid": [], "note": "a name"},
+    {"en": "Globox", "tr": ["Globox"], "avoid": [], "note": "a name"}
+  ],
+  "speakers": {
+    "comment": "Optional: what the speaker codes of the voice files (catalog column 'speakers', e.g. a four-letter code) mean to you. Filled by you; the tool never guesses them."
+  }
+}

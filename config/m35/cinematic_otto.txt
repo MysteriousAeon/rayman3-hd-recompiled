@@ -1,0 +1,39 @@
+# M35 tail (after the Load steps of m12_save_entry.py, entry knaar_20_human): pause (Start) -> Bonus (Y) -> Cinematic
+# (second entry) -> the 3x3 grid, cursor on the first movie -> right: the Otto movie (gallery title en.213) -> A -> the
+# confirmation (cursor on No) -> left -> A: the movie VIDEOS\menu10.bik plays. Frames are timed from the movie's open
+# against the English cues of VS.sub movie 42 (cue 0 15.64-20.42 s, cue 1 29.54-32.10 s, cue 3 54.44-60.25 s; a gap
+# without a cue at 24.5 s). Used with and without a subtitle mod plan by tools/m35_sub_game.py (same steps each time).
+wait 35
+press 40
+wait 3
+press 19
+wait 3
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.5
+press 44
+wait 4
+axis 300 32767
+wait 0.3
+axis 300 0
+wait 1.5
+frame grid
+press 44
+wait 3
+frame confirm
+axis 300 -32767
+wait 0.3
+axis 300 0
+wait 1.5
+press 44
+log VIDEOS\menu10.bik result=00000000 60
+wait 17.5
+frame cue0
+wait 7
+frame gap
+wait 6.5
+frame cue1
+wait 26
+frame cue3
+wait 5

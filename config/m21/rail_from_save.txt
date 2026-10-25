@@ -1,0 +1,18 @@
+# M21: the second rail-surf section from a working copy of the sk8_10 save of the human session
+# 20261011-143342, without input after the load. (The save was written in menu_10 before the movie
+# menu10.bik; loading it opens sk8_10 directly, without the movie.)
+# Regression: python tools/m21_campaign_check.py TAG rail_from_save
+log VIDEOS\ubi.bik result=00000000
+log menumap\menumap.lvl result=00000000
+wait 10
+press 40
+wait 12
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 2
+press 44
+wait 8
+press 44
+log sk8_10\sk8_10.lvl result=00000000 60
+wait 95

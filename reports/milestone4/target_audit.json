@@ -1,0 +1,3215 @@
+{
+ "dispatch_table_entries": 46207,
+ "translated_words": 1874097,
+ "data_pointers": {
+  "distinct_targets": 6504,
+  "by_class": {
+   "function_entry": 5507,
+   "inside_translated_function": 960,
+   "seh_except_body": 37
+  },
+  "inside_breakdown": {
+   "cxx_ip_state_entry": 734,
+   "coincidental_value_in_constant_table": 1,
+   "seh_scope_edge": 225
+  },
+  "untranslated": [],
+  "mid_function_other": []
+ },
+ "unclassified_synthesised": [],
+ "cxx_catch_continuations": {
+  "distinct": 5,
+  "untranslated": [
+   "0x820F63B8",
+   "0x82209EC4",
+   "0x8220A0D4",
+   "0x8220A2CC",
+   "0x8220A45C"
+  ]
+ },
+ "synthesised_pointers": {
+  "distinct_targets": 1572,
+  "by_class": {
+   "function_entry": 1310,
+   "inside_translated_function": 124,
+   "untranslated": 138
+  },
+  "non_entry_breakdown": {
+   "inside_translated_function/add_then_branch": 119,
+   "untranslated/cxx_catch_continuation_label": 5,
+   "untranslated/table_base_load": 133,
+   "inside_translated_function/same_function_unwind_target_label": 5
+  },
+  "non_entry_cases": [
+   {
+    "target": "0x820E8ACC",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x820E8AB8"
+    ],
+    "owner": "0x820E8608",
+    "is_label": true
+   },
+   {
+    "target": "0x820E9F64",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x820E9F50"
+    ],
+    "owner": "0x820E99F8",
+    "is_label": true
+   },
+   {
+    "target": "0x820EE0AC",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x820EE098"
+    ],
+    "owner": "0x820EDC78",
+    "is_label": true
+   },
+   {
+    "target": "0x820F031C",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x820F0308"
+    ],
+    "owner": "0x820EFEE0",
+    "is_label": true
+   },
+   {
+    "target": "0x820F13E8",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x820F13D4"
+    ],
+    "owner": "0x820F0DA8",
+    "is_label": true
+   },
+   {
+    "target": "0x820F63B8",
+    "cls": "untranslated",
+    "uses": {
+     "passed_or_live_at_branch": 1
+    },
+    "sites": [
+     "0x820F649C"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x820F8DC4",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x820F8DB0"
+    ],
+    "owner": "0x820F8D48",
+    "is_label": true
+   },
+   {
+    "target": "0x820F8E68",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x820F8E58"
+    ],
+    "owner": "0x820F8D48",
+    "is_label": true
+   },
+   {
+    "target": "0x820F906C",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x820F9058"
+    ],
+    "owner": "0x820F9028",
+    "is_label": true
+   },
+   {
+    "target": "0x820FF384",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x820FF374"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x821083C8",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x821083B8"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82108AB0",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82108AA0"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82112054",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82112044"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x821156C8",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x821156B8"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82115E38",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82115E28"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82129EC0",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82129EB0"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82129F50",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82129F40"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x8212A6D4",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x8212A6C4"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x8212A728",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x8212A718"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x821394A0",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82139490"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82160FDC",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82160FCC"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82178E90",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82178E80"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x8217E650",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x8217E640"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82183868",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82183858"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x821839AC",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x8218399C"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82183CAC",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82183C9C"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82183FB4",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82183FA4"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x821842FC",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x821842EC"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82184574",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82184564"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x8218486C",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x8218485C"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82184B78",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82184B68"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82184CFC",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82184CEC"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x821885C4",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x821885B4"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x8218D4A8",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x8218D498"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x821916B8",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x821916A8"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82191F90",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82191F80"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x821935B4",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x821935A4"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82193EB4",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82193EA4"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82194B68",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82194B58"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x821A3A08",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x821A39F8"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x821CE900",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x821CE8F0"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x821CF8B8",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x821CF8A8"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x821D0E40",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x821D0E30"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x821D1640",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x821D1630"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82209EC4",
+    "cls": "untranslated",
+    "uses": {
+     "passed_or_live_at_branch": 1
+    },
+    "sites": [
+     "0x82209F68"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x8220A0D4",
+    "cls": "untranslated",
+    "uses": {
+     "passed_or_live_at_branch": 1
+    },
+    "sites": [
+     "0x8220A0EC"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x8220A2CC",
+    "cls": "untranslated",
+    "uses": {
+     "passed_or_live_at_branch": 1
+    },
+    "sites": [
+     "0x8220A37C"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x8220A45C",
+    "cls": "untranslated",
+    "uses": {
+     "passed_or_live_at_branch": 1
+    },
+    "sites": [
+     "0x8220A528"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82223D8C",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82223D7C"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82224C24",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82224C14"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82239484",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82239474"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x8223994C",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x8223993C"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x822408B0",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x822408A0"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82241D08",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82241CF8"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x822429B0",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x822429A0"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82243520",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82243510"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x822445C0",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x822445B0"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82244B30",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82244B20"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x822452F8",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x822452E8"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x822470B4",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x822470A4"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x822477E8",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x822477D8"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82248434",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82248424"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x822489E8",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x822489D8"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x822490E4",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x822490D4"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x8224A618",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x8224A608"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x8224D970",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x8224D960"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x8224DA68",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x8224DA58"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x8224DF6C",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x8224DF5C"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x8224E178",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x8224E168"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x8224E76C",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x8224E75C"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x8224E840",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x8224E830"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x8224FED0",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x8224FEC0"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82250914",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82250904"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82255CC4",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82255CB4"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x822584C0",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x822584B0"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x8225AB04",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x8225AAF4"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x8225AFE0",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x8225AFD0"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x8225B96C",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x8225B95C"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x8225EB6C",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x8225EB5C"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x8226084C",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x8226083C"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82260B60",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82260B50"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82263BF8",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82263BE8"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x822643DC",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x822643CC"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82267418",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82267408"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82267E78",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82267E68"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82271884",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82271874"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82278618",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82278608"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82279080",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82279070"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x8227AF28",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x8227AF18"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x8227C108",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x8227C0F8"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x8227C82C",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x8227C81C"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x8227D440",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x8227D430"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x8227F3C4",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x8227F3B4"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82283318",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82283308"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x8228482C",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x8228481C"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x822A2908",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x822A28F8"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x822B504C",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x822B503C"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x822B60EC",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x822B60DC"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x822B867C",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x822B866C"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x822BB29C",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x822BB28C"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x822BC6C0",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x822BC6B0"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x822BE0DC",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x822BE0CC"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x822CAE08",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x822CADF8"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x822CC118",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x822CC108"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x822DD36C",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x822DD35C"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x822F2F84",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x822F2F74"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x822F3B60",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x822F3B50"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x822F5BB4",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x822F5BA4"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x822FCBD4",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x822FCBC4"
+    ],
+    "owner": "0x822FCB60",
+    "is_label": true
+   },
+   {
+    "target": "0x822FDC00",
+    "cls": "inside_translated_function",
+    "uses": {
+     "passed_or_live_at_branch": 1
+    },
+    "sites": [
+     "0x822FDBC8"
+    ],
+    "owner": "0x822FD930",
+    "is_label": true
+   },
+   {
+    "target": "0x82311A78",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82311A68"
+    ],
+    "owner": "0x82311A00",
+    "is_label": true
+   },
+   {
+    "target": "0x823195EC",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x823195DC"
+    ],
+    "owner": "0x823194B8",
+    "is_label": true
+   },
+   {
+    "target": "0x8231BDC4",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x8231BDB0"
+    ],
+    "owner": "0x8231BD78",
+    "is_label": true
+   },
+   {
+    "target": "0x82327D18",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82327D08"
+    ],
+    "owner": "0x82327BF8",
+    "is_label": true
+   },
+   {
+    "target": "0x8232F5A0",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x8232F590"
+    ],
+    "owner": "0x8232F470",
+    "is_label": true
+   },
+   {
+    "target": "0x8233C834",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x8233C820"
+    ],
+    "owner": "0x8233C7D8",
+    "is_label": true
+   },
+   {
+    "target": "0x8236C634",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x8236C620"
+    ],
+    "owner": "0x8236C5C8",
+    "is_label": true
+   },
+   {
+    "target": "0x82372DC4",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82372DB0"
+    ],
+    "owner": "0x82372D90",
+    "is_label": true
+   },
+   {
+    "target": "0x823B54F0",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x823B54E0"
+    ],
+    "owner": "0x823B5420",
+    "is_label": true
+   },
+   {
+    "target": "0x823B8BFC",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x823B8BE8"
+    ],
+    "owner": "0x823B8B20",
+    "is_label": true
+   },
+   {
+    "target": "0x823B9268",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x823B9258"
+    ],
+    "owner": "0x823B90C0",
+    "is_label": true
+   },
+   {
+    "target": "0x823BA8EC",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x823BA8D8"
+    ],
+    "owner": "0x823BA7D8",
+    "is_label": true
+   },
+   {
+    "target": "0x823BC06C",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x823BC05C"
+    ],
+    "owner": "0x823BC020",
+    "is_label": true
+   },
+   {
+    "target": "0x823C0ADC",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x823C0AC8"
+    ],
+    "owner": "0x823C0A38",
+    "is_label": true
+   },
+   {
+    "target": "0x823C2524",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x823C2570"
+    ],
+    "owner": "0x823C2508",
+    "is_label": true
+   },
+   {
+    "target": "0x823C2854",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x823C2844"
+    ],
+    "owner": "0x823C26B0",
+    "is_label": true
+   },
+   {
+    "target": "0x823C33C8",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x823C33B8"
+    ],
+    "owner": "0x823C2D08",
+    "is_label": true
+   },
+   {
+    "target": "0x823C6BA0",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x823C6B8C"
+    ],
+    "owner": "0x823C6AE0",
+    "is_label": true
+   },
+   {
+    "target": "0x823CD18C",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x823CD178"
+    ],
+    "owner": "0x823CCFD0",
+    "is_label": true
+   },
+   {
+    "target": "0x823D6614",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x823D6600"
+    ],
+    "owner": "0x823D6400",
+    "is_label": true
+   },
+   {
+    "target": "0x823E24A4",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x823E2494"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x823E4D3C",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x823E4D2C"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x823F53B0",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x823F539C"
+    ],
+    "owner": "0x823F5370",
+    "is_label": true
+   },
+   {
+    "target": "0x823F5CD0",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x823F5E34"
+    ],
+    "owner": "0x823F5A98",
+    "is_label": true
+   },
+   {
+    "target": "0x823F6450",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x823F643C"
+    ],
+    "owner": "0x823F5F98",
+    "is_label": true
+   },
+   {
+    "target": "0x823F6130",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x823F6494"
+    ],
+    "owner": "0x823F5F98",
+    "is_label": true
+   },
+   {
+    "target": "0x823FB250",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x823FB328"
+    ],
+    "owner": "0x823FB238",
+    "is_label": true
+   },
+   {
+    "target": "0x823FB7EC",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x823FB7DC"
+    ],
+    "owner": "0x823FB4D0",
+    "is_label": true
+   },
+   {
+    "target": "0x823FCE04",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x823FCDF0"
+    ],
+    "owner": "0x823FCCE8",
+    "is_label": true
+   },
+   {
+    "target": "0x823FDB18",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x823FDB04"
+    ],
+    "owner": "0x823FDA70",
+    "is_label": true
+   },
+   {
+    "target": "0x823FE534",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x823FE520"
+    ],
+    "owner": "0x823FE390",
+    "is_label": true
+   },
+   {
+    "target": "0x82406774",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82406764"
+    ],
+    "owner": "0x824066D0",
+    "is_label": true
+   },
+   {
+    "target": "0x82406C4C",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82406C38"
+    ],
+    "owner": "0x82406BC0",
+    "is_label": true
+   },
+   {
+    "target": "0x82418C38",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82418C24"
+    ],
+    "owner": "0x82418B38",
+    "is_label": true
+   },
+   {
+    "target": "0x82423908",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x824238F8"
+    ],
+    "owner": "0x824236E8",
+    "is_label": true
+   },
+   {
+    "target": "0x82440684",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82440670"
+    ],
+    "owner": "0x82440640",
+    "is_label": true
+   },
+   {
+    "target": "0x82440C84",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82440C70"
+    ],
+    "owner": "0x82440BE0",
+    "is_label": true
+   },
+   {
+    "target": "0x82441E20",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82441E0C"
+    ],
+    "owner": "0x82441D58",
+    "is_label": true
+   },
+   {
+    "target": "0x82442C40",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82442C30"
+    ],
+    "owner": "0x82442B80",
+    "is_label": true
+   },
+   {
+    "target": "0x824433B0",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x8244339C"
+    ],
+    "owner": "0x82443218",
+    "is_label": true
+   },
+   {
+    "target": "0x8244794C",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x8244793C"
+    ],
+    "owner": "0x82447648",
+    "is_label": true
+   },
+   {
+    "target": "0x8244A964",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x8244A950"
+    ],
+    "owner": "0x8244A7B0",
+    "is_label": true
+   },
+   {
+    "target": "0x8244B8AC",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x8244B8F8"
+    ],
+    "owner": "0x8244B898",
+    "is_label": true
+   },
+   {
+    "target": "0x8244BB50",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x8244BB3C"
+    ],
+    "owner": "0x8244B898",
+    "is_label": true
+   },
+   {
+    "target": "0x82450644",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82450630"
+    ],
+    "owner": "0x82450568",
+    "is_label": true
+   },
+   {
+    "target": "0x82452C0C",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82452BF8"
+    ],
+    "owner": "0x82452A68",
+    "is_label": true
+   },
+   {
+    "target": "0x8246B914",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x8246B904"
+    ],
+    "owner": "0x8246B728",
+    "is_label": true
+   },
+   {
+    "target": "0x82474EC0",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82474EAC"
+    ],
+    "owner": "0x82474E18",
+    "is_label": true
+   },
+   {
+    "target": "0x82488C88",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82488C74"
+    ],
+    "owner": "0x82488BE8",
+    "is_label": true
+   },
+   {
+    "target": "0x8248C158",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x8248C144"
+    ],
+    "owner": "0x8248C0C8",
+    "is_label": true
+   },
+   {
+    "target": "0x824ACD7C",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x824ACD6C"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x824E66D4",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x824E66C4"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x824E6CAC",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x824E6C9C"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x824EE758",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x824EE748"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x825525C0",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x825525B0"
+    ],
+    "owner": "0x82552548",
+    "is_label": true
+   },
+   {
+    "target": "0x82556384",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82556370"
+    ],
+    "owner": "0x82556278",
+    "is_label": true
+   },
+   {
+    "target": "0x8255BE98",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x8255BE88"
+    ],
+    "owner": "0x8255BDE8",
+    "is_label": true
+   },
+   {
+    "target": "0x8255EFC0",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x8255EFAC"
+    ],
+    "owner": "0x8255EEB8",
+    "is_label": true
+   },
+   {
+    "target": "0x82561C10",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82561BFC"
+    ],
+    "owner": "0x82561B90",
+    "is_label": true
+   },
+   {
+    "target": "0x82561D4C",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82561D38"
+    ],
+    "owner": "0x82561C78",
+    "is_label": true
+   },
+   {
+    "target": "0x82562AB4",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82562AA0"
+    ],
+    "owner": "0x82562768",
+    "is_label": true
+   },
+   {
+    "target": "0x8256C790",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x8256C77C"
+    ],
+    "owner": "0x8256C6F0",
+    "is_label": true
+   },
+   {
+    "target": "0x8256D748",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x8256D734"
+    ],
+    "owner": "0x8256D618",
+    "is_label": true
+   },
+   {
+    "target": "0x8256E8C8",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x8256E8B4"
+    ],
+    "owner": "0x8256E598",
+    "is_label": true
+   },
+   {
+    "target": "0x8256FB94",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x8256FB80"
+    ],
+    "owner": "0x8256FB58",
+    "is_label": true
+   },
+   {
+    "target": "0x82575288",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82575274"
+    ],
+    "owner": "0x82575108",
+    "is_label": true
+   },
+   {
+    "target": "0x825767E8",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x825767D4"
+    ],
+    "owner": "0x825767B8",
+    "is_label": true
+   },
+   {
+    "target": "0x82576860",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x8257684C"
+    ],
+    "owner": "0x82576828",
+    "is_label": true
+   },
+   {
+    "target": "0x82578060",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x8257804C"
+    ],
+    "owner": "0x82577CA0",
+    "is_label": true
+   },
+   {
+    "target": "0x825780BC",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x825780AC"
+    ],
+    "owner": "0x82577CA0",
+    "is_label": true
+   },
+   {
+    "target": "0x82577EBC",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x825783B4"
+    ],
+    "owner": "0x82577CA0",
+    "is_label": true
+   },
+   {
+    "target": "0x825A68C8",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x825A68B4"
+    ],
+    "owner": "0x825A6870",
+    "is_label": true
+   },
+   {
+    "target": "0x825DA270",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x825DA25C"
+    ],
+    "owner": "0x825D9588",
+    "is_label": true
+   },
+   {
+    "target": "0x825FEA54",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x825FEA40"
+    ],
+    "owner": "0x825FE950",
+    "is_label": true
+   },
+   {
+    "target": "0x82604E1C",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82604E08"
+    ],
+    "owner": "0x82604C78",
+    "is_label": true
+   },
+   {
+    "target": "0x82615D98",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82615D88"
+    ],
+    "owner": "0x82615BB0",
+    "is_label": true
+   },
+   {
+    "target": "0x826185B4",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x826185A0"
+    ],
+    "owner": "0x82617CF0",
+    "is_label": true
+   },
+   {
+    "target": "0x8261A4AC",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x8261A498"
+    ],
+    "owner": "0x82617CF0",
+    "is_label": true
+   },
+   {
+    "target": "0x8261B070",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x8261B05C"
+    ],
+    "owner": "0x82617CF0",
+    "is_label": true
+   },
+   {
+    "target": "0x8261B890",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x8261B87C"
+    ],
+    "owner": "0x82617CF0",
+    "is_label": true
+   },
+   {
+    "target": "0x82622D74",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82622D60"
+    ],
+    "owner": "0x82621E10",
+    "is_label": true
+   },
+   {
+    "target": "0x82636890",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x8263687C"
+    ],
+    "owner": "0x82636778",
+    "is_label": true
+   },
+   {
+    "target": "0x82636B84",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82636B70"
+    ],
+    "owner": "0x82636AD8",
+    "is_label": true
+   },
+   {
+    "target": "0x82641524",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82641510"
+    ],
+    "owner": "0x82640B70",
+    "is_label": true
+   },
+   {
+    "target": "0x82642088",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82642074"
+    ],
+    "owner": "0x82641C98",
+    "is_label": true
+   },
+   {
+    "target": "0x8264C738",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x8264C728"
+    ],
+    "owner": "0x8264C6C0",
+    "is_label": true
+   },
+   {
+    "target": "0x8264C8CC",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x8264C8BC"
+    ],
+    "owner": "0x8264C878",
+    "is_label": true
+   },
+   {
+    "target": "0x8264FEC4",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x8264FEB0"
+    ],
+    "owner": "0x8264FC80",
+    "is_label": true
+   },
+   {
+    "target": "0x82650998",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82650984"
+    ],
+    "owner": "0x8264FC80",
+    "is_label": true
+   },
+   {
+    "target": "0x82650DD4",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82650DC0"
+    ],
+    "owner": "0x8264FC80",
+    "is_label": true
+   },
+   {
+    "target": "0x82671430",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x8267141C"
+    ],
+    "owner": "0x826713A8",
+    "is_label": true
+   },
+   {
+    "target": "0x82692E0C",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82692DF8"
+    ],
+    "owner": "0x82692DD8",
+    "is_label": true
+   },
+   {
+    "target": "0x82692EC8",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82692EB4"
+    ],
+    "owner": "0x82692E98",
+    "is_label": true
+   },
+   {
+    "target": "0x82692F80",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82692F6C"
+    ],
+    "owner": "0x82692F50",
+    "is_label": true
+   },
+   {
+    "target": "0x82693000",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82692FEC"
+    ],
+    "owner": "0x82692FD0",
+    "is_label": true
+   },
+   {
+    "target": "0x826930A8",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82693094"
+    ],
+    "owner": "0x82693078",
+    "is_label": true
+   },
+   {
+    "target": "0x82693114",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82693100"
+    ],
+    "owner": "0x826930E0",
+    "is_label": true
+   },
+   {
+    "target": "0x82693398",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82693384"
+    ],
+    "owner": "0x82693368",
+    "is_label": true
+   },
+   {
+    "target": "0x826933F4",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x826933E0"
+    ],
+    "owner": "0x826933C0",
+    "is_label": true
+   },
+   {
+    "target": "0x82693484",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82693474"
+    ],
+    "owner": "0x82693450",
+    "is_label": true
+   },
+   {
+    "target": "0x82693620",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82693610"
+    ],
+    "owner": "0x826935E8",
+    "is_label": true
+   },
+   {
+    "target": "0x826937F4",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x826937E0"
+    ],
+    "owner": "0x826937C0",
+    "is_label": true
+   },
+   {
+    "target": "0x82695A38",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x82695A24"
+    ],
+    "owner": "0x82695A00",
+    "is_label": true
+   },
+   {
+    "target": "0x82697604",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x826975F0"
+    ],
+    "owner": "0x82697550",
+    "is_label": true
+   },
+   {
+    "target": "0x826976DC",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x826976CC"
+    ],
+    "owner": "0x82697550",
+    "is_label": true
+   },
+   {
+    "target": "0x826A9108",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x826A90F4"
+    ],
+    "owner": "0x826A85D8",
+    "is_label": true
+   },
+   {
+    "target": "0x826AD850",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x826AD83C"
+    ],
+    "owner": "0x826A85D8",
+    "is_label": true
+   },
+   {
+    "target": "0x826B3A60",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x826B3A4C"
+    ],
+    "owner": "0x826B3A08",
+    "is_label": true
+   },
+   {
+    "target": "0x826B56DC",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x826B56CC"
+    ],
+    "owner": "0x826B5688",
+    "is_label": true
+   },
+   {
+    "target": "0x826BA700",
+    "cls": "inside_translated_function",
+    "uses": {
+     "passed_or_live_at_branch": 1
+    },
+    "sites": [
+     "0x826BA6BC"
+    ],
+    "owner": "0x826BA608",
+    "is_label": true
+   },
+   {
+    "target": "0x826C2A40",
+    "cls": "inside_translated_function",
+    "uses": {
+     "passed_or_live_at_branch": 1
+    },
+    "sites": [
+     "0x826C29FC"
+    ],
+    "owner": "0x826C2948",
+    "is_label": true
+   },
+   {
+    "target": "0x826C5948",
+    "cls": "inside_translated_function",
+    "uses": {
+     "passed_or_live_at_branch": 1
+    },
+    "sites": [
+     "0x826C5850"
+    ],
+    "owner": "0x826C57D8",
+    "is_label": true
+   },
+   {
+    "target": "0x826C7534",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x826C7524"
+    ],
+    "owner": "0x826C7458",
+    "is_label": true
+   },
+   {
+    "target": "0x826CABC4",
+    "cls": "inside_translated_function",
+    "uses": {
+     "stored": 1,
+     "passed_or_live_at_branch": 1
+    },
+    "sites": [
+     "0x826CABA0",
+     "0x826CABB4"
+    ],
+    "owner": "0x826CAB60",
+    "is_label": false
+   },
+   {
+    "target": "0x826CF4F4",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x826CF7C0"
+    ],
+    "owner": "0x826CF428",
+    "is_label": true
+   },
+   {
+    "target": "0x826D2940",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x826D2930"
+    ],
+    "owner": "0x826D28C0",
+    "is_label": true
+   },
+   {
+    "target": "0x826E1044",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x826E1034"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x826E12B4",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x826E12A4"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x826E149C",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x826E148C"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x826E1B84",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x826E1B74"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x826F8B94",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x826F8B84"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x826F9FD0",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x826F9FC0"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82716BA8",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82716B98"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x827B303C",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x827B302C"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x827D6190",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x827D617C"
+    ],
+    "owner": "0x827D6140",
+    "is_label": true
+   },
+   {
+    "target": "0x827D8B44",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x827D8B30"
+    ],
+    "owner": "0x827D8A40",
+    "is_label": true
+   },
+   {
+    "target": "0x827DA580",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x827DA56C"
+    ],
+    "owner": "0x827DA238",
+    "is_label": true
+   },
+   {
+    "target": "0x827DB560",
+    "cls": "inside_translated_function",
+    "uses": {
+     "add_then_branch": 1
+    },
+    "sites": [
+     "0x827DB54C"
+    ],
+    "owner": "0x827DAFB8",
+    "is_label": true
+   },
+   {
+    "target": "0x827E025C",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x827E024C"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x827E655C",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x827E654C"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x827E7F44",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x827E7F34"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x827E9838",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x827E9828"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x827EF154",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x827EF144"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x827EF908",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x827EF8F8"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x827EFE84",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x827EFE74"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x827EFF9C",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x827EFF8C"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x827F01E8",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x827F01D8"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x827F05D4",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x827F05C4"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x827F0DA4",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x827F0D94"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x827F43F4",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x827F43E4"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x827FC25C",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x827FC24C"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x827FC41C",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x827FC40C"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x827FC50C",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x827FC4FC"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x827FC934",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x827FC924"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x827FF6E0",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x827FF6D0"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x827FF868",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x827FF858"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x827FFA58",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x827FFA48"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x827FFC48",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x827FFC38"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82801454",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82801444"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82802180",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82802170"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82818700",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x828186F0"
+    ],
+    "owner": null,
+    "is_label": false
+   },
+   {
+    "target": "0x82821A6C",
+    "cls": "untranslated",
+    "uses": {
+     "table_base_load": 1
+    },
+    "sites": [
+     "0x82821A5C"
+    ],
+    "owner": null,
+    "is_label": false
+   }
+  ]
+ },
+ "text_embedded_pointers": {
+  "distinct_targets": 1670,
+  "by_class": {
+   "function_entry": 2,
+   "inside_translated_function": 1668
+  },
+  "untranslated": []
+ },
+ "exception_representation": {
+  "seh_filter_funclets": 37,
+  "seh_filter_missing": [],
+  "seh_finally_funclets": 77,
+  "seh_finally_missing": [],
+  "seh_bodies": 37,
+  "seh_bodies_translated_in_owner": 37,
+  "seh_bodies_registered_as_functions": [],
+  "seh_bodies_untranslated": [],
+  "seh_bodies_translated_elsewhere": [],
+  "cxx_unwind_actions": 397,
+  "cxx_unwind_actions_missing": [],
+  "cxx_catch_funclets": 14,
+  "cxx_catch_missing": []
+ }
+}

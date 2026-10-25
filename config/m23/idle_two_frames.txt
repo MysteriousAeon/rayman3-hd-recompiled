@@ -1,0 +1,7 @@
+# M23: tail for m23_trace_entry.py after a save load: the level's opening view and a later idle view.
+# One explicit private frame each; with the M22 draw trace the guest frame after each is traced.
+wait 40
+frame t40
+wait 50
+frame t90
+wait 5

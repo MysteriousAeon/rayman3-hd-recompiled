@@ -1,0 +1,18 @@
+# M19: Load attempt on a profile copy whose save file was damaged by the test (fault injection, not a played
+#   state): title -> Start -> Load -> A (slot list) -> A (slot) -> A (the title's "Unable to load" message).
+#   Regression: python tools/m19_campaign_check.py TAG damaged_save
+log VIDEOS\ubi.bik result=00000000
+log menumap\menumap.lvl result=00000000
+wait 10
+press 40
+wait 12
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 2
+press 44
+wait 8
+press 44
+wait 10
+press 44
+wait 8

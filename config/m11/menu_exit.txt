@@ -1,0 +1,41 @@
+# Title -> main menu -> Exit Game (seventh entry in the full-version menu) -> A -> "Are you sure you want to
+# quit Rayman 3?" (cursor starts on No) -> left -> Yes -> A. The game ends by itself (XamLoaderLaunchTitle).
+# Regression for D-034 (window destroyed before the keyboard driver detached): the run passes on exit code 0.
+log VIDEOS\ubi.bik result=00000000
+log menumap\menumap.lvl result=00000000
+scale
+wait 10
+press 40
+wait 12
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 2
+press 44
+wait 3
+axis 300 -32767
+wait 0.3
+axis 300 0
+wait 1.5
+press 44
+exit 30

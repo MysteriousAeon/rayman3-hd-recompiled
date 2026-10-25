@@ -1,0 +1,58 @@
+# M14 knaar_69: lock on (right trigger held: schedule code 8), strafe with the left stick and throw fists with X taps,
+# first to the right, then to the left. The hoodlum reaches the spawn about 14 s after the level opens.
+wait 15
+axis 8 1
+wait 0.5
+axis 300 32767
+press 15 0.1
+wait 0.45
+press 15 0.1
+wait 0.45
+press 15 0.1
+wait 0.45
+press 15 0.1
+wait 0.45
+press 15 0.1
+wait 0.45
+press 15 0.1
+wait 0.45
+press 15 0.1
+wait 0.45
+press 15 0.1
+wait 0.45
+press 15 0.1
+wait 0.45
+press 15 0.1
+wait 0.45
+press 15 0.1
+wait 0.45
+press 15 0.1
+wait 0.45
+axis 300 -32767
+press 15 0.1
+wait 0.45
+press 15 0.1
+wait 0.45
+press 15 0.1
+wait 0.45
+press 15 0.1
+wait 0.45
+press 15 0.1
+wait 0.45
+press 15 0.1
+wait 0.45
+press 15 0.1
+wait 0.45
+press 15 0.1
+wait 0.45
+press 15 0.1
+wait 0.45
+press 15 0.1
+wait 0.45
+press 15 0.1
+wait 0.45
+press 15 0.1
+wait 0.45
+axis 300 0
+axis 8 0
+wait 20

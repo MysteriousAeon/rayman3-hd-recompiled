@@ -1,0 +1,14 @@
+# Title -> main menu, observe only. Same steps for both licence modes.
+# trailer.bik is not awaited: the configured full version skips that attract movie (E-58).
+log VIDEOS\ubi.bik result=00000000
+log menumap\menumap.lvl result=00000000
+scale
+wait 10
+probe title
+frame title
+press 40
+wait 15
+probe main_menu
+frame main_menu
+wait 5
+probe main_menu_late

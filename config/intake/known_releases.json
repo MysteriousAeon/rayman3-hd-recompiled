@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "note": "Identity of the user-supplied game data this project supports (M27, D-059). Hashes, sizes and header fields only; no game content. content_id = SHA-1 of the XContent header from 0x344 to the 4 KiB-aligned header size: it covers the metadata and the STFS volume descriptor (top hash table hash) but not the licence entries or the signature, so it identifies the release independently of the purchaser. observed_package_sha256 is the one dump this project was developed from; another owner's package of the same release may differ in its licence block and signature.",
+  "releases": [
+    {
+      "id": "x360-xbla-5841123F-v1",
+      "name": "Rayman 3 HD (Xbox 360, Xbox Live Arcade), version 0.0.0.1, no title update",
+      "package": {
+        "magic": "LIVE",
+        "content_type": "000D0000",
+        "title_id": "5841123F",
+        "media_id": "3C66047A",
+        "version_raw": "00000001",
+        "base_version_raw": "00000001",
+        "volume": "STFS read-only",
+        "content_id": "3D8189500116FB22A848B806DDF3F90B2824B549",
+        "top_hash_table_hash": "fbdb2e8208aab47c213d085646d3b449d0adb591",
+        "total_allocated_blocks": 508463,
+        "observed_package_size": 2095038464,
+        "observed_package_sha256": "18bccaff1ca8298147b21f21142c756c3da328face135a519327180c96d07517"
+      },
+      "content": {
+        "manifest": "reports/milestone1/data/content_manifest.tsv",
+        "manifest_sha256": "dc2d5b87cb3339c4ba5a9f57a0732632f2c7e4f4bf0ae850a5b8f6fe6fefbe4f",
+        "files": 915,
+        "bytes": 2080660168
+      },
+      "executable": {
+        "path": "Default.xex",
+        "size": 9089024,
+        "sha256": "77a4df54340aebcc79eb0f0053938c03b8efd2efdd3ffee26c00fdfef3c6e8ca",
+        "decrypted_image_sha256": "94517a5843dcc22bf7a28646ad02e7e4d0ea434e2fe991ac4b00344b673f0847"
+      }
+    }
+  ]
+}

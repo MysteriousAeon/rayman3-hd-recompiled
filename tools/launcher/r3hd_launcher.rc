@@ -1,0 +1,35 @@
+// M30 (D-067): resources of the Settings launcher (manifest and version information; no image of the game).
+// Icon 1: neutral application symbol (setup, executable and Play fallback).
+// Icon 2: Settings gear (Settings shortcuts, window and taskbar). Both are MIT Fluent assets.
+// Numeric constants only, so llvm-rc needs no SDK header: 24 = RT_MANIFEST, 1 = the process manifest.
+1 24 "r3hd_launcher.manifest"
+1 ICON "r3hd.ico"
+// M32 (D-069): icon 2 is the Settings shortcut's own icon (a gear; make_r3hd_icon.py --variant settings).
+2 ICON "r3hd_settings.ico"
+
+1 VERSIONINFO
+FILEVERSION 1,0,1,0
+PRODUCTVERSION 1,0,1,0
+FILEFLAGSMASK 0x3F
+FILEFLAGS 0x0
+FILEOS 0x40004
+FILETYPE 0x1
+FILESUBTYPE 0x0
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904B0"
+    BEGIN
+      VALUE "FileDescription", "Rayman 3 HD Recompiled Settings"
+      VALUE "FileVersion", "1.0.1"
+      VALUE "InternalName", "r3hd_launcher"
+      VALUE "OriginalFilename", "r3hd_launcher.exe"
+      VALUE "ProductName", "Rayman 3 HD Recompiled"
+      VALUE "ProductVersion", "1.0.1"
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x409, 1200
+  END
+END

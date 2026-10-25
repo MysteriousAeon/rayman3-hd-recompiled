@@ -1,0 +1,43 @@
+# M24: pause / Resume Game cycles on a working copy of the genuine swamp_60 save (entry swamp_60_human).
+#   load swamp_60 -> wait out the opening -> six times: Start (pause menu, cursor on Resume Game), 4 s in the
+#   menu, A (Resume Game), 7 s of play -> 20 s of undisturbed play as the control stretch.
+# No frames. Run and judge: python tools/m24_pause_resume.py run TAG ; ... analyze RUN
+log VIDEOS\ubi.bik result=00000000
+log menumap\menumap.lvl result=00000000
+wait 10
+press 40
+wait 12
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 2
+press 44
+wait 8
+press 44
+log swamp_60\swamp_60.lvl result=00000000 60
+wait 40
+press 40
+wait 4
+press 44
+wait 7
+press 40
+wait 4
+press 44
+wait 7
+press 40
+wait 4
+press 44
+wait 7
+press 40
+wait 4
+press 44
+wait 7
+press 40
+wait 4
+press 44
+wait 7
+press 40
+wait 4
+press 44
+wait 7
+wait 20

@@ -1,0 +1,40 @@
+{
+  "kind": "r3hd-context-groups",
+  "format": 1,
+  "comment": "M37: what the handles of the English text table hold, by range, so that a translator knows where a string belongs. Evidence: the M37 agent read the private catalog in handle order (SUPPORTED by content, not by observing each string on screen; 'display' says what is known about where it appears). Holds ids and labels only, never game text. A later rule overrides an earlier one. Voiced lines additionally carry their levels and speaker codes from the sound banks (VERIFIED from data), subtitles their movie (r3hd_loc.py). Categories: menu, system, tutorial, bonus_help, album, credits, dialogue, internal, legacy, placeholder.",
+  "categories": {
+    "menu": "menus, options, prompts and dialog boxes of the game's own interface",
+    "system": "platform messages (storage device, profiles, leaderboards, trial version)",
+    "tutorial": "hints and control instructions shown during play",
+    "bonus_help": "descriptions and controls of the bonus (arcade) games",
+    "album": "name / description pairs of characters and objects (the name line is centred with \\jc)",
+    "credits": "staff credits: role headings and people's names",
+    "dialogue": "lines spoken or said by characters (voiced lines carry level and speaker code)",
+    "subtitle": "movie subtitle cues (VS.sub)",
+    "internal": "development labels and dummy strings; whether the game ever shows them is unknown",
+    "legacy": "messages of another platform (PlayStation 2 memory card); HYPOTHESIS: not shown on Xbox 360",
+    "placeholder": "button glyphs or icons only, no words"
+  },
+  "groups": [
+    {"from": 1, "to": 26, "category": "bonus_help", "display": "bonus game screens (even handles: story text, odd: controls; not observed one by one)"},
+    {"from": 27, "to": 98, "category": "album", "display": "unknown screen; pairs of a centred name and its description"},
+    {"from": 99, "to": 151, "category": "credits", "display": "credits roll (Credits menu)"},
+    {"from": 152, "to": 168, "category": "internal", "display": "unknown; partly French development names, shared by every language"},
+    {"from": 169, "to": 304, "category": "menu", "display": "main / pause / options menus and their confirmation boxes (main-menu words seen in game, M34)"},
+    {"from": 305, "to": 312, "category": "tutorial", "display": "hints about collectables (HD edition)"},
+    {"from": 313, "to": 319, "category": "system", "display": "trial version / unlock screens"},
+    {"from": 320, "to": 340, "category": "menu", "display": "controller mapping screen"},
+    {"from": 341, "to": 367, "category": "system", "display": "storage device, profile and leaderboard messages"},
+    {"from": 368, "to": 401, "category": "legacy", "display": "PS2 memory card messages, shared by every language"},
+    {"from": 402, "to": 407, "category": "system", "display": "storage message buttons, shared by every language"},
+    {"from": 408, "to": 409, "category": "placeholder", "display": "a button glyph only"},
+    {"from": 410, "to": 415, "category": "menu", "display": "score and ranking lines"},
+    {"from": 416, "to": 422, "category": "internal", "display": "French debug words and dummy strings"},
+    {"from": 423, "to": 424, "category": "menu", "display": "bonus level messages"},
+    {"from": 425, "to": 425, "category": "internal", "display": "dummy string"},
+    {"from": 426, "to": 426, "category": "menu", "display": "a unit after a number (bonus level message)"},
+    {"from": 427, "to": 506, "category": "tutorial", "display": "in-game hints and instructions; some carry a bracketed speaker tag"},
+    {"from": 501, "to": 506, "category": "placeholder", "display": "button glyphs only, shared by every language"},
+    {"from": 507, "to": 1187, "category": "dialogue", "display": "characters' lines in levels (about half voiced)"}
+  ]
+}

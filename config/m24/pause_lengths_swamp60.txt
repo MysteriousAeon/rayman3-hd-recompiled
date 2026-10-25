@@ -1,0 +1,43 @@
+# M24: pause length series on a working copy of the genuine swamp_60 save (entry swamp_60_human).
+#   after the level opening: pauses of 2, 4, 6, 8, 12 and 20 s, each left with A on Resume Game and followed
+#   by 7 s of play.
+# No frames. Run: python tools/m24_pause_resume.py run TAG --steps config/m24/pause_lengths_swamp60.txt --seconds 200
+log VIDEOS\ubi.bik result=00000000
+log menumap\menumap.lvl result=00000000
+wait 10
+press 40
+wait 12
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 2
+press 44
+wait 8
+press 44
+log swamp_60\swamp_60.lvl result=00000000 60
+wait 40
+press 40
+wait 2
+press 44
+wait 7
+press 40
+wait 4
+press 44
+wait 7
+press 40
+wait 6
+press 44
+wait 7
+press 40
+wait 8
+press 44
+wait 7
+press 40
+wait 12
+press 44
+wait 7
+press 40
+wait 20
+press 44
+wait 7
+wait 8

@@ -1,0 +1,267 @@
+#include "m2_trace.h"
+#include <rex/logging.h>
+#include <rex/m24_event_trace.h>
+#include <spdlog/sinks/base_sink.h>
+#include <mutex>
+#include <windows.h>
+#include <atomic>
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+// M8: last-chance crash record. Optional so the M2..M6 build scripts keep working unchanged.
+#if __has_include("m8_crash_report.h")
+#include "m8_crash_report.h"
+#define R3HD_M8_CRASH_REPORT 1
+#endif
+thread_local const char* m2_current_function = nullptr;
+thread_local PPCContext* m2_current_context = nullptr;
+static std::atomic<bool> entered{false};
+static std::atomic<bool> bink_entered{false};
+static thread_local bool object_trace = false;
+static thread_local unsigned object_trace_count = 0;
+// M11 (D-036): this runs at the entry of every translated function. The two stores keep the fault and crash
+// records ("last entered function", guest lr / sp) and are all that a normal run needs. The M2 / M3 research
+// probes below (string compares, strtoul and a probe table per call) took about three quarters of the title's
+// main thread; they now run only with R3HD_M2_PROBES set, which m2_summarize.py / m3_summarize.py runs need.
+static const bool m2_probes = std::getenv("R3HD_M2_PROBES") != nullptr;
+void M2Enter(const char* name, PPCContext& ctx) {
+  m2_current_function = name;
+  m2_current_context = &ctx;
+  if (!m2_probes) return;
+  if (!std::strcmp(name, "__imp__sub_823E4AC8")) object_trace = true;
+  if (object_trace && object_trace_count++ < 128)
+    REXLOG_INFO("M2 object_call function={} sp={:08X} r31={:08X} lr={:08X}", name, ctx.r1.u32, ctx.r31.u32, unsigned(ctx.lr));
+  if ((!std::strcmp(name, "__imp__xstart") || !std::strcmp(name, "xstart")) && !entered.exchange(true)) {
+    REXLOG_INFO("M2 guest_entry_executed pc=820E13F8 lr={:08X} sp={:08X}", ctx.lr, ctx.r1.u32);
+  }
+  auto length = std::strlen(name);
+  if (length >= 8) {
+    auto address = std::strtoul(name + length - 8, nullptr, 16);
+    if (address >= 0x8280C600 && address < 0x828225E4 && !bink_entered.exchange(true))
+      REXLOG_INFO("M2 bink_code_entered function={:08X}", unsigned(address));
+    // M3 shader-provenance / exception probes: entry counts only (first and power-of-two hits).
+    static const uint32_t probes[] = {
+        0x822019E0, 0x822065D8,              // reference *ShaderCache_xenon.bin names
+        0x82204830,                          // references the .psh/.vsh/.hlsl source-name table
+        0x822308E0, 0x822309F0,              // format "0x%016I64x.hlsl"
+        0x82230A58, 0x82230C18,              // reference "ps_3_0" / "vs_3_0"
+        0x82366910, 0x823681C0,              // D3DX compile front end (profiles, CompareBackEnds)
+        0x823C2D08, 0x82550FF0,              // shader assembler profile check / ucode driver
+        0x826B8650, 0x826B8A30,              // _CxxThrowException / C++ frame handler
+        0x826BF880, 0x826CAB60,              // RtlUnwind wrappers (nonlocal/local unwind)
+        0x8249E3C0};                         // XMACreateContext caller
+    static std::atomic<unsigned long long> probe_counts[sizeof(probes) / sizeof(probes[0])];
+    for (size_t i = 0; i < sizeof(probes) / sizeof(probes[0]); ++i) {
+      if (address != probes[i]) continue;
+      auto n = ++probe_counts[i];
+      if ((n & (n - 1)) == 0)
+        REXLOG_INFO("M3 probe function={:08X} count={} lr={:08X}", unsigned(address), n, unsigned(ctx.lr));
+    }
+  }
+}
+static LONG CALLBACK M2Fault(EXCEPTION_POINTERS* fault) {
+  // An observational first-chance record, never consumes or changes an exception.
+  auto* ctx = m2_current_context;
+  char line[512];
+  int n = std::snprintf(line, sizeof(line), "M2 exception code=%08lX host_pc=%p last_entered_function=%s lr=%08X indirect=%08X sp=%08X fault_address=%p\n",
+    fault->ExceptionRecord->ExceptionCode, fault->ExceptionRecord->ExceptionAddress,
+    m2_current_function ? m2_current_function : "host", ctx ? unsigned(ctx->lr) : 0,
+    ctx ? ctx->last_indirect_target : 0, ctx ? ctx->r1.u32 : 0,
+    fault->ExceptionRecord->NumberParameters >= 2 ? reinterpret_cast<void*>(fault->ExceptionRecord->ExceptionInformation[1]) : nullptr);
+  FILE* file = std::fopen("m2_faults.log", "a");
+  if (file) {
+    std::fwrite(line, 1, n, file);
+    HMODULE fault_module = nullptr;
+    char fault_path[MAX_PATH] = {};
+    GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                      reinterpret_cast<LPCSTR>(fault->ExceptionRecord->ExceptionAddress), &fault_module);
+    if (fault_module) GetModuleFileNameA(fault_module, fault_path, MAX_PATH);
+    std::fprintf(file, "M2 exception_location module=%s offset=%llX\n", fault_path,
+      static_cast<unsigned long long>(reinterpret_cast<uintptr_t>(fault->ExceptionRecord->ExceptionAddress) - reinterpret_cast<uintptr_t>(fault_module)));
+    void* frames[32];
+    auto count = CaptureStackBackTrace(0, 32, frames, nullptr);
+    for (unsigned i = 0; i < count; ++i) {
+      HMODULE module = nullptr;
+      char path[MAX_PATH] = {};
+      GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                        reinterpret_cast<LPCSTR>(frames[i]), &module);
+      if (module) GetModuleFileNameA(module, path, MAX_PATH);
+      std::fprintf(file, "M2 stack %u module=%s offset=%llX\n", i, path,
+                   static_cast<unsigned long long>(reinterpret_cast<uintptr_t>(frames[i]) - reinterpret_cast<uintptr_t>(module)));
+    }
+    std::fclose(file);
+  }
+  return EXCEPTION_CONTINUE_SEARCH;
+}
+class M2FatalSink : public spdlog::sinks::base_sink<std::mutex> {
+  void sink_it_(const spdlog::details::log_msg& msg) override {
+    if (msg.level != spdlog::level::critical) return;
+    EXCEPTION_RECORD record{};
+    record.ExceptionCode = 0xDEADC0DE; // Observer record for a fatal log, not a raised exception.
+    EXCEPTION_POINTERS pointers{&record, nullptr};
+    M2Fault(&pointers);
+  }
+  void flush_() override {}
+};
+#ifdef R3HD_M8_CRASH_REPORT
+static int M8Describe(char* out, int size) {
+  // Runs on the faulting thread, so the observer's thread-local guest context is the relevant one.
+  auto* ctx = m2_current_context;
+  return std::snprintf(out, size, "last_entered_function=%s lr=%08X indirect=%08X sp=%08X\n",
+                       m2_current_function ? m2_current_function : "host", ctx ? unsigned(ctx->lr) : 0,
+                       ctx ? ctx->last_indirect_target : 0, ctx ? ctx->r1.u32 : 0);
+}
+#endif
+void M2InstallCrashHandler() {
+  AddVectoredExceptionHandler(1, M2Fault);
+  rex::AddSink(std::make_shared<M2FatalSink>());
+#ifdef R3HD_M8_CRASH_REPORT
+  m8crash::Install(M8Describe);
+#endif
+}
+static void M2Object(const char* site, PPCRegister& object, PPCRegister& result, PPCRegister& stack) {
+  REXLOG_INFO("M2 object_site={} object={:08X} r3={:08X} sp={:08X}", site, object.u32, result.u32, stack.u32);
+}
+void M2ObjectCallA(PPCRegister& r31, PPCRegister& r3, PPCRegister& r1) { M2Object("823E4BE8", r31, r3, r1); }
+void M2ObjectCallB(PPCRegister& r31, PPCRegister& r3, PPCRegister& r1) { M2Object("823E4BF0", r31, r3, r1); }
+void M2ObjectRead(PPCRegister& r31, PPCRegister& r3, PPCRegister& r1) { M2Object("823E4BFC", r31, r3, r1); }
+
+// M11 (D-037): the title's D3D library waits for the GPU's command-buffer position in a spin loop built from
+// SMT-priority hint no-ops (0x82316B40, called in a loop from 0x8232A0A8). On the console that parks a hardware
+// thread; here it kept one host core fully busy for the whole session. This hook runs at the top of each spin
+// step. A wait that ends within a few hundred steps is left alone; a longer one sleeps the host thread for a
+// fraction of a millisecond per step on a high-resolution timer. The guest loop, its exit condition and its
+// timeout are untouched. R3HD_GPU_WAIT=spin restores the unmodified behaviour for comparison.
+void M11GpuWaitStep(PPCRegister&) {
+  static const bool spin = [] { const char* v = std::getenv("R3HD_GPU_WAIT"); return v && !std::strcmp(v, "spin"); }();
+  if (spin) return;
+  static const long long gap = [] { LARGE_INTEGER f; QueryPerformanceFrequency(&f); return f.QuadPart / 5000; }();
+  static std::atomic<unsigned long long> sleeps{0};
+  thread_local long long last = 0;
+  thread_local unsigned streak = 0;
+  thread_local HANDLE timer = nullptr;
+  LARGE_INTEGER now;
+  QueryPerformanceCounter(&now);
+  // M24: observation only, when R3HD_M24_EVENTS is set: one record per finished wait that slept.
+  thread_local long long m24_start = 0, m24_longest = 0;
+  thread_local unsigned m24_sleeps = 0;
+  if (now.QuadPart - last > gap) {  // more than 200 us since the previous step: a new wait
+    if (m24_sleeps && m24ev::Enabled()) {
+      const long long per_us = gap / 200;  // counter ticks per microsecond
+      const unsigned long long longest = static_cast<unsigned long long>(m24_longest / per_us);
+      m24ev::EventAt(m24ev::kGpuWait, m24_start, uint32_t((last - m24_start) / per_us),
+                     (m24_sleeps > 0xFFFF ? 0xFFFFu : m24_sleeps) << 16 | uint32_t(longest > 0xFFFF ? 0xFFFF : longest));
+    }
+    streak = 0;
+    m24_start = now.QuadPart;
+    m24_sleeps = 0;
+    m24_longest = 0;
+  }
+  last = now.QuadPart;
+  if (++streak <= 256) return;
+  const long long m24_before = now.QuadPart;
+  if (!timer) timer = CreateWaitableTimerExW(nullptr, nullptr, 0x00000002 /* high resolution */, TIMER_ALL_ACCESS);
+  if (timer) {
+    LARGE_INTEGER due;
+    due.QuadPart = -1000;  // 100 us; the system rounds it up to its timer resolution
+    SetWaitableTimer(timer, &due, 0, nullptr, nullptr, FALSE);
+    WaitForSingleObject(timer, 2);
+  } else {
+    SwitchToThread();
+  }
+  QueryPerformanceCounter(&now);
+  last = now.QuadPart;
+  ++m24_sleeps;
+  if (now.QuadPart - m24_before > m24_longest) m24_longest = now.QuadPart - m24_before;
+  auto n = ++sleeps;
+  if ((n & (n - 1)) == 0) REXLOG_INFO("M11 gpu_wait mode=timed sleeps={}", n);
+}
+
+// M18 (D-047): guest-title compatibility correction for the end of revisit mode. Rationale, the decision table
+// and the switch are in tools/m18_revisit.h; the hook sites are in config/rexglue/r3hd_compat.toml. This is
+// the only place where the host changes what the title does, and R3HD_REVISIT=original turns it off.
+#if __has_include("m18_revisit.h")
+#include "m18_revisit.h"
+#include <rex/ppc/func.h>
+#include <rex/system/kernel_state.h>
+REX_EXTERN(sub_82104BE0);
+namespace {
+constexpr uint32_t kM18Flag = 0x82876108, kM18OneShot = 0x82875F28, kM18RevWorld = 0x8287611C,
+                   kM18IntWorld = 0x82876120, kM18EndOfGame = 0x82876130, kM18Backup = 0x82BF7440,
+                   kM18ScoreWorld = 0x82836F68, kM18ScoreTable = 0x82BF7A00, kM18NameTable = 0x82837004;
+uint8_t* M18Base() { return REX_KERNEL_MEMORY()->virtual_membase(); }
+uint32_t M18Load(uint32_t address) {
+  uint32_t v;
+  std::memcpy(&v, M18Base() + address, 4);
+  return _byteswap_ulong(v);
+}
+void M18Store(uint32_t address, uint32_t value) {
+  value = _byteswap_ulong(value);
+  std::memcpy(M18Base() + address, &value, 4);
+}
+// Copies a guest string of at most kNameLimit - 1 characters; false when it is longer.
+bool M18String(uint32_t address, char* out, bool lower) {
+  const char* p = reinterpret_cast<const char*>(M18Base() + address);
+  for (std::size_t i = 0; i < m18::kNameLimit; ++i) {
+    char c = p[i];
+    if (lower && c >= 'A' && c <= 'Z') c = char(c - 'A' + 'a');
+    out[i] = c;
+    if (!c) return true;
+  }
+  out[m18::kNameLimit - 1] = 0;
+  return false;
+}
+bool M18Original() {
+  static const bool original = m18::OriginalSelected(std::getenv("R3HD_REVISIT"));
+  return original;
+}
+}  // namespace
+
+// At 82102E3C: the title is about to replace the requested level (its lower-case copy is at r1 + 0x50, the name
+// it will request at r1 + 0x80) by "endgame". Returns true when the request must go ahead unreplaced.
+bool M18RevisitRedirect(PPCRegister& r1) {
+  char name[m18::kNameLimit], backup[m18::kNameLimit];
+  const bool name_ok = M18String(r1.u32 + 0x50, name, false);
+  const bool backup_ok = M18String(kM18Backup, backup, false);
+  const uint32_t world = M18Load(kM18RevWorld), end_of_game = M18Load(kM18EndOfGame);
+  auto action = m18::Action::kOriginal;
+  if (!M18Original() && name_ok)
+    action = m18::Decide({name, world, end_of_game, backup_ok ? backup : nullptr});
+  const uint32_t interrupted = M18Load(kM18IntWorld);
+  PPCContext* ctx = m2_current_context;
+  if (action == m18::Action::kReturnToCampaign && (interrupted > 9 || !ctx)) action = m18::Action::kOriginal;
+  REXLOG_INFO("M18 revisit redirect name={} revisited_world={} end_of_game={} backup={} mode={} action={}", name, world,
+              end_of_game, backup_ok ? backup : "?", M18Original() ? "original" : "fixed", m18::Name(action));
+  if (action == m18::Action::kOriginal) return false;
+  if (action == m18::Action::kPass) return true;
+  // The title's own transition back to the interrupted game (menu branch 82108518 .. 82108578), in its order:
+  // clear the flag, let the title settle its score bookkeeping, restore the interrupted world's index and
+  // running score, request the interrupted level.
+  M18Store(kM18Flag, 0);
+  const PPCContext saved = *ctx;
+  sub_82104BE0(*ctx, M18Base());
+  *ctx = saved;
+  M18Store(kM18ScoreWorld, interrupted);
+  M18Store(kM18RevWorld, 0);
+  const uint32_t score = M18Load(kM18ScoreTable + 4 + interrupted * 8);
+  M18Store(0x8287610C, score);
+  M18Store(0x82876110, score);
+  M18Store(0x82876128, score);
+  std::memcpy(M18Base() + r1.u32 + 0x80, backup, std::strlen(backup) + 1);
+  return true;
+}
+
+// At 82102CC4, hidden test runs only (R3HD_TEST_WORLD_END=1): in revisit mode, turn a request for the revisited
+// world's own first level into the request its last level makes, by pointing r3 at the next world's name in the
+// title's table. Reads guest memory, writes none.
+void M18TestWorldEnd(PPCRegister& r3) {
+  static const bool enabled = [] { const char* v = std::getenv("R3HD_TEST_WORLD_END"); return v && !std::strcmp(v, "1"); }();
+  if (!enabled || M18Load(kM18Flag) != 1 || M18Load(kM18OneShot) != 0) return;
+  const uint32_t world = M18Load(kM18RevWorld);
+  char name[m18::kNameLimit];
+  if (world < 1 || world > 8 || !M18String(r3.u32, name, true) || std::strcmp(name, m18::kFirstLevels[world - 1])) return;
+  const uint32_t next = M18Load(kM18NameTable + 4 + world * 4);
+  REXLOG_INFO("M18 test world_end revisited_world={} asked={} substituted={:08X}", world, name, next);
+  r3.u64 = next;
+}
+#endif

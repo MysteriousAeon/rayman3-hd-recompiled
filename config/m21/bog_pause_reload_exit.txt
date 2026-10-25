@@ -1,0 +1,71 @@
+# M21: level teardown paths from the pause menu on a working copy of the swamp_60 save of the human session
+# 20261011-143342 (the save was written by a staged commit, D-049). Same menu route as
+# config/m12/pause_reload_exit.txt:
+#   load swamp_60 -> Start (pause menu) -> Load -> slot -> "quit the current game and load a new game?"
+#   (cursor on No) -> left + A -> swamp_60 loads a second time in the same process -> Start -> Exit Game -> A
+#   -> "Current game will be lost. Continue anyway?" (cursor on No) -> left + A -> title screen.
+# Regression: python tools/m21_campaign_check.py TAG bog_reload_exit
+log VIDEOS\ubi.bik result=00000000
+log menumap\menumap.lvl result=00000000
+wait 10
+press 40
+wait 12
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 2
+press 44
+wait 8
+press 44
+log swamp_60\swamp_60.lvl result=00000000 60
+wait 35
+press 40
+wait 3
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.5
+press 44
+wait 6
+press 44
+wait 3
+axis 300 -32767
+wait 0.3
+axis 300 0
+wait 1.5
+press 44
+wait 50
+press 40
+wait 3
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.5
+press 44
+wait 4
+axis 300 -32767
+wait 0.3
+axis 300 0
+wait 1.5
+press 44
+wait 18

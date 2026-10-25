@@ -1,0 +1,1309 @@
+{
+  "schema": 1,
+  "strings": {
+    "Share the game identity and elapsed session time with Discord.": {
+      "en": "Share the game identity and elapsed session time with Discord.",
+      "tr": "Oyunun adını ve oturum süresini Discord ile paylaş."
+    },
+    "Discord Rich Presence": {
+      "en": "Discord Rich Presence",
+      "tr": "Discord Rich Presence"
+    },
+    "DualSense light bar": {
+      "en": "DualSense light bar",
+      "tr": "DualSense ışık çubuğu"
+    },
+    "The light bar takes the colour of the current world. DualSense only; other controllers are never changed.": {
+      "en": "The light bar takes the colour of the current world. DualSense only; other controllers are never changed.",
+      "tr": "Işık çubuğu bulunduğun dünyanın rengini alır. Yalnızca DualSense; diğer kumandalar hiç değiştirilmez."
+    },
+    "DualSense R2 resistance": {
+      "en": "DualSense R2 resistance",
+      "tr": "DualSense R2 direnci"
+    },
+    "A light R2 resistance in gameplay, felt as soon as you press it. DualSense only; it never changes what R2 does.": {
+      "en": "A light R2 resistance in gameplay, felt as soon as you press it. DualSense only; it never changes what R2 does.",
+      "tr": "Oyun sırasında R2'de, basar basmaz hissedilen hafif bir direnç. Yalnızca DualSense; R2'nin işlevini asla değiştirmez."
+    },
+    "Adaptive Trigger Strength": {
+      "en": "Adaptive Trigger Strength",
+      "tr": "Uyarlanabilir Tetik Sertliği"
+    },
+    "0% turns the resistance off. Applies the next time the game starts.": {
+      "en": "0% turns the resistance off. Applies the next time the game starts.",
+      "tr": "%0 direnci kapatır. Değişiklik, oyun bir sonraki başlatılışında uygulanır."
+    },
+    "{n}%": {
+      "en": "{n}%",
+      "tr": "%{n}"
+    },
+    "Vanilla": {
+      "en": "Vanilla",
+      "tr": "Vanilla"
+    },
+    "HD+ (Recommended)": {
+      "en": "HD+ (Recommended)",
+      "tr": "HD+ (Önerilen)"
+    },
+    "Custom": {
+      "en": "Custom",
+      "tr": "Özel"
+    },
+    "The Xbox 360 release, with the fixes it needs on PC.": {
+      "en": "The Xbox 360 release, with the fixes it needs on PC.",
+      "tr": "Xbox 360 sürümü, PC için gerekli düzeltmelerle."
+    },
+    "Fixes visual issues inherited from the Xbox 360 HD release.": {
+      "en": "Fixes visual issues inherited from the Xbox 360 HD release.",
+      "tr": "Xbox 360 HD sürümünden gelen görsel sorunları düzeltir."
+    },
+    "Pick each correction yourself, including unchecked ones.": {
+      "en": "Pick each correction yourself, including unchecked ones.",
+      "tr": "Henüz doğrulanmamış olanlar dahil, düzeltmeleri kendiniz seçin."
+    },
+    "Display": {
+      "en": "Display",
+      "tr": "Ekran"
+    },
+    "Corrections": {
+      "en": "Corrections",
+      "tr": "Düzeltmeler"
+    },
+    "Troubleshooting": {
+      "en": "Troubleshooting",
+      "tr": "Sorun giderme"
+    },
+    "Display mode": {
+      "en": "Display mode",
+      "tr": "Ekran modu"
+    },
+    "Fullscreen uses your desktop resolution (borderless).": {
+      "en": "Fullscreen uses your desktop resolution (borderless).",
+      "tr": "Tam ekran, masaüstü çözünürlüğünü kullanır (kenarlıksız)."
+    },
+    "Window": {
+      "en": "Window",
+      "tr": "Pencere"
+    },
+    "Fullscreen": {
+      "en": "Fullscreen",
+      "tr": "Tam ekran"
+    },
+    "Window size": {
+      "en": "Window size",
+      "tr": "Pencere boyutu"
+    },
+    "In screen pixels, for Window mode; reduced to fit your screen. The rendering resolution is set separately.": {
+      "en": "In screen pixels, for Window mode; reduced to fit your screen. The rendering resolution is set separately.",
+      "tr": "Pencere modunda piksel cinsinden boyut; ekrana sığacak şekilde küçültülür. Görüntü çözünürlüğü ayrıca ayarlanır."
+    },
+    "Rendering resolution": {
+      "en": "Rendering resolution",
+      "tr": "Görüntü çözünürlüğü"
+    },
+    "The size the game draws its 3D image at. Auto follows your screen or window (up to 2160p). Higher sizes need a faster graphics card.": {
+      "en": "The size the game draws its 3D image at. Auto follows your screen or window (up to 2160p). Higher sizes need a faster graphics card.",
+      "tr": "Oyunun 3B görüntü çözünürlüğü. Otomatik, ekran veya pencereye göre seçer (en fazla 2160p). Yüksek çözünürlük daha güçlü ekran kartı gerektirir."
+    },
+    "Auto (recommended)": {
+      "en": "Auto (recommended)",
+      "tr": "Otomatik (önerilen)"
+    },
+    "720p (1x, original)": {
+      "en": "720p (1x, original)",
+      "tr": "720p (1x, özgün)"
+    },
+    "Separate texture coordinates for two-layer effects": {
+      "en": "Separate texture coordinates for two-layer effects",
+      "tr": "İki katmanlı efektler için ayrı doku koordinatları"
+    },
+    "Makes haze and cloud layers move separately in the Bog of Murk and Land of the Livid Dead.": {
+      "en": "Makes haze and cloud layers move separately in the Bog of Murk and Land of the Livid Dead.",
+      "tr": "Kasvet Bataklığı ve Solgun Ölüler Diyarı bölümlerinde sis ve bulut katmanlarının ayrı hareket etmesini sağlar."
+    },
+    "Off (as on Xbox 360)": {
+      "en": "Off (as on Xbox 360)",
+      "tr": "Kapalı (Xbox 360 gibi)"
+    },
+    "On": {
+      "en": "On",
+      "tr": "Açık"
+    },
+    "Off": {
+      "en": "Off",
+      "tr": "Kapalı"
+    },
+    "Correct Robo-Pirate statue textures": {
+      "en": "Correct Robo-Pirate statue textures",
+      "tr": "Robo-Pirate heykellerinin doku yönünü düzelt"
+    },
+    "Fixes the texture orientation on four statues in Hoodlum Headquarters.": {
+      "en": "Fixes the texture orientation on four statues in Hoodlum Headquarters.",
+      "tr": "Hoodlum Karargâhı bölümündeki dört heykel dokusunun yönünü düzeltir."
+    },
+    "Gameplay subtitles": {
+      "en": "Gameplay subtitles",
+      "tr": "Oynanış altyazıları"
+    },
+    "Also outside cutscenes. The game's Subtitles option still applies.": {
+      "en": "Also outside cutscenes. The game's Subtitles option still applies.",
+      "tr": "Ara sahneler dışında da altyazı gösterir. Oyunun Altyazılar seçeneği yine geçerlidir."
+    },
+    "Settings language": {
+      "en": "Settings language",
+      "tr": "Ayarlar dili"
+    },
+    "Language of Settings, independent of the game and its mods.": {
+      "en": "Language of Settings, independent of the game and its mods.",
+      "tr": "Oyundan ve modlarından bağımsız olarak Ayarlar uygulamasının dili."
+    },
+    "English": {
+      "en": "English",
+      "tr": "English"
+    },
+    "Türkçe": {
+      "en": "Türkçe",
+      "tr": "Türkçe"
+    },
+    "Mouse cursor": {
+      "en": "Mouse cursor",
+      "tr": "Fare imleci"
+    },
+    "Hidden while the game window is in front; moving the mouse shows it.": {
+      "en": "Hidden while the game window is in front; moving the mouse shows it.",
+      "tr": "Oyun penceresi öndeyken gizlenir; fareyi hareket ettirince görünür."
+    },
+    "Hidden while playing": {
+      "en": "Hidden while playing",
+      "tr": "Oynarken gizle"
+    },
+    "Always visible": {
+      "en": "Always visible",
+      "tr": "Her zaman göster"
+    },
+    "Save times": {
+      "en": "Save times",
+      "tr": "Kayıt saatleri"
+    },
+    "The time shown next to saves in the game's menus.": {
+      "en": "The time shown next to saves in the game's menus.",
+      "tr": "Oyun menülerinde kayıtların yanında gösterilen saat."
+    },
+    "Local time": {
+      "en": "Local time",
+      "tr": "Yerel saat"
+    },
+    "Diagnostics": {
+      "en": "Diagnostics",
+      "tr": "Tanılama"
+    },
+    "Standard keeps session logs small and only the 10 newest. Choose Detailed when asked for a problem report. Saves are never affected.": {
+      "en": "Standard keeps session logs small and only the 10 newest. Choose Detailed when asked for a problem report. Saves are never affected.",
+      "tr": "Standart, günlükleri küçük tutar ve yalnızca son 10 oturumu saklar. Sorun raporu istendiğinde Ayrıntılı'yı seçin. Oyun kayıtları etkilenmez."
+    },
+    "Standard (recommended)": {
+      "en": "Standard (recommended)",
+      "tr": "Standart (önerilen)"
+    },
+    "Detailed": {
+      "en": "Detailed",
+      "tr": "Ayrıntılı"
+    },
+    "Movement": {
+      "en": "Movement",
+      "tr": "Hareket"
+    },
+    "Camera": {
+      "en": "Camera",
+      "tr": "Kamera"
+    },
+    "Actions": {
+      "en": "Actions",
+      "tr": "Eylemler"
+    },
+    "Menus": {
+      "en": "Menus",
+      "tr": "Menüler"
+    },
+    "Other controller buttons (not yet characterised)": {
+      "en": "Other controller buttons (not yet characterised)",
+      "tr": "Diğer kumanda tuşları (işlevleri henüz doğrulanmadı)"
+    },
+    "Left stick up": {
+      "en": "Left stick up",
+      "tr": "Sol çubuk yukarı"
+    },
+    "Left stick down": {
+      "en": "Left stick down",
+      "tr": "Sol çubuk aşağı"
+    },
+    "Left stick left": {
+      "en": "Left stick left",
+      "tr": "Sol çubuk sola"
+    },
+    "Left stick right": {
+      "en": "Left stick right",
+      "tr": "Sol çubuk sağa"
+    },
+    "Right stick up": {
+      "en": "Right stick up",
+      "tr": "Sağ çubuk yukarı"
+    },
+    "Right stick down": {
+      "en": "Right stick down",
+      "tr": "Sağ çubuk aşağı"
+    },
+    "Right stick left": {
+      "en": "Right stick left",
+      "tr": "Sağ çubuk sola"
+    },
+    "Right stick right": {
+      "en": "Right stick right",
+      "tr": "Sağ çubuk sağa"
+    },
+    "Keyboard only": {
+      "en": "Keyboard only",
+      "tr": "Yalnızca klavye"
+    },
+    "Right trigger": {
+      "en": "Right trigger",
+      "tr": "Sağ tetik"
+    },
+    "Left trigger": {
+      "en": "Left trigger",
+      "tr": "Sol tetik"
+    },
+    "Left shoulder": {
+      "en": "Left shoulder",
+      "tr": "Sol omuz tuşu"
+    },
+    "Right shoulder": {
+      "en": "Right shoulder",
+      "tr": "Sağ omuz tuşu"
+    },
+    "D-pad up": {
+      "en": "D-pad up",
+      "tr": "Yön tuşu yukarı"
+    },
+    "D-pad down": {
+      "en": "D-pad down",
+      "tr": "Yön tuşu aşağı"
+    },
+    "D-pad left": {
+      "en": "D-pad left",
+      "tr": "Yön tuşu sola"
+    },
+    "D-pad right": {
+      "en": "D-pad right",
+      "tr": "Yön tuşu sağa"
+    },
+    "Left stick press": {
+      "en": "Left stick press",
+      "tr": "Sol çubuğa bas"
+    },
+    "Right stick press": {
+      "en": "Right stick press",
+      "tr": "Sağ çubuğa bas"
+    },
+    "Move forward; up in menus": {
+      "en": "Move forward; up in menus",
+      "tr": "İleri git; menülerde yukarı"
+    },
+    "Move back; down in menus": {
+      "en": "Move back; down in menus",
+      "tr": "Geri git; menülerde aşağı"
+    },
+    "Move left; left in menus": {
+      "en": "Move left; left in menus",
+      "tr": "Sola git; menülerde sola"
+    },
+    "Move right; right in menus": {
+      "en": "Move right; right in menus",
+      "tr": "Sağa git; menülerde sağa"
+    },
+    "Walk: hold while moving to move slowly": {
+      "en": "Walk: hold while moving to move slowly",
+      "tr": "Yürü: yavaş hareket etmek için basılı tut"
+    },
+    "Turn the camera left": {
+      "en": "Turn the camera left",
+      "tr": "Kamerayı sola çevir"
+    },
+    "Turn the camera right": {
+      "en": "Turn the camera right",
+      "tr": "Kamerayı sağa çevir"
+    },
+    "Camera (right stick up)": {
+      "en": "Camera (right stick up)",
+      "tr": "Kamera (sağ çubuk yukarı)"
+    },
+    "Camera (right stick down)": {
+      "en": "Camera (right stick down)",
+      "tr": "Kamera (sağ çubuk aşağı)"
+    },
+    "Jump; again in the air to glide. Confirm in menus": {
+      "en": "Jump; again in the air to glide. Confirm in menus",
+      "tr": "Zıpla; havada tekrar basarak süzül. Menülerde onayla"
+    },
+    "Attack; hold to charge": {
+      "en": "Attack; hold to charge",
+      "tr": "Saldır; güç toplamak için basılı tut"
+    },
+    "Hold to lock on / strafe; next page in the pause menu": {
+      "en": "Hold to lock on / strafe; next page in the pause menu",
+      "tr": "Kilitlenmek / yana ilerlemek için basılı tut; duraklatma menüsünde sonraki sayfa"
+    },
+    "Photo mode; previous page in the pause menu": {
+      "en": "Photo mode; previous page in the pause menu",
+      "tr": "Fotoğraf modu; duraklatma menüsünde önceki sayfa"
+    },
+    "Pause; skip a movie; start from the title screen": {
+      "en": "Pause; skip a movie; start from the title screen",
+      "tr": "Duraklat; videoyu geç; başlık ekranından başla"
+    },
+    "Back / cancel in menus": {
+      "en": "Back / cancel in menus",
+      "tr": "Menülerde geri / iptal"
+    },
+    "Not yet characterised": {
+      "en": "Not yet characterised",
+      "tr": "İşlevi henüz doğrulanmadı"
+    },
+    "Not yet characterised (the menus' Back is B)": {
+      "en": "Not yet characterised (the menus' Back is B)",
+      "tr": "İşlevi henüz doğrulanmadı (menülerde Geri tuşu B'dir)"
+    },
+    "Not used by the game on PC": {
+      "en": "Not used by the game on PC",
+      "tr": "PC'de oyun tarafından kullanılmaz"
+    },
+    "Modern (WASD)": {
+      "en": "Modern (WASD)",
+      "tr": "Modern (WASD)"
+    },
+    "Original PC (2003)": {
+      "en": "Original PC (2003)",
+      "tr": "Özgün PC (2003)"
+    },
+    "Move with W A S D (hold Ctrl to walk), turn the camera with the arrow keys, jump with Space, attack with E, lock on with Shift.": {
+      "en": "Move with W A S D (hold Ctrl to walk), turn the camera with the arrow keys, jump with Space, attack with E, lock on with Shift.",
+      "tr": "W A S D ile hareket edin (yürümek için Ctrl), ok tuşlarıyla kamerayı çevirin. Space ile zıplayın, E ile saldırın, Shift ile kilitlenin."
+    },
+    "The keys of the 2003 Windows release: arrow keys, C to jump, Space to shoot, Ctrl to lock on, Esc to pause. The camera is on the numeric keypad (or W A S D) and Shift walks.": {
+      "en": "The keys of the 2003 Windows release: arrow keys, C to jump, Space to shoot, Ctrl to lock on, Esc to pause. The camera is on the numeric keypad (or W A S D) and Shift walks.",
+      "tr": "2003 Windows sürümünün tuşları: oklarla hareket, C ile zıplama, Space ile ateş, Ctrl ile kilitlenme, Esc ile duraklatma. Sayısal tuş takımı (veya W A S D) kamerayı çevirir; Shift ile yürünür."
+    },
+    "opens the runtime's debug overlay": {
+      "en": "opens the runtime's debug overlay",
+      "tr": "hata ayıklama panelini açar"
+    },
+    "opens the runtime's settings overlay": {
+      "en": "opens the runtime's settings overlay",
+      "tr": "oyun içi ayar panelini açar"
+    },
+    "opens the runtime's achievements overlay": {
+      "en": "opens the runtime's achievements overlay",
+      "tr": "başarım panelini açar"
+    },
+    "opens the runtime's console": {
+      "en": "opens the runtime's console",
+      "tr": "konsolu açar"
+    },
+    "Windows uses Alt for window commands (Alt+Tab, Alt+F4)": {
+      "en": "Windows uses Alt for window commands (Alt+Tab, Alt+F4)",
+      "tr": "Windows, Alt tuşunu pencere komutları için kullanır (Alt+Tab, Alt+F4)"
+    },
+    "a lock key: pressing it changes the keyboard's state": {
+      "en": "a lock key: pressing it changes the keyboard's state",
+      "tr": "kilit tuşu: basıldığında klavyenin durumunu değiştirir"
+    },
+    "Up": {
+      "en": "Up",
+      "tr": "Yukarı"
+    },
+    "Down": {
+      "en": "Down",
+      "tr": "Aşağı"
+    },
+    "Left": {
+      "en": "Left",
+      "tr": "Sol"
+    },
+    "Right": {
+      "en": "Right",
+      "tr": "Sağ"
+    },
+    "Escape and Enter also work as Back and Start when no other control uses them.": {
+      "en": "Escape and Enter also work as Back and Start when no other control uses them.",
+      "tr": "Başka bir işleve atanmamışsa Esc, Geri; Enter, Start olarak da çalışır."
+    },
+    "'": {
+      "en": "'",
+      "tr": "'"
+    },
+    ",": {
+      "en": ",",
+      "tr": ","
+    },
+    "-": {
+      "en": "-",
+      "tr": "-"
+    },
+    ".": {
+      "en": ".",
+      "tr": "."
+    },
+    "/": {
+      "en": "/",
+      "tr": "/"
+    },
+    "0": {
+      "en": "0",
+      "tr": "0"
+    },
+    "1": {
+      "en": "1",
+      "tr": "1"
+    },
+    "1280 x 720": {
+      "en": "1280 x 720",
+      "tr": "1280 x 720"
+    },
+    "1440p (2x)": {
+      "en": "1440p (2x)",
+      "tr": "1440p (2x)"
+    },
+    "1600 x 900": {
+      "en": "1600 x 900",
+      "tr": "1600 x 900"
+    },
+    "1920 x 1080": {
+      "en": "1920 x 1080",
+      "tr": "1920 x 1080"
+    },
+    "2": {
+      "en": "2",
+      "tr": "2"
+    },
+    "2160p (3x)": {
+      "en": "2160p (3x)",
+      "tr": "2160p (3x)"
+    },
+    "2560 x 1440": {
+      "en": "2560 x 1440",
+      "tr": "2560 x 1440"
+    },
+    "3": {
+      "en": "3",
+      "tr": "3"
+    },
+    "4": {
+      "en": "4",
+      "tr": "4"
+    },
+    "5": {
+      "en": "5",
+      "tr": "5"
+    },
+    "6": {
+      "en": "6",
+      "tr": "6"
+    },
+    "7": {
+      "en": "7",
+      "tr": "7"
+    },
+    "8": {
+      "en": "8",
+      "tr": "8"
+    },
+    "9": {
+      "en": "9",
+      "tr": "9"
+    },
+    ";": {
+      "en": ";",
+      "tr": ";"
+    },
+    "=": {
+      "en": "=",
+      "tr": "="
+    },
+    "A": {
+      "en": "A",
+      "tr": "A"
+    },
+    "Alt": {
+      "en": "Alt",
+      "tr": "Alt"
+    },
+    "B": {
+      "en": "B",
+      "tr": "B"
+    },
+    "Back": {
+      "en": "Back",
+      "tr": "Back"
+    },
+    "Backspace": {
+      "en": "Backspace",
+      "tr": "Backspace"
+    },
+    "C": {
+      "en": "C",
+      "tr": "C"
+    },
+    "Caps Lock": {
+      "en": "Caps Lock",
+      "tr": "Caps Lock"
+    },
+    "Ctrl": {
+      "en": "Ctrl",
+      "tr": "Ctrl"
+    },
+    "D": {
+      "en": "D",
+      "tr": "D"
+    },
+    "Delete": {
+      "en": "Delete",
+      "tr": "Delete"
+    },
+    "E": {
+      "en": "E",
+      "tr": "E"
+    },
+    "End": {
+      "en": "End",
+      "tr": "End"
+    },
+    "Enter": {
+      "en": "Enter",
+      "tr": "Enter"
+    },
+    "Esc": {
+      "en": "Esc",
+      "tr": "Esc"
+    },
+    "F": {
+      "en": "F",
+      "tr": "F"
+    },
+    "F1": {
+      "en": "F1",
+      "tr": "F1"
+    },
+    "F10": {
+      "en": "F10",
+      "tr": "F10"
+    },
+    "F11": {
+      "en": "F11",
+      "tr": "F11"
+    },
+    "F12": {
+      "en": "F12",
+      "tr": "F12"
+    },
+    "F2": {
+      "en": "F2",
+      "tr": "F2"
+    },
+    "F3": {
+      "en": "F3",
+      "tr": "F3"
+    },
+    "F4": {
+      "en": "F4",
+      "tr": "F4"
+    },
+    "F5": {
+      "en": "F5",
+      "tr": "F5"
+    },
+    "F6": {
+      "en": "F6",
+      "tr": "F6"
+    },
+    "F7": {
+      "en": "F7",
+      "tr": "F7"
+    },
+    "F8": {
+      "en": "F8",
+      "tr": "F8"
+    },
+    "F9": {
+      "en": "F9",
+      "tr": "F9"
+    },
+    "G": {
+      "en": "G",
+      "tr": "G"
+    },
+    "Guide": {
+      "en": "Guide",
+      "tr": "Guide"
+    },
+    "H": {
+      "en": "H",
+      "tr": "H"
+    },
+    "Home": {
+      "en": "Home",
+      "tr": "Home"
+    },
+    "I": {
+      "en": "I",
+      "tr": "I"
+    },
+    "Insert": {
+      "en": "Insert",
+      "tr": "Insert"
+    },
+    "J": {
+      "en": "J",
+      "tr": "J"
+    },
+    "K": {
+      "en": "K",
+      "tr": "K"
+    },
+    "L": {
+      "en": "L",
+      "tr": "L"
+    },
+    "M": {
+      "en": "M",
+      "tr": "M"
+    },
+    "N": {
+      "en": "N",
+      "tr": "N"
+    },
+    "Num *": {
+      "en": "Num *",
+      "tr": "Num *"
+    },
+    "Num +": {
+      "en": "Num +",
+      "tr": "Num +"
+    },
+    "Num -": {
+      "en": "Num -",
+      "tr": "Num -"
+    },
+    "Num /": {
+      "en": "Num /",
+      "tr": "Num /"
+    },
+    "Num 0": {
+      "en": "Num 0",
+      "tr": "Num 0"
+    },
+    "Num 1": {
+      "en": "Num 1",
+      "tr": "Num 1"
+    },
+    "Num 2": {
+      "en": "Num 2",
+      "tr": "Num 2"
+    },
+    "Num 3": {
+      "en": "Num 3",
+      "tr": "Num 3"
+    },
+    "Num 4": {
+      "en": "Num 4",
+      "tr": "Num 4"
+    },
+    "Num 5": {
+      "en": "Num 5",
+      "tr": "Num 5"
+    },
+    "Num 6": {
+      "en": "Num 6",
+      "tr": "Num 6"
+    },
+    "Num 7": {
+      "en": "Num 7",
+      "tr": "Num 7"
+    },
+    "Num 8": {
+      "en": "Num 8",
+      "tr": "Num 8"
+    },
+    "Num 9": {
+      "en": "Num 9",
+      "tr": "Num 9"
+    },
+    "Num Lock": {
+      "en": "Num Lock",
+      "tr": "Num Lock"
+    },
+    "O": {
+      "en": "O",
+      "tr": "O"
+    },
+    "P": {
+      "en": "P",
+      "tr": "P"
+    },
+    "Page Down": {
+      "en": "Page Down",
+      "tr": "Page Down"
+    },
+    "Page Up": {
+      "en": "Page Up",
+      "tr": "Page Up"
+    },
+    "Q": {
+      "en": "Q",
+      "tr": "Q"
+    },
+    "R": {
+      "en": "R",
+      "tr": "R"
+    },
+    "S": {
+      "en": "S",
+      "tr": "S"
+    },
+    "Scroll Lock": {
+      "en": "Scroll Lock",
+      "tr": "Scroll Lock"
+    },
+    "Shift": {
+      "en": "Shift",
+      "tr": "Shift"
+    },
+    "Space": {
+      "en": "Space",
+      "tr": "Space"
+    },
+    "Start": {
+      "en": "Start",
+      "tr": "Start"
+    },
+    "T": {
+      "en": "T",
+      "tr": "T"
+    },
+    "Tab": {
+      "en": "Tab",
+      "tr": "Tab"
+    },
+    "U": {
+      "en": "U",
+      "tr": "U"
+    },
+    "UTC": {
+      "en": "UTC",
+      "tr": "UTC"
+    },
+    "V": {
+      "en": "V",
+      "tr": "V"
+    },
+    "W": {
+      "en": "W",
+      "tr": "W"
+    },
+    "X": {
+      "en": "X",
+      "tr": "X"
+    },
+    "Y": {
+      "en": "Y",
+      "tr": "Y"
+    },
+    "Z": {
+      "en": "Z",
+      "tr": "Z"
+    },
+    "[": {
+      "en": "[",
+      "tr": "["
+    },
+    "\\": {
+      "en": "\\",
+      "tr": "\\"
+    },
+    "]": {
+      "en": "]",
+      "tr": "]"
+    },
+    "`": {
+      "en": "`",
+      "tr": "`"
+    },
+    "&Advanced": {
+      "en": "&Advanced",
+      "tr": "&Gelişmiş"
+    },
+    "&Controls": {
+      "en": "&Controls",
+      "tr": "&Kontroller"
+    },
+    "&Disable": {
+      "en": "&Disable",
+      "tr": "&Devre dışı bırak"
+    },
+    "&Down": {
+      "en": "&Down",
+      "tr": "&Aşağı"
+    },
+    "&Enable": {
+      "en": "&Enable",
+      "tr": "&Etkinleştir"
+    },
+    "&Install .zip...": {
+      "en": "&Install .zip...",
+      "tr": ".zip &yükle..."
+    },
+    "&Mods": {
+      "en": "&Mods",
+      "tr": "&Modlar"
+    },
+    "&Play": {
+      "en": "&Play",
+      "tr": "&Başlat"
+    },
+    "&Remove": {
+      "en": "&Remove",
+      "tr": "&Kaldır"
+    },
+    "&Restore defaults": {
+      "en": "&Restore defaults",
+      "tr": "&Varsayılanlara dön"
+    },
+    "&Save": {
+      "en": "&Save",
+      "tr": "&Kaydet"
+    },
+    "&Up": {
+      "en": "&Up",
+      "tr": "&Yukarı"
+    },
+    "Action": {
+      "en": "Action",
+      "tr": "Eylem"
+    },
+    "Active": {
+      "en": "Active",
+      "tr": "Etkin"
+    },
+    "Active (partly covered by a mod above it)": {
+      "en": "Active (partly covered by a mod above it)",
+      "tr": "Etkin (üstteki mod bazı değişiklikleri geçersiz kılıyor)"
+    },
+    "Advanced": {
+      "en": "Advanced",
+      "tr": "Gelişmiş"
+    },
+    "Already using {layout} defaults.": {
+      "en": "Already using {layout} defaults.",
+      "tr": "{layout} varsayılanları zaten kullanılıyor."
+    },
+    "Changes apply the next time the game starts. A mod that does not fit this game version is not applied and the reason is shown here.": {
+      "en": "Changes apply the next time the game starts. A mod that does not fit this game version is not applied and the reason is shown here.",
+      "tr": "Değişiklikler oyun yeniden açıldığında uygulanır. Uyumsuz modlar uygulanmaz; nedeni burada gösterilir."
+    },
+    "Checking the launch (test mode: dry run)...": {
+      "en": "Checking the launch (test mode: dry run)...",
+      "tr": "Başlatma denetleniyor (test modu)..."
+    },
+    "Checking the mod...": {
+      "en": "Checking the mod...",
+      "tr": "Mod denetleniyor..."
+    },
+    "Choose the mod folder containing mod.json.": {
+      "en": "Choose the mod folder containing mod.json.",
+      "tr": "mod.json dosyasını içeren mod klasörünü seçin."
+    },
+    "Click a key to change it, then press the new key (Esc cancels). Right-click a key or press Delete to remove it. ": {
+      "en": "Click a key to change it, then press the new key (Esc cancels). Right-click a key or press Delete to remove it. ",
+      "tr": "Bir tuşa tıklayıp yeni tuşa basın (Esc iptal eder). Atamayı silmek için sağ tıklayın veya Delete tuşuna basın. "
+    },
+    "Close": {
+      "en": "Close",
+      "tr": "Kapat"
+    },
+    "Community mods that replace textures or text. They never change your game files or saves, and Vanilla, HD+ and Custom stay as they are. Only data mods are accepted: no programs or scripts.": {
+      "en": "Community mods that replace textures or text. They never change your game files or saves, and Vanilla, HD+ and Custom stay as they are. Only data mods are accepted: no programs or scripts.",
+      "tr": "Doku, metin ve altyazı modlarını buradan yönetin. Oyun dosyaları, kayıtlar ve profil seçiminiz değişmez. Program veya betik içeren modlar kabul edilmez."
+    },
+    "Controller": {
+      "en": "Controller",
+      "tr": "Kumanda"
+    },
+    "Dry run passed: the game would start with these settings.": {
+      "en": "Dry run passed: the game would start with these settings.",
+      "tr": "Başlatma denetimi başarılı: oyun bu ayarlarla açılabilir."
+    },
+    "For troubleshooting. You do not need to change anything here to play.": {
+      "en": "For troubleshooting. You do not need to change anything here to play.",
+      "tr": "Sorun giderme seçenekleri. Oynamak için bunları değiştirmeniz gerekmez."
+    },
+    "Game data needs repair. Run setup again; your game package may be needed.": {
+      "en": "Game data needs repair. Run setup again; your game package may be needed.",
+      "tr": "Oyun verilerinin onarılması gerekiyor. Kurulumu yeniden çalıştırın; oyun paketiniz istenebilir."
+    },
+    "Game profile": {
+      "en": "Game profile",
+      "tr": "Oyun profili"
+    },
+    "Install &folder...": {
+      "en": "Install &folder...",
+      "tr": "&Klasörden yükle..."
+    },
+    "Install a mod": {
+      "en": "Install a mod",
+      "tr": "Mod yükle"
+    },
+    "Installed in {folder}": {
+      "en": "Installed in {folder}",
+      "tr": "Kurulum klasörü: {folder}"
+    },
+    "Key": {
+      "en": "Key",
+      "tr": "Tuş"
+    },
+    "Key not changed.": {
+      "en": "Key not changed.",
+      "tr": "Tuş değiştirilmedi."
+    },
+    "Keyboard": {
+      "en": "Keyboard",
+      "tr": "Klavye"
+    },
+    "Keys swapped: {from} / {to}.": {
+      "en": "Keys swapped: {from} / {to}.",
+      "tr": "Tuşlar değiştirildi: {from} / {to}."
+    },
+    "Layout": {
+      "en": "Layout",
+      "tr": "Düzen"
+    },
+    "Mod archive (*.zip)": {
+      "en": "Mod archive (*.zip)",
+      "tr": "Mod arşivi (*.zip)"
+    },
+    "Mods": {
+      "en": "Mods",
+      "tr": "Modlar"
+    },
+    "No mods are installed. Install a mod from a .zip file or a folder.": {
+      "en": "No mods are installed. Install a mod from a .zip file or a folder.",
+      "tr": "Yüklü mod yok. Bir .zip dosyasından veya klasörden mod yükleyebilirsiniz."
+    },
+    "Not applied: ": {
+      "en": "Not applied: ",
+      "tr": "Uygulanmadı: "
+    },
+    "Not done: ": {
+      "en": "Not done: ",
+      "tr": "İşlem tamamlanamadı: "
+    },
+    "Not saved: ": {
+      "en": "Not saved: ",
+      "tr": "Kaydedilemedi: "
+    },
+    "Off; it cannot be applied: ": {
+      "en": "Off; it cannot be applied: ",
+      "tr": "Kapalı; uygulanamıyor: "
+    },
+    "Open the installation &folder": {
+      "en": "Open the installation &folder",
+      "tr": "Kurulum &klasörünü aç"
+    },
+    "Press a key for {action}. Esc cancels.": {
+      "en": "Press a key for {action}. Esc cancels.",
+      "tr": "{action} için bir tuşa basın. Esc iptal eder."
+    },
+    "Press a key...": {
+      "en": "Press a key...",
+      "tr": "Bir tuşa basın..."
+    },
+    "Program files are missing ({file}). Run setup again to repair them.": {
+      "en": "Program files are missing ({file}). Run setup again to repair them.",
+      "tr": "Program dosyaları eksik ({file}). Onarmak için kurulumu yeniden çalıştırın."
+    },
+    "Rayman 3 HD Settings": {
+      "en": "Rayman 3 HD Settings",
+      "tr": "Rayman 3 HD Ayarları"
+    },
+    "Rayman 3 HD is already running.": {
+      "en": "Rayman 3 HD is already running.",
+      "tr": "Rayman 3 HD zaten çalışıyor."
+    },
+    "Rayman 3 HD is already being started.": {
+      "en": "Rayman 3 HD is already being started.",
+      "tr": "Rayman 3 HD zaten başlatılıyor."
+    },
+    "Rayman 3 HD is running. Saved changes apply next time it starts.": {
+      "en": "Rayman 3 HD is running. Saved changes apply next time it starts.",
+      "tr": "Rayman 3 HD çalışıyor. Kaydedilen değişiklikler bir sonraki açılışta uygulanır."
+    },
+    "Ready to play. Settings apply the next time the game starts.": {
+      "en": "Ready to play. Settings apply the next time the game starts.",
+      "tr": "Oynamaya hazır. Ayarlar bir sonraki oyun açılışında uygulanır."
+    },
+    "Remove {mod}? Game files and saves are kept.": {
+      "en": "Remove {mod}? Game files and saves are kept.",
+      "tr": "{mod} kaldırılsın mı? Oyun dosyaları ve kayıtlar korunur."
+    },
+    "Restore {layout} keys?": {
+      "en": "Restore {layout} keys?",
+      "tr": "{layout} tuşları varsayılanlara döndürülsün mü?"
+    },
+    "Save your changes before closing?": {
+      "en": "Save your changes before closing?",
+      "tr": "Kapatmadan önce değişiklikler kaydedilsin mi?"
+    },
+    "Saved keys could not be used. Save replaces them and keeps a backup.": {
+      "en": "Saved keys could not be used. Save replaces them and keeps a backup.",
+      "tr": "Kayıtlı tuşlar kullanılamadı. Kaydet, yedek alarak tuşları yeniler."
+    },
+    "Saved settings could not be read. Save replaces them and keeps a backup.": {
+      "en": "Saved settings could not be read. Save replaces them and keeps a backup.",
+      "tr": "Kayıtlı ayarlar okunamadı. Kaydet, yedek alarak ayarları yeniler."
+    },
+    "Saved. The settings apply the next time the game starts.": {
+      "en": "Saved. The settings apply the next time the game starts.",
+      "tr": "Kaydedildi. Ayarlar bir sonraki oyun açılışında uygulanır."
+    },
+    "Saving Vanilla or HD+ drops Custom choices. Display settings and gameplay subtitles apply to every profile.": {
+      "en": "Saving Vanilla or HD+ drops Custom choices. Display settings and gameplay subtitles apply to every profile.",
+      "tr": "Vanilla veya HD+ kaydedildiğinde Özel seçimler sıfırlanır. Görüntü ayarları ve oynanış altyazıları tüm profillerde korunur."
+    },
+    "Second key": {
+      "en": "Second key",
+      "tr": "İkinci tuş"
+    },
+    "Select a mod to see its details.": {
+      "en": "Select a mod to see its details.",
+      "tr": "Ayrıntılarını görmek için bir mod seçin."
+    },
+    "Settings could not be saved. Check folder access and try again.": {
+      "en": "Settings could not be saved. Check folder access and try again.",
+      "tr": "Ayarlar kaydedilemedi. Klasöre yazma iznini denetleyip yeniden deneyin."
+    },
+    "Starting Rayman 3 HD...": {
+      "en": "Starting Rayman 3 HD...",
+      "tr": "Rayman 3 HD başlatılıyor..."
+    },
+    "State: ": {
+      "en": "State: ",
+      "tr": "Durum: "
+    },
+    "The game cannot read that key. Press another key, or Esc to cancel.": {
+      "en": "The game cannot read that key. Press another key, or Esc to cancel.",
+      "tr": "Oyun bu tuşu okuyamıyor. Başka bir tuşa basın veya Esc ile iptal edin."
+    },
+    "The game could not be started: ": {
+      "en": "The game could not be started: ",
+      "tr": "Oyun başlatılamadı: "
+    },
+    "The game could not start. Check cache/launcher_play.log or run setup to repair it.": {
+      "en": "The game could not start. Check cache/launcher_play.log or run setup to repair it.",
+      "tr": "Oyun başlatılamadı. cache/launcher_play.log dosyasını inceleyin veya kurulumdan onarın."
+    },
+    "The game could not start. Check cache/launcher_play.log. Open Settings now?": {
+      "en": "The game could not start. Check cache/launcher_play.log. Open Settings now?",
+      "tr": "Oyun başlatılamadı. cache/launcher_play.log dosyasını inceleyin. Ayarlar açılsın mı?"
+    },
+    "The game has ended.": {
+      "en": "The game has ended.",
+      "tr": "Oyun kapandı."
+    },
+    "The game is already being started.": {
+      "en": "The game is already being started.",
+      "tr": "Oyun zaten başlatılıyor."
+    },
+    "The last session ended unexpectedly. Logs: sessions\\{session}": {
+      "en": "The last session ended unexpectedly. Logs: sessions\\{session}",
+      "tr": "Son oturum beklenmedik biçimde sonlandı. Günlükler: sessions\\{session}"
+    },
+    "The mod component could not be started.": {
+      "en": "The mod component could not be started.",
+      "tr": "Mod bileşeni başlatılamadı."
+    },
+    "The mod list cannot be read: ": {
+      "en": "The mod list cannot be read: ",
+      "tr": "Mod listesi okunamıyor: "
+    },
+    "The mod was installed. Enable it to use it.": {
+      "en": "The mod was installed. Enable it to use it.",
+      "tr": "Mod yüklendi. Kullanmak için etkinleştirin."
+    },
+    "The order was changed.": {
+      "en": "The order was changed.",
+      "tr": "Sıralama değiştirildi."
+    },
+    "The settings component could not be started.": {
+      "en": "The settings component could not be started.",
+      "tr": "Ayarlar bileşeni başlatılamadı."
+    },
+    "This installation needs repair. Run setup again and choose this folder.": {
+      "en": "This installation needs repair. Run setup again and choose this folder.",
+      "tr": "Kurulumun onarılması gerekiyor. Kurulumu yeniden çalıştırıp bu klasörü seçin."
+    },
+    "Unsaved changes.": {
+      "en": "Unsaved changes.",
+      "tr": "Kaydedilmemiş değişiklikler var."
+    },
+    "Use {layout}? Your changed keys will be replaced.": {
+      "en": "Use {layout}? Your changed keys will be replaced.",
+      "tr": "{layout} kullanılsın mı? Değiştirdiğiniz tuşlar sıfırlanacak."
+    },
+    "Version {version}": {
+      "en": "Version {version}",
+      "tr": "Sürüm {version}"
+    },
+    "[off]  ": {
+      "en": "[off]  ",
+      "tr": "[kapalı]  "
+    },
+    "[on]   ": {
+      "en": "[on]   ",
+      "tr": "[açık]   "
+    },
+    "active": {
+      "en": "active",
+      "tr": "etkin"
+    },
+    "not applied": {
+      "en": "not applied",
+      "tr": "uygulanmadı"
+    },
+    "off": {
+      "en": "off",
+      "tr": "kapalı"
+    },
+    "{action} needs a key. Assign another key before moving {key}.": {
+      "en": "{action} needs a key. Assign another key before moving {key}.",
+      "tr": "{action} için bir tuş gerekli. {key} taşınmadan önce başka bir tuş atayın."
+    },
+    "{action} needs at least one key.": {
+      "en": "{action} needs at least one key.",
+      "tr": "{action} için en az bir tuş gerekli."
+    },
+    "{key} assigned to {action}.": {
+      "en": "{key} assigned to {action}.",
+      "tr": "{action} için {key} atandı."
+    },
+    "{key} cannot be used: {reason}. Press another key or Esc.": {
+      "en": "{key} cannot be used: {reason}. Press another key or Esc.",
+      "tr": "{key} kullanılamaz: {reason}. Başka bir tuşa veya Esc tuşuna basın."
+    },
+    "{key} is already assigned here.": {
+      "en": "{key} is already assigned here.",
+      "tr": "{key} zaten burada atanmış."
+    },
+    "{key} removed from {action}.": {
+      "en": "{key} removed from {action}.",
+      "tr": "{action} için {key} ataması kaldırıldı."
+    },
+    "{layout} keys are shown.": {
+      "en": "{layout} keys are shown.",
+      "tr": "{layout} tuşları gösteriliyor."
+    },
+    "{layout} keys restored.": {
+      "en": "{layout} keys restored.",
+      "tr": "{layout} tuşları varsayılanlara döndürüldü."
+    },
+    "{mod} is now off.": {
+      "en": "{mod} is now off.",
+      "tr": "{mod} kapatıldı."
+    },
+    "{mod} is now on.": {
+      "en": "{mod} is now on.",
+      "tr": "{mod} açıldı."
+    },
+    "{mod} was removed.": {
+      "en": "{mod} was removed.",
+      "tr": "{mod} kaldırıldı."
+    },
+    "UI language changed. Unsaved edits are kept.": {
+      "en": "UI language changed. Unsaved edits are kept.",
+      "tr": "Arayüz dili değiştirildi. Kaydedilmemiş düzenlemeler korundu."
+    },
+    " It applies the next time the game starts.": {
+      "en": " It applies the next time the game starts.",
+      "tr": " Oyun yeniden açıldığında uygulanır."
+    },
+    " The game is running: restart it to apply the change.": {
+      "en": " The game is running: restart it to apply the change.",
+      "tr": " Oyun çalışıyor: değişikliği uygulamak için yeniden açın."
+    },
+    " Unsaved changes.": {
+      "en": " Unsaved changes.",
+      "tr": " Kaydedilmemiş değişiklikler var."
+    },
+    "The mod package is invalid. Choose a valid mod ZIP or folder.": {
+      "en": "The mod package is invalid. Choose a valid mod ZIP or folder.",
+      "tr": "Mod paketi geçersiz. Geçerli bir mod ZIP dosyası veya klasörü seçin."
+    },
+    "This mod does not match your game files or port version.": {
+      "en": "This mod does not match your game files or port version.",
+      "tr": "Bu mod, oyun dosyalarınızla veya port sürümüyle uyumlu değil."
+    },
+    "This mod needs another mod. Check its requirements and load order.": {
+      "en": "This mod needs another mod. Check its requirements and load order.",
+      "tr": "Bu mod başka bir mod gerektiriyor. Gereksinimleri ve yükleme sırasını denetleyin."
+    },
+    "This mod conflicts with another enabled mod.": {
+      "en": "This mod conflicts with another enabled mod.",
+      "tr": "Bu mod, etkin başka bir modla çakışıyor."
+    },
+    "The mod is damaged. Reinstall it from its original package.": {
+      "en": "The mod is damaged. Reinstall it from its original package.",
+      "tr": "Mod hasarlı. Özgün paketinden yeniden yükleyin."
+    },
+    "Mod data could not be read or written. Check folder access and try again.": {
+      "en": "Mod data could not be read or written. Check folder access and try again.",
+      "tr": "Mod verileri okunamadı veya yazılamadı. Klasör izinlerini denetleyip yeniden deneyin."
+    },
+    "Game data is unavailable. Run setup to repair it.": {
+      "en": "Game data is unavailable. Run setup to repair it.",
+      "tr": "Oyun verilerine erişilemiyor. Kurulumu çalıştırarak onarın."
+    },
+    "The translation does not fit the game files. Use a compatible mod package.": {
+      "en": "The translation does not fit the game files. Use a compatible mod package.",
+      "tr": "Çeviri oyun dosyalarına sığmıyor. Uyumlu bir mod paketi kullanın."
+    },
+    "The mod action could not be completed. Check the package and folder access.": {
+      "en": "The mod action could not be completed. Check the package and folder access.",
+      "tr": "Mod işlemi tamamlanamadı. Paketi ve klasör izinlerini denetleyin."
+    },
+    "The game is taking longer to start. Check cache/launcher_play.log.": {
+      "en": "The game is taking longer to start. Check cache/launcher_play.log.",
+      "tr": "Oyunun açılması beklenenden uzun sürüyor. cache/launcher_play.log dosyasını inceleyin."
+    },
+    "Windows PowerShell could not be started. Run setup to repair this installation.": {
+      "en": "Windows PowerShell could not be started. Run setup to repair this installation.",
+      "tr": "Windows PowerShell başlatılamadı. Kurulumu çalıştırarak onarın."
+    },
+    "The launch log could not be written. Check folder access.": {
+      "en": "The launch log could not be written. Check folder access.",
+      "tr": "Başlatma günlüğü yazılamadı. Klasör izinlerini denetleyin."
+    },
+    "Se&ttings": {
+      "en": "Se&ttings",
+      "tr": "A&yarlar"
+    },
+    "Default (1280 x 720)": {
+      "en": "Default (1280 x 720)",
+      "tr": "Varsayılan (1280 x 720)"
+    },
+    "Interface language": {
+      "en": "Interface language",
+      "tr": "Arayüz dili"
+    },
+    "Unknown argument: {argument}": {
+      "en": "Unknown argument: {argument}",
+      "tr": "Bilinmeyen bağımsız değişken: {argument}"
+    }
+  }
+}

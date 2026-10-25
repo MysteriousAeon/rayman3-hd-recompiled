@@ -1,0 +1,42 @@
+# M34: title -> main menu (frame: every menu word) -> Exit Game (sixth entry below New) -> A -> the quit dialog
+# (frame: the dialog sentence) -> left -> Yes -> A; the game ends by itself (exit code 0). Used by tools/m34_loc_game.py
+# with and without a localization mod plan (same steps for each).
+log VIDEOS\ubi.bik result=00000000
+log menumap\menumap.lvl result=00000000
+wait 10
+press 40
+wait 12
+frame main_menu
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.2
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 2
+press 44
+wait 3
+frame quit_dialog
+axis 300 -32767
+wait 0.3
+axis 300 0
+wait 1.5
+press 44
+exit 30

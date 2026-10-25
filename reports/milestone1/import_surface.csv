@@ -1,0 +1,365 @@
+library,ordinal,name,kind,direct_call_refs,subsystem,rexglue_c94f5eb,xenia_95a5c3e
+xam.xex,0x011,NetDll_WSACancelOverlappedIO,function,1,networking,stub,ABSENT
+xam.xex,0x002,NetDll_WSACleanup,function,1,networking,implemented,Implemented
+xam.xex,0x01E,NetDll_WSACloseEvent,function,1,networking,implemented,Implemented
+xam.xex,0x01D,NetDll_WSACreateEvent,function,1,networking,implemented,Implemented
+xam.xex,0x023,NetDll_WSAEventSelect,function,1,networking,stub,ABSENT
+xam.xex,0x01B,NetDll_WSAGetLastError,function,1,networking,implemented,Implemented
+xam.xex,0x010,NetDll_WSAGetOverlappedResult,function,1,networking,stub,ABSENT
+xam.xex,0x013,NetDll_WSARecv,function,1,networking,stub,ABSENT
+xam.xex,0x015,NetDll_WSARecvFrom,function,1,networking,implemented,HighFrequency
+xam.xex,0x020,NetDll_WSAResetEvent,function,1,networking,implemented,Implemented
+xam.xex,0x017,NetDll_WSASend,function,1,networking,stub,ABSENT
+xam.xex,0x019,NetDll_WSASendTo,function,1,networking,implemented,Implemented
+xam.xex,0x01F,NetDll_WSASetEvent,function,1,networking,implemented,Implemented
+xam.xex,0x01C,NetDll_WSASetLastError,function,1,networking,implemented,Implemented
+xam.xex,0x001,NetDll_WSAStartup,function,1,networking,implemented,Implemented
+xam.xex,0x021,NetDll_WSAWaitForMultipleEvents,function,1,networking,implemented,Blocking
+xam.xex,0x034,NetDll_XNetCleanup,function,1,networking,implemented,Implemented
+xam.xex,0x041,NetDll_XNetConnect,function,1,networking,stub,ABSENT
+xam.xex,0x036,NetDll_XNetCreateKey,function,1,networking,stub,ABSENT
+xam.xex,0x043,NetDll_XNetDnsLookup,function,1,networking,implemented,Stub
+xam.xex,0x044,NetDll_XNetDnsRelease,function,1,networking,implemented,Stub
+xam.xex,0x055,NetDll_XNetDnsReverseLookup,function,1,networking,stub,ABSENT
+xam.xex,0x056,NetDll_XNetDnsReverseRelease,function,1,networking,stub,ABSENT
+xam.xex,0x04C,NetDll_XNetGetBroadcastVersionStatus,function,1,networking,stub,ABSENT
+xam.xex,0x042,NetDll_XNetGetConnectStatus,function,1,networking,stub,ABSENT
+xam.xex,0x04A,NetDll_XNetGetDebugXnAddr,function,1,networking,implemented,Stub
+xam.xex,0x04B,NetDll_XNetGetEthernetLinkStatus,function,1,networking,implemented,Stub
+xam.xex,0x04E,NetDll_XNetGetOpt,function,1,networking,implemented,Sketchy
+xam.xex,0x053,NetDll_XNetGetSystemLinkPort,function,1,networking,stub,ABSENT
+xam.xex,0x049,NetDll_XNetGetTitleXnAddr,function,1,networking,implemented,Stub
+xam.xex,0x052,NetDll_XNetGetXnAddrPlatform,function,1,networking,stub,ABSENT
+xam.xex,0x03D,NetDll_XNetInAddrToServer,function,1,networking,stub,ABSENT
+xam.xex,0x03E,NetDll_XNetInAddrToString,function,1,networking,implemented,Stub
+xam.xex,0x03C,NetDll_XNetInAddrToXnAddr,function,1,networking,implemented,Stub
+xam.xex,0x04D,NetDll_XNetQosGetListenStats,function,1,networking,stub,ABSENT
+xam.xex,0x045,NetDll_XNetQosListen,function,1,networking,implemented,Stub
+xam.xex,0x046,NetDll_XNetQosLookup,function,1,networking,stub,ABSENT
+xam.xex,0x048,NetDll_XNetQosRelease,function,1,networking,implemented,Stub
+xam.xex,0x047,NetDll_XNetQosServiceLookup,function,1,networking,implemented,Stub
+xam.xex,0x035,NetDll_XNetRandom,function,1,networking,implemented,Stub
+xam.xex,0x037,NetDll_XNetRegisterKey,function,1,networking,stub,ABSENT
+xam.xex,0x051,NetDll_XNetReplaceKey,function,1,networking,stub,ABSENT
+xam.xex,0x03A,NetDll_XNetServerToInAddr,function,1,networking,stub,ABSENT
+xam.xex,0x04F,NetDll_XNetSetOpt,function,1,networking,stub,ABSENT
+xam.xex,0x054,NetDll_XNetSetSystemLinkPort,function,1,networking,implemented,Stub
+xam.xex,0x033,NetDll_XNetStartup,function,1,networking,implemented,Implemented
+xam.xex,0x03B,NetDll_XNetTsAddrToInAddr,function,1,networking,stub,ABSENT
+xam.xex,0x03F,NetDll_XNetUnregisterInAddr,function,1,networking,stub,ABSENT
+xam.xex,0x038,NetDll_XNetUnregisterKey,function,1,networking,stub,ABSENT
+xam.xex,0x039,NetDll_XNetXnAddrToInAddr,function,1,networking,implemented,Stub
+xam.xex,0x040,NetDll_XNetXnAddrToMachineId,function,1,networking,implemented,Stub
+xam.xex,0x06C,NetDll_XnpCapture,function,1,networking,stub,ABSENT
+xam.xex,0x068,NetDll_XnpConfig,function,1,networking,stub,ABSENT
+xam.xex,0x067,NetDll_XnpConfigUPnP,function,1,networking,stub,ABSENT
+xam.xex,0x06F,NetDll_XnpEthernetInterceptRecv,function,1,networking,stub,ABSENT
+xam.xex,0x06D,NetDll_XnpEthernetInterceptSetCallbacks,function,1,networking,stub,ABSENT
+xam.xex,0x06E,NetDll_XnpEthernetInterceptXmit,function,1,networking,stub,ABSENT
+xam.xex,0x07A,NetDll_XnpGetActiveSocketList,function,1,networking,stub,ABSENT
+xam.xex,0x069,NetDll_XnpGetConfigStatus,function,1,networking,stub,ABSENT
+xam.xex,0x078,NetDll_XnpGetVlanXboxName,function,1,networking,stub,ABSENT
+xam.xex,0x065,NetDll_XnpLoadConfigParams,function,1,networking,stub,ABSENT
+xam.xex,0x06A,NetDll_XnpLoadMachineAccount,function,1,networking,stub,ABSENT
+xam.xex,0x074,NetDll_XnpLogonClearQEvent,function,1,networking,stub,ABSENT
+xam.xex,0x071,NetDll_XnpLogonGetQFlags,function,1,networking,stub,ABSENT
+xam.xex,0x075,NetDll_XnpLogonGetQVals,function,1,networking,stub,ABSENT
+xam.xex,0x070,NetDll_XnpLogonGetStatus,function,1,networking,stub,ABSENT
+xam.xex,0x077,NetDll_XnpLogonSetPState,function,1,networking,stub,ABSENT
+xam.xex,0x073,NetDll_XnpLogonSetQEvent,function,1,networking,stub,ABSENT
+xam.xex,0x072,NetDll_XnpLogonSetQFlags,function,1,networking,stub,ABSENT
+xam.xex,0x076,NetDll_XnpLogonSetQVals,function,1,networking,stub,ABSENT
+xam.xex,0x07B,NetDll_XnpNoteSystemTime,function,1,networking,stub,ABSENT
+xam.xex,0x07C,NetDll_XnpRegisterKeyForCallerType,function,1,networking,stub,ABSENT
+xam.xex,0x066,NetDll_XnpSaveConfigParams,function,1,networking,stub,ABSENT
+xam.xex,0x06B,NetDll_XnpSaveMachineAccount,function,1,networking,stub,ABSENT
+xam.xex,0x079,NetDll_XnpSetVlanXboxName,function,1,networking,stub,ABSENT
+xam.xex,0x07D,NetDll_XnpUnregisterKeyForCallerType,function,1,networking,stub,ABSENT
+xam.xex,0x022,NetDll___WSAFDIsSet,function,1,networking,implemented,Implemented
+xam.xex,0x00E,NetDll_accept,function,1,networking,implemented,Implemented
+xam.xex,0x00B,NetDll_bind,function,1,networking,implemented,Implemented
+xam.xex,0x004,NetDll_closesocket,function,1,networking,implemented,Implemented
+xam.xex,0x00C,NetDll_connect,function,1,networking,implemented,Implemented
+xam.xex,0x00A,NetDll_getpeername,function,1,networking,stub,ABSENT
+xam.xex,0x009,NetDll_getsockname,function,1,networking,stub,ABSENT
+xam.xex,0x008,NetDll_getsockopt,function,1,networking,stub,ABSENT
+xam.xex,0x01A,NetDll_inet_addr,function,1,networking,implemented,Implemented
+xam.xex,0x006,NetDll_ioctlsocket,function,1,networking,implemented,Implemented
+xam.xex,0x00D,NetDll_listen,function,1,networking,implemented,Implemented
+xam.xex,0x012,NetDll_recv,function,1,networking,implemented,Implemented
+xam.xex,0x014,NetDll_recvfrom,function,1,networking,implemented,Implemented
+xam.xex,0x00F,NetDll_select,function,1,networking,implemented,Implemented
+xam.xex,0x016,NetDll_send,function,1,networking,implemented,Implemented
+xam.xex,0x018,NetDll_sendto,function,1,networking,implemented,Implemented
+xam.xex,0x007,NetDll_setsockopt,function,1,networking,implemented,Implemented
+xam.xex,0x005,NetDll_shutdown,function,1,networking,implemented,Implemented
+xam.xex,0x003,NetDll_socket,function,1,networking,implemented,Implemented
+xam.xex,0x3CB,XGetAVPack,function,1,config/system info,implemented,Stub
+xam.xex,0x3CC,XGetGameRegion,function,4,config/system info,implemented,Stub
+xam.xex,0x3CD,XGetLanguage,function,3,config/system info,implemented,Implemented
+xam.xex,0x1F8,XMsgCancelIORequest,function,1,achievements/XLive msg,implemented,Implemented
+xam.xex,0x1F4,XMsgInProcessCall,function,22,achievements/XLive msg,implemented,Implemented
+xam.xex,0x1F7,XMsgStartIORequest,function,51,achievements/XLive msg,implemented,Implemented
+xam.xex,0x1FC,XMsgStartIORequestEx,function,7,achievements/XLive msg,implemented,Implemented
+xam.xex,0x135,XNetLogonGetMachineID,function,3,networking,stub,ABSENT
+xam.xex,0x136,XNetLogonGetTitleID,function,7,networking,stub,ABSENT
+xam.xex,0x28B,XNotifyGetNext,function,3,achievements/XLive msg,implemented,HighFrequency
+xam.xex,0x1EA,XamAlloc,function,22,memory/VM,implemented,Implemented
+xam.xex,0x1EB,XamAllocEx,function,3,memory/VM,stub,ABSENT
+xam.xex,0x25A,XamContentClose,function,1,content/storage/save,implemented,Implemented
+xam.xex,0x25D,XamContentCreateDeviceEnumerator,function,1,content/storage/save,implemented,Implemented
+xam.xex,0x25C,XamContentCreateEnumerator,function,1,content/storage/save,implemented,Implemented
+xam.xex,0x259,XamContentCreateEx,function,1,content/storage/save,implemented,Implemented
+xam.xex,0x25B,XamContentDelete,function,1,content/storage/save,implemented,Implemented
+xam.xex,0x267,XamContentFlush,function,1,content/storage/save,implemented,Stub
+xam.xex,0x262,XamContentGetCreator,function,1,content/storage/save,implemented,Implemented
+xam.xex,0x25E,XamContentGetDeviceData,function,1,content/storage/save,implemented,Implemented
+xam.xex,0x25F,XamContentGetDeviceName,function,1,content/storage/save,implemented,Implemented
+xam.xex,0x265,XamContentGetDeviceState,function,2,content/storage/save,implemented,Stub
+xam.xex,0x266,XamContentGetLicenseMask,function,1,content/storage/save,implemented,HighFrequency
+xam.xex,0x261,XamContentGetThumbnail,function,1,content/storage/save,implemented,Implemented
+xam.xex,0x26A,XamContentInstall,function,1,content/storage/save,stub,ABSENT
+xam.xex,0x263,XamContentLaunchImage,function,1,content/storage/save,stub,ABSENT
+xam.xex,0x268,XamContentResolve,function,2,content/storage/save,implemented,Stub
+xam.xex,0x260,XamContentSetThumbnail,function,1,content/storage/save,implemented,Implemented
+xam.xex,0x24E,XamCreateEnumeratorHandle,function,8,achievements/XLive msg,implemented,Stub
+xam.xex,0x250,XamEnumerate,function,3,achievements/XLive msg,implemented,Implemented
+xam.xex,0x1EC,XamFree,function,24,memory/VM,implemented,Implemented
+xam.xex,0x280,XamGetExecutionId,function,1,module/loader,implemented,Implemented
+xam.xex,0x24F,XamGetPrivateEnumStructureFromHandle,function,8,achievements/XLive msg,implemented,Stub
+xam.xex,0x282,XamGetSystemVersion,function,7,config/system info,implemented,Stub
+xam.xex,0x190,XamInputGetCapabilities,function,2,input,implemented,Sketchy
+xam.xex,0x198,XamInputGetKeystrokeEx,function,2,input,implemented,Implemented
+xam.xex,0x191,XamInputGetState,function,2,input,implemented,HighFrequency
+xam.xex,0x192,XamInputSetState,function,2,input,implemented,Implemented
+xam.xex,0x1A4,XamLoaderLaunchTitle,function,1,module/loader,implemented,Sketchy
+xam.xex,0x1A9,XamLoaderTerminateTitle,function,2,module/loader,implemented,Sketchy
+xam.xex,0x28A,XamNotifyCreateListener,function,1,achievements/XLive msg,implemented,Implemented
+xam.xex,0x30A,XamParseGamerTileKey,function,1,profile/user,implemented,Stub
+xam.xex,0x2F6,XamReadString,function,1,profile/user,stub,ABSENT
+xam.xex,0x2F5,XamReadTileToTexture,function,3,profile/user,implemented,Stub
+xam.xex,0x316,XamSessionCreateHandle,function,1,achievements/XLive msg,implemented,Stub
+xam.xex,0x317,XamSessionRefObjByHandle,function,12,achievements/XLive msg,implemented,Stub
+xam.xex,0x2C5,XamShowAchievementsUI,function,1,system UI,stub,ABSENT
+xam.xex,0x2CB,XamShowDeviceSelectorUI,function,1,system UI,implemented,Implemented
+xam.xex,0x2D9,XamShowDirtyDiscErrorUI,function,1,system UI,implemented,Implemented
+xam.xex,0x2CE,XamShowFriendRequestUI,function,1,system UI,stub,ABSENT
+xam.xex,0x2BF,XamShowFriendsUI,function,1,system UI,stub,ABSENT
+xam.xex,0x2CD,XamShowGameInviteUI,function,1,system UI,stub,ABSENT
+xam.xex,0x2D5,XamShowGamerCardUIForXUID,function,1,system UI,stub,ABSENT
+xam.xex,0x2C1,XamShowKeyboardUI,function,1,system UI,implemented,Implemented
+xam.xex,0x2C7,XamShowMarketplaceUI,function,2,system UI,stub,ABSENT
+xam.xex,0x2CA,XamShowMessageBoxUI,function,1,system UI,implemented,Implemented
+xam.xex,0x2DC,XamShowMessageBoxUIEx,function,1,system UI,implemented,ABSENT
+xam.xex,0x2CC,XamShowMessageComposeUI,function,1,system UI,stub,ABSENT
+xam.xex,0x2C0,XamShowMessagesUI,function,1,system UI,stub,ABSENT
+xam.xex,0x2C6,XamShowPlayerReviewUI,function,1,system UI,stub,ABSENT
+xam.xex,0x2C8,XamShowPlayersUI,function,1,system UI,stub,ABSENT
+xam.xex,0x2C2,XamShowQuickChatUI,function,1,system UI,stub,ABSENT
+xam.xex,0x2BC,XamShowSigninUI,function,1,system UI,implemented,Stub
+xam.xex,0x2BE,XamShowSigninUIp,function,1,system UI,stub,ABSENT
+xam.xex,0x2C3,XamShowVoiceMailUI,function,1,system UI,stub,ABSENT
+xam.xex,0x1B1,XamTaskCloseHandle,function,1,achievements/XLive msg,implemented,ABSENT
+xam.xex,0x1AF,XamTaskSchedule,function,1,achievements/XLive msg,implemented,Sketchy
+xam.xex,0x1B3,XamTaskShouldExit,function,1,achievements/XLive msg,implemented,Sketchy
+xam.xex,0x213,XamUserAreUsersFriends,function,1,profile/user,implemented,Stub
+xam.xex,0x212,XamUserCheckPrivilege,function,2,profile/user,implemented,Stub
+xam.xex,0x2EE,XamUserCreateAchievementEnumerator,function,1,profile/user,implemented,Sketchy
+xam.xex,0x2F7,XamUserCreateStatsEnumerator,function,3,profile/user,stub,ABSENT
+xam.xex,0x217,XamUserGetMembershipTierFromXUID,function,2,profile/user,stub,ABSENT
+xam.xex,0x20E,XamUserGetName,function,1,profile/user,implemented,Implemented
+xam.xex,0x218,XamUserGetOnlineCountryFromXUID,function,2,profile/user,stub,ABSENT
+xam.xex,0x227,XamUserGetSigninInfo,function,1,profile/user,implemented,Implemented
+xam.xex,0x210,XamUserGetSigninState,function,3,profile/user,implemented,HighFrequency
+xam.xex,0x20A,XamUserGetXUID,function,8,profile/user,implemented,Implemented
+xam.xex,0x219,XamUserReadProfileSettings,function,2,profile/user,implemented,Implemented
+xam.xex,0x21A,XamUserWriteProfileSettings,function,1,profile/user,implemented,Implemented
+xam.xex,0x2F0,XamWriteGamerTile,function,1,profile/user,implemented,Stub
+xboxkrnl.exe,0x001,DbgBreakPoint,function,1,exceptions/debug,implemented,Important
+xboxkrnl.exe,0x003,DbgPrint,function,6,exceptions/debug,implemented,ABSENT
+xboxkrnl.exe,0x009,ExAllocatePool,function,1,memory/VM,implemented,Implemented
+xboxkrnl.exe,0x00B,ExAllocatePoolTypeWithTag,function,2,memory/VM,implemented,Implemented
+xboxkrnl.exe,0x00D,ExCreateThread,function,2,threading/sync,implemented,Implemented
+xboxkrnl.exe,0x00E,ExEventObjectType,variable,,threading/sync,variable(patched by loader),variable
+xboxkrnl.exe,0x00F,ExFreePool,function,5,memory/VM,implemented,Implemented
+xboxkrnl.exe,0x010,ExGetXConfigSetting,function,20,config/system info,implemented,Implemented
+xboxkrnl.exe,0x1AE,ExLoadedCommandLine,variable,,module/loader,variable(patched by loader),variable
+xboxkrnl.exe,0x015,ExRegisterTitleTerminateNotification,function,12,config/system info,implemented,Implemented
+xboxkrnl.exe,0x017,ExSemaphoreObjectType,variable,,threading/sync,variable(patched by loader),variable
+xboxkrnl.exe,0x019,ExTerminateThread,function,2,threading/sync,implemented,Implemented
+xboxkrnl.exe,0x01B,ExThreadObjectType,variable,,threading/sync,variable(patched by loader),variable
+xboxkrnl.exe,0x01C,ExTimerObjectType,variable,,threading/sync,variable(patched by loader),variable
+xboxkrnl.exe,0x020,FscGetCacheElementCount,function,1,filesystem/io,implemented,Stub
+xboxkrnl.exe,0x021,FscSetCacheElementCount,function,1,filesystem/io,implemented,Stub
+xboxkrnl.exe,0x028,HalReturnToFirmware,function,1,config/system info,implemented,Important
+xboxkrnl.exe,0x034,IoCheckShareAccess,function,2,filesystem/io,stub,ABSENT
+xboxkrnl.exe,0x035,IoCompleteRequest,function,11,filesystem/io,stub,ABSENT
+xboxkrnl.exe,0x037,IoCreateDevice,function,1,filesystem/io,implemented,Stub
+xboxkrnl.exe,0x039,IoDeleteDevice,function,1,filesystem/io,stub,ABSENT
+xboxkrnl.exe,0x03B,IoDismountVolume,function,3,filesystem/io,stub,ABSENT
+xboxkrnl.exe,0x03C,IoDismountVolumeByFileHandle,function,1,filesystem/io,implemented,ABSENT
+xboxkrnl.exe,0x041,IoInvalidDeviceRequest,function,0,filesystem/io,stub,ABSENT
+xboxkrnl.exe,0x045,IoRemoveShareAccess,function,2,filesystem/io,stub,ABSENT
+xboxkrnl.exe,0x047,IoSetShareAccess,function,3,filesystem/io,stub,ABSENT
+xboxkrnl.exe,0x04D,KeAcquireSpinLockAtRaisedIrql,function,1,threading/sync,implemented,HighFrequency
+xboxkrnl.exe,0x052,KeBugCheck,function,13,exceptions/debug,implemented,Important
+xboxkrnl.exe,0x053,KeBugCheckEx,function,10,exceptions/debug,implemented,Important
+xboxkrnl.exe,0x266,KeCertMonitorData,variable,,exceptions/debug,variable(patched by loader),variable
+xboxkrnl.exe,0x059,KeDebugMonitorData,variable,,exceptions/debug,variable(patched by loader),variable
+xboxkrnl.exe,0x05A,KeDelayExecutionThread,function,1,threading/sync,implemented,HighFrequency
+xboxkrnl.exe,0x05D,KeEnableFpuExceptions,function,1,exceptions/debug,implemented,Stub
+xboxkrnl.exe,0x05F,KeEnterCriticalRegion,function,8,threading/sync,implemented,HighFrequency
+xboxkrnl.exe,0x066,KeGetCurrentProcessType,function,103,threading/sync,implemented,HighFrequency
+xboxkrnl.exe,0x06F,KeInitializeDpc,function,1,threading/sync,implemented,Sketchy
+xboxkrnl.exe,0x07B,KeInsertQueueDpc,function,8,threading/sync,implemented,Sketchy
+xboxkrnl.exe,0x07D,KeLeaveCriticalRegion,function,8,threading/sync,implemented,HighFrequency
+xboxkrnl.exe,0x06B,KeLockL2,function,1,threading/sync,implemented,Stub
+xboxkrnl.exe,0x081,KeQueryBasePriorityThread,function,1,threading/sync,implemented,Implemented
+xboxkrnl.exe,0x083,KeQueryPerformanceFrequency,function,5,timing,implemented,HighFrequency
+xboxkrnl.exe,0x084,KeQuerySystemTime,function,7,timing,implemented,Implemented
+xboxkrnl.exe,0x089,KeReleaseSpinLockFromRaisedIrql,function,1,threading/sync,implemented,HighFrequency
+xboxkrnl.exe,0x08F,KeResetEvent,function,5,threading/sync,implemented,Implemented
+xboxkrnl.exe,0x097,KeSetAffinityThread,function,1,threading/sync,implemented,Implemented
+xboxkrnl.exe,0x099,KeSetBasePriorityThread,function,3,threading/sync,implemented,Implemented
+xboxkrnl.exe,0x09A,KeSetCurrentProcessType,function,2,threading/sync,implemented,Implemented
+xboxkrnl.exe,0x09C,KeSetDisableBoostThread,function,1,threading/sync,implemented,Implemented
+xboxkrnl.exe,0x09D,KeSetEvent,function,26,threading/sync,implemented,HighFrequency
+xboxkrnl.exe,0x0AD,KeTimeStampBundle,variable,,timing,variable(patched by loader),variable
+xboxkrnl.exe,0x152,KeTlsAlloc,function,3,threading/sync,implemented,Implemented
+xboxkrnl.exe,0x153,KeTlsFree,function,2,threading/sync,implemented,Implemented
+xboxkrnl.exe,0x154,KeTlsGetValue,function,19,threading/sync,implemented,HighFrequency
+xboxkrnl.exe,0x155,KeTlsSetValue,function,11,threading/sync,implemented,Implemented
+xboxkrnl.exe,0x06C,KeUnlockL2,function,2,threading/sync,implemented,Stub
+xboxkrnl.exe,0x0AF,KeWaitForMultipleObjects,function,4,threading/sync,implemented,HighFrequency
+xboxkrnl.exe,0x0B0,KeWaitForSingleObject,function,10,threading/sync,implemented,HighFrequency
+xboxkrnl.exe,0x0B1,KfAcquireSpinLock,function,9,threading/sync,implemented,HighFrequency
+xboxkrnl.exe,0x0B4,KfReleaseSpinLock,function,9,threading/sync,implemented,HighFrequency
+xboxkrnl.exe,0x1DF,KiApcNormalRoutineNop,function,1,threading/sync,implemented,Stub
+xboxkrnl.exe,0x0BA,MmAllocatePhysicalMemoryEx,function,4,memory/VM,implemented,Implemented
+xboxkrnl.exe,0x0BD,MmFreePhysicalMemory,function,6,memory/VM,implemented,Implemented
+xboxkrnl.exe,0x0BE,MmGetPhysicalAddress,function,12,memory/VM,implemented,Implemented
+xboxkrnl.exe,0x0C2,MmMapIoSpace,function,1,memory/VM,implemented,Implemented
+xboxkrnl.exe,0x0C4,MmQueryAddressProtect,function,6,memory/VM,implemented,HighFrequency
+xboxkrnl.exe,0x0C5,MmQueryAllocationSize,function,1,memory/VM,implemented,Implemented
+xboxkrnl.exe,0x0C6,MmQueryStatistics,function,1,memory/VM,implemented,Implemented
+xboxkrnl.exe,0x0C7,MmSetAddressProtect,function,1,memory/VM,implemented,Implemented
+xboxkrnl.exe,0x0CC,NtAllocateVirtualMemory,function,15,memory/VM,implemented,Implemented
+xboxkrnl.exe,0x0CE,NtClearEvent,function,1,threading/sync,implemented,HighFrequency
+xboxkrnl.exe,0x0CF,NtClose,function,28,object manager,implemented,Implemented
+xboxkrnl.exe,0x0D1,NtCreateEvent,function,3,threading/sync,implemented,Implemented
+xboxkrnl.exe,0x0D2,NtCreateFile,function,7,filesystem/io,implemented,Implemented
+xboxkrnl.exe,0x0D4,NtCreateMutant,function,1,threading/sync,implemented,Implemented
+xboxkrnl.exe,0x0D5,NtCreateSemaphore,function,1,threading/sync,implemented,Implemented
+xboxkrnl.exe,0x0D9,NtDeviceIoControlFile,function,2,filesystem/io,implemented,Stub
+xboxkrnl.exe,0x0DA,NtDuplicateObject,function,1,threading/sync,implemented,Implemented
+xboxkrnl.exe,0x0DB,NtFlushBuffersFile,function,2,filesystem/io,implemented,Stub
+xboxkrnl.exe,0x0DC,NtFreeVirtualMemory,function,15,memory/VM,implemented,Implemented
+xboxkrnl.exe,0x0DF,NtOpenFile,function,13,filesystem/io,implemented,Implemented
+xboxkrnl.exe,0x0E1,NtProtectVirtualMemory,function,2,memory/VM,implemented,Implemented
+xboxkrnl.exe,0x0E2,NtPulseEvent,function,1,threading/sync,implemented,HighFrequency
+xboxkrnl.exe,0x0E4,NtQueryDirectoryFile,function,0,filesystem/io,implemented,Implemented
+xboxkrnl.exe,0x0E7,NtQueryFullAttributesFile,function,1,filesystem/io,implemented,Implemented
+xboxkrnl.exe,0x0E8,NtQueryInformationFile,function,2,filesystem/io,implemented,Implemented
+xboxkrnl.exe,0x0EE,NtQueryVirtualMemory,function,4,memory/VM,implemented,Implemented
+xboxkrnl.exe,0x0EF,NtQueryVolumeInformationFile,function,9,filesystem/io,implemented,Implemented
+xboxkrnl.exe,0x0E3,NtQueueApcThread,function,1,threading/sync,implemented,Implemented
+xboxkrnl.exe,0x0F0,NtReadFile,function,3,filesystem/io,implemented,HighFrequency
+xboxkrnl.exe,0x0F1,NtReadFileScatter,function,0,filesystem/io,implemented,Implemented
+xboxkrnl.exe,0x0F2,NtReleaseMutant,function,1,threading/sync,implemented,Implemented
+xboxkrnl.exe,0x0F3,NtReleaseSemaphore,function,1,threading/sync,implemented,HighFrequency
+xboxkrnl.exe,0x0F5,NtResumeThread,function,1,threading/sync,implemented,Implemented
+xboxkrnl.exe,0x0F6,NtSetEvent,function,1,threading/sync,implemented,HighFrequency
+xboxkrnl.exe,0x0F7,NtSetInformationFile,function,11,filesystem/io,implemented,HighFrequency
+xboxkrnl.exe,0x0FB,NtSignalAndWaitForSingleObjectEx,function,1,threading/sync,implemented,HighFrequency
+xboxkrnl.exe,0x0FC,NtSuspendThread,function,1,threading/sync,implemented,Implemented
+xboxkrnl.exe,0x0FE,NtWaitForMultipleObjectsEx,function,1,threading/sync,implemented,HighFrequency
+xboxkrnl.exe,0x0FD,NtWaitForSingleObjectEx,function,6,threading/sync,implemented,HighFrequency
+xboxkrnl.exe,0x0FF,NtWriteFile,function,10,filesystem/io,implemented,Implemented
+xboxkrnl.exe,0x100,NtWriteFileGather,function,1,filesystem/io,stub,ABSENT
+xboxkrnl.exe,0x101,NtYieldExecution,function,1,threading/sync,implemented,HighFrequency
+xboxkrnl.exe,0x103,ObCreateSymbolicLink,function,2,filesystem/io,implemented,Implemented
+xboxkrnl.exe,0x104,ObDeleteSymbolicLink,function,5,filesystem/io,implemented,Implemented
+xboxkrnl.exe,0x105,ObDereferenceObject,function,33,object manager,implemented,Implemented
+xboxkrnl.exe,0x109,ObIsTitleObject,function,2,object manager,stub,ABSENT
+xboxkrnl.exe,0x10B,ObLookupThreadByThreadId,function,1,threading/sync,implemented,Implemented
+xboxkrnl.exe,0x10D,ObOpenObjectByName,function,3,object manager,implemented,Implemented
+xboxkrnl.exe,0x10E,ObOpenObjectByPointer,function,1,object manager,implemented,Implemented
+xboxkrnl.exe,0x10F,ObReferenceObject,function,1,object manager,stub,ABSENT
+xboxkrnl.exe,0x110,ObReferenceObjectByHandle,function,9,object manager,implemented,Implemented
+xboxkrnl.exe,0x119,RtlCaptureContext,function,1,exceptions/debug,implemented,ABSENT
+xboxkrnl.exe,0x11A,RtlCompareMemory,function,1,CRT/string,implemented,Implemented
+xboxkrnl.exe,0x11B,RtlCompareMemoryUlong,function,10,CRT/string,implemented,Implemented
+xboxkrnl.exe,0x11D,RtlCompareStringN,function,2,CRT/string,implemented,Implemented
+xboxkrnl.exe,0x125,RtlEnterCriticalSection,function,426,threading/sync,implemented,HighFrequency
+xboxkrnl.exe,0x126,RtlFillMemoryUlong,function,2,CRT/string,implemented,Implemented
+xboxkrnl.exe,0x127,RtlFreeAnsiString,function,1,CRT/string,implemented,Implemented
+xboxkrnl.exe,0x12B,RtlImageXexHeaderField,function,2,module/loader,implemented,Implemented
+xboxkrnl.exe,0x12C,RtlInitAnsiString,function,35,CRT/string,implemented,Implemented
+xboxkrnl.exe,0x12D,RtlInitUnicodeString,function,1,CRT/string,implemented,Implemented
+xboxkrnl.exe,0x12E,RtlInitializeCriticalSection,function,23,threading/sync,implemented,Implemented
+xboxkrnl.exe,0x12F,RtlInitializeCriticalSectionAndSpinCount,function,2,threading/sync,implemented,Implemented
+xboxkrnl.exe,0x130,RtlLeaveCriticalSection,function,498,threading/sync,implemented,HighFrequency
+xboxkrnl.exe,0x133,RtlMultiByteToUnicodeN,function,1,CRT/string,implemented,Sketchy
+xboxkrnl.exe,0x135,RtlNtStatusToDosError,function,7,CRT/string,implemented,LogResult
+xboxkrnl.exe,0x136,RtlRaiseException,function,5,exceptions/debug,implemented,Important
+xboxkrnl.exe,0x13F,RtlTimeFieldsToTime,function,6,timing,implemented,Implemented
+xboxkrnl.exe,0x140,RtlTimeToTimeFields,function,5,timing,implemented,Implemented
+xboxkrnl.exe,0x141,RtlTryEnterCriticalSection,function,6,threading/sync,implemented,HighFrequency
+xboxkrnl.exe,0x142,RtlUnicodeStringToAnsiString,function,1,CRT/string,implemented,Implemented
+xboxkrnl.exe,0x143,RtlUnicodeToMultiByteN,function,2,CRT/string,implemented,Sketchy
+xboxkrnl.exe,0x147,RtlUnwind,function,3,exceptions/debug,implemented,ABSENT
+xboxkrnl.exe,0x149,RtlUpcaseUnicodeChar,function,2,CRT/string,stub,ABSENT
+xboxkrnl.exe,0x25A,StfsControlDevice,function,0,filesystem/io,implemented,ABSENT
+xboxkrnl.exe,0x259,StfsCreateDevice,function,0,filesystem/io,implemented,ABSENT
+xboxkrnl.exe,0x1B1,VdCallGraphicsNotificationRoutines,function,3,graphics/display,implemented,Sketchy
+xboxkrnl.exe,0x1B4,VdEnableDisableClockGating,function,1,graphics/display,implemented,Stub
+xboxkrnl.exe,0x1B6,VdEnableRingBufferRPtrWriteBack,function,1,graphics/display,implemented,Implemented
+xboxkrnl.exe,0x1B9,VdGetCurrentDisplayGamma,function,1,graphics/display,implemented,Stub
+xboxkrnl.exe,0x1BA,VdGetCurrentDisplayInformation,function,3,graphics/display,implemented,Stub
+xboxkrnl.exe,0x1BD,VdGetSystemCommandBuffer,function,1,graphics/display,implemented,Stub
+xboxkrnl.exe,0x1BE,VdGlobalDevice,variable,,graphics/display,variable(patched by loader),variable
+xboxkrnl.exe,0x1BF,VdGlobalXamDevice,variable,,graphics/display,variable(patched by loader),variable
+xboxkrnl.exe,0x1C0,VdGpuClockInMHz,variable,,graphics/display,variable(patched by loader),variable
+xboxkrnl.exe,0x1C1,VdHSIOCalibrationLock,variable,,graphics/display,variable(patched by loader),variable
+xboxkrnl.exe,0x1C2,VdInitializeEngines,function,1,graphics/display,implemented,Stub
+xboxkrnl.exe,0x1C3,VdInitializeRingBuffer,function,1,graphics/display,implemented,Implemented
+xboxkrnl.exe,0x1C5,VdInitializeScalerCommandBuffer,function,1,graphics/display,implemented,Sketchy
+xboxkrnl.exe,0x1C6,VdIsHSIOTrainingSucceeded,function,1,graphics/display,implemented,Stub
+xboxkrnl.exe,0x1C7,VdPersistDisplay,function,1,graphics/display,implemented,Sketchy
+xboxkrnl.exe,0x1C8,VdQuerySystemCommandBuffer,function,1,graphics/display,stub,ABSENT
+xboxkrnl.exe,0x1C9,VdQueryVideoFlags,function,1,graphics/display,implemented,Stub
+xboxkrnl.exe,0x1CA,VdQueryVideoMode,function,4,graphics/display,implemented,Stub
+xboxkrnl.exe,0x269,VdRetrainEDRAM,function,2,graphics/display,implemented,Stub
+xboxkrnl.exe,0x26A,VdRetrainEDRAMWorker,function,1,graphics/display,implemented,Stub
+xboxkrnl.exe,0x1D3,VdSetDisplayMode,function,1,graphics/display,implemented,Stub
+xboxkrnl.exe,0x1D4,VdSetDisplayModeOverride,function,2,graphics/display,implemented,Stub
+xboxkrnl.exe,0x1D5,VdSetGraphicsInterruptCallback,function,2,graphics/display,implemented,Implemented
+xboxkrnl.exe,0x1D8,VdSetSystemCommandBuffer,function,1,graphics/display,stub,ABSENT
+xboxkrnl.exe,0x1D9,VdSetSystemCommandBufferGpuIdentifierAddress,function,3,graphics/display,implemented,Stub
+xboxkrnl.exe,0x1DC,VdShutdownEngines,function,2,graphics/display,implemented,Stub
+xboxkrnl.exe,0x25B,VdSwap,function,1,graphics/display,implemented,Important
+xboxkrnl.exe,0x1FF,XAudioGetSpeakerConfig,function,1,audio,implemented,Implemented
+xboxkrnl.exe,0x1F8,XAudioGetVoiceCategoryVolume,function,1,audio,implemented,HighFrequency
+xboxkrnl.exe,0x1F3,XAudioRegisterRenderDriverClient,function,1,audio,implemented,Implemented
+xboxkrnl.exe,0x1F5,XAudioSubmitRenderDriverFrame,function,1,audio,implemented,HighFrequency
+xboxkrnl.exe,0x1F4,XAudioUnregisterRenderDriverClient,function,1,audio,implemented,Implemented
+xboxkrnl.exe,0x224,XMACreateContext,function,1,audio,implemented,HighFrequency
+xboxkrnl.exe,0x226,XMAReleaseContext,function,1,audio,implemented,HighFrequency
+xboxkrnl.exe,0x156,XboxHardwareInfo,variable,,config/system info,variable(patched by loader),variable
+xboxkrnl.exe,0x158,XboxKrnlVersion,variable,,config/system info,variable(patched by loader),variable
+xboxkrnl.exe,0x192,XeCryptSha,function,7,crypto/keys,implemented,Implemented
+xboxkrnl.exe,0x256,XeKeysConsolePrivateKeySign,function,1,crypto/keys,implemented,ABSENT
+xboxkrnl.exe,0x257,XeKeysConsoleSignatureVerification,function,1,crypto/keys,implemented,ABSENT
+xboxkrnl.exe,0x194,XexCheckExecutablePrivilege,function,6,module/loader,implemented,Implemented
+xboxkrnl.exe,0x193,XexExecutableModuleHandle,variable,,module/loader,variable(patched by loader),variable
+xboxkrnl.exe,0x195,XexGetModuleHandle,function,2,module/loader,implemented,Implemented
+xboxkrnl.exe,0x196,XexGetModuleSection,function,1,module/loader,implemented,Implemented
+xboxkrnl.exe,0x197,XexGetProcedureAddress,function,3,module/loader,implemented,Implemented
+xboxkrnl.exe,0x199,XexLoadImage,function,3,module/loader,implemented,Implemented
+xboxkrnl.exe,0x1A1,XexUnloadImage,function,1,module/loader,implemented,Implemented
+xboxkrnl.exe,0x1A2,XexUnloadImageAndExitThread,function,1,module/loader,stub,ABSENT
+xboxkrnl.exe,0x1A5,__C_specific_handler,function,0,exceptions/debug,implemented,ABSENT
+xboxkrnl.exe,0x13A,_snprintf,function,11,CRT/string,implemented,ABSENT
+xboxkrnl.exe,0x14D,_vsnprintf,function,6,CRT/string,implemented,ABSENT
+xboxkrnl.exe,0x13B,sprintf,function,9,CRT/string,implemented,ABSENT
+xboxkrnl.exe,0x14E,vsprintf,function,1,CRT/string,implemented,ABSENT

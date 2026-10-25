@@ -1,0 +1,20 @@
+# M23 addendum: eight explicit private frames 0.75 s apart with the player standing still (no input), for a
+# before / after comparison of the two-layer surface option. Tail for m23_trace_entry.py (after a save load) or
+# a whole step file for an isolated level run. Eight is the per-process frame limit.
+wait 75
+frame f1
+wait 0.75
+frame f2
+wait 0.75
+frame f3
+wait 0.75
+frame f4
+wait 0.75
+frame f5
+wait 0.75
+frame f6
+wait 0.75
+frame f7
+wait 0.75
+frame f8
+wait 4

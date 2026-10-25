@@ -1,0 +1,25 @@
+# Milestone 1 experiment E-10/E-11: XenonRecomp (ddd128b) cross-check config.
+# Copied to private/work/xenon/ by the experiment; paths are relative to that location.
+# Helper addresses VERIFIED by byte pattern (tools/pe_analyze.py) and independently by ReXGlue.
+[main]
+file_path = "../../extracted/5841123F/Default.xex"
+out_directory_path = "ppc"
+switch_table_file_path = "switch_tables.toml"
+
+skip_lr = false
+skip_msr = false
+ctr_as_local = false
+xer_as_local = false
+reserved_as_local = false
+cr_as_local = false
+non_argument_as_local = false
+non_volatile_as_local = false
+
+restgprlr_14_address = 0x820E73E0
+savegprlr_14_address = 0x820E7390
+restfpr_14_address = 0x826BA92C
+savefpr_14_address = 0x826BA8E0
+restvmx_14_address = 0x826BFF18
+savevmx_14_address = 0x826BFC80
+restvmx_64_address = 0x826BFFAC
+savevmx_64_address = 0x826BFD14

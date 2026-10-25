@@ -1,0 +1,23 @@
+# M18 (D-047): guest-title compatibility hooks. Kept apart from r3hd_wait.toml (host scheduling only): an entry
+# here may change what the title does, so each one names the title defect it corrects, has a switch that restores
+# the original behaviour, and has a regression. Host code: tools/m2_host/m2_trace.cpp, tools/m18_revisit.h.
+
+# Revisit mode. 0x82102E3C is the block in the level request function 0x82102CA8 that replaces a request for a
+# world's first level by "endgame" and clears the revisit flag; it is reached only with the flag set, the
+# one-shot word clear and a matching name. The hook returns true when the request must not be replaced (it has
+# then left the name to request in the function's buffer at r1 + 0x80); 0x82102E58 is where the function
+# continues after the block. R3HD_REVISIT=original: the hook always returns false.
+[[midasm_hook]]
+address = 0x82102E3C
+name = "M18RevisitRedirect"
+registers = ["r1"]
+jump_address_on_true = 0x82102E58
+
+# Test-only trigger (hidden runs with R3HD_TEST_WORLD_END=1; play.ps1 clears the variable): 0x82102CC4 is in
+# the prologue of the same function, before the name in r3 is first used. In revisit mode a request for the
+# revisited world's own first level (the menu's Revisit chosen again) is turned into the request the world's
+# last level makes: r3 is pointed at the next world's name in the title's own table. No guest memory is written.
+[[midasm_hook]]
+address = 0x82102CC4
+name = "M18TestWorldEnd"
+registers = ["r3"]

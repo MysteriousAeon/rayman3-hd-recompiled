@@ -1,0 +1,28 @@
+# Title -> Help & Options -> B -> Help & Options -> Back. Which pad button leaves a submenu?
+log VIDEOS\ubi.bik result=00000000
+log menumap\menumap.lvl result=00000000
+wait 10
+press 40
+wait 12
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 1.5
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 2
+frame main_options_selected
+press 44
+wait 6
+frame submenu
+press 52
+wait 6
+frame after_b
+press 44
+wait 6
+frame submenu_again
+press 43
+wait 6
+frame after_back
+wait 3

@@ -1,0 +1,7 @@
+# M34: step tail after the M12 load of the intro_10_fresh entry: the level starts with Murfy's tutorial box ("steer
+# towards the red lums", handle en.471), shown at about 6 s and again at about 32 s (E-174 discovery run).
+wait 6
+frame tutorial_first
+wait 26
+frame tutorial_again
+wait 3

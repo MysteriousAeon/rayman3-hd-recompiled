@@ -1,0 +1,7 @@
+# M14 knaar_69: photo mode. The left trigger opens it (the world freezes, the director actor enters its help
+# behaviour), B returns to the game; afterwards the hoodlum must carry on and hit the idle player.
+wait 15
+press 20 0.3
+wait 3
+press 52
+wait 25

@@ -1,0 +1,2 @@
+# M14: no input; observe enemies acting on an idle player.
+wait 60

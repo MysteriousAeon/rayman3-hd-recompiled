@@ -1,0 +1,55 @@
+# M18: the request that ends a revisited world, on a working copy of the wood_11 save. Same entry into
+#   revisit mode as enter_return.txt; then Start -> LT x3 (The Fairy Council) -> A (Revisit) -> left + A.
+#   With R3HD_TEST_WORLD_END=1 (hidden runs only) that second Revisit reaches the title as the request for the
+#   next world's first level, which is what the world's last level asks for. Without the variable it simply
+#   restarts Intro_10.
+# Regression: python tools/m18_revisit_check.py TAG world_end_fixed world_end_original
+log VIDEOS\ubi.bik result=00000000
+log menumap\menumap.lvl result=00000000
+wait 10
+press 40
+wait 12
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 2
+press 44
+wait 8
+press 44
+log wood_11\wood_11.lvl result=00000000 60
+wait 35
+press 40
+wait 3
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 44
+wait 2
+axis 300 -32767
+wait 0.3
+axis 300 0
+wait 1.2
+press 44
+wait 2
+log intro_10\intro_10.lvl result=00000000 40
+wait 20
+press 40
+wait 3
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 44
+wait 2
+axis 300 -32767
+wait 0.3
+axis 300 0
+wait 1.2
+press 44
+wait 2
+wait 30

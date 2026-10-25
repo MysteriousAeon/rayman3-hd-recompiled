@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "note": "Frozen 1.0.0 record, checked by tools/r3hd_turkish_release.py. The 1.0.1 package that setup 1.0.1 bundles is recorded in release-1.0.1.json.",
+  "id": "tr.full.dev",
+  "name": "Türkçe",
+  "version": "1.0.0",
+  "file": "rayman3hd-turkish-1.0.0.zip",
+  "bytes": 81307,
+  "sha256": "5f7c609295936dd5a14df789995d4e51d11cfc5c8f66952809fd8b1b8641aa68",
+  "manifest_sha256": "dbd526d6bd7b32dc1fb96706f8884ddc4250821d6741f0f192605077f3bf7945",
+  "target": {
+    "title_id": "5841123F",
+    "releases": ["x360-xbla-5841123F-v1"],
+    "min_port_version": "0.36.0"
+  },
+  "overrides": {"glyph": 6, "text": 1051, "subtitle": 69},
+  "source_sha256": "39b220e75e7c38ea04500ec17acaee57511fbba49fe0ec9b3475f2a6b015ae2f",
+  "publication": "not published; translation licensing, credits and redistribution review pending",
+  "license": "not assigned; excluded from project MIT license"
+}

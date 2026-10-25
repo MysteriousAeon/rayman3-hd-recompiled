@@ -1,0 +1,7 @@
+# M23: the "press START" title screen, no input: one explicit private frame; with R3HD_M22_DRAW_TRACE=1 the
+# guest frame after it is traced (the two draws whose texture fetch constant has type 0, D-031 / D-052).
+log VIDEOS\ubi.bik result=00000000
+log menumap\menumap.lvl result=00000000
+wait 12
+frame title
+wait 4

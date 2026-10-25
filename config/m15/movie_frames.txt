@@ -1,0 +1,19 @@
+# M15: seven explicit private frames of the start-up movie, 0.7 s apart, to compare the video path between
+# --resolution_scale=1 and 2 at matching movie positions. python tools/m9_license_run.py RUN
+#   config/m15/movie_frames.txt --license-mask 1 --seconds 60 --play
+log VIDEOS\ubi.bik result=00000000
+wait 2
+frame m1
+wait 0.7
+frame m2
+wait 0.7
+frame m3
+wait 0.7
+frame m4
+wait 0.7
+frame m5
+wait 0.7
+frame m6
+wait 0.7
+frame m7
+wait 2
