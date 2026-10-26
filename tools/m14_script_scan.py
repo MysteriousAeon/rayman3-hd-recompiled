@@ -10,8 +10,11 @@ actor, the model, position, current behaviours and every designer variable of ty
 string through the title's own text tables. The run is then cancelled. No guest memory is written and no input
 is sent.
 
-Output is game-derived and stays private: private/work/m14/scan/<level>/ (decoded scripts, actors.json).
-tools/m14_transition_graph.py turns it into the metadata-only transition table.
+Output is game-derived and stays private: private/work/m14/scan_v2/<level>/ (decoded scripts, actors.json).
+Since D-113 the script probe writes format 2 (numeric node and designer-variable types, no Raymap names, with the
+labels of D-113 step 2 that the title's interpreter establishes); a text handle is a designer variable of type 21
+(E-270). The format-1 scans in private/work/m14/scan/ are kept as recorded evidence and are never overwritten;
+tools/m14_transition_graph.py and tools/r3hd_lqa.py read either (--scan / --scans).
 """
 import argparse
 import json
@@ -31,6 +34,8 @@ GAMEDATA = ROOT / "private" / "extracted" / "5841123F" / "GAMEDATAbin"
 # Text handles (RE_NOTES "M14"): the resolver 82133348 reads handles below 0x4E20 from the language table and
 # the others from a second table, both reached through the block at 82BCE1A0.
 TEXT_BLOCK, ENGINE_BLOCK, TEXT_SPLIT = 0x82BCE1A0, 0x82C06220, 0x4E20
+# Designer-variable type number of a text handle in the probe's format 2 (reader 822680D0, tag 0x24; E-270).
+TEXT_DSGVAR_TYPE = 21
 
 
 def level_names() -> list:
@@ -72,7 +77,7 @@ def misc_texts(process: Process) -> dict:
 def scan(tag: str, level: str, settle: int) -> dict:
     run_name = f"m14_{tag}_{level}"
     run_dir = RUNS / run_name
-    out = WORK / "scan" / level
+    out = WORK / "scan_v2" / level
     if run_dir.exists():
         raise SystemExit(f"run directory exists: {run_name}")
     out.mkdir(parents=True, exist_ok=True)
@@ -116,7 +121,7 @@ def scan(tag: str, level: str, settle: int) -> dict:
             process = Process(pid, int(base, 16))
             texts = {}
             for path in scripts.glob("*.txt"):
-                for m in re.finditer(r"^dsgvar (\d+) Text ([0-9a-f]{8})", path.read_text(errors="replace"), re.M):
+                for m in re.finditer(rf"^dsgvar (\d+) t{TEXT_DSGVAR_TYPE} ([0-9a-f]{{8}})", path.read_text(errors="replace"), re.M):
                     handle = int(m.group(2), 16)
                     texts.setdefault(path.stem.rsplit("_", 1)[-1], {})[m.group(1)] = {
                         "handle": f"{handle:08X}", "text": text_of(process, handle)}

@@ -216,15 +216,25 @@ def mod_texts(mod: dict, rows: list) -> tuple:
 def load_script_refs(scans: Path) -> dict:
     """{en.N: sorted levels} of every text handle below 0x4E20 (= language-table index, RE_NOTES "M14") that a
     level's decoded scripts (TextRef constants) or its actors' Text designer variables name, from the private M14
-    scans (`m14_script_scan.py --all`). Empty when the scans are absent."""
+    scans (`m14_script_scan.py --all`). Empty when the scans are absent. A text constant is `TextRef:` in the
+    recorded format-1 scans (node names printed from Raymap's tables at the time; nothing here reads Raymap) and node
+    type 1C in a format-2 scan with the D-113-2 labels (E-270); a format-2 scan without them is refused."""
     refs = {}
     if not scans or not Path(scans).is_dir():
         return refs
     tr = re.compile(r"TextRef:([0-9A-Fa-f]{8})")
+    tr2 = re.compile(r"^ *k1C:([0-9A-F]{8})", re.M)
     for d in sorted(p for p in Path(scans).iterdir() if p.is_dir()):
         found = set()
         for f in sorted((d / "scripts").glob("*.txt")):
-            found.update(int(h, 16) for h in tr.findall(f.read_text(encoding="utf-8", errors="replace")))
+            text = f.read_text(encoding="utf-8", errors="replace")
+            head = text.split("\n", 1)[0]
+            if text.startswith("{") and '"format":' in head:
+                if json.loads(head).get("spec") != "D-113-2":
+                    raise Refused(f"{f}: format-2 scan without the D-113-2 node labels; rescan with the current probe")
+                found.update(int(h, 16) for h in tr2.findall(text))
+                continue
+            found.update(int(h, 16) for h in tr.findall(text))
         a = d / "actors.json"
         if a.is_file():
             for act in json.loads(a.read_text(encoding="utf-8")).get("actors", []):
@@ -1077,6 +1087,17 @@ def selftest() -> int:
                                                      "2": {"handle": "FFFFFFFF"}}}]}), encoding="utf-8")
         refs = load_script_refs(sd)
         check("script refs: table handles only", refs == {"en.471": ["wood_10"], "en.16": ["wood_10"]}, str(refs))
+        (sd / "wood_11" / "scripts").mkdir(parents=True)
+        (sd / "wood_11" / "scripts" / "b.txt").write_text('{"format": 2, "spec": "D-113-2"}\n  k1C:000001D8 text\n'
+                                                           "  k0C:000001D9 int:473\n  k1C:00004F51 text\n", encoding="utf-8")
+        refs = load_script_refs(sd)
+        check("script refs: format-2 text nodes", refs.get("en.472") == ["wood_11"] and "en.473" not in refs, str(refs))
+        (sd / "wood_11" / "scripts" / "b.txt").write_text('{"format": 2}\n  k1C:000001D8\n', encoding="utf-8")
+        try:
+            load_script_refs(sd)
+            check("script refs: unlabelled format 2 refused", False)
+        except Refused:
+            check("script refs: unlabelled format 2 refused", True)
     for t in ("intro_10", "wood_11", "fact_40", "lept_15", "flash_20", "sea_10", "ship_map", "menu_30"):
         check(f"level {t} has a region", t in LEVEL_REGION)
     check("nine worlds", len(WORLDS) == 9 and all(w[:2] == f"{i + 1:02d}" for i, w in enumerate(WORLDS)))

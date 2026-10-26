@@ -181,6 +181,8 @@ The game-derived machine code is generated locally. Generated game translations 
 
 See [docs/BUILDING.md](docs/BUILDING.md) and `tools/build_milestone8.bat` for the current development/build procedure.
 
+External technical references used during development are described in [docs/PROVENANCE.md](docs/PROVENANCE.md).
+
 ## Acknowledgments and licences
 
 Rayman 3 HD Recompiled builds upon the work of several open-source projects:

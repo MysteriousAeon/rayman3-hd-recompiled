@@ -36,8 +36,8 @@ def main() -> int:
     ap.add_argument("--vars", default="4,5")
     ap.add_argument("--seconds", type=int, default=60)
     ap.add_argument("--frames", type=float, nargs="*", default=[])
-    ap.add_argument("--material", help="guest address (hex) of a visual material named by SkinMaterial in the "
-                                       "model's script: its texture list and current entry are read as well")
+    ap.add_argument("--material", help="guest address (hex) of a visual material the model's script refers to "
+                                       "(RE_NOTES \"M26\"): its texture list and current entry are read as well")
     a = ap.parse_args()
     wanted = [int(x) for x in a.vars.split(",")]
     rows, material = [], {}

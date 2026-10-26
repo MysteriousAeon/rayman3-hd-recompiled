@@ -18,8 +18,21 @@ Rows that occur with the same model, behaviour and destination in at least half 
 reported once as "shared" (global actor, player model): they are not level-specific edges.
 
 The output holds level, model and behaviour names, positions and counts: metadata only. Script text stays private.
+
+Input (--scan, default the recorded format-1 scans in private/work/m14/scan/) is one scan set of a single format:
+- format 1: node-type and procedure names were printed from Raymap's tables by the probe of that time (RE_NOTES "M5"
+  naming caveat) and the format-1 matching below relies on them; kept so the recorded table stays reproducible.
+- format 2 with "spec": "D-113-2" (private/work/m14/scan_v2/): node types from the title's interpreter (E-270): a
+  change-map call is a procedure call (type 04) whose table-A handler passes its first argument, converted by
+  822621C8 (string or text handle), to the level request 82102CA8 (RE_NOTES "M13"): ids 0x21A / 0x21B (handlers
+  8223F5A8 / 8223F4F0) and 0x64 / 0x65 / 0x66 (shared handler 82244570, which special-cases "sk8_00" and
+  "menumap": those two may not request the named level, so their rows carry "special"). Only direct calls to
+  82102CA8 were checked. A literal is type 14, a text constant type 1C, a designer variable type 0B / 0A, an actor
+  reference type 17. Format-2 files without the D-113-2 labels are refused.
+This tool reads no Raymap file.
 """
 import argparse
+import ast
 import collections
 import json
 import re
@@ -29,7 +42,45 @@ ROOT = Path(__file__).resolve().parents[1]
 SCAN = ROOT / "private" / "work" / "m14" / "scan"
 GAMEDATA = ROOT / "private" / "extracted" / "5841123F" / "GAMEDATAbin"
 NODE = re.compile(r"^( *)([A-Za-z0-9_]+):(.*)$")
-CHANGE = re.compile(r"ChangeMap|ChangeLevel", re.IGNORECASE)
+CHANGE = re.compile(r"ChangeMap|ChangeLevel", re.IGNORECASE)   # format 1 only (Raymap-era names in the scan text)
+NODE_V2 = re.compile(r"^( *)k([0-9A-F]{2}):([0-9A-F]{8})(?: (.*))?$")
+CHANGE_V2 = {0x21A, 0x21B, 0x64, 0x65, 0x66}   # table-A procedure ids (E-270)
+SPECIAL_V2 = ({0x64, 0x65, 0x66}, {"sk8_00", "menumap"})   # names 82244570 handles before or instead of the request
+
+
+def scan_format(lines: list, path: Path) -> int:
+    head = json.loads(lines[0]) if lines and lines[0].startswith("{") else {}
+    if "format" not in head:
+        return 1
+    if head.get("format") != 2 or head.get("spec") != "D-113-2":
+        raise SystemExit(f"{path}: format-2 scan without the D-113-2 node labels; rescan with the current probe")
+    return 2
+
+
+def node(line: str, fmt: int):
+    """(indent, role, value) of a script line: role text / changemap / string / dsgvar / other, or None."""
+    if fmt == 1:
+        m = NODE.match(line)
+        if not m:
+            return None
+        kind, value = m.group(2), m.group(3)
+        role = {"TextRef": "text", "String": "string", "DsgVarRef": "dsgvar"}.get(kind, "other")
+        if kind == "Procedure" and CHANGE.search(value):
+            role = "changemap"
+        return len(m.group(1)), role, value.strip("'\"").lower() if role == "string" else value
+    m = NODE_V2.match(line)
+    if not m:
+        return None
+    kind, param, label = int(m.group(2), 16), int(m.group(3), 16), m.group(4) or ""
+    if kind == 0x1C:
+        return len(m.group(1)), "text", m.group(3)
+    if kind == 0x04 and param in CHANGE_V2:
+        return len(m.group(1)), "changemap", f"procA#{param:X}"
+    if kind == 0x14 and label[:5] in ("str:'", 'str:"'):
+        return len(m.group(1)), "string", ast.literal_eval(label[4:]).lower()
+    if kind in (0x0A, 0x0B):
+        return len(m.group(1)), "dsgvar", str(param & 0xFF)
+    return len(m.group(1)), "other", m.group(3)
 
 
 def level_names() -> list:
@@ -44,8 +95,8 @@ def model_of(path: Path) -> str:
     return path.stem.rsplit("_", 1)[0]
 
 
-def analyse(level: str, known: set, misc: dict) -> dict:
-    base = SCAN / level
+def analyse(scan: Path, level: str, known: set, misc: dict, formats: set) -> dict:
+    base = scan / level
     actors = json.loads((base / "actors.json").read_text(encoding="utf-8"))["actors"]
     by_perso = {a["perso"]: a for a in actors}
     player = next((a for a in actors if a["model"] == "YLT_RaymanModel"), None)
@@ -59,41 +110,45 @@ def analyse(level: str, known: set, misc: dict) -> dict:
     for path in sorted((base / "scripts").glob("*.txt")):
         model, perso = model_of(path), path.stem.rsplit("_", 1)[-1]
         behaviour, lines = "", path.read_text(errors="replace").splitlines()
+        fmt = scan_format(lines, path)
+        formats.add(fmt)
         for index, line in enumerate(lines):
             if line.startswith("## "):
                 behaviour = short(line) if "CreateComport" in line else line[3:].split(" ", 1)[0]
                 continue
-            m = NODE.match(line)
-            if not m:
+            n = node(line, fmt)
+            if not n:
                 continue
-            indent, kind, value = len(m.group(1)), m.group(2), m.group(3)
-            if kind == "TextRef":
+            indent, role, value = n
+            if role == "text":
                 text = misc.get(value.upper().zfill(8), "").lower()
                 if text in known:
                     rows.append({"kind": "textref", "model": model, "behaviour": behaviour, "destination": text})
-            if kind != "Procedure" or not CHANGE.search(value):
+            if role != "changemap":
                 continue
             args = []
             for follow in lines[index + 1:index + 12]:
-                f = NODE.match(follow)
-                if not f or len(f.group(1)) <= indent:
+                f = node(follow, fmt)
+                if not f or f[0] <= indent:
                     break
-                args.append((f.group(2), f.group(3)))
+                args.append(f[1:])
             destination, how = None, "variable"
-            for akind, avalue in args:
-                if akind == "String":
-                    destination, how = avalue.strip("'\"").lower(), "script"
+            for arole, avalue in args:
+                if arole == "string":
+                    destination, how = avalue, "script"
                     break
-                if akind == "TextRef":
+                if arole == "text":
                     destination, how = misc.get(avalue.upper().zfill(8), f"text {avalue}").lower(), "script"
                     break
             if destination is None:
-                refs = [v for k, v in args if k == "DsgVarRef"]
+                refs = [v for k, v in args if k == "dsgvar"]
                 own = by_perso.get(perso, {}).get("texts", {})
                 held = (own.get(refs[0], {}).get("text") or "").lower() if refs else ""
                 destination = held if held else ("variable " + refs[0] if refs else "expression")
             rows.append({"kind": how, "model": model, "behaviour": behaviour, "procedure": value,
                          "destination": destination})
+            if fmt == 2 and int(value[6:], 16) in SPECIAL_V2[0] and destination in SPECIAL_V2[1]:
+                rows[-1]["special"] = "82244570 special-cases this name; the named level may not be requested"
     # who refers to a change-map actor instance (for example to set the custom bit that fires it)
     targets = {r["perso"]: r for r in rows if r["kind"] == "actor"}
     for path in sorted((base / "scripts").glob("*.txt")):
@@ -101,7 +156,7 @@ def analyse(level: str, known: set, misc: dict) -> dict:
         for perso, row in targets.items():
             if path.stem.endswith(perso):
                 continue
-            if f"PersoRef:{perso}" in text or perso.lower() in text.split("## ", 1)[0]:
+            if f"PersoRef:{perso}" in text or f"k17:{perso}" in text or perso.lower() in text.split("## ", 1)[0]:
                 row.setdefault("referenced_by", [])
                 if model_of(path) not in row["referenced_by"]:
                     row["referenced_by"].append(model_of(path))
@@ -117,16 +172,24 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--json", type=Path)
     ap.add_argument("--md", type=Path)
+    ap.add_argument("--scan", type=Path, default=SCAN, help="scan set (format-1 scan/ or format-2 scan_v2/)")
     a = ap.parse_args()
     known = set(level_names())
-    scanned = sorted(p.name for p in SCAN.iterdir() if (p / "actors.json").is_file())
+    if not a.scan.is_dir():
+        raise SystemExit(f"{a.scan}: no scan set")
+    scanned = sorted(p.name for p in a.scan.iterdir() if (p / "actors.json").is_file())
+    if not scanned:
+        raise SystemExit(f"{a.scan}: no scanned level (actors.json)")
     misc = {}
     for level in scanned:
-        path = SCAN / level / "misc_texts.json"
+        path = a.scan / level / "misc_texts.json"
         if path.is_file():
             misc = json.loads(path.read_text(encoding="utf-8"))
             break
-    levels = [analyse(level, known, misc) for level in scanned]
+    formats = set()
+    levels = [analyse(a.scan, level, known, misc, formats) for level in scanned]
+    if len(formats) > 1:
+        raise SystemExit(f"{a.scan}: format-1 and format-2 scans mixed; the shared-row test needs one format")
 
     def key(row):
         return (row["kind"], row["model"], row.get("behaviour"), row.get("procedure"), row["destination"])
@@ -146,7 +209,7 @@ def main() -> int:
         entry["rows"] = specific
         for row in specific:
             dest = row["destination"].lstrip("*")
-            if dest in known and dest != entry["level"]:
+            if dest in known and dest != entry["level"] and "special" not in row:
                 edges.setdefault((entry["level"], dest), set()).add(row["kind"])
     result = {
         "evidence": "script-derived (decoded from live isolated runs); no row is an executed transition",
