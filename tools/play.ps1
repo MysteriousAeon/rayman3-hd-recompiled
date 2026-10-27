@@ -137,6 +137,11 @@ param(
     [ValidateSet('info', 'debug', 'warn')][string]$LogLevel = 'info',
     [int]$Width = 0,
     [int]$Height = 0,
+    # D-114: developer use only. The SDK's settings overlay (F4) and the BIN\r3hd.toml its "Save to config" writes
+    # (which outranks every setting this script does not pass). Without it F4 is off (--bind_settings=None) and an
+    # existing BIN\r3hd.toml is moved, unchanged, to PLAYROOT\dev_overlay_config\ before the game starts.
+    # F3 is also developer-only: its continuous UI redraws inflate host-present FPS.
+    [switch]$DevOverlay,
     # Extra runtime cvars, e.g. -ExtraArgs --vsync=false. Passed through unchanged; recorded in session.json.
     [string[]]$ExtraArgs = @(),
     # Print and validate the launch without starting anything.
@@ -283,6 +288,30 @@ function Get-SessionsToPrune([string]$Root, [int]$Keep) {
     return @($all[0..($all.Count - $Keep - 1)])
 }
 
+function Get-DevConfigPlan([string]$Bin, [string]$Play, [string]$Stamp, [bool]$Keep) {
+    # D-114: the SDK loads BIN\r3hd.toml (written only by the F4 overlay's "Save to config"; the port never ships or
+    # writes one) and it outranks every setting not passed on the command line. A normal launch moves it, unchanged,
+    # to PLAYROOT\dev_overlay_config\r3hd-<stamp>.toml; -DevOverlay keeps it in place. Pure: nothing is moved here.
+    $source = Join-Path $Bin 'r3hd.toml'
+    if (-not (Test-Path -LiteralPath $source)) { return [ordered]@{ state = 'none'; source = $source; target = $null } }
+    if ($Keep) { return [ordered]@{ state = 'kept'; source = $source; target = $null } }
+    $dir = Join-Path $Play 'dev_overlay_config'
+    $target = Join-Path $dir "r3hd-$Stamp.toml"
+    for ($n = 1; Test-Path -LiteralPath $target; $n++) { $target = Join-Path $dir "r3hd-$Stamp-$n.toml" }
+    return [ordered]@{ state = 'set_aside'; source = $source; target = $target }
+}
+
+function Move-DevConfig($Plan) {
+    # Moves the file named by Get-DevConfigPlan; never deletes or rewrites it. A failure stops the launch (the game
+    # would otherwise run with the file's overrides).
+    if ($Plan.state -ne 'set_aside') { return }
+    if (-not (Test-Path -LiteralPath $Plan.source -PathType Leaf)) { throw "PREFLIGHT: $($Plan.source) is not a file; move or remove it, or launch with -DevOverlay" }
+    try {
+        New-Item -ItemType Directory -Path (Split-Path -Parent $Plan.target) -Force | Out-Null
+        Move-Item -LiteralPath $Plan.source -Destination $Plan.target -ErrorAction Stop
+    } catch { throw "PREFLIGHT: $($Plan.source) (developer overlay settings) could not be moved to $($Plan.target): $($_.Exception.Message)" }
+}
+
 function Get-LogFiles([string]$Session) {
     # runtime.N.log are older rotations (highest N first), runtime.log is the newest part.
     $rotated = @(Get-ChildItem -LiteralPath $Session -Filter 'runtime.*.log' -ErrorAction SilentlyContinue |
@@ -335,6 +364,8 @@ foreach ($extra in $ExtraArgs) {
     if ($extra -match '^--(resolution_scale|draw_resolution_scale_x|draw_resolution_scale_y)=') { throw 'The rendering resolution is chosen with -RenderScale auto|1|2|3, not through -ExtraArgs' }
     if ($extra -match '^--license_mask=') { throw 'The licence mode is chosen with -License full|trial, not through -ExtraArgs' }
     if ($extra -match '^--cl=') { throw 'The guest command line (developer options such as -level:) is for hidden test runs only: tools\run_milestone6.ps1 -TestLevel' }
+    if ($extra -match '^--bind_settings=') { throw 'The developer settings overlay (F4) is enabled with -DevOverlay, not through -ExtraArgs' }
+    if ($extra -match '^--bind_debug_overlay=') { throw 'The developer debug overlay (F3) is enabled with -DevOverlay, not through -ExtraArgs' }
 }
 
 if ($Summarize) {
@@ -369,6 +400,7 @@ if ($Fullscreen) {
 $presetLabel = 'vanilla (launcher defaults)'
 $presetWarnings = @()
 $keyboard = $null
+$controller = $null
 # M32 (D-069): the resolver runs for every launch, because it also gives the keyboard map; without -Preset or
 # -SettingsFile its preset values are the parameter defaults above (m27_settings_regression.py keeps them equal).
 if ($true) {
@@ -395,6 +427,7 @@ if ($true) {
     if ($Preset -or $SettingsFile) { $presetLabel = $resolved.label }
     $presetWarnings = @($resolved.warnings)
     $keyboard = $resolved.keyboard
+    $controller = $resolved.controller
 }
 # M32: the keyboard map's runtime arguments. A keybind_* setting named in -ExtraArgs replaces the map's for that input
 # (explicit wins); a combination with a modifier there ("Shift+Up") needs the runtime's exact modifier matching.
@@ -408,6 +441,10 @@ if (-not $NoKeyboard) {
     }
     $keyText = "$($keyboard.layout_name) ($($keyboard.state)$(if ($named.Count) { "; -ExtraArgs name $($named.Count) input(s)" }))"
 }
+# D-115: the controller button map (guest=physical pairs of the buttons that differ; empty = the original controls),
+# passed as R3HD_PAD_MAP. The runtime applies it to physical pads only; the keyboard map above never changes with it.
+$padMap = [string]$controller.env
+$padText = "$($controller.state)$(if ($padMap) { ": $padMap" })"
 
 # --- preflight ---------------------------------------------------------------------------------
 $problems = @()
@@ -440,6 +477,15 @@ $arguments = @(
     "--fullscreen=$(($Display -eq 'fullscreen').ToString().ToLowerInvariant())"
 )
 if ($Mouse) { $arguments += '--mnk_mouse=true' }
+# D-114: the SDK's developer settings overlay (F4) is off unless -DevOverlay; BIN\r3hd.toml is set aside likewise.
+if (-not $DevOverlay) { $arguments += '--bind_settings=None' }
+if (-not $DevOverlay) { $arguments += '--bind_debug_overlay=None' }
+$devConfig = Get-DevConfigPlan $bin $play $stamp $DevOverlay.IsPresent
+$devText = switch ($devConfig.state) {
+    'none' { "$(if ($DevOverlay) { 'on' } else { 'off' }); no $($devConfig.source)" }
+    'kept' { "on (-DevOverlay); $($devConfig.source) is loaded as is" }
+    default { "off; $($devConfig.source) moved unchanged to $($devConfig.target)" }
+}
 # M31 (D-068): diagnostics. standard = two rotated logs at most (the runtime keeps 20 by default).
 if ($Diagnostics -eq 'standard') { $arguments += '--log_max_files=2' }
 # Window size (M31). -Width / -Height are logical pixels as before; -WindowSize is physical and converted here.
@@ -533,8 +579,10 @@ if ($DryRun) {
     Write-Host "gameplay sub: $GameplaySubtitles"
     Write-Host "dualsense  : light=$DualSenseLight trigger=$DualSenseTrigger strength=$DualSenseTriggerStrength"
     Write-Host "keyboard   : $keyText"
+    Write-Host "controller : $padText"
     Write-Host "mods       : $modsText"
     $modsNotes | ForEach-Object { Write-Host "mods note  : $_" }
+    Write-Host "dev overlay: $(if ($devConfig.state -eq 'set_aside') { $devText -replace ' moved unchanged ', ' would be moved unchanged ' } else { $devText })"
     $arguments | ForEach-Object { Write-Host "argument   : $_" }
     exit 0
 }
@@ -547,15 +595,16 @@ if ($agent -and -not $AllowFromAgent) {
 # M31 (D-068): older session folders of an installed home; a folder that cannot be removed is left for next time.
 $pruned = 0
 foreach ($old in $prune) { try { Remove-Item -LiteralPath $old.FullName -Recurse -Force -ErrorAction Stop; $pruned++ } catch { } }
+Move-DevConfig $devConfig
 New-Item -ItemType Directory -Path $session, $user, $cache -Force | Out-Null
 # Written before the launch so the selected licence mode is on record even if this script is interrupted.
-[ordered]@{ session = $stamp; profile = $Profile; preset = $presetLabel; settings_file = $SettingsFile; license_mode = $License; license_mask = $licenseMask; display = $Display; window = $window; render_scale = $scale; render_scale_option = $RenderScale; pacing = $Pacing; revisit = $Revisit; cursor = $Cursor; save_clock = $SaveClock; layer_coords = $LayerCoords; texture_orient = $TextureOrient; gameplay_subtitles = $GameplaySubtitles; diagnostics = $Diagnostics; dualsense_light = $DualSenseLight; dualsense_trigger = $DualSenseTrigger; dualsense_trigger_strength = $DualSenseTriggerStrength; keyboard = $keyText; mods = $modsText; mods_notes = $modsNotes; sessions_removed = $pruned; render_target = $target; arguments = $arguments } |
+[ordered]@{ session = $stamp; profile = $Profile; preset = $presetLabel; settings_file = $SettingsFile; license_mode = $License; license_mask = $licenseMask; display = $Display; window = $window; render_scale = $scale; render_scale_option = $RenderScale; pacing = $Pacing; revisit = $Revisit; cursor = $Cursor; save_clock = $SaveClock; layer_coords = $LayerCoords; texture_orient = $TextureOrient; gameplay_subtitles = $GameplaySubtitles; diagnostics = $Diagnostics; dualsense_light = $DualSenseLight; dualsense_trigger = $DualSenseTrigger; dualsense_trigger_strength = $DualSenseTriggerStrength; keyboard = $keyText; controller = $padText; mods = $modsText; mods_notes = $modsNotes; dev_overlay = $devText; sessions_removed = $pruned; render_target = $target; arguments = $arguments } |
     ConvertTo-Json -Depth 3 | Set-Content -LiteralPath (Join-Path $session 'launch.json') -Encoding UTF8
 $testOnly = 'R3HD_NONINTRUSIVE', 'R3HD_TEST_SECONDS', 'R3HD_INPUT_SCHEDULE', 'R3HD_INPUT_FOLLOW', 'R3HD_M5_CAPTURE',
     'R3HD_FRAME_REQUEST', 'R3HD_AUDIO_CAPTURE', 'R3HD_AUDIO_AFTER', 'R3HD_M5_VB_RESIDENCY_CACHE', 'R3HD_PLAY', 'R3HD_TRIAL',
     'R3HD_FRAME_TRACE', 'R3HD_VBLANK_SPIN_US', 'R3HD_TEST_WORLD_END',
     'R3HD_SAVE_FAULT', 'R3HD_SAVE_COMMIT', 'R3HD_CURSOR', 'R3HD_TIMEZONE',
-    'R3HD_M22_DRAW_TRACE', 'R3HD_M22_AUDIO', 'R3HD_AUDIO_AUDIBLE', 'R3HD_M24_EVENTS', 'R3HD_DIAGNOSTICS', 'R3HD_KEYMAP_TEST', 'R3HD_DISCORD', 'R3HD_DS_LIGHT', 'R3HD_DS_TRIGGER', 'R3HD_DS_TRIGGER_STRENGTH', 'R3HD_ACH_TEXT'
+    'R3HD_M22_DRAW_TRACE', 'R3HD_M22_AUDIO', 'R3HD_AUDIO_AUDIBLE', 'R3HD_M24_EVENTS', 'R3HD_DIAGNOSTICS', 'R3HD_KEYMAP_TEST', 'R3HD_PADMAP_TEST', 'R3HD_PAD_MAP', 'R3HD_DISCORD', 'R3HD_DS_LIGHT', 'R3HD_DS_TRIGGER', 'R3HD_DS_TRIGGER_STRENGTH', 'R3HD_ACH_TEXT'
 $saved = @{}
 foreach ($name in $testOnly) { $saved[$name] = [Environment]::GetEnvironmentVariable($name); [Environment]::SetEnvironmentVariable($name, $null) }
 $env:R3HD_PLAY = '1'
@@ -563,6 +612,7 @@ $env:R3HD_DISCORD = $DiscordPresence
 $env:R3HD_DS_LIGHT = $DualSenseLight
 $env:R3HD_DS_TRIGGER = $DualSenseTrigger
 $env:R3HD_DS_TRIGGER_STRENGTH = [string]$DualSenseTriggerStrength
+$env:R3HD_PAD_MAP = $padMap  # D-115 (empty: the variable stays unset, the original controls)
 $savedVblank = $env:R3HD_VBLANK
 $env:R3HD_VBLANK = $(if ($Pacing -eq 'precise') { 'deadline' } else { 'poll' })
 $savedRevisit = $env:R3HD_REVISIT
@@ -598,6 +648,7 @@ try {
     Write-Host "Mouse cursor: $Cursor; save clock: $SaveClock; layer coordinates: $LayerCoords; texture orientation: $TextureOrient; gameplay subtitles: $GameplaySubtitles"
     Write-Host "Mods: $modsText"
     $modsNotes | ForEach-Object { Write-Host "Mods note: $_" }
+    if ($DevOverlay -or $devConfig.state -ne 'none') { Write-Host "Developer overlays (F3/F4): $devText" }
     Write-Host "Starting r3hd (session $stamp). Close the window or press Alt+F4 to quit."
     # M16 (D-045): keep a copy of the profile as it is now and after every change (one save entry per level
     # reached). Read-only on the profile; a keeper problem never stops or delays the session.
@@ -650,6 +701,7 @@ $result = [ordered]@{
     render_target = $target
     diagnostics = $Diagnostics
     keyboard = $keyText
+    controller = $padText
     pacing = $Pacing
     cursor = $Cursor
     save_clock = $SaveClock
@@ -657,6 +709,7 @@ $result = [ordered]@{
     texture_orient = $TextureOrient
     gameplay_subtitles = $GameplaySubtitles
     mods = $modsText
+    dev_overlay = $devText
     started = $started.ToString('o')
     ended = $ended.ToString('o')
     seconds = [Math]::Round(($ended - $started).TotalSeconds, 1)

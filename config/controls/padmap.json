@@ -1,0 +1,48 @@
+{
+  "schema": 2,
+  "note": "D-115 / D-116: the controller map. A physical pad's 14 digital buttons can be given to other game inputs, and the two triggers, and the two sticks, can be exchanged; the runtime (tools/r3hd_padmap.h, installed by tools/r3hd_padmap_patch.py) applies the map in the SDK's InputSystem to physical pads only, before every device of a player is merged, so keyboard keys (config/controls/keymap.json) never change with it. The map is always a bijection within each kind: a button chosen for an action that another input used swaps the two, so every game input stays reachable; a trigger only takes a trigger and a stick only a stick (analog values move whole, never become button presses). Ids of buttons are the keymap's pad inputs; bit and vk are the SDK's X_INPUT_GAMEPAD_* and VirtualKey kXInputPad* values (tools/r3hd_padmap_regression.py ties all three). Labels: Xbox name / PlayStation (DualSense) name of the same position (SDL reports a DualSense by position).",
+  "buttons": [
+    {"id": "a", "bit": "1000", "vk": "5800", "xbox": "A", "playstation": "Cross"},
+    {"id": "b", "bit": "2000", "vk": "5801", "xbox": "B", "playstation": "Circle"},
+    {"id": "x", "bit": "4000", "vk": "5802", "xbox": "X", "playstation": "Square"},
+    {"id": "y", "bit": "8000", "vk": "5803", "xbox": "Y", "playstation": "Triangle"},
+    {"id": "left_shoulder", "bit": "0100", "vk": "5805", "xbox": "LB", "playstation": "L1"},
+    {"id": "right_shoulder", "bit": "0200", "vk": "5804", "xbox": "RB", "playstation": "R1"},
+    {"id": "back", "bit": "0020", "vk": "5815", "xbox": "Back", "playstation": "Create"},
+    {"id": "start", "bit": "0010", "vk": "5814", "xbox": "Start", "playstation": "Options"},
+    {"id": "lstick_press", "bit": "0040", "vk": "5816", "xbox": "Left stick press", "playstation": "L3"},
+    {"id": "rstick_press", "bit": "0080", "vk": "5817", "xbox": "Right stick press", "playstation": "R3"},
+    {"id": "dpad_up", "bit": "0001", "vk": "5810", "xbox": "D-pad up", "playstation": "D-pad up"},
+    {"id": "dpad_down", "bit": "0002", "vk": "5811", "xbox": "D-pad down", "playstation": "D-pad down"},
+    {"id": "dpad_left", "bit": "0004", "vk": "5812", "xbox": "D-pad left", "playstation": "D-pad left"},
+    {"id": "dpad_right", "bit": "0008", "vk": "5813", "xbox": "D-pad right", "playstation": "D-pad right"}
+  ],
+  "analog": [
+    {"id": "left_trigger", "kind": "trigger", "xbox": "LT", "playstation": "L2"},
+    {"id": "right_trigger", "kind": "trigger", "xbox": "RT", "playstation": "R2"},
+    {"id": "left_stick", "kind": "stick", "xbox": "Left stick", "playstation": "Left stick"},
+    {"id": "right_stick", "kind": "stick", "xbox": "Right stick", "playstation": "Right stick"}
+  ],
+  "groups": [
+    {"key": "move", "name": "Movement and camera"},
+    {"key": "actions", "name": "Actions"},
+    {"key": "menus", "name": "Menus"}
+  ],
+  "actions_note": "The actions the Settings window lists: game controls verified by a run or a person (RE_NOTES 'Controller inputs the title uses', E-274 and E-277). Human verification supersedes the incomplete E-274 observation for LB / L1 (health bar without a power-up) and RB / R1 (Grimace, unlocked after Reflux in Desert of the Knaaren). D-120: human verification establishes Y as held Look Mode and B as Roll / Back. Back, D-pad left / right and both stick presses remain uncharacterised and unlisted; they still take part in swaps.",
+  "actions": [
+    {"input": "left_stick", "group": "move", "name": "Move"},
+    {"input": "right_stick", "group": "move", "name": "Camera"},
+    {"input": "a", "group": "actions", "name": "Jump"},
+    {"input": "x", "group": "actions", "name": "Attack"},
+    {"input": "y", "group": "actions", "name": "Look Mode (hold)"},
+    {"input": "b", "group": "actions", "name": "Roll / Back"},
+    {"input": "right_trigger", "group": "actions", "name": "Lock on"},
+    {"input": "left_trigger", "group": "actions", "name": "Photo mode"},
+    {"input": "left_shoulder", "group": "actions", "name": "Show Health Bar"},
+    {"input": "right_shoulder", "group": "actions", "name": "Grimace"},
+    {"input": "start", "group": "menus", "name": "Pause"},
+    {"input": "dpad_up", "group": "menus", "name": "Menu up"},
+    {"input": "dpad_down", "group": "menus", "name": "Menu down"}
+  ],
+  "not_assignable": "The Guide / PS button and the DualSense touchpad are not inputs of the game on PC and are never assigned; per-device profiles (one map serves every pad). The developer-only XInput backend (input_backend=xinput) is a physical driver and goes through the same map, but play.ps1 always uses SDL and only SDL is tested."
+}

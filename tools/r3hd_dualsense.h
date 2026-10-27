@@ -19,6 +19,7 @@
 #pragma once
 
 #include <cstdint>
+#include <cstring>
 
 namespace r3hd_ds {
 
@@ -106,6 +107,16 @@ inline Trigger Resistance(uint8_t start, uint8_t force) {
   t.bytes[1] = start;
   t.bytes[2] = force;
   return t;
+}
+
+// The 47-byte DualSense effects block as SDL's HIDAPI PS5 driver takes it through SDL_SendGamepadEffect (layout of
+// SDL 3.5.0's DS5EffectsState): one trigger's enable bit and its 11 effect bytes, nothing else. D-116: `left` = the
+// physical L2 (enable 0x08, bytes at 21) when the person exchanged the triggers, so the resistance stays on the
+// trigger that locks on; otherwise R2 (enable 0x04, bytes at 10).
+inline void EffectBlock(const Trigger& t, bool left, uint8_t (&block)[47]) {
+  std::memset(block, 0, sizeof(block));
+  block[0] = left ? 0x08 : 0x04;
+  std::memcpy(block + (left ? 21 : 10), t.bytes, sizeof(t.bytes));
 }
 
 struct Output {

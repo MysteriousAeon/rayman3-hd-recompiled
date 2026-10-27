@@ -24,6 +24,10 @@ def check(name, ok):
 
 def run(*args):
     r = subprocess.run([sys.executable, *map(str, args)], capture_output=True, text=True, cwd=ROOT)
+    if r.returncode:
+        # Keep the nested failure's evidence in the build log; a bare failed aggregate cannot be diagnosed.
+        print(f"Nested {Path(args[0]).name} exited {r.returncode}:", flush=True)
+        print(r.stdout + r.stderr, flush=True)
     return r.returncode, r.stdout + r.stderr
 
 
@@ -32,6 +36,8 @@ def main() -> int:
     ap.add_argument("--payload")
     a = ap.parse_args()
 
+    rc, out = run(TOOLS / "issue3_installer_regression.py")
+    check("Issue #3 process-query safety", rc == 0)
     rc, out = run(TOOLS / "r3hd_installer.py", "selftest")
     check("engine selftest", rc == 0 and "R3HD_INSTALLER_SELFTEST PASS" in out)
     rc, out = run(TOOLS / "r3hd_stage.py", "selftest")

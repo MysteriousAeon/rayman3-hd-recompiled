@@ -197,9 +197,8 @@ struct Ps5Model {
 void ApplySdl(Ps5Model& sdl, const Output& o, uint32_t now) {
   if (o.set_light) sdl.SetLED(o.light, now);
   if (o.send_trigger) {
-    uint8_t block[47] = {};
-    block[0] = 0x04;
-    std::memcpy(block + 10, o.trigger.bytes, 11);
+    uint8_t block[47];
+    EffectBlock(o.trigger, false, block);  // r3hd_ds_sdl.h: the left side only with the triggers exchanged (D-116)
     sdl.SendEffect(block, sizeof(block));
   }
 }
@@ -685,6 +684,22 @@ int main() {
       ApplySdl(two, q.Renumbered(0), t);
       check("renumbered twice: nothing more", two.reports.size() == n);
     }
+  }
+  {  // D-116: the effect block of either trigger (SDL 3.5.0 DS5EffectsState: R2 bytes at 10, L2 bytes at 21)
+    const Trigger t = Resistance(20, 18);
+    uint8_t r[47], l[47];
+    EffectBlock(t, false, r);
+    EffectBlock(t, true, l);
+    bool rOnly = r[0] == 0x04 && std::memcmp(r + 10, t.bytes, 11) == 0, lOnly = l[0] == 0x08 && std::memcmp(l + 21, t.bytes, 11) == 0;
+    for (int i = 1; i < 47; ++i) {
+      if ((i < 10 || i >= 21) && r[i]) rOnly = false;
+      if ((i < 21 || i >= 32) && l[i]) lOnly = false;
+    }
+    Check("trigger block: R2 only (enable 0x04, bytes 10..20), nothing else", rOnly);
+    Check("trigger block, triggers exchanged: L2 only (enable 0x08, bytes 21..31), nothing else", lOnly);
+    uint8_t c[47];
+    EffectBlock(ClearTrigger(), true, c);
+    Check("trigger block: a clear goes to the same side", c[0] == 0x08 && c[21] == 0x05 && c[10] == 0);
   }
   std::printf("R3HD_DUALSENSE_TEST %s %d/%d\n", g_fail ? "FAIL" : "PASS", g_pass, g_pass + g_fail);
   return g_fail ? 1 : 0;

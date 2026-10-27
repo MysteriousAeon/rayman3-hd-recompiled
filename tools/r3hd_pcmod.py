@@ -7,7 +7,7 @@ texture files under `.../<archive>.cnt/<dir>/<name>.gf` (e.g. files/added_files/
 rayman.gf). The HD bundles name their entries after the PC CNT paths, `<dir>\\<name>.dds` (RESEARCH "M33"), so each GF
 maps to the HD entry of that name, in every bundle that holds it.
 
-GF (Rayman 3 PC; RESEARCH "M34", from Raymap and RCP, both reference only): little-endian u32 format (8888, 888, 565, 1555,
+GF (Rayman 3 PC; format research from Raymap and RCP; scope/limits in docs/PROVENANCE.md): little-endian u32 format (8888, 888, 565, 1555,
 4444, 88; 888 = three channels, M35), u32 width, u32 height, u8 channels (1-4), u8 mip levels, u8 repeat byte; with one channel a 256-entry BGRA
 palette; then each channel's bytes in turn (base level and mips), run-length coded: the repeat byte is followed by a
 value and a count. Three or four channels are B, G, R(, A); two channels are a 16-bit pixel of the format. Rows are

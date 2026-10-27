@@ -38,7 +38,8 @@ bin\rexruntime.dll
   cppDES                                           MIT                               licenses\cppDES-LICENSE.txt
   stb_image 2.29                                   public domain / MIT (terms in the header only)
   renderdoc_app.h                                  MIT (terms in the header only)
-  TinySHA1, SHA-256 (Stephan Brumme), rijndael-alg-fst   permissive / zlib / public domain (terms in the source headers)
+  TinySHA1 (Saurav Mohapatra; modified for Xenia)    ISC-style permission notice       licenses\TinySHA1-LICENSE.txt
+  SHA-256 (Stephan Brumme), rijndael-alg-fst         zlib / public domain (terms in the source headers)
   disruptorplus (header-only; lewissbaker/disruptorplus, locally modified)
                                                    MIT                               licenses\disruptorplus-LICENSE.txt
 bin\ffmpeg.dll (M46: its own DLL, replaceable; see the LGPL notice below)

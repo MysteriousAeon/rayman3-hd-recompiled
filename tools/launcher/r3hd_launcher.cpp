@@ -10,6 +10,14 @@
 // M31 (D-068): a setting may require another setting's value (model REQUIRES rows; shown disabled otherwise), the
 // read-only Controls page lists the model's CONTROL rows (the runtime's key bindings), and the window icon is the
 // project icon of the executable's resources.
+// D-115: the Controls page also holds the controller button map (model PAD* rows); a button another input uses is
+// swapped with it, so the map the engine validates is always complete.
+// D-116: the Controls page has a Keyboard and a Controller tab. A controller assignment is made by pressing the button:
+// the person picks an action, the window reads the connected controller (XInput for Xbox-compatible pads, the HID
+// reports of a DualSense / DualShock 4 through Raw Input) only while that capture runs and the window has focus, and
+// the first new press is the assignment. Nothing is ever sent to a controller and none is opened. Triggers take a
+// trigger and sticks a stick (the runtime exchanges them whole). When a page is taller than the screen, only the page
+// scrolls: the header and the Save / Play / Close row stay in view; the window's height can be changed.
 //
 // usage:  r3hd_launcher.exe                 the Settings window
 //         r3hd_launcher.exe --play          start the game with the saved settings, without a window
@@ -26,9 +34,11 @@
 #include <shlobj.h>
 #include <shellapi.h>
 #include <tlhelp32.h>
+#include <xinput.h>  // D-116: types only; xinput1_4.dll is loaded when a capture starts
 
 #include <algorithm>
 #include <array>
+#include <climits>
 #include <map>
 #include <string>
 #include <vector>
@@ -36,6 +46,7 @@
 namespace {
 
 const wchar_t kWindowClass[] = L"R3HDRecompSettings";
+const wchar_t kHostClass[] = L"R3HDRecompSettingsPage";  // D-116: the page host
 const wchar_t kAppMutex[] = L"Rayman3HDRecompLauncher";  // tools/installer/r3hd_setup.iss AppMutex
 const wchar_t kPlayMutex[] = L"Local\\Rayman3HDRecompPlay";
 const DWORD kEngineTimeoutMs = 60000;
@@ -235,9 +246,12 @@ struct KeyInput {
   std::wstring id, group, pad, action;
   bool hidden = false, required = false;
   Slots saved;
-  HWND text = nullptr, padText = nullptr, button[2] = {};
+  HWND text = nullptr, button[2] = {};
 };
 struct KeyLayout { std::wstring key, name, text; std::map<std::wstring, Slots> keys; };
+// D-115 / D-116: the controller map, all from the model's PAD* rows (config/controls/padmap.json and the saved map).
+struct PadInput { std::wstring id, label, kind; };  // kind: button | trigger | stick
+struct PadAction { std::wstring id, group, name; HWND text = nullptr, button = nullptr; };
 struct Model {
   std::wstring home, product, version, install, files, filesFirst, data, dataDetail;
   std::wstring languageKey, language = L"en";
@@ -253,6 +267,12 @@ struct Model {
   std::vector<KeyInput> keyInputs;
   std::vector<KeyName> keyNames;
   std::vector<std::pair<std::wstring, std::wstring>> fallbacks;  // key -> input
+  std::vector<std::array<std::wstring, 3>> sharedKeys;  // key, input, input; explicit collision exceptions
+  std::wstring padState, padWarning;
+  std::vector<PadInput> padButtons;                                // every input, in the padmap's order (18)
+  std::vector<std::pair<std::wstring, std::wstring>> padGroups;   // D-116: key -> name
+  std::vector<PadAction> padActions;                              // the actions the page lists
+  std::map<std::wstring, std::wstring> padSaved;                  // input -> physical input, all of them
 };
 
 bool LoadModel(const Paths& p, Model& m, std::wstring& error) {
@@ -265,7 +285,7 @@ bool LoadModel(const Paths& p, Model& m, std::wstring& error) {
   std::wstring text = Widen(out);
   std::vector<std::wstring> lines = Split(text, L'\n');
   while (!lines.empty() && Trim(lines.back()).empty()) lines.pop_back();
-  if (code != 0 || lines.empty() || lines.front() != L"R3HD_LAUNCHER_MODEL\t3" || lines.back() != L"END") {
+  if (code != 0 || lines.empty() || lines.front() != L"R3HD_LAUNCHER_MODEL\t5" || lines.back() != L"END") {
     std::wstring tail = Trim(text);
     if (tail.size() > 600) tail = L"..." + tail.substr(tail.size() - 600);
     error = L"the installation could not be read (exit code " + std::to_wstring(code) + L"): " + tail;
@@ -308,6 +328,7 @@ bool LoadModel(const Paths& p, Model& m, std::wstring& error) {
     } else if (k == L"KEYBOARD") { m.keyboardState = at(1); m.keyboardLayout = at(2); m.keyboardWarning = at(3); }
     else if (k == L"KEYLAYOUT") m.layouts.push_back({at(1), at(2), at(3), {}});
     else if (k == L"KEYGROUP") m.keyGroups.push_back({at(1), at(2)});
+    else if (k == L"KEYSHARE") m.sharedKeys.push_back({at(1), at(2), at(3)});
     else if (k == L"KEYINPUT") {
       KeyInput i;
       i.id = at(1); i.group = at(2); i.hidden = at(3) == L"1"; i.required = at(4) == L"1"; i.pad = at(5); i.action = at(6);
@@ -321,6 +342,11 @@ bool LoadModel(const Paths& p, Model& m, std::wstring& error) {
     } else if (k == L"KEYNAME") m.keyNames.push_back({at(1), at(2), at(4), Split(at(3), L',')});
     else if (k == L"KEYFALLBACK") m.fallbacks.push_back({at(1), at(2)});
     else if (k == L"KEYNOTE") m.keyNote = at(1);
+    else if (k == L"PADSTATE") { m.padState = at(1); m.padWarning = at(2); }
+    else if (k == L"PADBUTTON") m.padButtons.push_back({at(1), at(2), at(3)});
+    else if (k == L"PADGROUP") m.padGroups.push_back({at(1), at(2)});
+    else if (k == L"PADACTION") m.padActions.push_back({at(1), at(2), at(3)});
+    else if (k == L"PADBIND") m.padSaved[at(1)] = at(2);
   }
   uiLanguage = m.language;
   if (m.languageKey.empty() || uiStrings.empty()) {
@@ -329,13 +355,17 @@ bool LoadModel(const Paths& p, Model& m, std::wstring& error) {
   }
   if (m.presets.size() != 3 || m.settings.empty()) { error = L"the settings description is incomplete"; return false; }
   if (m.layouts.empty() || m.keyInputs.empty() || m.keyNames.empty()) { error = L"the keyboard description is incomplete"; return false; }
+  if (m.padButtons.empty() || m.padActions.empty() || m.padSaved.size() != m.padButtons.size()) {
+    error = L"the controller description is incomplete";
+    return false;
+  }
   return true;
 }
 
 // The engine's set-preset: the resolver validates the choice and writes settings.json.
 bool SaveSettings(const Paths& p, const std::wstring& preset, const std::wstring& base,
                   const std::vector<std::wstring>& pairs, const std::vector<std::wstring>& keyboard,
-                  std::wstring& message) {
+                  const std::vector<std::wstring>& controller, std::wstring& message) {
   wchar_t dir[MAX_PATH], file[MAX_PATH];
   GetTempPathW(MAX_PATH, dir);
   GetTempFileNameW(dir, L"r3h", 0, file);
@@ -344,6 +374,7 @@ bool SaveSettings(const Paths& p, const std::wstring& preset, const std::wstring
   if (!base.empty()) a.insert(a.end(), {L"--base", base});
   if (!pairs.empty()) { a.push_back(L"--set"); a.insert(a.end(), pairs.begin(), pairs.end()); }
   a.insert(a.end(), keyboard.begin(), keyboard.end());  // M32: --keyboard LAYOUT [--key INPUT=KEYS ...]
+  a.insert(a.end(), controller.begin(), controller.end());  // D-115: --pad [INPUT=BUTTON ...]
   a.insert(a.end(), {L"--result-file", file});
   std::string out;
   DWORD code = 1;
@@ -532,9 +563,24 @@ Launch StartGame(const Paths& p, bool dryRun, std::wstring& detail, void (*idle)
 
 enum : int { kIdSave = 10, kIdPlay = 11, kIdFolder = 12, kIdControls = 13, kIdPageSettings = 14, kIdAdvanced = 15,
               kIdLayout = 16, kIdRestoreKeys = 17, kIdLanguage = 18, kIdMods = 19, kIdModList = 20, kIdModZip = 21,
-              kIdModFolder = 22, kIdModToggle = 23, kIdModUp = 24, kIdModDown = 25, kIdModRemove = 26, kIdRadio = 100,
-              kIdSetting = 200, kIdKey = 400 };
+              kIdModFolder = 22, kIdModToggle = 23, kIdModUp = 24, kIdModDown = 25, kIdModRemove = 26,
+              kIdRestorePad = 27, kIdKeyTab = 28, kIdPadTab = 29, kIdRadio = 100, kIdSetting = 200, kIdKey = 400,
+              kIdPad = 600 };
+enum : UINT_PTR { kTimerPadPoll = 1, kTimerPadStatus = 2 };  // D-116
 enum class Page { Settings, Controls, Advanced, Mods };
+
+// D-116: one reading of a controller, in the Xbox 360 pad's terms (buttons = X_INPUT_GAMEPAD_* bits).
+struct PadSample {
+  uint16_t buttons = 0;
+  uint8_t lt = 0, rt = 0;
+  int lx = 0, ly = 0, rx = 0, ry = 0;  // -32768 .. 32767
+  bool guide = false, touchpad = false;
+};
+
+struct PadPrevious {
+  PadSample sample;
+  bool leftArmed = false, rightArmed = false;
+};
 
 struct Ui {
   Paths paths;
@@ -550,8 +596,16 @@ struct Ui {
   HWND radios[3] = {}, radioText[3] = {}, lastFocus = nullptr;
   // M32 (D-069): three pages in one window: settings, the keyboard (Controls) and Advanced (troubleshooting).
   HWND controlsButton = nullptr, settingsButton = nullptr, advancedButton = nullptr;
-  HWND controlsTitle = nullptr, layoutTitle = nullptr, layoutBox = nullptr, restoreKeys = nullptr,
-       controlsNote = nullptr, keyHead[4] = {}, controlsRule = nullptr;
+  HWND layoutTitle = nullptr, layoutBox = nullptr, restoreKeys = nullptr, controlsNote = nullptr, keyHead[6] = {},
+       controlsRule = nullptr;
+  HWND padTitle = nullptr, padRestore = nullptr;  // D-115
+  // D-116: the Controls page's tabs, the controller tab's status line and help.
+  HWND keyTab = nullptr, padTab = nullptr, padStatus = nullptr, padHint = nullptr;
+  // D-116: every page's controls are children of this window, which covers the band between the header and the button
+  // row: a scrolled page is cut off at its edges by the window manager itself.
+  HWND host = nullptr, makeParent = nullptr;
+  std::map<std::wstring, HWND> padGroupTitles;
+  std::vector<HWND> keyPage, padPage;  // the two tabs' controls (both also in controlsPage)
   HWND advancedTitle = nullptr, advancedText = nullptr, languageTitle = nullptr, languageBox = nullptr;
 
   std::vector<HWND> settingsPage, controlsPage, advancedPage, modsPage;
@@ -567,6 +621,18 @@ struct Ui {
   // The keys the Controls page shows (input id -> slots) and the layout they start from.
   std::map<std::wstring, Slots> keys;
   std::wstring keyLayout;
+  std::map<std::wstring, std::wstring> pad;  // D-115: input -> the button the page shows (every input of the map)
+  bool padTabShown = false;                   // D-116: the Controls page shows the Controller tab
+  int padCapture = -1;                        // D-116: the action waiting for a press (-1: none)
+  ULONGLONG padCaptureEnd = 0, padCheckAt = 0, testClock = 0;
+  std::map<std::wstring, PadPrevious> padPrev;  // sample and stick re-arm state per capture/source
+  bool rawRegistered = false;
+  std::wstring padConnected;                  // what the status line names ("" = no controller)
+  std::wstring simPads;                       // --ui-test: the controllers the test says are connected (never read)
+  int viewTop = 0, viewBottom = 0;            // D-116: the page's visible band (client pixels) when it scrolls
+  int userHeight = 0;                         // D-116: a height the person gave the window (0 = fit the page)
+  int naturalHeight = 0;                      // D-116: the window height that shows the whole page
+  bool fitting = false;                       // D-116: inside Fit (its own WM_SIZE is not a person's resize)
   // M43 (D-080): the point the window keeps as its centre when a page of another height is shown: the work area's
   // centre at start, the window's own centre once a person has moved it, the system's rectangle after a DPI change.
   POINT anchor{};
@@ -625,7 +691,8 @@ HICON LoadAppIcon(HINSTANCE inst, int metric) {
 }
 
 HWND Make(const wchar_t* cls, const std::wstring& text, DWORD style, int id = 0) {
-  HWND h = CreateWindowExW(0, cls, T(text).c_str(), WS_CHILD | WS_VISIBLE | style, 0, 0, 10, 10, g.hwnd,
+  HWND h = CreateWindowExW(0, cls, T(text).c_str(), WS_CHILD | WS_VISIBLE | style, 0, 0, 10, 10,
+                           g.makeParent ? g.makeParent : g.hwnd,
                            (HMENU)(INT_PTR)id, GetModuleHandleW(nullptr), nullptr);
   return h;
 }
@@ -645,6 +712,13 @@ std::wstring SettingLabel(const Setting& s) {
   return s.note.empty() ? T(s.label) : T(s.label) + L" (" + T(s.note) + L")";
 }
 
+// D-116: an action's name as a table row shows it: the text before its first ';', '.' or ':' (translated first).
+std::wstring ShortAction(const std::wstring& action) {
+  std::wstring a = T(action);
+  size_t cut = a.find_first_of(L";.:");
+  return cut == std::wstring::npos ? a : a.substr(0, cut);
+}
+
 void BuildControls() {
   g.titleText = Make(L"STATIC", L"Rayman 3 HD Recompiled", SS_LEFT | SS_NOPREFIX);
   g.versionText = Make(L"STATIC", L"", SS_RIGHT | SS_NOPREFIX);
@@ -653,6 +727,10 @@ void BuildControls() {
   g.secondary.push_back(g.homeText);
   g.banner = Text(L"");
   g.rule1 = Make(L"STATIC", L"", SS_ETCHEDHORZ);
+  // D-116: the page host (here in the window's order, so Tab goes header, page, button row), then the pages in it.
+  g.host = CreateWindowExW(WS_EX_CONTROLPARENT, kHostClass, L"", WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN, 0, 0, 10, 10,
+                           g.hwnd, nullptr, GetModuleHandleW(nullptr), nullptr);
+  g.makeParent = g.host;
   g.groupTitle[L"profile"] = Make(L"STATIC", T(L"Game profile"), SS_LEFT | SS_NOPREFIX);
   for (int i = 0; i < 3; ++i) {
     const Preset& p = g.model.presets[i];
@@ -694,49 +772,72 @@ void BuildControls() {
       for (HWND h : {s.title, s.control, s.valueText, s.helpText}) if (h) pageList.push_back(h);
     }
   }
-  // M32 (D-069): the Controls page: a layout, then one row per pad input with two key buttons (the keyboard map of
-  // the model's KEY* rows). M43 (D-080): inputs not yet characterised are not shown at all; their keys stay in the map
-  // (saved, restored with a layout, part of the conflict check), so a later milestone can show them once named.
-  g.controlsTitle = Make(L"STATIC", T(L"Keyboard"), SS_LEFT | SS_NOPREFIX);
-  g.groupTitle[L"controls"] = g.controlsTitle;
+  // M32 (D-069): the Controls page. D-116: two tabs (push-like radio buttons). Keyboard: a layout, then one row per
+  // pad input with two key buttons, in two columns of groups. M43 (D-080): inputs not yet characterised are not shown
+  // at all; their keys stay in the map (saved, restored with a layout, part of the conflict check).
+  g.keyTab = Make(L"BUTTON", T(L"&Keyboard"), BS_AUTORADIOBUTTON | BS_PUSHLIKE | WS_TABSTOP | WS_GROUP, kIdKeyTab);
+  g.padTab = Make(L"BUTTON", T(L"C&ontroller"), BS_AUTORADIOBUTTON | BS_PUSHLIKE, kIdPadTab);
   g.layoutTitle = Make(L"STATIC", T(L"Layout"), SS_LEFT | SS_NOPREFIX);
   g.layoutBox = Make(WC_COMBOBOXW, L"", CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP | WS_GROUP, kIdLayout);
   for (const auto& l : g.model.layouts) SendMessageW(g.layoutBox, CB_ADDSTRING, 0, (LPARAM)T(l.name).c_str());
   g.restoreKeys = Make(L"BUTTON", T(L"&Restore defaults"), BS_PUSHBUTTON | WS_TABSTOP | WS_GROUP, kIdRestoreKeys);
-  const std::wstring heads[4] = {T(L"Action"), T(L"Controller"), T(L"Key"), T(L"Second key")};
-  for (int c = 0; c < 4; ++c) {
-    g.keyHead[c] = Make(L"STATIC", heads[c], SS_LEFT | SS_NOPREFIX);
+  const std::wstring heads[3] = {T(L"Action"), T(L"Key"), T(L"Second key")};
+  for (int c = 0; c < 6; ++c) {
+    g.keyHead[c] = Make(L"STATIC", heads[c % 3], SS_LEFT | SS_NOPREFIX);
     g.groupTitle[L"controls.head" + std::to_wstring(c)] = g.keyHead[c];  // bold, like a group title
   }
   g.controlsRule = Make(L"STATIC", L"", SS_ETCHEDHORZ);
-  g.controlsPage = {g.controlsTitle, g.layoutTitle, g.layoutBox, g.restoreKeys, g.keyHead[0], g.keyHead[1],
-                    g.keyHead[2], g.keyHead[3], g.controlsRule};
+  g.keyPage = {g.layoutTitle, g.layoutBox, g.restoreKeys, g.controlsRule};
+  g.keyPage.insert(g.keyPage.end(), std::begin(g.keyHead), std::end(g.keyHead));
   for (const auto& kg : g.model.keyGroups) {
     HWND t = Make(L"STATIC", kg.second, SS_LEFT | SS_NOPREFIX);
     g.keyGroupTitles[kg.first] = t;
     g.groupTitle[L"keys." + kg.first] = t;
-    g.controlsPage.push_back(t);
+    g.keyPage.push_back(t);
     for (size_t i = 0; i < g.model.keyInputs.size(); ++i) {
       KeyInput& in = g.model.keyInputs[i];
       if (in.group != kg.first) continue;
-      in.text = Text(in.action);
-      in.padText = Text(in.pad, true);
+      in.text = Text(ShortAction(in.action));  // before its buttons: their accessible name
       for (int s = 0; s < 2; ++s)
         in.button[s] = Make(L"BUTTON", L"", BS_PUSHBUTTON | WS_TABSTOP | (i == 0 && s == 0 ? WS_GROUP : 0),
                             kIdKey + (int)i * 2 + s);
-      for (HWND h : {in.text, in.padText, in.button[0], in.button[1]}) g.controlsPage.push_back(h);
+      for (HWND h : {in.text, in.button[0], in.button[1]}) g.keyPage.push_back(h);
     }
   }
   g.controlsNote = Text(T(L"Click a key to change it, then press the new key (Esc cancels). Right-click a key or press "
                         L"Delete to remove it. ") + T(g.model.keyNote), true);
-  g.controlsPage.push_back(g.controlsNote);
+  g.keyPage.push_back(g.controlsNote);
+  // D-116: the Controller tab: the connected controller and Restore, the help, then one row per listed action with a
+  // button that starts a capture (its caption: the physical input the action uses now).
+  g.padStatus = Text(L"");
+  g.padRestore = Make(L"BUTTON", T(L"Restore controller d&efaults"), BS_PUSHBUTTON | WS_TABSTOP | WS_GROUP, kIdRestorePad);
+  g.padHint = Text(T(L"Click an action, then press the controller button you want. Assigned buttons swap; Esc cancels."), true);
+  g.padPage = {g.padStatus, g.padRestore, g.padHint};
+  for (const auto& pg : g.model.padGroups) {
+    HWND t = Make(L"STATIC", pg.second, SS_LEFT | SS_NOPREFIX);
+    g.padGroupTitles[pg.first] = t;
+    g.groupTitle[L"pad." + pg.first] = t;
+    g.padPage.push_back(t);
+    for (size_t i = 0; i < g.model.padActions.size(); ++i) {
+      PadAction& pa = g.model.padActions[i];
+      if (pa.group != pg.first) continue;
+      pa.text = Text(pa.name);  // before its button: the button's accessible name
+      pa.button = Make(L"BUTTON", L"", BS_PUSHBUTTON | WS_TABSTOP | (i == 0 ? WS_GROUP : 0), kIdPad + (int)i);
+      g.padPage.insert(g.padPage.end(), {pa.text, pa.button});
+    }
+  }
+  g.controlsPage = {g.keyTab, g.padTab};
+  g.controlsPage.insert(g.controlsPage.end(), g.keyPage.begin(), g.keyPage.end());
+  g.controlsPage.insert(g.controlsPage.end(), g.padPage.begin(), g.padPage.end());
   // M32: Advanced holds the troubleshooting settings (registry group "advanced") and the installation folder.
   g.advancedTitle = Make(L"STATIC", T(L"Advanced"), SS_LEFT | SS_NOPREFIX);
   g.groupTitle[L"advanced.page"] = g.advancedTitle;
   g.advancedText = Text(T(L"For troubleshooting. You do not need to change anything here to play."), true);
   g.folderButton = Make(L"BUTTON", T(L"Open the installation &folder"), BS_PUSHBUTTON | WS_TABSTOP | WS_GROUP, kIdFolder);
+  g.makeParent = nullptr;  // the language choice is in the header
   g.languageTitle = Make(L"STATIC", T(L"Interface language"), SS_RIGHT | SS_NOPREFIX);
   g.languageBox = Make(WC_COMBOBOXW, L"", CBS_DROPDOWNLIST | WS_TABSTOP, kIdLanguage);
+  g.makeParent = g.host;
   SendMessageW(g.languageBox, CB_ADDSTRING, 0, (LPARAM)L"English");
   SendMessageW(g.languageBox, CB_ADDSTRING, 0, (LPARAM)L"Türkçe");
   SendMessageW(g.languageBox, CB_SETCURSEL, uiLanguage == L"tr" ? 1 : 0, 0);
@@ -762,6 +863,7 @@ void BuildControls() {
                     L"applied and the reason is shown here."), true);
   g.modsPage = {g.modsTitle, g.modsText, g.modList, g.modDetail, g.modZip, g.modFolder, g.modToggle, g.modUp, g.modDown,
                 g.modRemove, g.modsNote};
+  g.makeParent = nullptr;  // the button row
   g.rule2 = Make(L"STATIC", L"", SS_ETCHEDHORZ);
   g.status = Text(L"");
   // The page selector: push-like radio buttons, the shown page's one pressed.
@@ -802,88 +904,152 @@ int LineHeight(HFONT font) {
   return tm.tmHeight;
 }
 
-// Places every control for the current DPI and scroll position; returns the content height (pixels).
+/// D-116: the list of the page shown now (its controls scroll; everything else is the header and the button row).
+const std::vector<HWND>& PageList() {
+  return g.page == Page::Controls ? g.controlsPage : g.page == Page::Advanced ? g.advancedPage
+         : g.page == Page::Mods ? g.modsPage : g.settingsPage;
+}
+
+// Places every control for the current DPI and scroll position; returns the content height (pixels). D-116: the
+// header and the button row are never scrolled: when the window is shorter than the content, the row sits at the
+// bottom of the client area and the page scrolls between the two (g.viewTop / g.viewBottom: the visible band), inside
+// the page host, which cuts off what is scrolled out of it.
 int Layout() {
   const int margin = S(20), gap = S(28), width = S(kWidth);
   const int col = (width - 2 * margin - gap) / 2;
   const int line = LineHeight(g.body);
   const int rowH = std::max(line + S(6), S(24));
-  HDWP dwp = BeginDeferWindowPos(64);
-  auto put = [&](HWND h, int x, int y, int w, int hgt) {
+  RECT client;
+  GetClientRect(g.hwnd, &client);
+  const bool scrolling = (GetWindowLongPtrW(g.hwnd, GWL_STYLE) & WS_VSCROLL) != 0;
+  // One position structure per parent (DeferWindowPos needs siblings): the window's own controls, the page host's.
+  HDWP dwp = BeginDeferWindowPos(24), pdwp = BeginDeferWindowPos(160);
+  auto place = [&](HWND h, int x, int y, int w, int hgt) {
     // SWP_NOCOPYBITS: a moved control repaints instead of carrying its old pixels (M31: the list's header left a copy).
-    if (h) dwp = DeferWindowPos(dwp, h, nullptr, x, y - g.scrollY, w, hgt, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOCOPYBITS);
+    if (h) dwp = DeferWindowPos(dwp, h, nullptr, x, y, w, hgt, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOCOPYBITS);
+  };
+  int hostTop = 0;  // the page host's top in the window (set once the header is placed)
+  auto put = [&](HWND h, int x, int y, int w, int hgt) {  // the page: in the host, scrolled
+    if (h) pdwp = DeferWindowPos(pdwp, h, nullptr, x, y - g.scrollY - hostTop, w, hgt,
+                                 SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOCOPYBITS);
   };
   int y = S(16);
   int th = Measure(g.titleText, g.title, width);
-  put(g.titleText, margin, y, col + gap, th);
-  put(g.versionText, margin + col + gap, y + th - line - S(2), col, line);
+  place(g.titleText, margin, y, col + gap, th);
+  place(g.versionText, margin + col + gap, y + th - line - S(2), col, line);
   y += th + S(2);
   // Persistent header: locale is explicitly an interface choice, separate from game settings.
   int languageX = width - margin - S(150);
-  put(g.homeText, margin, y + (rowH - line) / 2, col, line);
-  put(g.languageTitle, languageX - S(148), y + (rowH - line) / 2, S(140), line);
-  put(g.languageBox, languageX, y, S(150), rowH + S(80));
+  place(g.homeText, margin, y + (rowH - line) / 2, col, line);
+  place(g.languageTitle, languageX - S(148), y + (rowH - line) / 2, S(140), line);
+  place(g.languageBox, languageX, y, S(150), rowH + S(80));
   y += rowH + S(1);
   int bh = Measure(g.banner, g.body, width - 2 * margin);
-  put(g.banner, margin, y, width - 2 * margin, bh);
+  place(g.banner, margin, y, width - 2 * margin, bh);
   y += bh + S(12);
-  put(g.rule1, margin, y, width - 2 * margin, S(2));
+  place(g.rule1, margin, y, width - 2 * margin, S(2));
+  const int headBottom = y + S(6);
   const int top = y + S(14);
+  hostTop = headBottom;
   int bottom = top;
-  std::vector<HWND> hidden;  // controls of the shown page that stay hidden (inputs not shown)
+  std::vector<HWND> hidden;  // controls of the shown page that stay hidden (inputs not shown, the other tab)
   if (g.page == Page::Controls) {
-    // M32: layout row, then a table: action, controller input, two key buttons; one group title per keymap group.
-    int full = width - 2 * margin;
-    int ch = Measure(g.controlsTitle, g.bold, full);
-    put(g.controlsTitle, margin, top, full, ch);
-    int ly2 = top + ch + S(8);
-    const int lw = S(70), cbw = S(240), rbw = S(150);
-    int lh = Measure(g.layoutTitle, g.body, lw);
-    put(g.layoutTitle, margin, ly2 + std::max(0, (rowH - lh) / 2), lw, lh);
-    put(g.layoutBox, margin + lw + S(8), ly2, cbw, rowH + S(120));
-    put(g.restoreKeys, margin + lw + S(16) + cbw, ly2 - S(1), rbw, rowH + S(2));
-    ly2 += rowH + S(12);
-    const int cgap = S(10), kw = S(130);
-    const int cw[4] = {full - S(150) - 2 * kw - 3 * cgap, S(150), kw, kw};
-    const int cx[4] = {margin, margin + cw[0] + cgap, margin + cw[0] + cw[1] + 2 * cgap,
-                       margin + cw[0] + cw[1] + cw[2] + 3 * cgap};
-    int hh2 = 0;
-    for (int c = 0; c < 4; ++c) hh2 = std::max(hh2, Measure(g.keyHead[c], g.bold, cw[c]));
-    for (int c = 0; c < 4; ++c) put(g.keyHead[c], cx[c], ly2, cw[c], hh2);
-    ly2 += hh2 + S(4);
-    put(g.controlsRule, margin, ly2, full, S(2));
-    ly2 += S(8);
-    for (const auto& kg : g.model.keyGroups) {
-      bool any = false;
-      for (const auto& in : g.model.keyInputs) any |= in.group == kg.first && !in.hidden;
-      HWND t = g.keyGroupTitles[kg.first];
-      if (!any) {
-        hidden.push_back(t);
-        for (auto& in : g.model.keyInputs)
-          if (in.group == kg.first) for (HWND h : {in.text, in.padText, in.button[0], in.button[1]}) hidden.push_back(h);
-        continue;
+    const int full = width - 2 * margin;
+    // D-116: two columns of groups, each group kept whole; the split that makes the taller column shortest.
+    struct TRow { HWND text; HWND b[2]; };
+    struct TGroup { HWND title; std::vector<TRow> rows; };
+    auto table = [&](const std::vector<TGroup>& groups, int y0, int nb, int bw) -> int {
+      const int colGap = S(24), colW = (full - colGap) / 2, cg = S(6), tw = colW - nb * (bw + cg);
+      auto rowHeight = [&](const TRow& r) { return std::max(Measure(r.text, g.body, tw), rowH); };
+      std::vector<int> hs;
+      for (const auto& gr : groups) {
+        int h = Measure(gr.title, g.bold, colW) + S(4);
+        for (const auto& r : gr.rows) h += rowHeight(r) + S(3);
+        hs.push_back(h + S(8));
       }
-      int gh = Measure(t, g.bold, full);
-      put(t, margin, ly2, full, gh);
-      ly2 += gh + S(4);
-      for (auto& in : g.model.keyInputs) {
-        if (in.group != kg.first) continue;
-        if (in.hidden) {
-          for (HWND h : {in.text, in.padText, in.button[0], in.button[1]}) hidden.push_back(h);
-          continue;
+      size_t split = 0;
+      int best = INT_MAX;
+      for (size_t k = 0; k <= groups.size(); ++k) {
+        int left = 0, right = 0;
+        for (size_t i = 0; i < groups.size(); ++i) (i < k ? left : right) += hs[i];
+        if (std::max(left, right) < best) { best = std::max(left, right); split = k; }
+      }
+      int yc[2] = {y0, y0};
+      for (size_t i = 0; i < groups.size(); ++i) {
+        const int c = i < split ? 0 : 1, x = margin + c * (colW + colGap);
+        int& cy = yc[c];
+        int gh = Measure(groups[i].title, g.bold, colW);
+        put(groups[i].title, x, cy, colW, gh);
+        cy += gh + S(4);
+        for (const auto& r : groups[i].rows) {
+          int rh = rowHeight(r), t2 = Measure(r.text, g.body, tw);
+          put(r.text, x, cy + std::max(0, (rh - t2) / 2), tw, t2);
+          for (int b = 0; b < nb; ++b) put(r.b[b], x + tw + cg + b * (bw + cg), cy + (rh - rowH) / 2, bw, rowH);
+          cy += rh + S(3);
         }
-        int th2 = std::max(Measure(in.text, g.body, cw[0]), Measure(in.padText, g.body, cw[1]));
-        int rh = std::max(th2, rowH);
-        put(in.text, cx[0], ly2 + std::max(0, (rh - Measure(in.text, g.body, cw[0])) / 2), cw[0], Measure(in.text, g.body, cw[0]));
-        put(in.padText, cx[1], ly2 + std::max(0, (rh - Measure(in.padText, g.body, cw[1])) / 2), cw[1], Measure(in.padText, g.body, cw[1]));
-        for (int s = 0; s < 2; ++s) put(in.button[s], cx[2 + s], ly2 + (rh - rowH) / 2, cw[2 + s], rowH);
-        ly2 += rh + S(3);
+        cy += S(8);
       }
+      return std::max(yc[0], yc[1]);
+    };
+    const int tabW = S(130), tabH = S(28);
+    put(g.keyTab, margin, top, tabW, tabH);
+    put(g.padTab, margin + tabW + S(6), top, tabW, tabH);
+    int ly2 = top + tabH + S(12);
+    const int rbw = S(200);
+    if (!g.padTabShown) {
+      hidden.insert(hidden.end(), g.padPage.begin(), g.padPage.end());
+      // M32: layout row, then the table: action and two key buttons per row, one group title per keymap group.
+      const int lw = S(70), cbw = S(240);
+      int lh = Measure(g.layoutTitle, g.body, lw);
+      put(g.layoutTitle, margin, ly2 + std::max(0, (rowH - lh) / 2), lw, lh);
+      put(g.layoutBox, margin + lw + S(8), ly2, cbw, rowH + S(120));
+      put(g.restoreKeys, margin + full - rbw, ly2 - S(1), rbw, rowH + S(2));
+      ly2 += rowH + S(12);
+      const int kw = S(96), colGap = S(24), colW = (full - colGap) / 2, cg = S(6), tw = colW - 2 * (kw + cg);
+      int hh2 = 0;
+      for (int c = 0; c < 6; ++c) hh2 = std::max(hh2, Measure(g.keyHead[c], g.bold, c % 3 ? kw : tw));
+      for (int c = 0; c < 6; ++c) {
+        int x = margin + (c / 3) * (colW + colGap) + (c % 3 ? tw + cg + (c % 3 - 1) * (kw + cg) : 0);
+        put(g.keyHead[c], x, ly2, c % 3 ? kw : tw, hh2);
+      }
+      ly2 += hh2 + S(4);
+      put(g.controlsRule, margin, ly2, full, S(2));
       ly2 += S(8);
+      std::vector<TGroup> groups;
+      for (const auto& kg : g.model.keyGroups) {
+        TGroup gr{g.keyGroupTitles[kg.first], {}};
+        for (auto& in : g.model.keyInputs) {
+          if (in.group != kg.first) continue;
+          if (in.hidden) { for (HWND h : {in.text, in.button[0], in.button[1]}) hidden.push_back(h); continue; }
+          gr.rows.push_back({in.text, {in.button[0], in.button[1]}});
+        }
+        if (gr.rows.empty()) hidden.push_back(gr.title);
+        else groups.push_back(gr);
+      }
+      ly2 = table(groups, ly2, 2, kw);
+      int nh = Measure(g.controlsNote, g.body, full);
+      put(g.controlsNote, margin, ly2, full, nh);
+      ly2 += nh;
+    } else {
+      hidden.insert(hidden.end(), g.keyPage.begin(), g.keyPage.end());
+      // D-116: the connected controller and Restore, the help, the actions' table, the note.
+      int sh2 = Measure(g.padStatus, g.body, full - rbw - S(12));
+      put(g.padStatus, margin, ly2 + std::max(0, (rowH - sh2) / 2), full - rbw - S(12), sh2);
+      put(g.padRestore, margin + full - rbw, ly2 - S(1), rbw, rowH + S(2));
+      ly2 += std::max(rowH, sh2) + S(8);
+      int hh3 = Measure(g.padHint, g.body, full);
+      put(g.padHint, margin, ly2, full, hh3);
+      ly2 += hh3 + S(12);
+      std::vector<TGroup> groups;
+      for (const auto& pg : g.model.padGroups) {
+        TGroup gr{g.padGroupTitles[pg.first], {}};
+        for (auto& pa : g.model.padActions) if (pa.group == pg.first) gr.rows.push_back({pa.text, {pa.button, nullptr}});
+        if (gr.rows.empty()) hidden.push_back(gr.title);
+        else groups.push_back(gr);
+      }
+      ly2 = table(groups, ly2, 1, S(190));
     }
-    int nh = Measure(g.controlsNote, g.body, full);
-    put(g.controlsNote, margin, ly2, full, nh);
-    bottom = ly2 + nh;
+    bottom = ly2;
   } else if (g.page == Page::Advanced) {
     // M32: the troubleshooting settings and the folder, in one column.
     int full = width - 2 * margin, ay = top;
@@ -1017,22 +1183,29 @@ int Layout() {
     }
     bottom = std::max(ly, ry);
   }
-  y = bottom + S(8);
-  put(g.rule2, margin, y, width - 2 * margin, S(2));
-  y += S(12);
-  int sh = Measure(g.status, g.body, width - 2 * margin);
-  put(g.status, margin, y, width - 2 * margin, std::max(sh, line));
-  y += std::max(sh, line) + S(10);
+  // The button row: under the page, or (D-116) at the bottom of a window shorter than the content.
+  const int sh = std::max(Measure(g.status, g.body, width - 2 * margin), line);
   const int bw = S(100), bhgt = S(30), bgap = S(8);
-  put(g.settingsButton, margin, y, bw, bhgt);
-  put(g.controlsButton, margin + bw + bgap, y, bw, bhgt);
-  put(g.advancedButton, margin + 2 * (bw + bgap), y, bw, bhgt);
-  put(g.modsButton, margin + 3 * (bw + bgap), y, bw, bhgt);
-  put(g.closeButton, width - margin - bw, y, bw, bhgt);
-  put(g.playButton, width - margin - 2 * bw - bgap, y, bw, bhgt);
-  put(g.saveButton, width - margin - 3 * bw - 2 * bgap, y, bw, bhgt);
-  y += bhgt + S(16);
+  const int footH = S(8) + S(12) + sh + S(10) + bhgt + S(16);
+  const int content = bottom + footH;
+  y = scrolling ? std::max<int>(client.bottom - footH, headBottom) + S(8) : bottom + S(8);
+  const int footTop = y - S(8);
+  place(g.rule2, margin, y, width - 2 * margin, S(2));
+  y += S(12);
+  place(g.status, margin, y, width - 2 * margin, sh);
+  y += sh + S(10);
+  place(g.settingsButton, margin, y, bw, bhgt);
+  place(g.controlsButton, margin + bw + bgap, y, bw, bhgt);
+  place(g.advancedButton, margin + 2 * (bw + bgap), y, bw, bhgt);
+  place(g.modsButton, margin + 3 * (bw + bgap), y, bw, bhgt);
+  place(g.closeButton, width - margin - bw, y, bw, bhgt);
+  place(g.playButton, width - margin - 2 * bw - bgap, y, bw, bhgt);
+  place(g.saveButton, width - margin - 3 * bw - 2 * bgap, y, bw, bhgt);
+  place(g.host, 0, headBottom, width, footTop - headBottom);
+  EndDeferWindowPos(pdwp);
   EndDeferWindowPos(dwp);
+  g.viewTop = headBottom;
+  g.viewBottom = footTop;
   auto show = [&](const std::vector<HWND>& list, bool on) {
     for (HWND h : list)
       ShowWindow(h, on && std::find(hidden.begin(), hidden.end(), h) == hidden.end() ? SW_SHOWNA : SW_HIDE);
@@ -1045,7 +1218,24 @@ int Layout() {
   SendMessageW(g.controlsButton, BM_SETCHECK, g.page == Page::Controls ? BST_CHECKED : BST_UNCHECKED, 0);
   SendMessageW(g.advancedButton, BM_SETCHECK, g.page == Page::Advanced ? BST_CHECKED : BST_UNCHECKED, 0);
   SendMessageW(g.modsButton, BM_SETCHECK, g.page == Page::Mods ? BST_CHECKED : BST_UNCHECKED, 0);
-  return y;
+  SendMessageW(g.keyTab, BM_SETCHECK, g.padTabShown ? BST_UNCHECKED : BST_CHECKED, 0);
+  SendMessageW(g.padTab, BM_SETCHECK, g.padTabShown ? BST_CHECKED : BST_UNCHECKED, 0);
+  return content;
+}
+
+void SetScroll(int y);
+
+// D-116: a control that takes the focus (Tab, an accelerator) while it is outside the visible band is scrolled into it.
+void EnsureVisible(HWND h) {
+  if (!h || !(GetWindowLongPtrW(g.hwnd, GWL_STYLE) & WS_VSCROLL)) return;
+  while (h && GetParent(h) != g.host) h = GetParent(h);  // a combo box's edit part: the box
+  const auto& list = PageList();
+  if (std::find(list.begin(), list.end(), h) == list.end()) return;
+  RECT r;
+  GetWindowRect(h, &r);
+  MapWindowPoints(nullptr, g.hwnd, (POINT*)&r, 2);
+  if (r.top < g.viewTop + S(4)) SetScroll(g.scrollY - (g.viewTop + S(4) - r.top));
+  else if (r.bottom > g.viewBottom - S(4)) SetScroll(g.scrollY + (r.bottom - (g.viewBottom - S(4))));
 }
 
 void SetText(HWND h, const std::wstring& s) { SetWindowTextW(h, T(s).c_str()); }
@@ -1063,11 +1253,13 @@ void CentreAnchor() {
   g.anchor = {(wa.left + wa.right) / 2, (wa.top + wa.bottom) / 2};
 }
 
-// Sizes the window to the shown page. M43 (D-080): `recentre` (a page change, a DPI change, the first show) puts the
+/// Sizes the window to the shown page. M43 (D-080): `recentre` (a page change, a DPI change, the first show) puts the
 // window's centre on g.anchor, so pages of different heights share one centre and switching back returns the window
 // to where it was; any other call (a status line, a key capture, a mod list update) keeps the top-left corner. Either
-// way the window stays inside the work area; a page taller than the work area scrolls.
+// way the window stays inside the work area; a page taller than the work area scrolls. D-116: a height the person gave
+// the window (g.userHeight) is kept as the most it may take; only the page scrolls (Layout keeps the button row in view).
 void Fit(bool recentre = false) {
+  g.fitting = true;
   g.contentHeight = Layout();
   RECT want{0, 0, S(kWidth), g.contentHeight};
   DWORD style = (DWORD)GetWindowLongPtrW(g.hwnd, GWL_STYLE) & ~WS_VSCROLL;
@@ -1077,7 +1269,9 @@ void Fit(bool recentre = false) {
   if (adjust) adjust(&frame, style, FALSE, 0, g.dpi); else AdjustWindowRectEx(&frame, style, FALSE, 0);
   RECT wa = WorkArea();
   int maxH = wa.bottom - wa.top;
+  if (g.userHeight > 0) maxH = std::min(maxH, g.userHeight);
   int w = frame.right - frame.left, h = frame.bottom - frame.top;
+  g.naturalHeight = h;
   // A UI test takes the same path (M43 follow-up, D-082): the M33 exception that kept the whole page in test mode
   // left a page taller than a real 1032 px work area outside it; the dump checks the layout against the whole page.
   bool scroll = h > maxH;
@@ -1091,15 +1285,27 @@ void Fit(bool recentre = false) {
   // SWP_NOCOPYBITS: a recentred window repaints instead of carrying its old client pixels to the new place.
   SetWindowPos(g.hwnd, nullptr, x, y0, w, h, SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED | SWP_NOCOPYBITS);
   GetWindowRect(g.hwnd, &g.placed);
+  RECT client;
+  GetClientRect(g.hwnd, &client);
+  g.scrollY = scroll ? std::max(0, std::min(g.scrollY, g.contentHeight - (int)client.bottom)) : 0;
   if (scroll) {
-    RECT client;
-    GetClientRect(g.hwnd, &client);
     SCROLLINFO si{sizeof si, SIF_RANGE | SIF_PAGE | SIF_POS, 0, g.contentHeight - 1, (UINT)client.bottom, g.scrollY};
     SetScrollInfo(g.hwnd, SB_VERT, &si, TRUE);
-  } else if (g.scrollY) {
-    g.scrollY = 0;
-    Layout();
   }
+  Layout();  // again: the button row's place depends on the client height just set
+  g.fitting = false;
+}
+
+// D-116: scrolls the page to `y` (clamped); the header and the button row stay.
+void SetScroll(int y) {
+  RECT client;
+  GetClientRect(g.hwnd, &client);
+  y = std::max(0, std::min(y, std::max(0, g.contentHeight - (int)client.bottom)));
+  if (y == g.scrollY || !(GetWindowLongPtrW(g.hwnd, GWL_STYLE) & WS_VSCROLL)) return;
+  g.scrollY = y;
+  SetScrollPos(g.hwnd, SB_VERT, y, TRUE);
+  Layout();
+  InvalidateRect(g.hwnd, nullptr, TRUE);
 }
 
 // Shows g.chosen in the controls; corrections are editable only in Custom.
@@ -1214,6 +1420,356 @@ void ShowKeys() {
     }
 }
 
+/// ----------------------------------------------------------------------------------------------- controller --
+// D-115 / D-116. The page shows, for every listed action, the physical input it uses now; a capture assigns the next
+// new press. Every rule (which inputs exist, their kinds and names, the listed actions) comes from the model's PAD*
+// rows; the engine validates the map again when saving.
+
+const PadInput* FindPadInput(const std::wstring& id) {
+  for (const auto& b : g.model.padButtons) if (b.id == id) return &b;
+  return nullptr;
+}
+
+std::wstring PadLabel(const std::wstring& id) {
+  const PadInput* b = FindPadInput(id);
+  return b ? T(b->label) : id;
+}
+
+std::wstring PadKind(const std::wstring& id) {
+  const PadInput* b = FindPadInput(id);
+  return b ? b->kind : L"";
+}
+
+// The listed action that uses this guest input, else "".
+std::wstring PadActionName(const std::wstring& input) {
+  for (const auto& pa : g.model.padActions) if (pa.id == input) return T(pa.name);
+  return L"";
+}
+
+void ShowPad() {
+  for (size_t i = 0; i < g.model.padActions.size(); ++i) {
+    PadAction& pa = g.model.padActions[i];
+    std::wstring caption = PadLabel(g.pad[pa.id]);
+    if ((int)i == g.padCapture) {
+      const std::wstring kind = PadKind(pa.id);
+      caption = kind == L"trigger" ? T(L"Pull a trigger...") : kind == L"stick" ? T(L"Move a stick...") : T(L"Press a button...");
+    }
+    SetWindowTextW(pa.button, caption.c_str());
+  }
+}
+
+bool PadIsOriginal() {
+  for (const auto& b : g.model.padButtons) if (g.pad[b.id] != b.id) return false;
+  return true;
+}
+
+void PadChanged(const std::wstring& message) {
+  g.dirty = true;
+  EnableWindow(g.saveButton, g.model.install == L"ok");
+  ShowPad();
+  SetStatus(message + T(L" Unsaved changes."));
+}
+
+// Gives an action a physical input of its kind. The input that had it gets this action's old one (a swap), so every
+// game input keeps exactly one, whether the page lists it or not; the status line names what moved.
+void AssignPad(int action, const std::wstring& physical) {
+  if (action < 0 || action >= (int)g.model.padActions.size() || !FindPadInput(physical)) return;
+  const std::wstring& input = g.model.padActions[action].id;
+  const std::wstring name = T(g.model.padActions[action].name);
+  if (PadKind(physical) != PadKind(input)) return;  // the capture never offers another kind
+  std::wstring old = g.pad[input];
+  if (old == physical) { SetStatus(F(L"{key} is already assigned to {action}.", {{L"key", PadLabel(physical)}, {L"action", name}})); return; }
+  std::wstring other;
+  for (auto& o : g.pad)
+    if (o.first != input && o.second == physical) { o.second = old; other = o.first; }
+  g.pad[input] = physical;
+  std::wstring otherName = PadActionName(other);
+  if (!otherName.empty())
+    PadChanged(F(L"{key} assigned to {action}. {other} moved to {old}.",
+                 {{L"key", PadLabel(physical)}, {L"action", name}, {L"other", otherName}, {L"old", PadLabel(old)}}));
+  else
+    PadChanged(F(L"{key} assigned to {action}. {old} now does what {key} did.",
+                 {{L"key", PadLabel(physical)}, {L"action", name}, {L"old", PadLabel(old)}}));
+}
+
+// --- reading a controller (only during a capture, only with the window in front; never written to) ---
+
+using XInputGetStateFn = DWORD(WINAPI*)(DWORD, XINPUT_STATE*);
+XInputGetStateFn XInputState() {
+  static XInputGetStateFn fn = [] {
+    HMODULE m = LoadLibraryExW(L"xinput1_4.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
+    if (!m) m = LoadLibraryExW(L"xinput9_1_0.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
+    return m ? (XInputGetStateFn)GetProcAddress(m, "XInputGetState") : nullptr;
+  }();
+  return fn;
+}
+
+// Sony controllers by USB product id (vendor 054C): DualSense, DualSense Edge, DualShock 4 (two models, the dongle).
+enum class Sony { None, DualSense, DualShock4 };
+Sony SonyModel(DWORD vendor, DWORD product) {
+  if (vendor != 0x054C) return Sony::None;
+  if (product == 0x0CE6 || product == 0x0DF2) return Sony::DualSense;
+  if (product == 0x05C4 || product == 0x09CC || product == 0x0BA0) return Sony::DualShock4;
+  return Sony::None;
+}
+
+// One HID input report of a DualSense / DualShock 4 (report id first) in the Xbox pad's terms, by position as SDL names
+// them (Cross = A, Circle = B, Square = X, Triangle = Y, Create / Share = Back, Options = Start). False: not a report
+// with the controls (a short or other report).
+bool ParseSony(Sony model, const uint8_t* r, size_t n, PadSample& s) {
+  size_t st, face, l2, r2;  // offsets: the four stick bytes, the three button bytes, the two trigger bytes
+  if (n < 10) return false;
+  // SDL at the pinned SDK: ID 01 + 10 OR 78 bytes is DualSense BT simple
+  // (Windows pads the simple report). ID 01 + 64 is USB full. Length is part
+  // of the format: n>=32 misread simple L2/R2 as face/shoulder button bits.
+  if (model == Sony::DualSense && r[0] == 0x01 && (n == 10 || n == 78)) st = 1, face = 5, l2 = 8, r2 = 9;
+  else if (model == Sony::DualSense && r[0] == 0x01 && n == 64) st = 1, l2 = 5, r2 = 6, face = 8;
+  else if (model == Sony::DualSense && r[0] == 0x31 && n == 78) st = 2, l2 = 6, r2 = 7, face = 9;
+  else if (model == Sony::DualShock4 && r[0] == 0x01 && (n == 10 || n == 64 || n == 78)) st = 1, face = 5, l2 = 8, r2 = 9;
+  else if (model == Sony::DualShock4 && r[0] == 0x11 && n == 78) st = 3, face = 7, l2 = 10, r2 = 11;
+  else return false;
+  auto axis = [&](size_t i) { return ((int)r[i] - 128) * 256; };
+  s = PadSample{};
+  s.lx = axis(st), s.ly = -axis(st + 1), s.rx = axis(st + 2), s.ry = -axis(st + 3);
+  s.lt = r[l2], s.rt = r[r2];
+  const uint8_t b0 = r[face], b1 = r[face + 1], b2 = r[face + 2];
+  static const uint16_t hat[8] = {0x0001, 0x0009, 0x0008, 0x000A, 0x0002, 0x0006, 0x0004, 0x0005};  // N NE E SE S SW W NW
+  if ((b0 & 0x0F) < 8) s.buttons |= hat[b0 & 0x0F];
+  if (b0 & 0x10) s.buttons |= 0x4000;  // Square -> X
+  if (b0 & 0x20) s.buttons |= 0x1000;  // Cross -> A
+  if (b0 & 0x40) s.buttons |= 0x2000;  // Circle -> B
+  if (b0 & 0x80) s.buttons |= 0x8000;  // Triangle -> Y
+  if (b1 & 0x01) s.buttons |= 0x0100;  // L1
+  if (b1 & 0x02) s.buttons |= 0x0200;  // R1
+  if (b1 & 0x10) s.buttons |= 0x0020;  // Create / Share -> Back
+  if (b1 & 0x20) s.buttons |= 0x0010;  // Options -> Start
+  if (b1 & 0x40) s.buttons |= 0x0040;  // L3
+  if (b1 & 0x80) s.buttons |= 0x0080;  // R3
+  s.guide = (b2 & 0x01) != 0;
+  s.touchpad = (b2 & 0x02) != 0;
+  return true;
+}
+
+// The controllers connected now, for the status line: XInput slots answered and Sony HID gamepads listed by Raw Input
+// (a list of devices, nothing read). In a UI test, the test's own list; no device is ever looked at there.
+std::wstring ConnectedPads() {
+  if (g.testMode) return g.simPads;
+  int xbox = 0, ds = 0, ds4 = 0;
+  if (auto get = XInputState()) {
+    for (DWORD i = 0; i < 4; ++i) { XINPUT_STATE x{}; if (get(i, &x) == ERROR_SUCCESS) ++xbox; }
+  }
+  UINT count = 0;
+  GetRawInputDeviceList(nullptr, &count, sizeof(RAWINPUTDEVICELIST));
+  std::vector<RAWINPUTDEVICELIST> list(count);
+  if (count && GetRawInputDeviceList(list.data(), &count, sizeof(RAWINPUTDEVICELIST)) != (UINT)-1) {
+    for (UINT i = 0; i < count; ++i) {
+      if (list[i].dwType != RIM_TYPEHID) continue;
+      RID_DEVICE_INFO info{sizeof info};
+      UINT size = sizeof info;
+      if (GetRawInputDeviceInfoW(list[i].hDevice, RIDI_DEVICEINFO, &info, &size) == (UINT)-1) continue;
+      if (info.hid.usUsagePage != 1 || (info.hid.usUsage != 5 && info.hid.usUsage != 4)) continue;
+      Sony m = SonyModel(info.hid.dwVendorId, info.hid.dwProductId);
+      ds += m == Sony::DualSense, ds4 += m == Sony::DualShock4;
+    }
+  }
+  std::vector<std::wstring> parts;
+  if (xbox) parts.push_back(T(L"Xbox-compatible controller"));
+  if (ds) parts.push_back(L"DualSense");
+  if (ds4) parts.push_back(L"DualShock 4");
+  std::wstring out;
+  for (const auto& p : parts) out += (out.empty() ? L"" : L", ") + p;
+  return out;
+}
+
+void UpdatePadStatus() {
+  g.padConnected = ConnectedPads();
+  std::wstring text = g.padConnected.empty()
+      ? T(L"No controller found. Connect one to change its buttons.")
+      : F(L"Connected: {pads}", {{L"pads", g.padConnected}});
+  wchar_t now[512] = {};
+  GetWindowTextW(g.padStatus, now, 512);
+  if (text != now) SetWindowTextW(g.padStatus, text.c_str());
+}
+
+ULONGLONG Clock() { return g.testMode ? g.testClock : GetTickCount64(); }
+const ULONGLONG kPadCaptureMs = 10000;
+
+void RegisterRaw(bool on) {
+  if (g.testMode || on == g.rawRegistered) return;
+  // Gamepads and joysticks of the generic desktop page, delivered to this window only while it is in front (no
+  // RIDEV_INPUTSINK): nothing is read for other applications or in the background.
+  RAWINPUTDEVICE d[2] = {{1, 5, on ? 0u : (DWORD)RIDEV_REMOVE, on ? g.hwnd : nullptr},
+                         {1, 4, on ? 0u : (DWORD)RIDEV_REMOVE, on ? g.hwnd : nullptr}};
+  RegisterRawInputDevices(d, 2, sizeof d[0]);
+  g.rawRegistered = on;
+}
+
+void PadTimers() {
+  // The status line is read again once a second while the Controller tab is in front; a capture reads every 16 ms.
+  bool status = !g.testMode && g.page == Page::Controls && g.padTabShown && GetForegroundWindow() == g.hwnd;
+  if (g.padCapture >= 0 && !g.testMode) SetTimer(g.hwnd, kTimerPadPoll, 16, nullptr);
+  else KillTimer(g.hwnd, kTimerPadPoll);
+  if (status) SetTimer(g.hwnd, kTimerPadStatus, 1000, nullptr);
+  else KillTimer(g.hwnd, kTimerPadStatus);
+}
+
+void EndPadCapture(const std::wstring& message = L"", bool error = false) {
+  if (g.padCapture < 0) return;
+  g.padCapture = -1;
+  g.padPrev.clear();
+  RegisterRaw(false);
+  PadTimers();
+  ShowPad();
+  Note(L"pad capture end");
+  if (!message.empty()) SetStatus(message, error);
+}
+
+void StartPadCapture(int action) {
+  UpdatePadStatus();
+  if (g.padConnected.empty()) {
+    SetStatus(T(L"No controller found. Connect a controller, then choose the action again."), true);
+    return;
+  }
+  g.padCapture = action;
+  g.padCaptureEnd = Clock() + kPadCaptureMs;
+  g.padCheckAt = Clock() + 250;
+  g.padPrev.clear();
+  RegisterRaw(true);
+  PadTimers();
+  ShowPad();
+  SetFocus(g.model.padActions[action].button);
+  const PadAction& pa = g.model.padActions[action];
+  const std::wstring kind = PadKind(pa.id), name = T(pa.name);
+  SetStatus(kind == L"trigger" ? F(L"Pull the trigger to use for {action}. Esc cancels.", {{L"action", name}})
+            : kind == L"stick" ? F(L"Move the stick to use for {action}. Esc cancels.", {{L"action", name}})
+            : F(L"Press the controller button to use for {action}. Esc cancels.", {{L"action", name}}));
+}
+
+// A new press during a capture: `physical` is a padmap input, or "guide" / "touchpad".
+void PadPressed(const std::wstring& physical) {
+  if (g.padCapture < 0) return;
+  const PadAction& pa = g.model.padActions[g.padCapture];
+  const std::wstring want = PadKind(pa.id), got = PadKind(physical), name = T(pa.name);
+  Note(L"pad press " + physical);
+  if (got.empty()) {
+    SetStatus(T(L"The game does not use that button. Press another, or Esc to cancel."), true);
+    return;
+  }
+  if (got == want) {
+    int action = g.padCapture;
+    EndPadCapture();
+    AssignPad(action, physical);
+    return;
+  }
+  if (got == L"stick" && want == L"button") return;  // a stick moved while a button was wanted: not a choice
+  if (want == L"trigger")
+    SetStatus(F(L"{action} needs a trigger: pull LT / L2 or RT / R2, or press Esc to cancel.", {{L"action", name}}), true);
+  else if (want == L"stick")
+    SetStatus(F(L"{action} needs a stick: move the left or the right stick, or press Esc to cancel.", {{L"action", name}}), true);
+  else
+    SetStatus(T(L"Triggers keep their analog actions (Lock on, Photo mode). Press a button, or Esc to cancel."), true);
+}
+
+// One reading from one source ("x0".."x3" XInput slots, "h…" a HID device, "t…" a UI test's). The first reading of a
+// source during a capture is its baseline: what is already held when the capture starts is never a choice.
+void PadSampleIn(const std::wstring& source, const PadSample& s) {
+  if (g.padCapture < 0) return;
+  auto beyond = [](int x, int y, double f) { return (double)x * x + (double)y * y >= f * f * 32767.0 * 32767.0; };
+  auto it = g.padPrev.find(source);
+  if (it == g.padPrev.end()) {
+    g.padPrev[source] = {s, !beyond(s.lx, s.ly, 0.25), !beyond(s.rx, s.ry, 0.25)};
+    return;
+  }
+  PadPrevious& prev = it->second;
+  const PadSample p = prev.sample;
+  prev.sample = s;
+  // Latch the centered state across intermediate samples. Comparing only the
+  // immediately previous sample loses a gradual push through the deadzone.
+  if (!beyond(s.lx, s.ly, 0.25)) prev.leftArmed = true;
+  if (!beyond(s.rx, s.ry, 0.25)) prev.rightArmed = true;
+  bool left = prev.leftArmed && beyond(s.lx, s.ly, 0.5);
+  bool right = prev.rightArmed && beyond(s.rx, s.ry, 0.5);
+  if (left) prev.leftArmed = false;
+  if (right) prev.rightArmed = false;
+  const uint16_t pressed = s.buttons & ~p.buttons;
+  for (const auto& b : g.model.padButtons) {
+    if (b.kind != L"button") continue;
+    static const std::map<std::wstring, uint16_t> bits = {
+        {L"a", 0x1000}, {L"b", 0x2000}, {L"x", 0x4000}, {L"y", 0x8000}, {L"left_shoulder", 0x0100},
+        {L"right_shoulder", 0x0200}, {L"back", 0x0020}, {L"start", 0x0010}, {L"lstick_press", 0x0040},
+        {L"rstick_press", 0x0080}, {L"dpad_up", 0x0001}, {L"dpad_down", 0x0002}, {L"dpad_left", 0x0004},
+        {L"dpad_right", 0x0008}};
+    auto bit = bits.find(b.id);
+    if (bit != bits.end() && (pressed & bit->second)) { PadPressed(b.id); return; }
+  }
+  if (s.guide && !p.guide) { PadPressed(L"guide"); return; }
+  if (s.touchpad && !p.touchpad) { PadPressed(L"touchpad"); return; }
+  // Triggers cross half way; sticks cross half travel after centering below 25 %.
+  if (s.lt >= 128 && p.lt < 128) { PadPressed(L"left_trigger"); return; }
+  if (s.rt >= 128 && p.rt < 128) { PadPressed(L"right_trigger"); return; }
+  if (left) { PadPressed(L"left_stick"); return; }
+  if (right) { PadPressed(L"right_stick"); return; }
+}
+
+// Every 16 ms of a capture (WM_TIMER), or a UI test's `padtick`: XInput slots, the time limit, a disconnect.
+void PadTick() {
+  if (g.padCapture < 0) return;
+  if (!g.testMode && GetForegroundWindow() != g.hwnd) {
+    EndPadCapture(T(L"Controller not changed: the window lost focus."));
+    return;
+  }
+  if (Clock() >= g.padCaptureEnd) {
+    EndPadCapture(T(L"No controller button was pressed. Nothing changed."));
+    return;
+  }
+  if (!g.testMode)
+    if (auto get = XInputState())
+      for (DWORD i = 0; i < 4; ++i) {
+        XINPUT_STATE x{};
+        if (get(i, &x) != ERROR_SUCCESS) continue;
+        PadSample s;
+        s.buttons = x.Gamepad.wButtons & 0xF3FF;
+        s.lt = x.Gamepad.bLeftTrigger, s.rt = x.Gamepad.bRightTrigger;
+        s.lx = x.Gamepad.sThumbLX, s.ly = x.Gamepad.sThumbLY, s.rx = x.Gamepad.sThumbRX, s.ry = x.Gamepad.sThumbRY;
+        PadSampleIn(L"x" + std::to_wstring(i), s);
+        if (g.padCapture < 0) return;
+      }
+  if (Clock() >= g.padCheckAt) {
+    g.padCheckAt = Clock() + 250;
+    UpdatePadStatus();
+    if (g.padConnected.empty()) EndPadCapture(T(L"The controller was disconnected. Nothing changed."), true);
+  }
+}
+
+// WM_INPUT during a capture: a DualSense / DualShock 4 report (other HID devices, Xbox pads included, are ignored here;
+// XInput reads those).
+void PadRawInput(HRAWINPUT handle) {
+  if (g.padCapture < 0) return;
+  if (GetForegroundWindow() != g.hwnd) {
+    EndPadCapture(T(L"Controller not changed: the window lost focus."));
+    return;
+  }
+  UINT size = 0;
+  if (GetRawInputData(handle, RID_INPUT, nullptr, &size, sizeof(RAWINPUTHEADER)) != 0 || size == 0) return;
+  std::vector<uint8_t> buf(size);
+  if (GetRawInputData(handle, RID_INPUT, buf.data(), &size, sizeof(RAWINPUTHEADER)) == (UINT)-1) return;
+  const RAWINPUT* ri = (const RAWINPUT*)buf.data();
+  const size_t offset = offsetof(RAWINPUT, data.hid.bRawData);
+  if (size < offset || ri->header.dwType != RIM_TYPEHID || ri->data.hid.dwSizeHid == 0 ||
+      ri->data.hid.dwCount > (size - offset) / ri->data.hid.dwSizeHid) return;
+  RID_DEVICE_INFO info{sizeof info};
+  UINT isize = sizeof info;
+  if (GetRawInputDeviceInfoW(ri->header.hDevice, RIDI_DEVICEINFO, &info, &isize) == (UINT)-1) return;
+  Sony model = SonyModel(info.hid.dwVendorId, info.hid.dwProductId);
+  if (model == Sony::None || info.hid.usUsagePage != 1 || (info.hid.usUsage != 5 && info.hid.usUsage != 4)) return;
+  const std::wstring source = L"h" + std::to_wstring((uintptr_t)ri->header.hDevice);
+  for (DWORD i = 0; i < ri->data.hid.dwCount && g.padCapture >= 0; ++i) {
+    PadSample s;
+    if (ParseSony(model, ri->data.hid.bRawData + (size_t)i * ri->data.hid.dwSizeHid, ri->data.hid.dwSizeHid, s))
+      PadSampleIn(source, s);
+  }
+}
+
 void EndCapture() {
   if (g.captureInput < 0) return;
   g.captureInput = -1;
@@ -1235,9 +1791,24 @@ void KeysChanged(const std::wstring& message, bool error = false) {
   SetStatus(message + (error ? L"" : T(L" Unsaved changes.")), error);
 }
 
-// Puts a key on (input, slot). A key another input uses moves here and that input gets this slot's old key in its
-// place (a swap: nothing is lost and every key stays on one input), unless that would leave an input that needs a
-// key without one: then nothing changes and the person is told why.
+bool SharedKey(const std::wstring& key, const std::wstring& a, const std::wstring& b) {
+  for (const auto& s : g.model.sharedKeys)
+    if (s[0] == key && ((s[1] == a && s[2] == b) || (s[1] == b && s[2] == a))) return true;
+  return false;
+}
+
+// Validate the whole proposed swap before changing either input: moving a shared key must never leave an
+// unrelated third action on it. The documented pair may share only the documented physical key.
+bool KeyCollisions(const std::map<std::wstring, Slots>& keys) {
+  for (auto a = keys.begin(); a != keys.end(); ++a)
+    for (auto b = std::next(a); b != keys.end(); ++b)
+      for (const auto& key : a->second)
+        if (!key.empty() && (b->second[0] == key || b->second[1] == key) && !SharedKey(key, a->first, b->first))
+          return true;
+  return false;
+}
+
+// A taken key swaps, except for the documented shared pair. Refuse an ambiguous shared-key swap as a whole.
 void AssignKey(int input, int slot, const KeyName& key) {
   KeyInput& in = g.model.keyInputs[input];
   Slots& mine = g.keys[in.id];
@@ -1254,7 +1825,7 @@ void AssignKey(int input, int slot, const KeyName& key) {
     return;
   }
   for (auto& other : g.model.keyInputs) {
-    if (other.id == in.id) continue;
+    if (other.id == in.id || SharedKey(key.name, in.id, other.id)) continue;
     Slots& theirs = g.keys[other.id];
     for (int s = 0; s < 2; ++s) {
       if (theirs[s] != key.name) continue;
@@ -1264,6 +1835,13 @@ void AssignKey(int input, int slot, const KeyName& key) {
       Compact(after);
       if (other.required && after[0].empty()) {
         SetStatus(F(L"{action} needs a key. Assign another key before moving {key}.", {{L"action", InputName(other)}, {L"key", KeyLabel(key.name)}}), true);
+        return;
+      }
+      auto proposed = g.keys;
+      proposed[other.id] = after;
+      proposed[in.id][slot] = key.name;
+      if (KeyCollisions(proposed)) {
+        SetStatus(T(L"This key is shared. Remove one assignment before swapping it."), true);
         return;
       }
       theirs = after;
@@ -1319,6 +1897,22 @@ bool CaptureFilter(const MSG& msg) {
   if (swallowUp && ours && (msg.message == WM_KEYUP || msg.message == WM_SYSKEYUP) && msg.wParam == swallowUp) {
     swallowUp = 0;
     return true;
+  }
+  if (g.padCapture >= 0) {  // D-116: a controller capture: Esc cancels; the keyboard does nothing else meanwhile
+    if (!ours) return false;
+    if (msg.message == WM_KEYDOWN || msg.message == WM_SYSKEYDOWN) {
+      swallowUp = msg.wParam;
+      if (msg.wParam == VK_ESCAPE) EndPadCapture(T(L"Controller not changed."));
+      return true;
+    }
+    if (msg.message == WM_KEYUP || msg.message == WM_SYSKEYUP || msg.message == WM_CHAR || msg.message == WM_SYSCHAR)
+      return true;
+    if (msg.message == WM_LBUTTONDOWN || msg.message == WM_RBUTTONDOWN || msg.message == WM_NCLBUTTONDOWN) {
+      bool same = msg.hwnd == g.model.padActions[g.padCapture].button;
+      EndPadCapture(T(L"Controller not changed."));
+      return same;  // a click on the waiting button only cancels; elsewhere it still goes where it was aimed
+    }
+    return false;
   }
   if (g.captureInput >= 0) {
     if (!ours) return false;
@@ -1378,7 +1972,10 @@ void UpdateBanner() {
     banner += L"\n" + F(L"The last session ended unexpectedly. Logs: sessions\\{session}", {{L"session", m.lastStamp}});
   if (m.keyboardState == L"invalid")
     banner += L"\n" + T(L"Saved keys could not be used. Save replaces them and keeps a backup.");
-  g.bannerError = !ok || m.settingsState == L"invalid" || m.keyboardState == L"invalid" || m.lastFailed;
+  if (m.padState == L"invalid")
+    banner += L"\n" + T(L"Saved controller buttons could not be used. Save replaces them and keeps a backup.");
+  g.bannerError = !ok || m.settingsState == L"invalid" || m.keyboardState == L"invalid" || m.padState == L"invalid" ||
+                  m.lastFailed;
   SetText(g.banner, banner);
   EnableWindow(g.playButton, ok);
 }
@@ -1401,7 +1998,11 @@ void Populate() {
   for (const auto& in : m.keyInputs) g.keys[in.id] = in.saved;
   g.captureInput = -1;
   ShowKeys();
-  g.dirty = m.settingsState == L"invalid" || m.keyboardState == L"invalid";  // Save can replace an unreadable file
+  g.pad = m.padSaved;  // D-115: the saved map (or the original controls the resolver fell back to)
+  g.padCapture = -1;
+  ShowPad();
+  // Save can replace an unreadable file
+  g.dirty = m.settingsState == L"invalid" || m.keyboardState == L"invalid" || m.padState == L"invalid";
   Show();
 }
 
@@ -1447,8 +2048,12 @@ bool Save() {
         changed.push_back(in.id + L"=" + k[0] + (k[1].empty() ? L"" : L"," + k[1]));
     }
   if (!changed.empty()) { keyboard.push_back(L"--key"); keyboard.insert(keyboard.end(), changed.begin(), changed.end()); }
+  // D-115: the controller map as shown: every input on another one than its own (none = the original controls).
+  std::vector<std::wstring> controller{L"--pad"};
+  for (const auto& b : g.model.padButtons)
+    if (g.pad[b.id] != b.id) controller.push_back(b.id + L"=" + g.pad[b.id]);
   std::wstring msg;
-  if (!SaveSettings(g.paths, preset, base, pairs, keyboard, msg)) {
+  if (!SaveSettings(g.paths, preset, base, pairs, keyboard, controller, msg)) {
     SetStatus(T(L"Not saved: ") + msg, true);
     return false;
   }
@@ -1466,6 +2071,9 @@ bool Save() {
     g.model.keyboardWarning = fresh.keyboardWarning;
     for (size_t i = 0; i < g.model.keyInputs.size() && i < fresh.keyInputs.size(); ++i)
       g.model.keyInputs[i].saved = fresh.keyInputs[i].saved;
+    g.model.padState = fresh.padState;
+    g.model.padWarning = fresh.padWarning;
+    g.model.padSaved = fresh.padSaved;
     Populate();
   }
   SetStatus(T(L"Saved. The settings apply the next time the game starts."));
@@ -1682,15 +2290,21 @@ bool ChangeLanguage(const std::wstring& language) {
   int selected = SelectedMod();
   std::wstring selectedId = selected >= 0 ? g.mods[selected].id : L"";
   EndCapture();
-  while (HWND child = GetWindow(g.hwnd, GW_CHILD)) DestroyWindow(child);
+  EndPadCapture();
+  while (HWND child = GetWindow(g.hwnd, GW_CHILD)) DestroyWindow(child);  // the page host with its controls
+  g.host = nullptr;
   g.settingsPage.clear(); g.controlsPage.clear(); g.advancedPage.clear(); g.modsPage.clear();
+  g.keyPage.clear(); g.padPage.clear(); g.padGroupTitles.clear();
   g.groupTitle.clear(); g.keyGroupTitles.clear(); g.secondary.clear();
   for (auto& setting : g.model.settings) setting.title = setting.control = setting.helpText = nullptr;
+  for (auto& pa : g.model.padActions) pa.text = pa.button = nullptr;
   BuildControls();
   ApplyFonts();
   SetWindowTextW(g.hwnd, T(L"Rayman 3 HD Settings").c_str());
   UpdateBanner();
   ShowKeys();
+  ShowPad();
+  UpdatePadStatus();
   Show();
   if (g.modsLoaded) ShowMods(selectedId);  // read only; never applies a mod action
   SetStatus(T(L"UI language changed. Unsaved edits are kept."));
@@ -1714,7 +2328,15 @@ void OnCommand(int id, int code) {
     }
     return;
   }
+  if (id >= kIdPad && id < kIdPad + (int)g.model.padActions.size()) {  // D-116: a row's button starts its capture
+    if (code != BN_CLICKED) return;
+    EndCapture();
+    if (g.padCapture == id - kIdPad) EndPadCapture(T(L"Controller not changed."));
+    else { EndPadCapture(); StartPadCapture(id - kIdPad); }
+    return;
+  }
   if (id >= kIdKey && id < kIdKey + 2 * (int)g.model.keyInputs.size() && code == BN_CLICKED) {
+    EndPadCapture();
     int input = (id - kIdKey) / 2, slot = (id - kIdKey) % 2;
     if (g.captureInput == input && g.captureSlot == slot) { EndCapture(); SetStatus(T(L"Key not changed.")); }
     else StartCapture(input, slot);
@@ -1726,18 +2348,35 @@ void OnCommand(int id, int code) {
       break;
     case kIdSave: Save(); break;
     case kIdPlay: Play(); break;
+    case kIdKeyTab:
+    case kIdPadTab:  // D-116: the Controls page's two tabs
+      if (code != BN_CLICKED || g.padTabShown == (id == kIdPadTab)) break;
+      EndCapture();
+      EndPadCapture();
+      g.padTabShown = id == kIdPadTab;
+      if (g.padTabShown) UpdatePadStatus();
+      g.scrollY = 0;
+      Fit();
+      PadTimers();
+      SetFocus(g.padTabShown ? g.padTab : g.keyTab);
+      Note(std::wstring(L"tab: ") + (g.padTabShown ? L"controller" : L"keyboard"));
+      InvalidateRect(g.hwnd, nullptr, TRUE);
+      break;
     case kIdPageSettings:
     case kIdControls:
     case kIdAdvanced:
     case kIdMods: {
       if (code != BN_CLICKED) break;
       EndCapture();
+      EndPadCapture();
       g.page = id == kIdControls ? Page::Controls : id == kIdAdvanced ? Page::Advanced : id == kIdMods ? Page::Mods
              : Page::Settings;
       if (g.page == Page::Mods && !g.modsLoaded) ShowMods(L"");
+      if (g.page == Page::Controls && g.padTabShown) UpdatePadStatus();
       g.scrollY = 0;
       Fit(true);  // M43: the new page's height around the same centre
-      SetFocus(g.page == Page::Controls ? g.layoutBox : g.page == Page::Advanced ? g.folderButton
+      PadTimers();
+      SetFocus(g.page == Page::Controls ? (g.padTabShown ? g.padTab : g.layoutBox) : g.page == Page::Advanced ? g.folderButton
                : g.page == Page::Mods ? g.modList : g.radios[g.profile]);
       Note(std::wstring(L"page: ") + (g.page == Page::Controls ? L"controls" : g.page == Page::Advanced ? L"advanced"
                                       : g.page == Page::Mods ? L"mods" : L"settings"));
@@ -1759,6 +2398,14 @@ void OnCommand(int id, int code) {
         if (!KeysDifferFromLayout()) { SetStatus(F(L"Already using {layout} defaults.", {{L"layout", T(l->name)}})); break; }
         if (Ask(F(L"Restore {layout} keys?", {{L"layout", T(l->name)}}), MB_OKCANCEL | MB_ICONQUESTION, IDOK) == IDOK)
           UseLayout(l->key, F(L"{layout} keys restored.", {{L"layout", T(l->name)}}));
+      }
+      break;
+    case kIdRestorePad:  // D-115
+      EndPadCapture();
+      if (PadIsOriginal()) { SetStatus(T(L"The controller already uses its default buttons.")); break; }
+      if (Ask(T(L"Restore the controller's default buttons, triggers and sticks?"), MB_OKCANCEL | MB_ICONQUESTION, IDOK) == IDOK) {
+        for (const auto& b : g.model.padButtons) g.pad[b.id] = b.id;
+        PadChanged(T(L"Controller defaults restored."));
       }
       break;
     case kIdFolder:
@@ -1804,7 +2451,9 @@ LRESULT CALLBACK WndProc(HWND h, UINT msg, WPARAM wp, LPARAM lp) {
       CreateFonts();
       ApplyFonts();
       const RECT* r = (const RECT*)lp;
+      g.fitting = true;  // D-116: the system's size for the new DPI is not a person's resize
       SetWindowPos(h, nullptr, r->left, r->top, r->right - r->left, r->bottom - r->top, SWP_NOZORDER | SWP_NOACTIVATE);
+      g.fitting = false;
       g.anchor = {(r->left + r->right) / 2, (r->top + r->bottom) / 2};  // M43: the system's place for the new DPI
       Fit(true);
       RedrawWindow(h, nullptr, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN);  // M42: no stale strip
@@ -1833,21 +2482,48 @@ LRESULT CALLBACK WndProc(HWND h, UINT msg, WPARAM wp, LPARAM lp) {
         case SB_PAGEDOWN: y += page; break;
         case SB_THUMBTRACK: case SB_THUMBPOSITION: y = HIWORD(wp); break;
       }
-      y = std::max(0, std::min(y, maxY));
-      if (y != g.scrollY && (GetWindowLongPtrW(h, GWL_STYLE) & WS_VSCROLL)) {
-        g.scrollY = y;
-        SetScrollPos(h, SB_VERT, y, TRUE);
-        Layout();
-        InvalidateRect(h, nullptr, TRUE);
-      }
+      SetScroll(std::max(0, std::min(y, maxY)));
       return 0;
     }
+    case WM_SIZING: {  // D-116: only the height changes; the width is the page's
+      RECT* r = (RECT*)lp;
+      RECT cur;
+      GetWindowRect(h, &cur);
+      r->left = cur.left, r->right = cur.right;
+      if (r->bottom - r->top < S(360)) {
+        if (wp == WMSZ_TOP || wp == WMSZ_TOPLEFT || wp == WMSZ_TOPRIGHT) r->top = r->bottom - S(360);
+        else r->bottom = r->top + S(360);
+      }
+      return TRUE;
+    }
+    case WM_SIZE:  // D-116: a height the person chose stays the most the window takes (0: the whole page again)
+      if (!g.fitting && g.hwnd && wp == SIZE_RESTORED) {
+        RECT wr;
+        GetWindowRect(h, &wr);
+        g.userHeight = wr.bottom - wr.top >= g.naturalHeight ? 0 : wr.bottom - wr.top;
+        Fit();
+      }
+      return 0;
+    case WM_INPUT:  // D-116: a controller report, only while a capture has registered for it
+      PadRawInput((HRAWINPUT)lp);
+      break;
+    case WM_TIMER:
+      if (wp == kTimerPadPoll) PadTick();
+      else if (wp == kTimerPadStatus) {
+        if (GetForegroundWindow() == g.hwnd) UpdatePadStatus();
+        else PadTimers();  // not in front: no reading at all (the timer stops until the window is activated again)
+      }
+      return 0;
     case WM_ACTIVATE:
       if (LOWORD(wp) == WA_INACTIVE) {
         HWND f = GetFocus();
         if (f && IsChild(h, f)) g.lastFocus = f;
         if (g.captureInput >= 0) { EndCapture(); SetStatus(T(L"Key not changed.")); }  // M32: no capture without focus
+        EndPadCapture(T(L"Controller not changed: the window lost focus."));  // D-116: likewise
+      } else if (g.page == Page::Controls && g.padTabShown) {
+        UpdatePadStatus();
       }
+      PadTimers();
       return 0;
     case WM_CONTEXTMENU: {  // M32: right-click on a key button removes that key
       int id = GetDlgCtrlID((HWND)wp);
@@ -1857,6 +2533,17 @@ LRESULT CALLBACK WndProc(HWND h, UINT msg, WPARAM wp, LPARAM lp) {
     case WM_SETFOCUS: SetFocus(g.lastFocus && IsWindow(g.lastFocus) ? g.lastFocus : g.radios[g.profile]); return 0;
     case WM_CLOSE: if (ConfirmClose()) DestroyWindow(h); return 0;
     case WM_DESTROY: if (!g.testMode) PostQuitMessage(0); return 0;  // the UI test drives its own pump
+  }
+  return DefWindowProcW(h, msg, wp, lp);
+}
+
+// D-116: the page host passes on what its controls send their parent (commands, colours, the slider, the context
+// menu) and the wheel, so the window handles them as when the controls were its own.
+LRESULT CALLBACK HostProc(HWND h, UINT msg, WPARAM wp, LPARAM lp) {
+  switch (msg) {
+    case WM_COMMAND: case WM_NOTIFY: case WM_HSCROLL: case WM_CONTEXTMENU: case WM_MOUSEWHEEL:
+    case WM_CTLCOLORSTATIC: case WM_CTLCOLORBTN: case WM_CTLCOLOREDIT: case WM_CTLCOLORLISTBOX:
+      return g.hwnd ? SendMessageW(g.hwnd, msg, wp, lp) : 0;
   }
   return DefWindowProcW(h, msg, wp, lp);
 }
@@ -1875,8 +2562,15 @@ bool CreateUi(HINSTANCE inst) {
   wc.hIcon = g.icon;
   wc.hIconSm = LoadAppIcon(inst, SM_CXSMICON);
   RegisterClassExW(&wc);
+  WNDCLASSEXW hc{sizeof hc};  // D-116: the page host: its controls' notifications go to the window as before
+  hc.lpfnWndProc = HostProc;
+  hc.hInstance = inst;
+  hc.hCursor = LoadCursorW(nullptr, IDC_ARROW);
+  hc.hbrBackground = g.background;
+  hc.lpszClassName = kHostClass;
+  RegisterClassExW(&hc);
   g.hwnd = CreateWindowExW(WS_EX_CONTROLPARENT, kWindowClass, T(L"Rayman 3 HD Settings").c_str(),
-                           WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_CLIPCHILDREN,
+                           WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_THICKFRAME | WS_CLIPCHILDREN,
                            CW_USEDEFAULT, CW_USEDEFAULT, 800, 600, nullptr, nullptr, inst, nullptr);
   if (!g.hwnd) return false;
   using Fn = UINT(WINAPI*)(HWND);
@@ -1893,6 +2587,13 @@ bool CreateUi(HINSTANCE inst) {
   return true;
 }
 
+// D-116: keyboard navigation onto a control of a scrolled page brings it into view.
+void FollowFocus() {
+  static HWND last = nullptr;
+  HWND f = GetFocus();
+  if (f != last) { last = f; if (f && IsChild(g.hwnd, f)) EnsureVisible(f); }
+}
+
 int RunUi(HINSTANCE inst) {
   if (!CreateUi(inst)) return 1;
   ShowWindow(g.hwnd, SW_SHOWNORMAL);
@@ -1900,9 +2601,11 @@ int RunUi(HINSTANCE inst) {
   MSG msg;
   while (GetMessageW(&msg, nullptr, 0, 0) > 0) {
     if (CaptureFilter(msg)) continue;  // M32: the key capture sees keys before the dialog manager
-    if (IsDialogMessageW(g.hwnd, &msg)) continue;
-    TranslateMessage(&msg);
-    DispatchMessageW(&msg);
+    if (!IsDialogMessageW(g.hwnd, &msg)) {
+      TranslateMessage(&msg);
+      DispatchMessageW(&msg);
+    }
+    FollowFocus();
   }
   return 0;
 }
@@ -1916,6 +2619,7 @@ void Pump() {
     if (CaptureFilter(msg)) continue;
     if (!IsWindow(g.hwnd) || !IsDialogMessageW(g.hwnd, &msg)) { TranslateMessage(&msg); DispatchMessageW(&msg); }
   }
+  if (IsWindow(g.hwnd)) FollowFocus();
 }
 
 bool SaveBmp(const std::wstring& path) {
@@ -2061,6 +2765,25 @@ std::wstring StateDump() {
          std::to_wstring(vis) + L" action=" + buf + L"\n";
   }
   s += L"key_rows_shown=" + std::to_wstring(shownRows) + L"\n";
+  // D-115 / D-116: the controller tab as the page shows it (button captions read back from the window).
+  s += L"pad_state=" + g.model.padState + L"\n";
+  s += std::wstring(L"tab=") + (g.padTabShown ? L"controller" : L"keyboard") + L"\n";
+  s += L"pad_capture=" + (g.padCapture >= 0 ? g.model.padActions[g.padCapture].id : L"") + L" raw_registered=" +
+       std::to_wstring(g.rawRegistered) + L"\n";
+  GetWindowTextW(g.padStatus, buf, (int)std::size(buf));
+  s += L"pad_status=" + std::wstring(buf) + L"\n";
+  int padShown = 0;
+  for (const auto& pa : g.model.padActions) {
+    GetWindowTextW(pa.button, buf, (int)std::size(buf));
+    std::wstring caption = buf;
+    GetWindowTextW(pa.text, buf, (int)std::size(buf));
+    bool vis = IsWindowVisible(pa.button) != 0;
+    padShown += vis;
+    s += L"pad." + pa.id + L"=" + g.pad[pa.id] + L" caption=" + caption + L" visible=" + std::to_wstring(vis) +
+         L" action=" + buf + L"\n";
+  }
+  for (const auto& b : g.model.padButtons) s += L"pad_map." + b.id + L"=" + g.pad[b.id] + L"\n";
+  s += L"pad_rows_shown=" + std::to_wstring(padShown) + L"\n";
   s += L"layout_text=\n";  // Fixed layout summaries are no longer shown; current bindings are in the table.
   GetWindowTextW(g.controlsNote, buf, (int)std::size(buf));
   s += L"controls_note=" + std::wstring(buf) + L"\n";
@@ -2069,6 +2792,8 @@ std::wstring StateDump() {
        std::to_wstring(SendMessageW(g.controlsButton, BM_GETCHECK, 0, 0) == BST_CHECKED) +
        std::to_wstring(SendMessageW(g.advancedButton, BM_GETCHECK, 0, 0) == BST_CHECKED) +
        std::to_wstring(SendMessageW(g.modsButton, BM_GETCHECK, 0, 0) == BST_CHECKED) + L"\n";
+  s += L"tab_buttons=" + std::to_wstring(SendMessageW(g.keyTab, BM_GETCHECK, 0, 0) == BST_CHECKED) +
+       std::to_wstring(SendMessageW(g.padTab, BM_GETCHECK, 0, 0) == BST_CHECKED) + L"\n";
   GetWindowTextW(g.banner, buf, (int)std::size(buf));
   std::wstring b = buf;
   std::replace(b.begin(), b.end(), L'\n', L' ');
@@ -2094,13 +2819,19 @@ std::wstring StateDump() {
   std::vector<RECT> rects;
   EnumChildWindows(g.hwnd, [](HWND c, LPARAM p) -> BOOL {
     auto* v = (std::vector<RECT>*)p;
-    if (GetParent(c) != g.hwnd) return TRUE;  // a control's own parts (the list's header) are inside it
+    if (c == g.host || (GetParent(c) != g.hwnd && GetParent(c) != g.host)) return TRUE;  // a control's own parts
     RECT rc;
     GetWindowRect(c, &rc);
     MapWindowPoints(nullptr, g.hwnd, (POINT*)&rc, 2);
     wchar_t cls[32];
     GetClassNameW(c, cls, 32);
     if (_wcsicmp(cls, WC_COMBOBOXW) == 0) { COMBOBOXINFO ci{sizeof ci}; GetComboBoxInfo(c, &ci); rc.bottom = rc.top + (ci.rcItem.bottom + 3); }
+    // D-116: a page control scrolled partly out of the page host counts only for the part that shows
+    if (GetParent(c) == g.host && (GetWindowLongPtrW(g.hwnd, GWL_STYLE) & WS_VSCROLL)) {
+      rc.top = std::max<LONG>(rc.top, g.viewTop);
+      rc.bottom = std::min<LONG>(rc.bottom, g.viewBottom);
+      if (rc.bottom <= rc.top) return TRUE;
+    }
     if (IsWindowVisible(c)) v->push_back(rc);
     return TRUE;
   }, (LPARAM)&rects);
@@ -2116,6 +2847,53 @@ std::wstring StateDump() {
     }
   }
   s += L"controls=" + std::to_wstring(rects.size()) + L" overlaps=" + std::to_wstring(overlaps) + L" outside=" + std::to_wstring(out) + L"\n";
+  {  // D-116: the button row and Restore in view (inside the client area, not cut); the visible band; clipped text
+    auto inView = [&](HWND c) {
+      RECT q;
+      GetWindowRect(c, &q);
+      MapWindowPoints(nullptr, g.hwnd, (POINT*)&q, 2);
+      bool cut = GetParent(c) == g.host && (q.top < g.viewTop || q.bottom > g.viewBottom);
+      return IsWindowVisible(c) && !cut && q.top >= 0 && q.bottom <= r.bottom ? 1 : 0;
+    };
+    HWND restore = g.page == Page::Controls ? (g.padTabShown ? g.padRestore : g.restoreKeys) : nullptr;
+    s += L"in_view=save:" + std::to_wstring(inView(g.saveButton)) + L" play:" + std::to_wstring(inView(g.playButton)) +
+         L" close:" + std::to_wstring(inView(g.closeButton)) + L" restore:" +
+         (restore ? std::to_wstring(inView(restore)) : std::wstring(L"-")) + L" band=" + std::to_wstring(g.viewTop) +
+         L"," + std::to_wstring(g.viewBottom) + L" content=" + std::to_wstring(g.contentHeight) + L" scroll_y=" +
+         std::to_wstring(g.scrollY) + L"\n";
+    // Text that does not fit its control: a push button's one line wider than it, a static's wrapped text taller.
+    int textClipped = 0;
+    std::wstring which;
+    for (HWND c : PageList()) {
+      if (!IsWindowVisible(c)) continue;
+      wchar_t cls[32];
+      GetClassNameW(c, cls, 32);
+      wchar_t text[1024] = {};
+      GetWindowTextW(c, text, 1024);
+      bool button = _wcsicmp(cls, L"BUTTON") == 0, label = _wcsicmp(cls, L"STATIC") == 0;
+      if (!text[0] || !(button || label)) continue;
+      LONG style = GetWindowLongW(c, GWL_STYLE);
+      LONG type = style & BS_TYPEMASK;
+      if (button && (type == BS_AUTOCHECKBOX || type == BS_AUTORADIOBUTTON) && !(style & BS_PUSHLIKE)) continue;
+      RECT q;
+      GetClientRect(c, &q);
+      HFONT font = (HFONT)SendMessageW(c, WM_GETFONT, 0, 0);
+      bool fits;
+      if (button) {
+        HDC dc = GetDC(c);
+        HGDIOBJ old = SelectObject(dc, font);
+        RECT m{0, 0, 0, 0};
+        DrawTextW(dc, text, -1, &m, DT_CALCRECT | DT_SINGLELINE);
+        SelectObject(dc, old);
+        ReleaseDC(c, dc);
+        fits = m.right <= q.right - S(8);
+      } else {
+        fits = Measure(c, font, q.right) <= q.bottom + 1;
+      }
+      if (!fits) { ++textClipped; which += std::wstring(which.empty() ? L"" : L"|") + text; }
+    }
+    s += L"text_clipped=" + std::to_wstring(textClipped) + (which.empty() ? L"" : L" " + which) + L"\n";
+  }
   return s;
 }
 
@@ -2181,15 +2959,17 @@ int RunUiTest(HINSTANCE inst, const std::wstring& script, const std::wstring& ou
     } else if (cmd == L"click") {
       HWND b = a1 == L"save" ? g.saveButton : a1 == L"play" ? g.playButton : a1 == L"folder" ? g.folderButton
              : a1 == L"close" ? g.closeButton : a1 == L"controls" ? g.controlsButton : a1 == L"restore" ? g.restoreKeys
+             : a1 == L"restorepad" ? g.padRestore
              : a1 == L"advanced" ? g.advancedButton : a1 == L"settings" ? g.settingsButton : a1 == L"mods" ? g.modsButton
              : a1 == L"modzip" ? g.modZip : a1 == L"modfolder" ? g.modFolder : nullptr;
       if (!b) { g.log.push_back(L"no button " + a1); ++failures; }
       else if (!IsWindowEnabled(b)) g.log.push_back(L"button disabled: " + a1);
       else SendMessageW(b, BM_CLICK, 0, 0);
-    } else if (cmd == L"page") {  // M31 / M32: settings | controls | advanced; M33: mods
-      HWND b = a1 == L"controls" ? g.controlsButton : a1 == L"advanced" ? g.advancedButton : a1 == L"mods" ? g.modsButton
-             : g.settingsButton;
+    } else if (cmd == L"page") {  // M31 / M32: settings | controls | advanced; M33: mods; D-116: keys | pad (a tab)
+      HWND b = a1 == L"controls" || a1 == L"keys" || a1 == L"pad" ? g.controlsButton : a1 == L"advanced" ? g.advancedButton
+             : a1 == L"mods" ? g.modsButton : g.settingsButton;
       SendMessageW(b, BM_CLICK, 0, 0);
+      if (a1 == L"keys" || a1 == L"pad") { Pump(); SendMessageW(a1 == L"pad" ? g.padTab : g.keyTab, BM_CLICK, 0, 0); }
     } else if (cmd == L"layout") {  // M32: choose a keyboard layout in the box
       bool found = false;
       for (size_t i = 0; i < g.model.layouts.size(); ++i)
@@ -2207,6 +2987,63 @@ int RunUiTest(HINSTANCE inst, const std::wstring& script, const std::wstring& ou
       else if (!IsWindowVisible(g.model.keyInputs[found].button[slot])) g.log.push_back(L"key button hidden: " + a1);
       else if (cmd == L"key") SendMessageW(g.model.keyInputs[found].button[slot], BM_CLICK, 0, 0);
       else SendMessageW(g.hwnd, WM_CONTEXTMENU, (WPARAM)g.model.keyInputs[found].button[slot], 0);
+    } else if (cmd == L"pad") {  // D-116: click the button of the row of INPUT (starts its capture, or cancels it)
+      int action = -1;
+      for (size_t i = 0; i < g.model.padActions.size(); ++i) if (g.model.padActions[i].id == a1) action = (int)i;
+      if (action < 0) { g.log.push_back(L"no pad row " + a1); ++failures; }
+      else if (!IsWindowVisible(g.model.padActions[action].button)) g.log.push_back(L"pad row hidden: " + a1);
+      else SendMessageW(g.model.padActions[action].button, BM_CLICK, 0, 0);
+    } else if (cmd == L"padsim") {  // D-116: the controllers the test says are connected: none | xbox,dualsense,ds4
+      std::wstring list;
+      for (const auto& w : Split(a1 == L"none" ? L"" : a1, L',')) {
+        std::wstring name = w == L"xbox" ? T(L"Xbox-compatible controller") : w == L"dualsense" ? L"DualSense"
+                            : w == L"ds4" ? L"DualShock 4" : L"";
+        if (!name.empty()) list += (list.empty() ? L"" : L", ") + name;
+      }
+      g.simPads = list;
+      UpdatePadStatus();
+    } else if (cmd == L"padin") {  // D-116: SOURCE BUTTONS(a+b | -) LT RT LX LY RX RY [guide] [touchpad]: one reading
+      if (f.size() < 9) { g.log.push_back(L"padin needs SOURCE BUTTONS LT RT LX LY RX RY"); ++failures; continue; }
+      static const std::map<std::wstring, uint16_t> bits = {
+          {L"a", 0x1000}, {L"b", 0x2000}, {L"x", 0x4000}, {L"y", 0x8000}, {L"left_shoulder", 0x0100},
+          {L"right_shoulder", 0x0200}, {L"back", 0x0020}, {L"start", 0x0010}, {L"lstick_press", 0x0040},
+          {L"rstick_press", 0x0080}, {L"dpad_up", 0x0001}, {L"dpad_down", 0x0002}, {L"dpad_left", 0x0004},
+          {L"dpad_right", 0x0008}};
+      PadSample s;
+      for (const auto& b : Split(a2 == L"-" ? L"" : a2, L'+')) {
+        if (b.empty()) continue;
+        auto it = bits.find(b);
+        if (it == bits.end()) { g.log.push_back(L"no button " + b); ++failures; } else s.buttons |= it->second;
+      }
+      s.lt = (uint8_t)_wtoi(f[3].c_str()), s.rt = (uint8_t)_wtoi(f[4].c_str());
+      s.lx = _wtoi(f[5].c_str()), s.ly = _wtoi(f[6].c_str()), s.rx = _wtoi(f[7].c_str()), s.ry = _wtoi(f[8].c_str());
+      for (size_t i = 9; i < f.size(); ++i) { s.guide |= f[i] == L"guide"; s.touchpad |= f[i] == L"touchpad"; }
+      PadSampleIn(L"t" + a1, s);
+    } else if (cmd == L"hid") {  // D-116: SOURCE dualsense|ds4 HEX: one HID report through the Raw Input parser
+      std::wstring hex = f.size() > 3 ? f[3] : L"";
+      std::vector<uint8_t> report;
+      for (size_t i = 0; i + 1 < hex.size(); i += 2) report.push_back((uint8_t)wcstoul(hex.substr(i, 2).c_str(), nullptr, 16));
+      PadSample s;
+      Sony model = a2 == L"dualsense" ? Sony::DualSense : a2 == L"ds4" ? Sony::DualShock4 : Sony::None;
+      if (model == Sony::None || !ParseSony(model, report.data(), report.size(), s)) g.log.push_back(L"hid report not parsed");
+      else PadSampleIn(L"h" + a1, s);
+    } else if (cmd == L"padtick") {  // D-116: MS of capture time pass (the timeout and the disconnect check)
+      g.testClock += (ULONGLONG)std::max(0, _wtoi(a1.c_str()));
+      PadTick();
+    } else if (cmd == L"deactivate") {  // D-116: the window loses focus (as Alt+Tab does)
+      SendMessageW(g.hwnd, WM_ACTIVATE, MAKEWPARAM(WA_INACTIVE, 0), 0);
+    } else if (cmd == L"resize") {  // D-116: a person drags the window to H pixels high
+      RECT wr;
+      GetWindowRect(g.hwnd, &wr);
+      SetWindowPos(g.hwnd, nullptr, 0, 0, wr.right - wr.left, _wtoi(a1.c_str()), SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
+    } else if (cmd == L"wheel") {  // D-116: N notches down (negative: up)
+      SendMessageW(g.hwnd, WM_MOUSEWHEEL, MAKEWPARAM(0, (WORD)(short)(-WHEEL_DELTA * _wtoi(a1.c_str()))), 0);
+    } else if (cmd == L"focus") {  // D-116: pad:INPUT | key:INPUT | save: keyboard focus to that control
+      HWND target = a1 == L"save" ? g.saveButton : nullptr;
+      for (const auto& pa : g.model.padActions) if (a1 == L"pad:" + pa.id) target = pa.button;
+      for (const auto& in : g.model.keyInputs) if (a1 == L"key:" + in.id) target = in.button[0];
+      if (!target) { g.log.push_back(L"no control " + a1); ++failures; }
+      else SetFocus(target);
     } else if (cmd == L"press") {  // M32: a key-down with this scan code (hex, E0xx = extended) to the focused control
       std::wstring code = a1;
       bool ext = code.size() == 4;

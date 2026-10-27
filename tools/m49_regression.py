@@ -130,11 +130,17 @@ def driver_cases(km) -> str:
         lines += [f"down {up}", f"down {right}"]
         expect(0, 0, 0, 32767, 32767, 0, 0, "no walk key: the old behaviour")
         lines.append("release")
+    # Isolate the numerical boundary case from the last layout (Original PC binds Roll to W under D-120).
+    # First prove that binding still generates B; Walk must not suppress unrelated buttons.
+    lines += [f"set keybind_{i['id']} None" for i in km["inputs"]]
+    lines += ["set keybind_b W", "set keybind_walk Z", "down Z", "down W",
+              "expect 2000 0 0 0 0 0 0 Roll survives Walk", "release", "set keybind_b None"]
     lines += ["# magnitude 1.0: straight full, diagonal of length one", "set keybind_walk Z", "set mnk_walk_magnitude 1.0",
               "set keybind_lstick_up W", "set keybind_lstick_right D", "set keybind_rstick_up None",
               "set keybind_rstick_right None",
               "down Z", "down W", "expect 0000 0 0 0 32767 0 0 magnitude 1 straight", "down D",
-              "expect 0000 0 0 %d %d 0 0 magnitude 1 diagonal" % walk_value(1.0, 1, 1), "release"]
+              "expect 0000 0 0 %d %d 0 0 magnitude 1 diagonal" % walk_value(1.0, 1, 1), "release",
+              "expect 0000 0 0 0 0 0 0 magnitude fixture releases cleanly"]
     return "\n".join(lines) + "\n"
 
 

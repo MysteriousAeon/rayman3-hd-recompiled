@@ -225,16 +225,19 @@ def placement_checks(launcher: Path, t: Path, home: Path, keep, baseline=False):
               "clamped page (no move, no new anchor)", wins["small_s"] == wins["small_s2"]
               and "user_placed=0" in d["small_s2"]["window"], (wins["small_s"], wins["small_s2"]))
     # D-082: a 1080p screen at 125 % and 150 % (a 1920 x 1032 work area), the desktop where the M33 test-mode exception
-    # left Controls outside the real work area. The UI test now takes the person's path, so the hook and the monitor
+    # left Controls outside the real work area. D-120 expands Keyboard: it scrolls at 150%, while Controller fits.
+    # The UI test takes the person's path, so the hook and the monitor
     # agree: every page inside, a taller page scrolls and fills the height, the others share one centre, and the
     # layout of the whole page (scrolled or not) holds.
     for dpi in (120, 144):
-        steps = [[f"dpi {dpi}", "workarea 0 0 1920 1032", "dump w_s"], ["page controls", "dump w_c"],
+        steps = [[f"dpi {dpi}", "workarea 0 0 1920 1032", "dump w_s"], ["page keys", "dump w_c"],
+                 ["wheel 100", "dump w_bottom"],
+                 ["focus key:lstick_up", "wait 150", "wheel -100", "dump w_focus"], ["page pad", "dump w_pad"],
                  ["page advanced", "dump w_a"], ["page mods", "dump w_m"], ["page settings", "dump w_s2"]]
         code, rects, d, log, out = observed_run(launcher, home, t, f"place1032_{dpi}", steps)
         if keep:
             shutil.copytree(out, Path(keep) / out.name, dirs_exist_ok=True)
-        keys = ("w_s", "w_c", "w_a", "w_m", "w_s2")
+        keys = ("w_s", "w_c", "w_bottom", "w_focus", "w_pad", "w_a", "w_m", "w_s2")
         ok = code == 0 and all(k in d for k in keys)
         check(f"placement 1920 x 1032 at {dpi} DPI: run completed", ok, log[-300:])
         if not ok:
@@ -242,13 +245,22 @@ def placement_checks(launcher: Path, t: Path, home: Path, keep, baseline=False):
         work = (0, 0, 1920, 1032)
         wins = {k: win_of(d[k]) for k in keys}
         tall = [k for k in keys if "scroll=1" in d[k]["window"]]
-        cs = {centre(wins[k]) for k in keys if k not in tall}
+        # Tabs use Fit() to keep the top-left; top-level pages use Fit(true) to share the anchor.
+        cs = {centre(wins[k]) for k in keys if k not in tall and k != "w_pad"}
         spread = max(abs(a[1] - b[1]) + abs(a[0] - b[0]) for a in cs for b in cs) if cs else 0
-        check(f"placement 1920 x 1032 at {dpi} DPI: every page inside the work area; a taller page scrolls and fills "
-              f"its height; the others keep one centre (spread {spread} px); Settings returns to its rectangle",
-              all(inside(w, work) for w in wins.values()) and "w_c" in tall
+        # D-080/D-082 retain clamping/centering; D-120 accepts only the expanded Keyboard tab scrolling here.
+        expected_tall = ["w_c", "w_bottom", "w_focus"] if dpi == 144 else []
+        check(f"placement 1920 x 1032 at {dpi} DPI: every page inside; only expanded Keyboard scrolls at 150% (D-120); the fitting pages "
+              f"keep one centre (spread {spread} px); Settings returns to its rectangle",
+              all(inside(w, work) for w in wins.values()) and tall == expected_tall
               and all(wins[k][1] == 0 and wins[k][3] == 1032 for k in tall) and spread <= 2
               and wins["w_s"] == wins["w_s2"], (tall, wins))
+        check(f"placement 1920 x 1032 at {dpi} DPI: fixed buttons visible after focus and scroll, no clipped text, scroll reaches both ends",
+              all(d[k].get("text_clipped") == "0" and d[k].get("in_view", "").startswith(
+                  "save:1 play:1 close:1 restore:1") for k in ("w_c", "w_bottom", "w_focus", "w_pad"))
+              and int(d["w_focus"]["in_view"].split("scroll_y=")[1]) == 0
+              and (dpi != 144 or int(d["w_bottom"]["in_view"].split("scroll_y=")[1]) > 0),
+              {k: (d[k].get("in_view"), d[k].get("text_clipped")) for k in ("w_c", "w_bottom", "w_focus", "w_pad")})
         check(f"placement 1920 x 1032 at {dpi} DPI: the whole page's layout holds on every page, the scrolled one too",
               all(m30.layout_ok(d[k]) for k in keys), {k: d[k].get("controls") for k in keys})
     # Key capture, an Esc and a status line never move the window.
@@ -277,7 +289,9 @@ def static_checks():
           is not None)
     km = json.loads(read(ROOT / "config" / "controls" / "keymap.json"))
     hidden = [i["id"] for i in km["inputs"] if i.get("hidden")]
-    check("keymap: the uncharacterised inputs are still in the map (low-level mappings kept)", len(hidden) >= 10, hidden)
+    check("keymap: only uncharacterised inputs remain hidden (D-120 exposes Look and menu up/down)",
+          set(hidden) == {"back", "dpad_left", "dpad_right", "lstick_press",
+                          "rstick_press", "guide"}, hidden)
 
 
 def preset_checks(skip_runtime=False):

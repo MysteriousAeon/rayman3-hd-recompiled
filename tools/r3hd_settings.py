@@ -35,10 +35,20 @@ put on another input (that section was written before the input existed), so an 
 D-108: "range": {"min": A, "max": B} makes an integer preference (the DualSense trigger strength, a slider in
 Settings); load_registry gives it the values "A" ... "B", so files, explicit pairs and play.ps1 carry decimal strings.
 
+D-115: the controller button map (config/controls/padmap.json) is a preference of its own like the keyboard: a settings
+file (schema 4; a file without one is still written as schema 3) may hold "controller": {"buttons": {input: button}}
+with only the inputs whose button differs from the original controls. The whole map must stay a bijection of the 14
+digital buttons (a button on two inputs is refused: PAD_CONFLICT); the Settings window swaps instead. A stored section
+that does not validate never stops a launch or touches the keyboard: the original controls apply and a warning says
+why. play.ps1 passes the result as R3HD_PAD_MAP (guest=physical pairs, empty = original controls).
+D-116: the analog subset: "controller" may also hold "analog": {input: input} for the two exchanges (left_trigger /
+right_trigger, left_stick / right_stick); a trigger only ever takes a trigger and a stick a stick (PAD_KIND), so no
+analog value is turned into a button press or back.
+
 usage:
   r3hd_settings.py resolve [--preset P] [--settings FILE] [--explicit KEY=VALUE ...] [--key-layout L]
   r3hd_settings.py write FILE --preset P [--base B] [--set KEY=VALUE ...] [--keep-preferences]
-                         [--keyboard LAYOUT [--key INPUT=KEY[,KEY] ...]]
+                         [--keyboard LAYOUT [--key INPUT=KEY[,KEY] ...]] [--pad [INPUT=BUTTON ...]]
   r3hd_settings.py describe
 Exit codes: 0 resolved / written, 2 refused (reason printed), 1 usage error.
 """
@@ -52,13 +62,19 @@ ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "config" / "settings" / "registry.json"
 SCHEMA = 1  # the registry's schema
 SETTINGS_SCHEMA = 3  # settings files written now (M32: "keyboard"; M30: "preferences"); schema 1 / 2 still read
-SETTINGS_READ = (1, 2, 3)
+SETTINGS_READ = (1, 2, 3, 4)
+CONTROLLER_SCHEMA = 4  # D-115: a settings file holding a controller section; without one it stays SETTINGS_SCHEMA
 SETTINGS_FIELDS = {1: {"schema", "preset", "base", "overrides", "allow_experimental", "comment"}}
 SETTINGS_FIELDS[2] = SETTINGS_FIELDS[1] | {"preferences"}
 SETTINGS_FIELDS[3] = SETTINGS_FIELDS[2] | {"keyboard"}
+SETTINGS_FIELDS[4] = SETTINGS_FIELDS[3] | {"controller"}
 KEYMAP = ROOT / "config" / "controls" / "keymap.json"
 KEYMAP_SCHEMA = 1
 KEYBOARD_FIELDS = {"layout", "keys"}
+PADMAP = ROOT / "config" / "controls" / "padmap.json"
+PADMAP_SCHEMA = 2  # D-116: analog inputs and the listed actions
+CONTROLLER_FIELDS = {"buttons", "analog"}
+ANALOG_IDS = ("left_trigger", "right_trigger", "left_stick", "right_stick")
 SCOPES = ("preset", "preference")
 UI_MODES = ("shown", "hidden")
 FIXED_PRESETS = ("vanilla", "hdplus")
@@ -167,11 +183,14 @@ def check_value(reg: dict, key: str, value: str, origin: str) -> dict:
 
 
 def resolve(reg: dict, preset: str = None, settings: dict = None, explicit: dict = None,
-            key_layout: str = None, keymap: dict = None) -> dict:
+            key_layout: str = None, keymap: dict = None, padmap: dict = None) -> dict:
     out = resolve_presets(reg, preset, settings, explicit)
     km = keymap or load_keymap()
     out["keyboard"] = resolve_keyboard(km, (settings or {}).get("keyboard"), key_layout)
     out["warnings"] += [f"keyboard: {w}" for w in out["keyboard"]["warnings"]]
+    pm = padmap or load_padmap(km)
+    out["controller"] = resolve_controller(pm, (settings or {}).get("controller"))
+    out["warnings"] += [f"controller: {w}" for w in out["controller"]["warnings"]]
     return out
 
 
@@ -278,10 +297,20 @@ def load_keymap(path: Path = KEYMAP) -> dict:
     km["_names"] = names
     km["_labels"] = {k["name"]: k.get("label", k["name"]) for k in km["keys"]}
     km["_ids"] = ids
+    for share in km.get("shared_keys", []):
+        if (set(share) != {"key", "inputs"} or share["key"] not in names
+                or share["key"] in km["reserved"] or len(share["inputs"]) != 2
+                or len(set(share["inputs"])) != 2 or not set(share["inputs"]) <= set(ids)
+                or set(share["inputs"]) & set(km["required"])):
+            raise Refused("KEYMAP_INVALID", "shared_keys: expected one non-reserved key and two optional inputs")
     for name, layout in km["layouts"].items():
         if set(layout["keys"]) != set(ids):
             raise Refused("KEYMAP_INVALID", f"layout {name}: it must name every input exactly")
         try:
+            if not isinstance(layout.get("previous_keys", {}), dict) or not set(layout.get("previous_keys", {})) <= set(ids):
+                raise Refused("KEYMAP_INVALID", "previous_keys must name known inputs")
+            for input_id, previous in layout.get("previous_keys", {}).items():
+                slots(km, previous, f"previous {name} {input_id}")
             check_map(km, {i: slots(km, v, f"layout {name}") for i, v in layout["keys"].items()})
         except Refused as e:
             raise Refused("KEYMAP_INVALID", f"layout {name}: {e.code}: {e.detail}")
@@ -314,14 +343,20 @@ def input_label(km: dict, input_id: str) -> str:
     return f"{i['pad']} ({i['action'].split(';')[0].split('.')[0]})"
 
 
+def shared_key(km: dict, key: str, first: str, second: str) -> bool:
+    """Only explicitly documented key/input pairs may share; all other collisions still fail."""
+    return any(s["key"] == key and {first, second} == set(s["inputs"])
+               for s in km.get("shared_keys", []))
+
+
 def check_map(km: dict, keys: dict):
-    """A complete map: no key on two inputs (KEY_CONFLICT), a key for every required input (KEY_REQUIRED)."""
+    """A complete map: only documented shared pairs; a key for every required input."""
     owner = {}
     for input_id in km["_ids"]:
         for k in keys.get(input_id, []):
             if not k:
                 continue
-            if k in owner:
+            if k in owner and not shared_key(km, k, owner[k], input_id):
                 raise Refused("KEY_CONFLICT", f"{km['_labels'][k]} is used by both {input_label(km, owner[k])} and "
                                               f"{input_label(km, input_id)}")
             owner[k] = input_id
@@ -335,8 +370,8 @@ def layout_keys(km: dict, layout: str) -> dict:
 
 
 def changed_keys(km: dict, layout: str, changes=None) -> dict:
-    """A layout's keys with a person's changes (INPUT -> keys) applied; an input marked "yields" that the changes do
-    not name loses a layout key that a changed input now uses (M49). Not checked: see keyboard_section."""
+    """A layout plus explicit changes, preserving older overrides through previous_keys (D-120).
+    An unchanged "yields" input loses keys used by a change (M49). Not checked: see keyboard_section."""
     if layout not in km["layouts"]:
         raise Refused("KEY_LAYOUT_UNKNOWN", f"{layout!r}: one of {', '.join(km['layouts'])}")
     keys = layout_keys(km, layout)
@@ -345,6 +380,14 @@ def changed_keys(km: dict, layout: str, changes=None) -> dict:
             raise Refused("KEY_INPUT_UNKNOWN", f"{input_id!r} is not an input ({', '.join(km['_ids'])})")
         keys[input_id] = slots(km, value, input_label(km, input_id))
     taken = {k for i in (changes or {}) for k in keys[i] if k}
+    # D-120: new authentic defaults must not invalidate an older saved override (e.g. Attack on V).
+    # Only corrected, unchanged defaults yield to an explicit conflicting input, using their previous keys.
+    for input_id, previous in km["layouts"][layout].get("previous_keys", {}).items():
+        if input_id in (changes or {}):
+            continue
+        if any(k and k in keys[other] and not shared_key(km, k, input_id, other)
+               for k in keys[input_id] for other in (changes or {})):
+            keys[input_id] = slots(km, previous, f"previous {layout} {input_id}")
     for i in km["inputs"]:
         if i.get("yields") and i["id"] not in (changes or {}) and taken & set(keys[i["id"]]):
             left = [k for k in keys[i["id"]] if k and k not in taken]
@@ -427,6 +470,136 @@ def resolve_keyboard(km: dict, section=None, explicit_layout: str = None) -> dic
             "keymap_sha256": km["_sha256"]}
 
 
+# --- controller button map (D-115) ----------------------------------------------------------------------------------
+
+def load_padmap(km: dict = None, path: Path = PADMAP) -> dict:
+    """config/controls/padmap.json: 14 distinct digital buttons (each a pad input of the keymap) and, D-116, the analog
+    inputs (two triggers, two sticks), then the actions the Settings window lists, each naming the input it uses.
+    _ids = every input in r3hd_padmap.h's order (buttons, then analog); _kind = button | trigger | stick."""
+    km = km or load_keymap()
+    raw = path.read_bytes()
+    pm = json.loads(raw)
+    if pm.get("schema") != PADMAP_SCHEMA:
+        raise Refused("PADMAP_SCHEMA", f"padmap schema {pm.get('schema')!r}, this resolver reads {PADMAP_SCHEMA}")
+    ids = [b["id"] for b in pm["buttons"]]
+    bits = [int(b["bit"], 16) for b in pm["buttons"]]
+    vks = [int(b["vk"], 16) for b in pm["buttons"]]
+    if len(ids) != 14 or len(set(ids)) != 14 or len(set(bits)) != 14 or len(set(vks)) != 14:
+        raise Refused("PADMAP_INVALID", "buttons: 14 distinct ids, bits and virtual keys are needed")
+    inputs = {i["id"]: i for i in km["inputs"]}
+    if any(b not in inputs or inputs[b].get("keyboard_only") for b in ids):
+        raise Refused("PADMAP_INVALID", "buttons: every id must be a pad input of the keymap")
+    analog = [a["id"] for a in pm["analog"]]
+    if analog != list(ANALOG_IDS) or [a["kind"] for a in pm["analog"]] != ["trigger", "trigger", "stick", "stick"]:
+        raise Refused("PADMAP_INVALID", f"analog: {', '.join(ANALOG_IDS)} in this order (two triggers, two sticks)")
+    groups = [g["key"] for g in pm["groups"]]
+    shown = [a["input"] for a in pm["actions"]]
+    if (len(set(shown)) != len(shown) or any(a not in ids + analog for a in shown)
+            or any(a["group"] not in groups for a in pm["actions"]) or not {"a", "b", "start"} <= set(shown)):
+        raise Refused("PADMAP_INVALID", "actions: distinct inputs of the map, in known groups, Jump / Back / Pause included")
+    pm["_ids"] = ids + analog
+    pm["_kind"] = {**{b: "button" for b in ids}, **{a["id"]: a["kind"] for a in pm["analog"]}}
+    pm["_labels"] = {b["id"]: b["xbox"] if b["xbox"] == b["playstation"] else f"{b['xbox']} / {b['playstation']}"
+                     for b in pm["buttons"] + pm["analog"]}
+    pm["_actions"] = {**{b: input_label(km, b) for b in ids}, **{a["id"]: pm["_labels"][a["id"]] for a in pm["analog"]}}
+    for a in pm["actions"]:
+        pm["_actions"][a["input"]] = f"{pm['_labels'][a['input']]} ({a['name']})"
+    pm["_shown"] = shown
+    pm["_sha256"] = hashlib.sha256(raw).hexdigest()
+    return pm
+
+
+def controller_buttons(pm: dict, changes=None) -> dict:
+    """The full map (input -> physical input) with a person's changes applied; refuses an unknown input, a physical
+    input of another kind (D-116: a trigger takes a trigger, a stick a stick, a button a button) and a map that is not
+    a bijection (PAD_CONFLICT)."""
+    buttons = {i: i for i in pm["_ids"]}
+    for input_id, button in (changes or {}).items():
+        if input_id not in buttons:
+            raise Refused("PAD_INPUT_UNKNOWN", f"{input_id!r} is not a controller input ({', '.join(pm['_ids'])})")
+        if not isinstance(button, str) or button not in buttons:
+            raise Refused("PAD_BUTTON_UNKNOWN", f"{pm['_actions'][input_id]}: {button!r} is not a controller input")
+        if pm["_kind"][button] != pm["_kind"][input_id]:
+            raise Refused("PAD_KIND", f"{pm['_actions'][input_id]}: {pm['_labels'][button]} is a {pm['_kind'][button]}, "
+                                      f"not a {pm['_kind'][input_id]}")
+        buttons[input_id] = button
+    owner = {}
+    for input_id in pm["_ids"]:
+        b = buttons[input_id]
+        if b in owner:
+            raise Refused("PAD_CONFLICT", f"{pm['_labels'][b]} is used by both {pm['_actions'][owner[b]]} and "
+                                          f"{pm['_actions'][input_id]}")
+        owner[b] = input_id
+    return buttons
+
+
+def controller_section(pm: dict, changes=None) -> dict:
+    """The settings file's controller section: only the inputs whose physical input differs from the original
+    controls; D-116: the analog exchanges under "analog", written only when there is one."""
+    buttons = controller_buttons(pm, changes)
+    out = {"buttons": {i: b for i, b in buttons.items() if b != i and pm["_kind"][i] == "button"}}
+    analog = {i: b for i, b in buttons.items() if b != i and pm["_kind"][i] != "button"}
+    if analog:
+        out["analog"] = analog
+    return out
+
+
+def check_controller_section(pm: dict, section) -> dict:
+    """A stored section as controller_section would have written it, or Refused."""
+    if not isinstance(section, dict) or not set(section) <= CONTROLLER_FIELDS:
+        raise Refused("CONTROLLER_INVALID", f"controller must be an object with {sorted(CONTROLLER_FIELDS)}")
+    changes = {}
+    for field in ("buttons", "analog"):
+        part = section.get(field) or {}
+        if not isinstance(part, dict):
+            raise Refused("CONTROLLER_INVALID", f"controller.{field} must be an object")
+        for i in part:  # an unknown input is refused by controller_buttons
+            if i in pm["_kind"] and (pm["_kind"][i] == "button") != (field == "buttons"):
+                raise Refused("CONTROLLER_INVALID", f"controller.{field}: {i!r} belongs to the other field")
+        changes.update(part)
+    return controller_section(pm, changes)
+
+
+def controller_of(pm: dict, settings) -> dict:
+    """The valid controller section of a settings file, or None (absent or not valid)."""
+    if not settings or "controller" not in settings:
+        return None
+    try:
+        return check_controller_section(pm, settings["controller"])
+    except Refused:
+        return None
+
+
+def section_changes(section: dict) -> dict:
+    return {**section.get("buttons", {}), **section.get("analog", {})}
+
+
+def resolve_controller(pm: dict, section=None) -> dict:
+    """The effective map and the runtime's R3HD_PAD_MAP. Never refuses a stored section (see the module note)."""
+    warnings, state, changes = [], "default", {}
+    if section is not None:
+        try:
+            changes = section_changes(check_controller_section(pm, section))
+            state = "saved" if changes else "default"
+        except Refused as e:
+            state = "invalid"
+            warnings.append(f"saved controller buttons not used ({e.code}: {e.detail}); the original controls apply")
+    buttons = controller_buttons(pm, changes)
+    env = ",".join(f"{i}={b}" for i, b in buttons.items() if b != i)  # the order of r3hd_padmap.h's table
+    return {"state": state, "buttons": buttons, "changed": changes, "env": env, "warnings": warnings,
+            "padmap_sha256": pm["_sha256"]}
+
+
+def parse_pad_pairs(pairs) -> dict:
+    out = {}
+    for pair in pairs or []:
+        if "=" not in pair:
+            raise Refused("INVALID_PAIR", f"{pair!r} is not INPUT=BUTTON")
+        input_id, value = pair.split("=", 1)
+        out[input_id] = value
+    return out
+
+
 def parse_key_pairs(pairs) -> dict:
     out = {}
     for pair in pairs or []:
@@ -456,12 +629,14 @@ def preferences_of(reg: dict, settings: dict) -> dict:
 
 
 def make_settings(reg: dict, preset: str, base: str = None, pairs=None, allow_experimental=False,
-                  keep_preferences=None, keyboard=None) -> dict:
+                  keep_preferences=None, keyboard=None, controller=None) -> dict:
     """A settings file for a preset (M30, D-067). Preference pairs go to "preferences" in every preset, the other
     pairs to the custom overrides; keep_preferences (the current file's) are carried over unless a pair names them;
     a preference equal to its default is not stored unless preserve_default records an explicit choice.
     M32: keyboard is a section
-    from keyboard_section (or a kept one); the default layout without changes is not stored."""
+    from keyboard_section (or a kept one); the default layout without changes is not stored. D-115: controller is a
+    section from controller_section (or a kept one); the original controls are not stored, and only a file that holds
+    a controller section is written as schema 4."""
     pairs = parse_pairs(pairs, reg, "write")
     prefs = dict(keep_preferences or {})
     overrides = {}
@@ -489,7 +664,13 @@ def make_settings(reg: dict, preset: str, base: str = None, pairs=None, allow_ex
         keyboard = check_keyboard_section(km, keyboard)
         if keyboard["layout"] != km["default_layout"] or keyboard["keys"]:
             data["keyboard"] = keyboard
-    resolve(reg, settings=data, keymap=km)  # never persist a file that would not resolve
+    pm = load_padmap(km)
+    if controller is not None:
+        controller = check_controller_section(pm, controller)
+        if section_changes(controller):  # D-116: buttons or analog exchanges
+            data["schema"] = CONTROLLER_SCHEMA
+            data["controller"] = controller
+    resolve(reg, settings=data, keymap=km, padmap=pm)  # never persist a file that would not resolve
     return data
 
 
@@ -510,6 +691,8 @@ def main() -> int:
     w.add_argument("--keep-preferences", action="store_true", help="carry the existing file's preferences over")
     w.add_argument("--keyboard", help="M32: keyboard layout; with --key the inputs changed from it")
     w.add_argument("--key", nargs="*", default=[], help="INPUT=KEY[,KEY]; an empty value unbinds")
+    w.add_argument("--pad", nargs="*", help="D-115: INPUT=BUTTON pairs that replace the controller map (none = the "
+                                             "original controls); without --pad, --keep-preferences keeps the saved map")
     sub.add_parser("describe")
     a = ap.parse_args()
     try:
@@ -528,8 +711,13 @@ def main() -> int:
                 raise Refused("KEY_LAYOUT_REQUIRED", "--key needs --keyboard LAYOUT")
             else:
                 keyboard = keyboard_of(km, old) if a.keep_preferences else None
+            pm = load_padmap(km)
+            if a.pad is not None:
+                controller = controller_section(pm, parse_pad_pairs(a.pad))
+            else:
+                controller = controller_of(pm, old) if a.keep_preferences else None
             data = make_settings(reg, a.preset, a.base, a.set, a.allow_experimental,
-                                 preferences_of(reg, old) if a.keep_preferences else None, keyboard)
+                                 preferences_of(reg, old) if a.keep_preferences else None, keyboard, controller)
             tmp = a.file.with_name(a.file.name + ".tmp")
             tmp.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
             tmp.replace(a.file)

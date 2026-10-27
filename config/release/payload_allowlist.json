@@ -9,6 +9,7 @@
     {"glob": "app/*.cmd", "kind": "batch"},
     {"glob": "app/*.txt", "kind": "text"},
     {"glob": "app/MODDING.md", "kind": "markdown"},
+    {"glob": "app/PROVENANCE.md", "kind": "markdown"},
     {"glob": "app/tools/*.py", "kind": "python"},
     {"glob": "app/licenses/*.txt", "kind": "text"},
     {"glob": "app/licenses/*.md", "kind": "markdown"},
@@ -17,6 +18,7 @@
     {"glob": "app/config/settings/registry.json", "kind": "json"},
     {"glob": "app/config/settings/ui_strings.json", "kind": "json"},
     {"glob": "app/config/controls/keymap.json", "kind": "json"},
+    {"glob": "app/config/controls/padmap.json", "kind": "json"},
     {"glob": "app/reports/milestone1/data/content_manifest.tsv", "kind": "tsv"},
     {"glob": "app/python/python311._pth", "kind": "text"},
     {"glob": "app/python/LICENSE.txt", "kind": "text"}

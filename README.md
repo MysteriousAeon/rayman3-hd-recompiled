@@ -59,24 +59,27 @@ This setting changes only the Settings interface. The game's language is control
 
 ## Controls
 
-Xbox-compatible controllers use the Xbox 360 button layout. For keyboard controls, choose between two layouts in Settings → Controls. Individual keyboard bindings can be customized.
+Xbox-compatible controllers use the Xbox 360 button layout. For keyboard controls, choose between two layouts in Settings → Controls. Individual keyboard bindings can be customized. Controller mappings are available on the Controller tab.
 
 | Action | Modern (default) | Original PC (2003) |
 |---|---|---|
 | Move | W A S D | Arrow keys |
 | Walk (hold while moving) | Ctrl | Shift |
-| Camera | Arrow keys | Numeric keypad or W A S D |
+| Camera | Arrow keys | Numeric keypad; A / S / D also turn or lower the camera |
 | Jump / helicopter | Space | C |
 | Attack (hold to charge) | E | Space |
 | Lock on / strafe | Shift | Ctrl |
 | Pause | Enter or P | Esc |
-| Back | Esc or Backspace | Backspace |
+| Roll / Back | Esc or Backspace | W or Backspace |
+| Look Mode (hold) | R | X |
+| Show Health Bar | 1 | V |
+| Grimace | 3 | V |
 
 **Walk** is an additional keyboard action in this port. The Xbox 360 version allows slower movement by gently tilting the analog stick. Holding Walk provides a similar option on the keyboard.
 
 You can rebind Walk or leave it unassigned.
 
-Controller button remapping is not currently available.
+In Settings → Controls → Controller, capture a button to reassign it. Digital buttons swap with digital buttons, triggers with triggers, and sticks with sticks. One map applies to physical controllers; keyboard bindings remain independent. Xbox-compatible controllers and native DualSense are supported, with physical DualSense Bluetooth acceptance recorded; other device configurations have limited testing. Guide / PS and the touchpad cannot be assigned. Existing saved keyboard choices take precedence over updated defaults.
 
 ## Game profiles: Vanilla, HD+, and Custom
 

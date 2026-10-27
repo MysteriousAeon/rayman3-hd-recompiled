@@ -112,7 +112,7 @@ with tempfile.TemporaryDirectory() as tmp:
     bad_reg["schema"] = 2
     (t / "r.json").write_text(json.dumps(bad_reg), encoding="utf-8")
     check(refused(lambda: rs.load_registry(t / "r.json"), "REGISTRY_SCHEMA"), "registry: unknown schema refused")
-    for name, body, code in (("newer.json", {"schema": 4, "preset": "vanilla"}, "SETTINGS_NEWER"),  # M32 reads 1, 2 and 3
+    for name, body, code in (("newer.json", {"schema": 5, "preset": "vanilla"}, "SETTINGS_NEWER"),  # D-115 reads 1 ... 4
                              ("noschema.json", {"preset": "vanilla"}, "SETTINGS_INVALID"),
                              ("field.json", {"schema": 1, "preset": "vanilla", "colour": 1}, "SETTINGS_INVALID")):
         (t / name).write_text(json.dumps(body), encoding="utf-8")

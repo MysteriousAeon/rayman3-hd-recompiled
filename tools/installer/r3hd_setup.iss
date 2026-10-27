@@ -59,7 +59,7 @@
 ; its .zip is left in {app}\extras for Settings > Mods). An EXISTING installation keeps what it has: an installed copy
 ; is updated in place (on / off and order kept, a newer one kept), a missing or removed one is not added (--want 3).
 ; Silent: /TURKISH=0|1|2|3 overrides that choice (tests).
-#define AppVersion "1.0.1"
+#define AppVersion "1.0.2"
 #define AppTitle "Rayman 3 HD Recompiled"
 #ifdef BundledMod
   #define Playtest
@@ -78,6 +78,10 @@ AppId={{6F2C9A41-7D3B-4E58-B1A2-5841123F0029}
 AppName={#AppTitle}
 AppVersion={#AppVersion}
 AppVerName=Rayman 3 HD Recompiled {#AppVersion}
+VersionInfoVersion={#AppVersion}.0
+VersionInfoTextVersion={#AppVersion}
+VersionInfoProductVersion={#AppVersion}.0
+VersionInfoProductTextVersion={#AppVersion}
 AppPublisher=Rayman 3 HD Recompiled
 #ifdef Playtest
 WizardSizePercent=110

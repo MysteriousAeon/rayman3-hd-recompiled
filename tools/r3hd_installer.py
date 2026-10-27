@@ -8,7 +8,11 @@ the rest:
                     installer.json, bin\\install.json, r3hd_home.json, the Inno Setup uninstaller files
   the person's      settings.json (the preset; replaced only on an explicit choice), profiles\\ (saves),
                     save_history\\, sessions\\ (diagnostics), mods\\ (M33: imported data mods, managed by
-                    r3hd_mods.py; their launch plan lives in cache\\mods) and any file the engine did not write
+                    r3hd_mods.py; their launch plan lives in cache\\mods), dev_overlay_config\\ (D-114) and any
+                    file the engine did not write
+D-114: bin\\r3hd.toml is the one file of the person's that can appear in bin\\ (the SDK's developer overlay, F4, saves
+it; no payload carries one). Setup re-runs, updates and uninstalls move it, unchanged, to dev_overlay_config\\ instead
+of discarding it with bin\\ or leaving bin\\ behind; repair leaves it in place. Any other unknown file stays untouched.
 The payload (tools/r3hd_stage.py) is a directory with payload.json (every file, size, SHA-256, role) and the files
 under app\\ and bin\\. Game data enters only through tools/r3hd_intake.py: a package by header identity then
 extraction judged against the 915-file manifest, or an already extracted tree verified against the same manifest.
@@ -42,8 +46,10 @@ holds no setting of its own: it shows launcher-model and saves through set-prese
 refuse while it is open (LAUNCHER_RUNNING), because they replace or remove the folder it runs from.
 """
 import argparse
+import csv
 import datetime
 import hashlib
+import io
 import json
 import os
 import platform
@@ -70,7 +76,9 @@ HOME_MARK = "r3hd_home.json"
 LOCK = ".r3hd_install.lock"
 TXN = ".r3hd_txn.json"
 COMPONENTS = ("app", "bin")
-USER_ITEMS = ("settings.json", "profiles", "save_history", "sessions", "mods")  # M33: mods\ = imported data mods
+# M33: mods\ = imported data mods; D-114: dev_overlay_config\ = SDK overlay files moved out of bin\ (set_aside_dev_config)
+USER_ITEMS = ("settings.json", "profiles", "save_history", "sessions", "mods", "dev_overlay_config")
+DEV_CONFIG = "r3hd.toml"
 UNINSTALLER = ("unins000.exe", "unins000.dat", "unins000.msg")
 RUNTIME_FILES = ("r3hd.exe", "rexruntime.dll", "rexgpu-xenos.dll", "ffmpeg.dll", "mspack.dll")  # M46: the LGPL DLLs (D-084)
 VC_RUNTIME = ("MSVCP140.dll", "MSVCP140_ATOMIC_WAIT.dll", "VCRUNTIME140.dll", "VCRUNTIME140_1.dll")
@@ -78,7 +86,7 @@ MARGIN = 256 << 20
 HOOKS = ("R3HD_INSTALL_FAULT", "R3HD_INSTALL_FREE_BYTES", "R3HD_INSTALL_SYSTEM32", "R3HD_INSTALL_FAKE_RUNNING",
          "R3HD_INSTALL_FAKE_LAUNCHER")
 LAUNCHER = "app/r3hd_launcher.exe"
-MODEL_SCHEMA = 3  # M31: REQUIRES rows; M32: the keyboard rows (KEY*) replace the read-only CONTROL rows
+MODEL_SCHEMA = 5  # M31: REQUIRES rows; M32: the keyboard rows (KEY*) replace the read-only CONTROL rows; D-115: PAD*; D-116: PADBUTTON kind, PADGROUP, PADACTION group name
 
 ADVICE = {
     "NOT_XCONTENT": "The selected file is not an Xbox 360 content package. Select the Rayman 3 HD package file "
@@ -106,6 +114,8 @@ ADVICE = {
                     "Nothing was changed.",
     "GAME_RUNNING": "Rayman 3 HD is running. Close the game and try again.",
     "LAUNCHER_RUNNING": "Rayman 3 HD Settings is open. Close it and try again.",
+    "PROCESS_QUERY_FAILED": "Windows could not check running applications. No installation action was allowed. "
+                            "Try again after closing the game and Settings.",
     "SETTINGS_REFUSED": "These settings cannot be saved.",
     "VC_RUNTIME_MISSING": "The Microsoft Visual C++ Redistributable 2015-2022 (x64) is missing. Install it from "
                           "Microsoft (aka.ms/vs/17/release/vc_redist.x64.exe) and run the installer again.",
@@ -313,16 +323,43 @@ def check_platform():
         raise Refusal("VC_RUNTIME_MISSING", f"missing in {sys32}: {', '.join(missing)}")
 
 
+def _parse_process_snapshot(stdout: bytes, encoding="oem") -> list[tuple[str, int]]:
+    """Full tasklist CSV only: absence is proven by valid rows, never a localized message."""
+    if not isinstance(stdout, bytes) or not stdout:
+        raise ValueError("missing process-query output")
+    rows = list(csv.reader(io.StringIO(stdout.decode(encoding)), strict=True))
+    result = []
+    for row in rows:
+        if not row:
+            continue
+        if (len(row) != 5 or not row[0] or any(c in row[0] for c in '\x00\r\n')
+                or not row[1].isascii() or not row[1].isdecimal()):
+            raise ValueError("malformed process-query row")
+        result.append((row[0].lower(), int(row[1])))
+    if not result:
+        raise ValueError("empty process snapshot")
+    return result
+
+
+def _process_snapshot() -> list[tuple[str, int]]:
+    # tasklist writes OEM, not ANSI. Decode on this thread so failures are observable.
+    # A full list avoids translated /FI no-match messages, whose meaning is not machine-readable.
+    exe = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32" / "tasklist.exe"
+    try:
+        r = subprocess.run([str(exe), "/FO", "CSV", "/NH"], capture_output=True,
+                           creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0), timeout=30)
+        if r.returncode != 0:
+            raise ValueError(f"tasklist exit {r.returncode}")
+        return _parse_process_snapshot(r.stdout)
+    except (OSError, subprocess.SubprocessError, ValueError, LookupError, csv.Error) as e:
+        raise Refusal("PROCESS_QUERY_FAILED", f"{type(e).__name__}: {e}") from e
+
+
 def image_running(image: str, hook: str) -> bool:
     fake = os.environ.get(hook)
     if fake in ("0", "1"):
         return fake == "1"
-    try:
-        r = subprocess.run(["tasklist", "/FI", f"IMAGENAME eq {image}", "/FO", "CSV", "/NH"], capture_output=True,
-                           text=True, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0), timeout=30)
-        return f'"{image}"' in r.stdout.lower()
-    except (OSError, subprocess.SubprocessError):
-        return False
+    return any(name == image.lower() for name, _ in _process_snapshot())
 
 
 def game_running() -> bool:
@@ -339,11 +376,9 @@ def check_not_running():
 
 def process_alive(pid: int) -> bool:
     try:
-        r = subprocess.run(["tasklist", "/FI", f"PID eq {pid}", "/FO", "CSV", "/NH"], capture_output=True, text=True,
-                           creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0), timeout=30)
-    except (OSError, subprocess.SubprocessError):
+        return any(found == pid for _, found in _process_snapshot())
+    except Refusal:
         return True  # cannot tell: keep the lock
-    return f'"{pid}"' in r.stdout
 
 
 def recover_if_needed(home: Path, log) -> str:
@@ -569,13 +604,14 @@ def data_state(home: Path, release: dict, full=False) -> dict:
 # --- settings -----------------------------------------------------------------------------------------------------
 
 def settings_from_args(preset, base, pairs, allow_exp, home: Path = None, fresh=False, keyboard=None,
-                       ui_language=None) -> dict:
+                       ui_language=None, controller=None) -> dict:
     """A settings file for an explicit choice. With home, the preferences of its readable settings.json (display
     mode, rendering resolution, ...) are carried over: they do not belong to a preset (M30, D-067). fresh = the first
     settings file of a brand-new installation: the registry's install defaults apply unless a pair names them (M31,
     D-068: a new installation starts in fullscreen; an existing one keeps its choice). M32 (D-069): the keyboard map
     is carried over the same way unless keyboard (layout, {input: keys}) replaces it; a stored map that does not
-    validate is not carried (set_preset keeps a copy of that file first)."""
+    validate is not carried (set_preset keeps a copy of that file first). D-115: the controller button map likewise,
+    unless controller ({input: button}) replaces it."""
     reg = presets.load_registry()
     keep = presets.install_defaults(reg) if fresh else None
     if fresh and ui_language is not None:
@@ -584,13 +620,14 @@ def settings_from_args(preset, base, pairs, allow_exp, home: Path = None, fresh=
         keep["ui_language"] = ui_language
     if fresh and (base if preset == "custom" else preset) == "hdplus":
         keep["gameplay_subtitles"] = "all"  # D-090: a fresh HD+ (or Custom on HD+) starts with them; Vanilla does not
-    keep_keys = None
+    keep_keys = keep_pad = None
     carry = {}
     if not fresh and home is not None and (home / "settings.json").is_file():
         try:
             old = presets.load_settings_file(home / "settings.json")
             keep = presets.preferences_of(reg, old)
             keep_keys = presets.keyboard_of(presets.load_keymap(), old)
+            keep_pad = presets.controller_of(presets.load_padmap(), old)
             carry = hidden_overrides(reg, old)
         except presets.Refused:
             keep = None
@@ -604,7 +641,9 @@ def settings_from_args(preset, base, pairs, allow_exp, home: Path = None, fresh=
     try:
         if keyboard is not None:
             keep_keys = presets.keyboard_section(presets.load_keymap(), keyboard[0], keyboard[1])
-        return presets.make_settings(reg, preset, base, pairs, allow_exp, keep, keep_keys)
+        if controller is not None:
+            keep_pad = presets.controller_section(presets.load_padmap(), controller)
+        return presets.make_settings(reg, preset, base, pairs, allow_exp, keep, keep_keys, keep_pad)
     except presets.Refused as e:
         raise Refusal("SETTINGS_REFUSED", f"{e.code}: {e.detail}")
 
@@ -706,6 +745,18 @@ def keyboard_state(home: Path) -> dict:
         except presets.Refused:
             section = None
     return presets.resolve_keyboard(km, section)
+
+
+def controller_state(home: Path) -> dict:
+    """D-115: the controller button map a launch from this home uses (the resolver's view of settings.json)."""
+    section = None
+    f = home / "settings.json"
+    if f.is_file():
+        try:
+            section = presets.load_settings_file(f).get("controller")
+        except presets.Refused:
+            section = None
+    return presets.resolve_controller(presets.load_padmap(), section)
 
 
 def settings_state(home: Path) -> dict:
@@ -1029,6 +1080,9 @@ def _install(home, payload_dir, source, preset, base, pairs, allow_exp, reset_se
             if not (home / HOME_MARK).is_file():
                 write_json(staging / HOME_MARK, home_mark())
                 items.append(HOME_MARK)
+            dev_config = set_aside_dev_config(home)  # D-114: the old bin\ is discarded by the commit
+            if dev_config:
+                log(f"developer overlay settings kept as {dev_config}")
             log("committing")
             cleaned = commit(home, staging, items, log)
         except Refusal:
@@ -1046,7 +1100,8 @@ def _install(home, payload_dir, source, preset, base, pairs, allow_exp, reset_se
                 "phase_seconds": getattr(progress, "seconds", {}),
                 "payload_id": payload["payload_id"], "data": "extracted" if need_data else "kept",
                 "settings": "written" if write_settings is not None else "kept", "recovered": recovered,
-                "cleanup_pending": not cleaned, "preset": settings_state(home), "play_icon": int(play_icon)}
+                "cleanup_pending": not cleaned, "preset": settings_state(home), "play_icon": int(play_icon),
+                "dev_config_set_aside": dev_config}
 
 
 def verify(home: Path, full_data=False, releases=None) -> dict:
@@ -1145,16 +1200,18 @@ def repair(home: Path, payload_dir: Path, source=None, releases=None, log=print)
                 "data": data_action, "settings": settings_action, "unexpected_in_bin": rep["unexpected_in_bin"]}
 
 
-def set_preset(home: Path, preset, base=None, pairs=(), allow_exp=False, keyboard=None) -> dict:
-    """keyboard (M32): (layout, {input: keys}) replaces the keyboard map; None keeps the saved one."""
+def set_preset(home: Path, preset, base=None, pairs=(), allow_exp=False, keyboard=None, controller=None) -> dict:
+    """keyboard (M32): (layout, {input: keys}) replaces the keyboard map; None keeps the saved one. controller
+    (D-115): {input: button} replaces the controller button map ({} = the original controls); None keeps it."""
     home = Path(os.path.abspath(home))
     recover_if_needed(home, lambda *_: None)
     if not (home / STATE).is_file():
         raise Refusal("NOT_INSTALLED", str(home))
-    data = settings_from_args(preset, base, pairs, allow_exp, home, keyboard=keyboard)
+    data = settings_from_args(preset, base, pairs, allow_exp, home, keyboard=keyboard, controller=controller)
     with Lock(home):
         st = read_state(home)
-        if settings_state(home)["state"] == "invalid" or keyboard_state(home)["state"] == "invalid":
+        if (settings_state(home)["state"] == "invalid" or keyboard_state(home)["state"] == "invalid"
+                or controller_state(home)["state"] == "invalid"):
             # M30: an unreadable file is replaced by an explicit choice, never deleted: a copy is kept beside it.
             backup = invalid_copy_path(home)
             shutil.copyfile(home / "settings.json", backup)
@@ -1163,8 +1220,10 @@ def set_preset(home: Path, preset, base=None, pairs=(), allow_exp=False, keyboar
         st["history"] = (st.get("history", []) + [{"action": "set-preset", "preset": preset, "at": now()}])[-50:]
         write_json(home / STATE, st)
     kb = keyboard_state(home)
+    pad = controller_state(home)
     return {"action": "set-preset", "home": str(home), "preset": settings_state(home),
-            "keyboard": {"state": kb["state"], "layout": kb["layout"], "keys": kb["keys"]}}
+            "keyboard": {"state": kb["state"], "layout": kb["layout"], "keys": kb["keys"]},
+            "controller": {"state": pad["state"], "changed": pad["changed"]}}
 
 
 def configure(home: Path, ask=input, say=print) -> dict:
@@ -1205,6 +1264,22 @@ def configure(home: Path, ask=input, say=print) -> dict:
         return {"action": "configure", "changed": False}
     say(f"Saved: {r['preset'].get('label')}. It applies the next time the game starts.")
     return {"action": "configure", "changed": True, "preset": r["preset"]}
+
+
+def set_aside_dev_config(home: Path):
+    """D-114: move bin\\r3hd.toml (the SDK overlay's saved settings) unchanged to dev_overlay_config\\; the target
+    name never replaces an earlier file. Returns the new path relative to HOME, or None when there is no such file."""
+    src = home / "bin" / DEV_CONFIG
+    if not src.is_file() or src.is_symlink():
+        return None
+    d = home / USER_ITEMS[-1]
+    d.mkdir(exist_ok=True)
+    stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    target, n = d / f"r3hd-{stamp}.toml", 1
+    while target.exists():
+        target, n = d / f"r3hd-{stamp}-{n}.toml", n + 1
+    os.replace(src, target)
+    return f"{d.name}/{target.name}"
 
 
 def remove_empty_dirs(root: Path):
@@ -1250,6 +1325,7 @@ def uninstall(home: Path, remove_user_data=False, confirm=None, from_uninstaller
                 f.unlink()
                 removed += 1
         (home / "bin" / "install.json").unlink(missing_ok=True)
+        dev_config = set_aside_dev_config(home)
         remove_empty_dirs(home / "bin")
         if not defer_app:
             remove_empty_dirs(home / "app")
@@ -1282,7 +1358,7 @@ def uninstall(home: Path, remove_user_data=False, confirm=None, from_uninstaller
         home.rmdir()
     return {"action": "uninstall", "home": str(home), "removed_app_files": removed, "removed_data_files": data_removed,
             "app_deferred_to_uninstaller": defer_app, "user_data_removed": user_removed, "user_data_kept": kept,
-            "left_in_home": left}
+            "dev_config_set_aside": dev_config, "left_in_home": left}
 
 
 def status(home: Path) -> dict:
@@ -1349,11 +1425,19 @@ def launcher_model(home: Path, releases=None) -> str:
       VALUE key value label | REQUIRES key other value (M31) | SLIDER key min max unit (D-108) |
       KEYBOARD state layout warnings | KEYLAYOUT key name text | KEYGROUP key name |
       KEYINPUT id group hidden(0/1) required(0/1) pad action | KEYDEFAULT layout id key... |
-      KEYBIND id key... | KEYNAME name label scans reserved_reason | KEYFALLBACK key input | KEYNOTE text | END
+      KEYBIND id key... | KEYNAME name label scans reserved_reason | KEYFALLBACK key input | KEYNOTE text |
+      KEYSHARE key input input (D-120, optional collision exception; no settings schema change) |
+      PADSTATE state warnings | PADBUTTON id label kind | PADGROUP key name | PADACTION input group name |
+      PADBIND input button | END
     The settings rows are the registry's adjustable, shown settings in its order; mandatory behaviour is never
     listed. REQUIRES and SLIDER follow their setting's VALUE rows. M32 (D-069): the keyboard rows are config/controls/keymap.json
     and the resolver's view of the saved map (KEYBIND: the keys a launch uses, one field per slot, '' = empty);
-    KEYDEFAULT gives every layout's keys so the window can show a layout or restore one without a rule of its own."""
+    KEYDEFAULT gives every layout's keys so the window can show a layout or restore one without a rule of its own.
+    D-115: the controller rows are config/controls/padmap.json and the resolver's view of the saved map: PADBUTTON in
+    the padmap's order, PADACTION the inputs the window lists, PADBIND every input's button (all 14, so a swap with an
+    input that is not listed is still shown correctly); the original controls are each input on its own button.
+    D-116: PADBUTTON also lists the four analog inputs with their kind (button | trigger | stick) and PADBIND all 18;
+    PADGROUP / PADACTION are padmap.json's groups and actions (the input, its group, the action's name)."""
     home = Path(os.path.abspath(home))
     reg = presets.load_registry()
     rows = [("R3HD_LAUNCHER_MODEL", MODEL_SCHEMA), ("HOME", home), ("PRODUCT", PRODUCT)]
@@ -1412,6 +1496,8 @@ def launcher_model(home: Path, releases=None) -> str:
         rows.append(("KEYLAYOUT", key, layout["name"], layout["text"]))
     for g in km["groups"]:
         rows.append(("KEYGROUP", g["key"], g["name"]))
+    for share in km.get("shared_keys", []):
+        rows.append(("KEYSHARE", share["key"], *share["inputs"]))
     for i in km["inputs"]:
         rows.append(("KEYINPUT", i["id"], i["group"], int(bool(i.get("hidden"))), int(i["id"] in km["required"]),
                      i["pad"], i["action"]))
@@ -1425,6 +1511,17 @@ def launcher_model(home: Path, releases=None) -> str:
     for key, target in km["fallbacks"].items():
         rows.append(("KEYFALLBACK", key, target))
     rows.append(("KEYNOTE", "Escape and Enter also work as Back and Start when no other control uses them."))
+    pm = presets.load_padmap(km)
+    pad = controller_state(home)
+    rows.append(("PADSTATE", pad["state"], " ".join(pad["warnings"])))
+    for b in pm["_ids"]:
+        rows.append(("PADBUTTON", b, pm["_labels"][b], pm["_kind"][b]))
+    for g in pm["groups"]:
+        rows.append(("PADGROUP", g["key"], g["name"]))
+    for a in pm["actions"]:
+        rows.append(("PADACTION", a["input"], a["group"], a["name"]))
+    for input_id, b in pad["buttons"].items():
+        rows.append(("PADBIND", input_id, b))
     import r3hd_ui_locale as ui_locale
     language = values.get("ui_language", "en")
     rows.append(("LANG", "ui_language", language))
@@ -1648,7 +1745,7 @@ def selftest() -> int:
                                                                             for r in rows))
             check("launcher-model rows have a fixed width", all(len(r.split("\t")) == {"SETTING": 11, "VALUE": 4, "PRESET": 4,
                                                                                     "REQUIRES": 4, "KEYINPUT": 7,
-                                                                                    "KEYBIND": 4, "KEYDEFAULT": 5,
+                                                                                    "KEYBIND": 4, "KEYDEFAULT": 5, "KEYSHARE": 4,
                                                                                     "KEYNAME": 5, "KEYBOARD": 4}
                                                                 .get(r.split("\t")[0], len(r.split("\t"))) for r in rows))
             km = presets.load_keymap()
@@ -1796,9 +1893,51 @@ def selftest() -> int:
             h9 = t / "H9"
             install(h9, pl, tree, "vanilla", releases=rels, log=quiet)
             (h9 / "unins000.exe").write_bytes(b"inno")
+            (h9 / "bin" / DEV_CONFIG).write_bytes(b"vsync = false\n")
             r = uninstall(h9, from_uninstaller=True, releases=rels, log=quiet)
             check("uninstaller mode leaves app\\ to the uninstaller", (h9 / "app").is_dir() and not (h9 / "bin").exists()
                   and r["app_deferred_to_uninstaller"])
+            check("D-114: uninstaller mode also moves bin\\r3hd.toml out of bin\\",
+                  [p.read_bytes() for p in (h9 / "dev_overlay_config").glob("r3hd-*.toml")] == [b"vsync = false\n"]
+                  and "dev_overlay_config" in r["user_data_kept"])
+            # D-114: bin\r3hd.toml (the SDK overlay's saved settings) is moved, never deleted or left to block a reinstall.
+            h11 = t / "H11"
+            install(h11, pl, tree, "vanilla", releases=rels, log=quiet)
+            dev_dir = h11 / "dev_overlay_config"
+            (h11 / "bin" / DEV_CONFIG).write_bytes(b"vsync = false\n")
+            r = repair(h11, pl, releases=rels, log=quiet)
+            check("D-114: repair leaves bin\\r3hd.toml in place", (h11 / "bin" / DEV_CONFIG).read_bytes()
+                  == b"vsync = false\n" and not dev_dir.exists() and DEV_CONFIG in r["unexpected_in_bin"])
+            r = install(h11, pl, None, None, releases=rels, log=quiet)
+            moved = sorted(dev_dir.glob("r3hd-*.toml"))
+            check("D-114: a setup re-run moves bin\\r3hd.toml unchanged to dev_overlay_config\\",
+                  not (h11 / "bin" / DEV_CONFIG).exists() and len(moved) == 1 and moved[0].read_bytes() == b"vsync = false\n"
+                  and r["dev_config_set_aside"] == f"dev_overlay_config/{moved[0].name}" and verify(h11, releases=rels)["result"] == "healthy")
+            (h11 / "bin" / DEV_CONFIG).write_bytes(b"mnk_mouse = true\n")
+            r = install(h11, pl3, None, None, releases=rels, log=quiet)
+            moved = sorted(dev_dir.glob("r3hd-*.toml"))
+            check("D-114: an update moves it too and never replaces an earlier one", len(moved) == 2
+                  and sorted(p.read_bytes() for p in moved) == [b"mnk_mouse = true\n", b"vsync = false\n"])
+            (h11 / "bin" / DEV_CONFIG).write_bytes(b"anisotropic_override = 0\n")
+            r = uninstall(h11, releases=rels, log=quiet)
+            check("D-114: uninstall moves it out of bin\\, removes bin\\ and keeps it with the user data",
+                  not (h11 / "bin").exists() and len(list(dev_dir.glob("r3hd-*.toml"))) == 3
+                  and r["dev_config_set_aside"] and "dev_overlay_config" in r["user_data_kept"])
+            r = install(h11, pl3, tree, None, releases=rels, log=quiet)
+            check("D-114: a fresh install into the same folder works and keeps the set-aside files",
+                  r["action"] == "install" and len(list(dev_dir.glob("r3hd-*.toml"))) == 3
+                  and not (h11 / "bin" / DEV_CONFIG).exists())
+            (h11 / "bin" / "notes.txt").write_bytes(b"mine")
+            uninstall(h11, releases=rels, log=quiet)
+            check("D-114: any other unknown file in bin\\ is still kept, and still blocks a fresh install",
+                  (h11 / "bin" / "notes.txt").read_bytes() == b"mine"
+                  and refused(lambda: install(h11, pl3, tree, None, releases=rels, log=quiet), "HOME_NOT_EMPTY"))
+            (h11 / "bin" / "notes.txt").unlink()
+            (h11 / "bin").rmdir()
+            install(h11, pl3, tree, None, releases=rels, log=quiet)
+            r = uninstall(h11, True, str(h11), releases=rels, log=quiet)
+            check("D-114: a confirmed removal of the user data removes dev_overlay_config\\ with it",
+                  not dev_dir.exists() and "dev_overlay_config" in r["user_data_removed"] and not h11.exists())
             check("describe-options lists the shown adjustable settings only (M31: cursor and save clock hidden)",
                   [o["key"] for o in describe_options()] == ["display", "window_size", "render_scale", "layer_coords",
                                                              "texture_orient", "gameplay_subtitles", "discord_presence",
@@ -1848,6 +1987,62 @@ def selftest() -> int:
                   "after keeping a copy", "KEYBOARD\tinvalid\tmodern\t" in model and "SETTINGS\tok\t" in model
                   and settings_state(h10)["values"]["render_scale"] == "3"
                   and "keyboard" not in read_json(h10 / "settings.json") and list(h10.glob("settings.json.invalid-*")))
+            # D-115: the controller button map is a preference of its own like the keyboard map.
+            refused_pad = refused(lambda: set_preset(h10, "hdplus", controller={"a": "b"}), "SETTINGS_REFUSED")
+            refused_unknown = refused(lambda: set_preset(h10, "hdplus", controller={"a": "left_trigger"}),
+                                      "SETTINGS_REFUSED")
+            refused_kind = refused(lambda: set_preset(h10, "hdplus", controller={"left_trigger": "left_stick",
+                                                                                 "left_stick": "left_trigger"}),
+                                   "SETTINGS_REFUSED")
+            check("controller (D-115, D-116): a button on two inputs, a trigger for a button and a stick for a trigger "
+                  "are refused; the file is unchanged", refused_pad and refused_unknown and refused_kind
+                  and "controller" not in read_json(h10 / "settings.json"))
+            set_preset(h10, "hdplus", keyboard=("original_pc", {"x": "H"}),
+                       controller={"a": "b", "b": "a", "left_trigger": "right_trigger", "right_trigger": "left_trigger"})
+            pad1 = read_json(h10 / "settings.json")
+            set_preset(h10, "custom", "vanilla", ["texture_orient=corrected"])
+            set_preset(h10, "vanilla", keyboard=("modern", {}))
+            pad2 = read_json(h10 / "settings.json")
+            install(h10, pl3, None, "hdplus", releases=rels, log=quiet)
+            pad3 = read_json(h10 / "settings.json")
+            (h10 / "settings.json").unlink()
+            repair(h10, pl3, releases=rels, log=quiet)
+            pad4 = read_json(h10 / "settings.json")
+            model = launcher_model(h10, rels)
+            check("controller (D-115): saved as the changed inputs only (schema 4), kept by preset changes, a keyboard "
+                  "change, an update and a repair",
+                  pad1["schema"] == 4 and pad1["controller"] == {"buttons": {"a": "b", "b": "a"},
+                                                                 "analog": {"left_trigger": "right_trigger",
+                                                                            "right_trigger": "left_trigger"}}
+                  and pad1["keyboard"] == {"layout": "original_pc", "keys": {"x": ["H"]}}
+                  and pad1["controller"] == pad2["controller"] == pad3["controller"] == pad4["controller"]
+                  and "keyboard" not in pad2 and "PADSTATE\tsaved\t\n" in model and "PADBIND\ta\tb\n" in model
+                  and "PADBIND\tb\ta\n" in model and "PADBIND\tx\tx\n" in model
+                  and "PADBIND\tright_trigger\tleft_trigger\n" in model and "PADBIND\tleft_stick\tleft_stick\n" in model
+                  and "PADBUTTON\ta\tA / Cross\tbutton\n" in model and "PADBUTTON\tright_trigger\tRT / R2\ttrigger\n" in model
+                  and "PADGROUP\tactions\tActions\n" in model and "PADACTION\tstart\tmenus\tPause\n" in model
+                  and "PADACTION\tright_trigger\tactions\tLock on\n" in model
+                  and "PADACTION\ty\tactions\tLook Mode (hold)\n" in model and model.startswith("R3HD_LAUNCHER_MODEL\t5\n"))
+            set_option(h10, "ui_language", "tr")
+            set_option(h10, "render_scale", "2")
+            check("controller (D-115): the interface language and a single option keep the map",
+                  read_json(h10 / "settings.json").get("controller") == pad1["controller"])
+            set_option(h10, "ui_language", "en")
+            set_preset(h10, "vanilla", controller={})
+            check("controller (D-115): restoring the original controls stores nothing (schema 3 again)",
+                  "controller" not in read_json(h10 / "settings.json") and read_json(h10 / "settings.json")["schema"] == 3
+                  and "PADSTATE\tdefault\t\n" in launcher_model(h10, rels))
+            bad = read_json(h10 / "settings.json")
+            bad.update(schema=4, controller={"buttons": {"a": "b"}}, keyboard={"layout": "original_pc", "keys": {}})
+            write_json(h10 / "settings.json", bad)
+            model = launcher_model(h10, rels)
+            set_preset(h10, "hdplus")
+            check("controller (D-115): a damaged map is reported, the keyboard map and settings still apply, and saving "
+                  "replaces it after keeping a copy", "PADSTATE\tinvalid\tsaved controller buttons not used" in model
+                  and "KEYBOARD\tsaved\toriginal_pc\t\n" in model and "SETTINGS\tok\t" in model
+                  and "controller" not in read_json(h10 / "settings.json")
+                  and read_json(h10 / "settings.json").get("keyboard") == {"layout": "original_pc", "keys": {}}
+                  and len(list(h10.glob("settings.json.invalid-*"))) >= 2)
             # M31 (D-068): an M30 installation in a window (the default then: nothing stored) stays in a window.
             h11 = t / "H11"
             install(h11, pl, tree, "vanilla", releases=rels, log=quiet)
@@ -2001,6 +2196,8 @@ def main() -> int:
                     help="install: record the front end's Settings desktop shortcut choice (M32)")
     ap.add_argument("--keyboard", help="set-preset: keyboard layout (M32); with --key the inputs changed from it")
     ap.add_argument("--key", nargs="*", default=[], help="set-preset: INPUT=KEY[,KEY] (M32); an empty value unbinds")
+    ap.add_argument("--pad", nargs="*", help="set-preset: INPUT=BUTTON pairs that replace the controller button map "
+                                             "(D-115; --pad alone = the original controls); without it the map is kept")
     a = ap.parse_args()
     if a.cmd == "selftest":
         return selftest()
@@ -2057,7 +2254,13 @@ def main() -> int:
                     keyboard = (a.keyboard, presets.parse_key_pairs(a.key))
                 except presets.Refused as e:
                     raise Refusal("SETTINGS_REFUSED", f"{e.code}: {e.detail}")
-            r = set_preset(Path(a.home), a.preset, a.base, a.pairs, a.allow_experimental, keyboard)
+            controller = None
+            if a.pad is not None:
+                try:
+                    controller = presets.parse_pad_pairs(a.pad)
+                except presets.Refused as e:
+                    raise Refusal("SETTINGS_REFUSED", f"{e.code}: {e.detail}")
+            r = set_preset(Path(a.home), a.preset, a.base, a.pairs, a.allow_experimental, keyboard, controller)
             r["message"] = f"preset {r['preset'].get('label')}"
             r["preset_label"] = r["preset"].get("label")
         elif a.cmd == "set-option":

@@ -82,16 +82,19 @@ Klavye için iki hazır düzen bulunur. **Ayarlar → Kontroller** bölümünden
 |---|---|---|
 | Hareket | W A S D | Ok tuşları |
 | Yürüme (basılı tut) | Ctrl | Shift |
-| Kamera | Ok tuşları | Sayısal tuş takımı veya W A S D |
+| Kamera | Ok tuşları | Sayısal tuş takımı; A / S / D ile de kamera yönü değiştirilebilir |
 | Zıplama / helikopter | Boşluk | C |
 | Saldırı (doldurmak için basılı tut) | E | Boşluk |
 | Kilitlenme / yana hareket | Shift | Ctrl |
 | Duraklat | Enter veya P | Esc |
-| Geri | Esc veya Backspace | Backspace |
+| Yuvarlanma / Geri | Esc veya Backspace | W veya Backspace |
+| Bakış Modu (basılı tut) | R | X |
+| Sağlık Çubuğunu Göster | 1 | V |
+| Dil Çıkar | 3 | V |
 
 **Yürüme** tuşu, analog çubuğu hafifçe iterek yavaş hareket etme davranışının klavye karşılığıdır. Bu tuşu da değiştirebilir veya atamasını kaldırabilirsiniz.
 
-Oyun kumandası düğmelerinin yeniden atanması henüz desteklenmiyor.
+Ayarlar → Kontroller → Oyun Kumandası bölümünde düğmeye basarak atamasını değiştirebilirsiniz. Düğmeler kendi aralarında, tetikler kendi aralarında, analog çubuklar da kendi aralarında yer değiştirir. Aynı eşleme fiziksel kumandalara uygulanır; klavye atamaları bağımsız kalır. Guide / PS ve dokunmatik yüzey atanamaz. Önceden kaydettiğiniz klavye atamaları, güncellenen varsayılanlardan önceliklidir.
 
 ## DualSense özellikleri
 

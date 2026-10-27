@@ -16,6 +16,7 @@
 #include <rex/m23_haptics.h>
 #include <rex/r3hd_ds_state.h>
 #include <rex/r3hd_dualsense.h>
+#include <rex/r3hd_padmap.h>  // D-116: installed by r3hd_padmap_patch.py, which runs before the build compiles
 
 namespace r3hd_ds {
 
@@ -50,12 +51,11 @@ struct PadOutput {
   bool light_failed_logged = false, trigger_failed_logged = false;
 };
 
-// The 47-byte DualSense effects block as SDL's HIDAPI PS5 driver takes it through SDL_SendGamepadEffect: only the
-// right-trigger enable bit (byte 0, 0x04) and the 11 right-trigger bytes (offset 10) are set; nothing else changes.
+// One trigger effect (EffectBlock): R2's, or L2's when the controller map exchanges the triggers (D-116), so the
+// resistance is on the trigger that locks on; the side is fixed for the process, so a release clears the same one.
 inline bool SendTrigger(SDL_Gamepad* pad, const Trigger& t) {
-  uint8_t block[47] = {};
-  block[0] = 0x04;
-  std::memcpy(block + 10, t.bytes, sizeof(t.bytes));
+  uint8_t block[47];
+  EffectBlock(t, r3hd_padmap::Get().TriggersSwapped(), block);
   return SDL_SendGamepadEffect(pad, block, sizeof(block));
 }
 

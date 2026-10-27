@@ -748,6 +748,16 @@ def selftest():
         check("clean fixture passes", res["verdict"] == "PASS" and res["rejected"] == 0)
         check("Program Files / placeholder paths pass", not m["notes.md"])
         check("hash lines are not key material", not m["reports/h.md"])
+        m, res = reasons({".claude/settings.json": b'{"env": {"CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS": "2"}}\n',
+                          ".codex/config.toml": b'[agents]\nenabled = true\nmax_concurrent_threads_per_session = 2\n'},
+                         "agent-config")
+        check("tracked agent configuration passes text audit", res["verdict"] == "PASS" and res["rejected"] == 0)
+        m, _ = reasons({".claude/settings.local.json": b'{}\n', ".codex/auth.json": b'{}\n'}, "agent-neighbors")
+        check("neighboring agent configuration stays unlisted", all(v == {"NOT_ALLOWLISTED"} for v in m.values()))
+        m, res = reasons({".recomp.json": b'{"game":"Rayman 3 HD","status":"released"}\n'}, "public-manifest")
+        check("public project manifest passes the ordinary JSON/text audit", res["verdict"] == "PASS")
+        m, _ = reasons({".recomp.local.json": b'{}\n'}, "public-manifest-neighbor")
+        check("neighboring project manifests stay unlisted", m[".recomp.local.json"] == {"NOT_ALLOWLISTED"})
 
         # negative fixtures
         m, _ = reasons({"notes.md": b"XEX2" + b"\0" * 60}, "xex")

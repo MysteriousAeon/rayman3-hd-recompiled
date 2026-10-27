@@ -134,9 +134,10 @@ def keymap_checks(km):
     check("keymap: the runtime's overlay keys are reserved", overlay and overlay <= set(km["reserved"]), sorted(overlay))
     o = rs.layout_keys(km, "original_pc")
     manual = {"lstick_up": "Up", "lstick_down": "Down", "lstick_left": "Left", "lstick_right": "Right", "a": "C",
-              "x": "Space", "right_trigger": "Control", "start": "Escape", "b": "Backspace", "left_trigger": "F1"}
+              "x": "Space", "right_trigger": "Control", "start": "Escape", "b": "W", "y": "X", "left_shoulder": "V", "right_shoulder": "V", "left_trigger": "F1"}
     check("keymap: the Original PC layout has the 2003 manual's keys as first keys (arrows, C, Space, Ctrl, Esc, "
-          "Backspace, F1) and Enter on confirm", all(o[i][0] == k for i, k in manual.items()) and "Return" in o["a"],
+          "W, X, shared V, F1) and Enter on confirm / Backspace on cancel", all(o[i][0] == k for i, k in manual.items())
+          and "Return" in o["a"] and "Backspace" in o["b"],
           {i: o[i] for i in manual})
     m = rs.layout_keys(km, "modern")
     check("keymap: the Modern layout is W A S D, arrows for the camera, Space to jump",
@@ -176,7 +177,7 @@ def driver_cases(km) -> str:
             lines.append(f"set {name} {value}")
         for input_id, keys in kb["effective"].items():
             for k in keys:
-                lines += [f"down {k}", "expect %04X %d %d %d %d %d %d" % tuple(pad(input_id)) + f" {layout} {k} -> {input_id}",
+                lines += [f"down {k}", "expect %04X %d %d %d %d %d %d" % tuple(pad(*(i for i, v in kb["effective"].items() if k in v))) + f" {layout} {k} -> {input_id}",
                           f"up {k}", "expect 0000 0 0 0 0 0 0" + f" {layout} {k} released"]
         a_key = kb["effective"]["a"][0]
         lines += [f"tap {a_key}", "expect %04X 0 0 0 0 0 0" % pad("a")[0] + f" {layout} tap latched",
@@ -184,6 +185,11 @@ def driver_cases(km) -> str:
         lock, fwd = kb["effective"]["right_trigger"][0], kb["effective"]["lstick_up"][0]
         lines += [f"down {lock}", f"down {fwd}", "expect %04X %d %d %d %d %d %d" % tuple(pad("right_trigger", "lstick_up"))
                   + f" {layout} lock-on held while moving", "release"]
+    # Independent numeric expectations for the shared pair, tap latch and a saved detached override.
+    lines += ["tap V", "expect 0300 0 0 0 0 0 0 shared V tap latched",
+              "expect 0000 0 0 0 0 0 0 shared V tap consumed",
+              "set keybind_left_shoulder H", "down V", "expect 0200 0 0 0 0 0 0 detached V is RB only",
+              "release", "down H", "expect 0100 0 0 0 0 0 0 detached H is LB only", "release"]
     lines += ["# the SDK's exact modifier matching without the switch (legacy Shift+arrow combinations)",
               "set mnk_modifier_keys false", "set keybind_dpad_up Shift+Up", "set keybind_rstick_up Up",
               "set keybind_right_trigger E", "set keybind_lstick_up W", "down Shift", "down Up", "expect 0001 0 0 0 0 0 0 exact: Shift+Up is the D-pad only",
@@ -229,17 +235,17 @@ def play_checks(km):
           and [a for a in argv if a.startswith(("--keybind_", "--mnk_modifier_keys", "--mnk_walk_magnitude"))] == want and "Modern" in kb, out[-500:])
     with tempfile.TemporaryDirectory(prefix="r3hd_m32_play_") as tmp:
         f = Path(tmp) / "settings.json"
-        data = rs.make_settings(rs.load_registry(), "hdplus", keyboard=rs.keyboard_section(km, "original_pc", {"x": "V"}))
+        data = rs.make_settings(rs.load_registry(), "hdplus", keyboard=rs.keyboard_section(km, "original_pc", {"x": "H"}))
         f.write_text(json.dumps(data), encoding="utf-8")
         code, out, argv, kb = dry_run("-SettingsFile", str(f))
-        check("play: a saved map is passed (Original PC with Attack on V); the visual preset is HD+",
-              code == 0 and "--keybind_x=V" in argv and "--keybind_a=C,Return" in argv and "--keybind_start=Escape" in argv
+        check("play: a saved map is passed (Original PC with Attack on H); the visual preset is HD+",
+              code == 0 and "--keybind_x=H" in argv and "--keybind_a=C,Return" in argv and "--keybind_start=Escape" in argv
               and "Original PC" in kb and "saved" in kb and "--layer_coords" not in " ".join(argv), out[-500:])
         code, out, argv, kb = dry_run("-SettingsFile", str(f), "-KeyLayout", "modern")
         check("play: -KeyLayout wins over the saved map", code == 0 and "--keybind_x=E" in argv and "explicit" in kb, kb)
         code, out, argv, kb = dry_run("-SettingsFile", str(f), "-ExtraArgs", "--keybind_x=K")
         check("play: keybind_* in -ExtraArgs wins (the map's own argument for that input is left out)",
-              code == 0 and argv.count("--keybind_x=K") == 1 and not any(a.startswith("--keybind_x=V") for a in argv), argv)
+              code == 0 and argv.count("--keybind_x=K") == 1 and not any(a.startswith("--keybind_x=H") for a in argv), argv)
         code, out, argv, kb = dry_run("-ExtraArgs", "--keybind_dpad_up=Shift+Up")
         check("play: a modifier combination in -ExtraArgs keeps the SDK's exact matching",
               code == 0 and "--mnk_modifier_keys=true" not in argv and "--keybind_dpad_up=Shift+Up" in argv, argv)
@@ -371,7 +377,7 @@ def launcher_checks(km, keep):
             check("UI: Save stores only the changed inputs of the layout",
                   s1.get("keyboard") == {"layout": "modern", "keys": {"x": ["F"], "lstick_press": ["E"]}}, s1.get("keyboard"))
             # 2: a new Settings window shows the saved keys; another layout; a visual preset change keeps the keys
-            d = run("m32b", ["page controls", "dump reloaded", "layout original_pc", "dump orig", "key x 0", "press 2D",
+            d = run("m32b", ["page controls", "dump reloaded", "layout original_pc", "dump orig", "key x 0", "press 23",
                              "click save", "page settings", "profile hdplus", "click save", "dump hdplus"],
                     ("reloaded", "orig", "hdplus"))
             if not d:
@@ -384,7 +390,7 @@ def launcher_checks(km, keep):
                   and d["orig"]["layout_text"] == "")
             s2 = m30.settings(home)
             check("UI: the new layout and its change are saved, and changing the visual preset kept them",
-                  s2["preset"] == "hdplus" and s2.get("keyboard") == {"layout": "original_pc", "keys": {"x": ["X"]}}, s2)
+                  s2["preset"] == "hdplus" and s2.get("keyboard") == {"layout": "original_pc", "keys": {"x": ["H"]}}, s2)
             # 3: Restore defaults, the hidden inputs, the Advanced page, DPI
             d = run("m32c", ["page controls", "click restore", "dump restored", "click save", "dump all",
                              "dpi 144", "dump c144", "shot controls_144", "page advanced", "dump adv",

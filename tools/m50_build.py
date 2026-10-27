@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""M50 (D-089): build the 1.0.1 release candidate with the M49 builder (tools/m49_build.py, same arguments, same
+"""M50 (D-089): build the current release candidate with the M49 builder (tools/m49_build.py, same arguments, same
 refusals) plus the release checks of M50. Nothing is uploaded; OUT/dist is never replaced.
 
     python tools/m50_build.py OUT --expect-runtime HASHES.json [--test-variant NAME --dpi-proxy PT] [--fast]
@@ -22,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import m49_build as b  # noqa: E402
 from m48p_build import ROOT, Refused  # noqa: E402
 
-b.VERSION = "1.0.1"
+b.VERSION = "1.0.2"
 b.SETUP_NAME = f"Rayman3HDRecompiled-{b.VERSION}-setup.exe"
 b.TAG = "M50_BUILD"
 # D-108: the final Turkish translation (D-106 / D-107: the person's 65 LQA proposals verbatim, the U+2026 glyph, the
@@ -76,7 +76,29 @@ def licence_files(payload: Path) -> dict:
     return {"lgpl_archive_files": len(names)}
 
 
-b.EXTRA_CHECKS[:] = [r01_keys, licence_files]
+def tinysha_notice(payload: Path) -> dict:
+    """Compare the distributed notice to the authoritative comment at the pinned SDK commit."""
+    pin = json.loads((ROOT / "config/build/toolchain.json").read_bytes())["rexglue_sdk"]["commit"]
+    header = subprocess.check_output(["git", "-C", str(ROOT / "external/rexglue-sdk"), "show",
+                                      f"{pin}:thirdparty/crypto/TinySHA1.hpp"]).decode("utf-8")
+    comment = header.split("/*", 1)[1].split("*/", 1)[0]
+    expected = ("\n".join(line[3:] if line.startswith(" * ") else ""
+                          for line in comment.splitlines()).strip() + "\n").encode()
+    notice = payload / "app/licenses/TinySHA1-LICENSE.txt"
+    source = ROOT / "tools/installer/TinySHA1-LICENSE.txt"
+    for path in (notice, source):
+        if not path.is_file() or path.read_bytes().replace(b"\r\n", b"\n") != expected:
+            raise Refused("TinySHA1 notice missing or differs from the pinned source header")
+    if b"licenses\\TinySHA1-LICENSE.txt" not in (payload / "app/THIRD_PARTY_NOTICES.txt").read_bytes():
+        raise Refused("TinySHA1 notice is not referenced by THIRD_PARTY_NOTICES.txt")
+    provenance = payload / "app/PROVENANCE.md"
+    if not provenance.is_file() or provenance.read_bytes() != (ROOT / "docs/PROVENANCE.md").read_bytes().replace(b"\r\n", b"\n"):
+        raise Refused("payload provenance differs from the central public statement")
+    return {"tinysha_notice": {"sdk_commit": pin, "matches_source_header": True},
+            "research_provenance": "app/PROVENANCE.md"}
+
+
+b.EXTRA_CHECKS[:] = [r01_keys, licence_files, tinysha_notice]
 
 if __name__ == "__main__":
     sys.exit(b.main())

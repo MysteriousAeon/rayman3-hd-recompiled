@@ -40,6 +40,11 @@ def model_keys():
         out.update((i['action'], i['pad']))
     out.update(k.get('label', k['name']) for k in km['keys'])
     out.update(km['reserved'].values())
+    pm = json.loads((ROOT / 'config/controls/padmap.json').read_text(encoding='utf-8'))  # D-115: drop-down labels
+    out.update(b['xbox'] if b['xbox'] == b['playstation'] else f"{b['xbox']} / {b['playstation']}"
+               for b in pm['buttons'] + pm['analog'])
+    out.update(g['name'] for g in pm['groups'])  # D-116: the Controller tab's groups and actions
+    out.update(a['name'] for a in pm['actions'])
     import r3hd_installer
     out.update(o['note'] for o in r3hd_installer.describe_options() if o['note'])
     out.add('Escape and Enter also work as Back and Start when no other control uses them.')

@@ -273,13 +273,13 @@
       "en": "Left trigger",
       "tr": "Sol tetik"
     },
-    "Left shoulder": {
-      "en": "Left shoulder",
-      "tr": "Sol omuz tuşu"
+    "Show Health Bar": {
+      "en": "Show Health Bar",
+      "tr": "Can Barını Göster"
     },
-    "Right shoulder": {
-      "en": "Right shoulder",
-      "tr": "Sağ omuz tuşu"
+    "Grimace": {
+      "en": "Grimace",
+      "tr": "Dil Çıkar"
     },
     "D-pad up": {
       "en": "D-pad up",
@@ -361,10 +361,6 @@
       "en": "Pause; skip a movie; start from the title screen",
       "tr": "Duraklat; videoyu geç; başlık ekranından başla"
     },
-    "Back / cancel in menus": {
-      "en": "Back / cancel in menus",
-      "tr": "Menülerde geri / iptal"
-    },
     "Not yet characterised": {
       "en": "Not yet characterised",
       "tr": "İşlevi henüz doğrulanmadı"
@@ -388,10 +384,6 @@
     "Move with W A S D (hold Ctrl to walk), turn the camera with the arrow keys, jump with Space, attack with E, lock on with Shift.": {
       "en": "Move with W A S D (hold Ctrl to walk), turn the camera with the arrow keys, jump with Space, attack with E, lock on with Shift.",
       "tr": "W A S D ile hareket edin (yürümek için Ctrl), ok tuşlarıyla kamerayı çevirin. Space ile zıplayın, E ile saldırın, Shift ile kilitlenin."
-    },
-    "The keys of the 2003 Windows release: arrow keys, C to jump, Space to shoot, Ctrl to lock on, Esc to pause. The camera is on the numeric keypad (or W A S D) and Shift walks.": {
-      "en": "The keys of the 2003 Windows release: arrow keys, C to jump, Space to shoot, Ctrl to lock on, Esc to pause. The camera is on the numeric keypad (or W A S D) and Shift walks.",
-      "tr": "2003 Windows sürümünün tuşları: oklarla hareket, C ile zıplama, Space ile ateş, Ctrl ile kilitlenme, Esc ile duraklatma. Sayısal tuş takımı (veya W A S D) kamerayı çevirir; Shift ile yürünür."
     },
     "opens the runtime's debug overlay": {
       "en": "opens the runtime's debug overlay",
@@ -933,10 +925,6 @@
       "en": "Community mods that replace textures or text. They never change your game files or saves, and Vanilla, HD+ and Custom stay as they are. Only data mods are accepted: no programs or scripts.",
       "tr": "Doku, metin ve altyazı modlarını buradan yönetin. Oyun dosyaları, kayıtlar ve profil seçiminiz değişmez. Program veya betik içeren modlar kabul edilmez."
     },
-    "Controller": {
-      "en": "Controller",
-      "tr": "Kumanda"
-    },
     "Dry run passed: the game would start with these settings.": {
       "en": "Dry run passed: the game would start with these settings.",
       "tr": "Başlatma denetimi başarılı: oyun bu ayarlarla açılabilir."
@@ -972,10 +960,6 @@
     "Key not changed.": {
       "en": "Key not changed.",
       "tr": "Tuş değiştirilmedi."
-    },
-    "Keyboard": {
-      "en": "Keyboard",
-      "tr": "Klavye"
     },
     "Keys swapped: {from} / {to}.": {
       "en": "Keys swapped: {from} / {to}.",
@@ -1304,6 +1288,230 @@
     "Unknown argument: {argument}": {
       "en": "Unknown argument: {argument}",
       "tr": "Bilinmeyen bağımsız değişken: {argument}"
+    },
+    "{key} assigned to {action}. {old} now does what {key} did.": {
+      "en": "{key} assigned to {action}. {old} now does what {key} did.",
+      "tr": "{action} için {key} atandı. {key} tuşunun önceki işini artık {old} yapıyor."
+    },
+    "Saved controller buttons could not be used. Save replaces them and keeps a backup.": {
+      "en": "Saved controller buttons could not be used. Save replaces them and keeps a backup.",
+      "tr": "Kayıtlı kumanda tuşları kullanılamadı. Kaydet, yedek alarak tuşları yeniler."
+    },
+    "A / Cross": {
+      "en": "A / Cross",
+      "tr": "A / Çarpı"
+    },
+    "B / Circle": {
+      "en": "B / Circle",
+      "tr": "B / Daire"
+    },
+    "X / Square": {
+      "en": "X / Square",
+      "tr": "X / Kare"
+    },
+    "Y / Triangle": {
+      "en": "Y / Triangle",
+      "tr": "Y / Üçgen"
+    },
+    "LB / L1": {
+      "en": "LB / L1",
+      "tr": "LB / L1"
+    },
+    "RB / R1": {
+      "en": "RB / R1",
+      "tr": "RB / R1"
+    },
+    "Back / Create": {
+      "en": "Back / Create",
+      "tr": "Back / Create"
+    },
+    "Start / Options": {
+      "en": "Start / Options",
+      "tr": "Start / Options"
+    },
+    "Left stick press / L3": {
+      "en": "Left stick press / L3",
+      "tr": "Sol çubuğa bas / L3"
+    },
+    "Right stick press / R3": {
+      "en": "Right stick press / R3",
+      "tr": "Sağ çubuğa bas / R3"
+    },
+    "&Keyboard": {
+      "en": "&Keyboard",
+      "tr": "&Klavye"
+    },
+    "C&ontroller": {
+      "en": "C&ontroller",
+      "tr": "K&umanda"
+    },
+    "Attack": {
+      "en": "Attack",
+      "tr": "Saldırı"
+    },
+    "Jump": {
+      "en": "Jump",
+      "tr": "Zıpla"
+    },
+    "Lock on": {
+      "en": "Lock on",
+      "tr": "Hedefe kilitlen"
+    },
+    "Photo mode": {
+      "en": "Photo mode",
+      "tr": "Fotoğraf modu"
+    },
+    "Pause": {
+      "en": "Pause",
+      "tr": "Duraklat"
+    },
+    "Menu up": {
+      "en": "Menu up",
+      "tr": "Menüde yukarı"
+    },
+    "Menu down": {
+      "en": "Menu down",
+      "tr": "Menüde aşağı"
+    },
+    "Move": {
+      "en": "Move",
+      "tr": "Hareket et"
+    },
+    "Movement and camera": {
+      "en": "Movement and camera",
+      "tr": "Hareket ve kamera"
+    },
+    "LT / L2": {
+      "en": "LT / L2",
+      "tr": "LT / L2"
+    },
+    "RT / R2": {
+      "en": "RT / R2",
+      "tr": "RT / R2"
+    },
+    "Left stick": {
+      "en": "Left stick",
+      "tr": "Sol çubuk"
+    },
+    "Right stick": {
+      "en": "Right stick",
+      "tr": "Sağ çubuk"
+    },
+    "Xbox-compatible controller": {
+      "en": "Xbox-compatible controller",
+      "tr": "Xbox uyumlu kumanda"
+    },
+    "Connected: {pads}": {
+      "en": "Connected: {pads}",
+      "tr": "Bağlı: {pads}"
+    },
+    "Controller defaults restored.": {
+      "en": "Controller defaults restored.",
+      "tr": "Kumandanın varsayılanlarına dönüldü."
+    },
+    "Controller not changed.": {
+      "en": "Controller not changed.",
+      "tr": "Kumanda değiştirilmedi."
+    },
+    "Controller not changed: the window lost focus.": {
+      "en": "Controller not changed: the window lost focus.",
+      "tr": "Kumanda değiştirilmedi: pencere odağı kaybetti."
+    },
+    "Move the stick to use for {action}. Esc cancels.": {
+      "en": "Move the stick to use for {action}. Esc cancels.",
+      "tr": "{action} için kullanılacak çubuğu oynatın. Esc iptal eder."
+    },
+    "No controller button was pressed. Nothing changed.": {
+      "en": "No controller button was pressed. Nothing changed.",
+      "tr": "Kumandada hiçbir tuşa basılmadı. Hiçbir şey değişmedi."
+    },
+    "No controller found. Connect a controller, then choose the action again.": {
+      "en": "No controller found. Connect a controller, then choose the action again.",
+      "tr": "Kumanda bulunamadı. Bir kumanda bağlayıp eylemi yeniden seçin."
+    },
+    "No controller found. Connect one to change its buttons.": {
+      "en": "No controller found. Connect one to change its buttons.",
+      "tr": "Kumanda bulunamadı. Tuşlarını değiştirmek için bir kumanda bağlayın."
+    },
+    "Press the controller button to use for {action}. Esc cancels.": {
+      "en": "Press the controller button to use for {action}. Esc cancels.",
+      "tr": "{action} için kullanılacak kumanda tuşuna basın. Esc iptal eder."
+    },
+    "Pull the trigger to use for {action}. Esc cancels.": {
+      "en": "Pull the trigger to use for {action}. Esc cancels.",
+      "tr": "{action} için kullanılacak tetiği çekin. Esc iptal eder."
+    },
+    "Restore controller d&efaults": {
+      "en": "Restore controller d&efaults",
+      "tr": "Kumanda &varsayılanlarına dön"
+    },
+    "Restore the controller's default buttons, triggers and sticks?": {
+      "en": "Restore the controller's default buttons, triggers and sticks?",
+      "tr": "Kumandanın varsayılan tuşlarına, tetiklerine ve çubuklarına dönülsün mü?"
+    },
+    "The controller already uses its default buttons.": {
+      "en": "The controller already uses its default buttons.",
+      "tr": "Kumanda zaten varsayılan tuşlarını kullanıyor."
+    },
+    "The controller was disconnected. Nothing changed.": {
+      "en": "The controller was disconnected. Nothing changed.",
+      "tr": "Kumandanın bağlantısı kesildi. Hiçbir şey değişmedi."
+    },
+    "The game does not use that button. Press another, or Esc to cancel.": {
+      "en": "The game does not use that button. Press another, or Esc to cancel.",
+      "tr": "Oyun bu tuşu kullanmıyor. Başka bir tuşa basın ya da Esc ile iptal edin."
+    },
+    "Triggers keep their analog actions (Lock on, Photo mode). Press a button, or Esc to cancel.": {
+      "en": "Triggers keep their analog actions (Lock on, Photo mode). Press a button, or Esc to cancel.",
+      "tr": "Tetikler analog eylemlerini korur (Hedefe kilitlen, Fotoğraf modu). Bir tuşa basın ya da Esc ile iptal edin."
+    },
+    "{action} needs a stick: move the left or the right stick, or press Esc to cancel.": {
+      "en": "{action} needs a stick: move the left or the right stick, or press Esc to cancel.",
+      "tr": "{action} bir çubuk ister: sol ya da sağ çubuğu oynatın veya Esc ile iptal edin."
+    },
+    "{action} needs a trigger: pull LT / L2 or RT / R2, or press Esc to cancel.": {
+      "en": "{action} needs a trigger: pull LT / L2 or RT / R2, or press Esc to cancel.",
+      "tr": "{action} bir tetik ister: LT / L2 ya da RT / R2'yi çekin veya Esc ile iptal edin."
+    },
+    "{key} assigned to {action}. {other} moved to {old}.": {
+      "en": "{key} assigned to {action}. {other} moved to {old}.",
+      "tr": "{action} için {key} atandı. {other} artık {old} üzerinde."
+    },
+    "{key} is already assigned to {action}.": {
+      "en": "{key} is already assigned to {action}.",
+      "tr": "{key} zaten {action} için atanmış."
+    },
+    "Press a button...": {
+      "en": "Press a button...",
+      "tr": "Bir tuşa basın..."
+    },
+    "Pull a trigger...": {
+      "en": "Pull a trigger...",
+      "tr": "Bir tetik çekin..."
+    },
+    "Move a stick...": {
+      "en": "Move a stick...",
+      "tr": "Bir çubuğu oynatın..."
+    },
+    "Click an action, then press the controller button you want. Assigned buttons swap; Esc cancels.": {
+      "en": "Click an action, then press the controller button you want. Assigned buttons swap; Esc cancels.",
+      "tr": "Değiştirmek istediğin tuşa tıkla ve kumandada yeni tuşa bas. Kullanılan tuşlar yer değiştirir; Esc ile iptal edebilirsin."
+    },
+    "Look Mode (hold)": {
+      "en": "Look Mode (hold)",
+      "tr": "Bakış Modu (basılı tut)"
+    },
+    "Roll / Back": {
+      "en": "Roll / Back",
+      "tr": "Yuvarlan / Geri"
+    },
+    "This key is shared. Remove one assignment before swapping it.": {
+      "en": "This key is shared. Remove one assignment before swapping it.",
+      "tr": "Bu tuş iki eylemde kullanılıyor. Yer değiştirmeden önce bir atamayı kaldır."
+    },
+    "The keys of the 2003 Windows release: arrow keys, C to jump, Space to shoot, Ctrl to lock on, Esc to pause. W rolls, hold X to look, V shows health / grimace. The camera is on the numeric keypad (or A S D) and Shift walks.": {
+      "en": "The keys of the 2003 Windows release: arrow keys, C to jump, Space to shoot, Ctrl to lock on, Esc to pause. W rolls, hold X to look, V shows health / grimace. The camera is on the numeric keypad (or A S D) and Shift walks.",
+      "tr": "2003 PC sürümünün tuşları: oklarla hareket, C ile zıplama, Boşluk ile saldırı, Ctrl ile hedefe kilitlenme, Esc ile duraklatma. W ile yuvarlan, bakış modu için X basılı tut, V ile can barını göster / dil çıkar. Kamera sayısal tuş takımında (veya A S D), yürüme Shift tuşunda."
     }
   }
 }
