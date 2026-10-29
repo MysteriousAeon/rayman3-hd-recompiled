@@ -7,13 +7,23 @@ start. A mod is **data only**: a `mod.json` file plus PNG pictures. Nothing in a
 The commands below use the Python that comes with the game. Open a command prompt in the installation folder
 (the folder with `app\`, `bin\`, `data\`) and type them as shown. `--home .` means "this installation".
 
+## Game language and translation mods (development)
+
+The development Settings app has a **Game language** choice, separate from **Settings language**.
+It selects shipped game text, subtitles and voices for the next game launch.
+**The current Turkish and PINHATT PT-BR translation mods need Game language = English:** they replace the
+English text and subtitle entries. Choosing another native language does not translate that language's entries
+with those mods. For native languages, disable conflicting translation mods yourself on the Mods page.
+Nothing automatically disables, removes or changes a mod. Settings language affects only the PC Settings app.
+Public v1.0.2 is unchanged and has no Game language selector.
+
 ## What a mod can change
 
 | Kind (`type`) | What it changes | How it is matched |
 |---|---|---|
 | `texture` | one picture of the game (a bundle entry such as `menu\mnu_jard.dds`) | entry name; your PNG must have the entry's exact size |
 | `text` | one string of the game's text (menus, dialogue, item names) | its place in `GAMEDATAbin/fix.lvl` (offset) and a hash of the original string |
-| `glyph` | adds one of the Turkish letters ğ Ğ ş Ş ı İ, or the ellipsis … (1.0.1 and later), to the game's font | the character; drawn from the font's own glyphs plus small accents |
+| `glyph` | adds Turkish letters ğ Ğ ş Ş ı İ, ellipsis … (1.0.1+), or Œ œ (development only) | the character; composed from glyphs, small accents or PNG layers |
 | `subtitle` | the text of one cutscene subtitle | `vs.<language>.<movie>.<cue>` and a hash of the original cue |
 
 Not supported, and not to be expected from this port today: **models, animations, sounds and music, levels, scripts,

@@ -40,11 +40,12 @@ def main():
     ap.add_argument("--list")
     a = ap.parse_args()
     rules = json.loads(RULES.read_text(encoding="utf-8"))["rules"]
-    tracked = subprocess.run(["git", "ls-files"], cwd=ROOT, capture_output=True, text=True, check=True).stdout.split()
+    tracked = subprocess.run(["git", "ls-files", "-z"], cwd=ROOT, capture_output=True,
+                             check=True).stdout.decode("utf-8").split("\0")
     # Files written but not yet committed count as well, so the check can run before a commit.
-    tracked += subprocess.run(["git", "ls-files", "--others", "--exclude-standard"], cwd=ROOT, capture_output=True,
-                              text=True, check=True).stdout.split()
-    tracked = sorted(set(tracked))
+    tracked += subprocess.run(["git", "ls-files", "-z", "--others", "--exclude-standard"], cwd=ROOT,
+                              capture_output=True, check=True).stdout.decode("utf-8").split("\0")
+    tracked = sorted(set(p for p in tracked if p))
     got, unmatched = classify(tracked, rules)
     # An "optional" rule names a file the public source export leaves out (config/release/public_export.json).
     exact = [pat for r in rules if not r.get("optional") for pat in r["paths"] if not any(c in pat for c in "*?[")]

@@ -41,7 +41,7 @@ def main() -> int:
         r = run(str(TOOLS / tool), "selftest")
         check(r.returncode == 0 and marker in r.stdout, f"{tool} selftest ({r.stdout.strip().splitlines()[-1] if r.stdout.strip() else r.stderr[-200:]})")
     pay = json.loads((ROOT / "config" / "release" / "payload.json").read_text(encoding="utf-8"))
-    check(pay["version"].startswith(("0.34.0", "0.35.0", "0.36.0", "0.49.0", "0.50.0", "1.0.0", "1.0.1", "1.0.2")) and "app/tools/r3hd_mods.py" in json.dumps(pay),
+    check(pay["version"].startswith(("0.34.0", "0.35.0", "0.36.0", "0.49.0", "0.50.0", "1.0.0", "1.0.1", "1.0.2", "1.0.3")) and "app/tools/r3hd_mods.py" in json.dumps(pay),
           f"payload: version {pay['version']}, ships the mod tool (glyphs, moved text)")
     src = ROOT / "config" / "localization" / "tr" / "tr.json"
     if not src.is_file():

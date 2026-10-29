@@ -1,7 +1,8 @@
 """Deterministic checks that isolated level entry stays a hidden-test-only option (M13, D-040). Starts no game.
 
-The title's developer option "-level:NAME" reaches the guest only through the runtime setting `cl`. Only the
-hidden runner sets it, only from its -TestLevel parameter; the player launcher refuses it; the host never sets
+The title's developer option "-level:NAME" reaches the guest only through the runtime setting `cl`. The
+hidden runner sets it only from -TestLevel; the explicitly user-invoked E-304 observer has one fixed fixture
+(D-129 manual exception). The player launcher refuses it; the host never sets
 it by itself; a run started that way is recorded as such.
 Needs: a built executable and no running r3hd (launcher preflight).
 """
@@ -45,9 +46,17 @@ check("$TestLevel" not in play and play.count("--cl=") == 1 and "if ($extra -mat
 check("-level:" not in host and '"cl"' not in host and "REXCVAR_SET(cl" not in host, "host: never sets the guest command line")
 for script in sorted((ROOT / "tools").glob("*.py")):
     text = script.read_text(encoding="utf-8", errors="replace")
+    if script.name == "combo_close_visual.py":
+        check(text.count("--cl=") == 1 and "'--cl=-level:knaar_69'" in text,
+              "manual observer: one fixed knaar_69 fixture, no arbitrary level option")
+        check("mode.add_argument('--manual'" in text and "input('Press Enter" in text and
+              "R3HD_NONINTRUSIVE='1'" in text and "def configuration(combo_mode='timed'):" in text and
+              "artifact mismatch" in text and "private/work/combo_visual" in text,
+              "manual observer: explicit readiness, device gates, pinned artifact and disposable profile")
+        continue
     if script.name not in ("m13_testlevel_regression.py",) and "--cl=" in text:
         check(False, f"{script.name} passes cl directly")
-check(True, "no Python tool passes cl directly")
+check(True, "no other Python tool passes cl directly")
 
 code, out = powershell("play.ps1", "-DryRun", "-ExtraArgs", "--cl=-level:wood_10")
 check(code != 0 and "DRY RUN" not in out and "hidden test runs only" in out, "launcher refuses -ExtraArgs --cl=-level:...")

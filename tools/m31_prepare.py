@@ -51,4 +51,5 @@ END
     mark = '\n# --- Milestone 31 targets ---\n'
     write_text_if_changed(p, p.read_text().split(mark)[0] + mark + '''enable_language(RC)
 target_sources(r3hd PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/r3hd_icon.rc")
+target_link_options(r3hd PRIVATE "LINKER:/MANIFESTINPUT:${CMAKE_CURRENT_SOURCE_DIR}/../../../tools/m2_host/r3hd.manifest")
 ''')

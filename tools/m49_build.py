@@ -11,6 +11,9 @@ OUT/dist/             Rayman3HDRecompiled-0.49.0-setup.exe, r3hd-lgpl-source-0.4
 --expect-runtime      {"r3hd.exe": sha256, ...} of the integrated M49 build (written by `--record-runtime FILE`);
                       the build refuses when the build tree or the staged payload differs from it
 --record-runtime F    write the build tree's runtime hashes to F and stop (after a full build that ended M8_BUILD_OK)
+--portable-id ID --crt-dir DIR
+                      also create/check a private development ZIP from the same new installer stage;
+                      record shared hashes/source identity in MANIFEST.json and checksum both formats
 
 Refuses (exit 2) when the Turkish package is not the M49 release copy, when OUT/dist exists, or when the audit fails.
 """
@@ -53,10 +56,16 @@ def main() -> int:
     ap.add_argument("--dpi-proxy", type=int)
     ap.add_argument("--fast", action="store_true")
     ap.add_argument("--reuse-stage", action="store_true", help="test variants: use OUT/stage as it is")
+    ap.add_argument("--portable-id", help="also build a private development ZIP from this exact installer stage")
+    ap.add_argument("--crt-dir", type=Path, help="pinned retail CRT directory; required with --portable-id")
     a = ap.parse_args()
     out = a.out.resolve()
     logs = out / "logs"
     try:
+        if bool(a.portable_id) != bool(a.crt_dir) or (a.portable_id and (a.test_variant or a.reuse_stage)):
+            raise Refused("--portable-id and --crt-dir must be paired; no test-variant or reused stage")
+        if a.portable_id and (not out.is_relative_to(ROOT / "private") or out.exists()):
+            raise Refused("matched development outputs require a new directory under private/")
         if a.record_runtime:
             a.record_runtime.parent.mkdir(parents=True, exist_ok=True)
             a.record_runtime.write_text(json.dumps({n: v["sha256"] for n, v in runtime_hashes(BUILD).items()}, indent=1)
@@ -117,6 +126,15 @@ def main() -> int:
             print(f"{TAG} TEST {a.test_variant} {setup} {sha(setup)}")
             return 0
         shutil.copy2(lgpl[0], dest / lgpl[0].name)
+        portable = None
+        if a.portable_id:
+            import r3hd_portable_zip as portable_zip
+            archive = dest / f"Rayman3HDRecompiled-{a.portable_id}-portable.zip"
+            try:
+                portable_zip.build(stage, archive, a.portable_id, a.crt_dir)
+                portable = portable_zip.compare_stage(stage, archive)
+            except (ValueError, OSError) as exc:
+                raise Refused(f"matched ZIP failed: {exc}") from exc
         head = git("rev-parse", "HEAD")
         dirty = bool(git("status", "--porcelain"))
         manifest = {
@@ -143,6 +161,10 @@ def main() -> int:
             "audit": audit.strip().splitlines()[-1] if audit.strip() else "",
             **extra,
         }
+        if portable:
+            manifest["portable_pair"] = portable
+            manifest["development_id"] = a.portable_id
+            manifest["publishable"] = False
         (dest / "MANIFEST.json").write_text(json.dumps(manifest, indent=1) + "\n", encoding="utf-8")
         sums = "".join(f"{sha(p)} *{p.name}\n" for p in sorted(dest.iterdir()) if p.name != "SHA256SUMS.txt")
         (dest / "SHA256SUMS.txt").write_text(sums, encoding="utf-8")

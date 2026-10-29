@@ -56,7 +56,7 @@ def main() -> int:
         check(r.returncode == 0 and marker in r.stdout,
               f"{tool} selftest ({r.stdout.strip().splitlines()[-1] if r.stdout.strip() else r.stderr[-200:]})")
     pay = json.loads((ROOT / "config" / "release" / "payload.json").read_text(encoding="utf-8"))
-    check(pay["version"].startswith(("0.35.0", "0.36.0", "0.49.0", "0.50.0", "1.0.0", "1.0.1", "1.0.2")), f"payload: version {pay['version']} (subtitle overrides need 0.35.0)")
+    check(pay["version"].startswith(("0.35.0", "0.36.0", "0.49.0", "0.50.0", "1.0.0", "1.0.1", "1.0.2", "1.0.3")), f"payload: version {pay['version']} (subtitle overrides need 0.35.0)")
     g = lf.load_glossary(ROOT / "config" / "localization" / "tr" / "glossary.example.json")
     check(g and all(t["tr"] == [t["en"]] for t in g), "glossary example: loads; it only keeps names (no guessed translation)")
     for f in ("WORKFLOW.md", "prompts/draft.md", "prompts/review.md"):

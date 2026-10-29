@@ -1,24 +1,33 @@
 Rayman 3 HD Recompiled
 ======================
 
+Portable edition: use the top-level Play.cmd and Settings.cmd, and follow PORTABLE.txt
+for first launch, requirements, updates, backups and removal. The Start menu, app\play.cmd,
+app\settings.cmd, extras and Windows setup/uninstaller instructions below apply to the
+installer edition only. Portable files and saves stay in the extracted folder.
+
 Play:              Start menu "Rayman 3 HD Recompiled" (or app\r3hd_launcher.exe --play). Starts the game with your
                    saved settings.
 Settings:          Start menu "Rayman 3 HD Recompiled - Settings" (or app\r3hd_launcher.exe).
                      Game profile   Vanilla = the Xbox 360 release with the fixes it needs on PC;
                                     HD+     = Vanilla plus fixes for visual mistakes of the Xbox 360 release;
                                     Custom  = pick each correction yourself.
+                     Corrections    Combo Meter Animation: Vanilla Off, HD+ On, Custom On or Off.
                      Display        window or fullscreen; rendering resolution (Auto, 720p, 1440p, 2160p).
                      Controls       keyboard keys (Modern or Original PC keys; any key can be changed). Hold Walk
                                     (Ctrl in Modern, Shift in Original PC) while moving to walk slowly.
                      Mods           turn installed mods on or off, change their order, install a mod .zip.
-                     Advanced       Settings language, mouse cursor, save times, Discord Rich Presence,
+                     Advanced       Game Language (English, French, Spanish, Italian, German),
+                                    Settings language, mouse cursor, save times, Discord Rich Presence,
                                     DualSense light bar and R2 resistance (Adaptive Trigger Strength 0-100 %,
                                     0 % = off), diagnostics.
                    Display, controls and advanced settings stay the same when you change the profile. Settings apply
                    the next time the game starts. Nothing here changes your game files or saves.
 Turkish:           the Turkish translation is a mod. A Turkish setup installs and turns it on; to add it later, use
                    Settings > Mods > Install .zip and choose the file in the installation's extras\ folder. Turn it
-                   off there to play in English.
+                   off there to use a built-in game language. Turkish and current PT-BR translation mods
+                   require Game Language = English. The portable ZIP has no bundled translation; install
+                   the separate optional Turkish v1.0.1 ZIP through Settings > Mods if desired.
 Subtitles:         a new game profile starts with the game's own Subtitles option off: switch it on once in the
                    game's Options (Audio). Subtitles for voiced lines during gameplay: Settings > Corrections >
                    Gameplay subtitles (on for a new HD+ installation, off for Vanilla); the choice stays when you

@@ -264,4 +264,170 @@ void M18TestWorldEnd(PPCRegister& r3) {
   REXLOG_INFO("M18 test world_end revisited_world={} asked={} substituted={:08X}", world, name, next);
   r3.u64 = next;
 }
+
+// E-304: a bounded experiment, deliberately not a player setting. At 8219E9D4
+// f13 holds vector2.y; changing that operand lets the original routine set its
+// duration/reciprocal and run its own timed close. No command vector, scoring
+// field, timer, handle or generated translation is written by this hook.
+void ComboTimedCloseTest(PPCRegister& object, PPCRegister& command,
+                         PPCRegister& duration, PPCRegister& scalar) {
+  static const int mode = [] {
+    const char* v = std::getenv("R3HD_TEST_COMBO_CLOSE");
+    if (!std::getenv("R3HD_NONINTRUSIVE") || !v) return 0;
+    if (!std::strcmp(v, "timed")) return 2;
+    if (!std::strcmp(v, "observe")) return 1;
+    if (!std::strcmp(v, "countdown")) return 3;
+    if (!std::strcmp(v, "delayed-countdown")) return 4;
+    return 0;
+  }();
+  if (!mode) return;
+  // Scope the prototype and command log to the already verified nonzero fixture.
+  // No assumptions about designer-buffer relocation in any other level.
+  if (std::memcmp(M18Base() + 0x82C06221, "knaar_69\0", 9)) return;
+  if (object.u32 < 0x82800000 || object.u32 > 0x82900000 ||
+      M18Load(object.u32) != 0x8200FE2C) return;
+  const auto selector = M18Load(object.u32 + 0x58);
+  if (selector > 1 || command.u32 < 0x40000000 || command.u32 > 0x83000000) return;
+  const auto action = M18Load(command.u32);
+  const auto old_duration = duration.f64;
+  const bool selected = mode == 2 && selector == 1 && action == 0x40000000 &&
+      old_duration == -1.0 && scalar.f64 == 0.0 &&
+      M18Base()[0x40CDD6FE] == 1;
+  if (selected) duration.f64 = 6.0;
+  REXLOG_INFO("ComboTest command selector={} action_bits={:08X} duration={} selected={} object={:08X} scalar={} state={} score={} bonus_bits={:08X} pending={}",
+      selector, action, old_duration, selected, object.u32, scalar.f64,
+      M18Load(0x8288D618), M18Load(0x40CDD678), M18Load(0x40CDD644),
+      unsigned(M18Base()[0x40CDD6FE]));
+}
+
+// E-305 / Model B: use the remaining *gameplay* timer to initialize the
+// existing Combo closing state, then leave interpolation to 8219F2C0. The
+// native update-disable gate is before this site. The ordinary expiry command
+// remains immediate, and original scoring open(-1) cancels/restarts the close.
+// No polling thread, allocation, synthetic command or gameplay timer write.
+// Explicit playable developer session only. The shared fix actor is present at
+// these same addresses in intro_10, knaar_69 and swamp_81 scans. Fail closed if
+// its live reciprocal link or designer-buffer identity differs; never guess a
+// relocated buffer. Existing hidden experiments retain their original gates.
+static bool ComboProfileEnabled() {
+  static const bool enabled = [] {
+    const char* v = std::getenv("R3HD_COMBO_CLOSE");
+    const bool selected = v && !std::strcmp(v, "delayed");
+    REXLOG_INFO("ComboClose profile_mode={}", selected ? "delayed" : "original");
+    return selected;
+  }();
+  return enabled;
+}
+
+static bool ComboPlayableTest() {
+  static const bool selected = [] {
+    const char* mode = std::getenv("R3HD_TEST_COMBO_CLOSE");
+    const char* manual = std::getenv("R3HD_TEST_COMBO_PLAYTEST");
+    return mode && !std::strcmp(mode, "delayed-countdown") && manual &&
+        !std::strcmp(manual, "1");
+  }();
+  return ComboProfileEnabled() || selected;
+}
+
+static bool ComboPlayableLayout() {
+  const auto valid = [](uint32_t p) { return p >= 0x40000000 && p <= 0x41FFF000 && !(p & 3); };
+  if (M18Load(0x40CD65D8) != 2 || M18Load(0x40CD65DC) != 0x40CD6340) return false;
+  const auto stdgame = M18Load(0x40CD6344), brain = M18Load(0x40CD634C);
+  if (!valid(stdgame) || M18Load(stdgame + 12) != 0x40CD65D8 || !valid(brain)) return false;
+  const auto mind = M18Load(brain);
+  if (!valid(mind)) return false;
+  const auto mem = M18Load(mind + 12);
+  if (!valid(mem) || M18Load(mem + 8) != 0x40CDD5BC) return false;
+  const auto model = M18Load(mem);
+  if (!valid(model)) return false;
+  const auto vars = M18Load(model);
+  if (!valid(vars) || M18Load(vars + 8) != 325) return false;
+  const auto infos = M18Load(vars + 4);
+  return valid(infos) && M18Load(infos + 24 * 16) == 136 &&
+      M18Load(infos + 25 * 16) == 140 && M18Load(infos + 26 * 16) == 144 &&
+      M18Load(infos + 29 * 16) == 322 && M18Load(infos + 36 * 16) == 188;
+}
+
+// E-311: command10029 owns a handle, not a permanent heap address. Mirror
+// 821ABC88's read-only handle lookup (16-byte records, payload+16). A real
+// front-end -> intro_15 load recreates the Combo handle; the former fixed
+// 828A3E98 address is reused before the human's first pickup.
+static bool ComboPlayableObject(uint32_t object) {
+  const uint32_t handle = M18Load(0x8288D658), count = M18Load(0x829A3E18);
+  if (!handle || !count || count > 256) return false;
+  for (uint32_t i = 0; i < count; ++i) {
+    const uint32_t entry = 0x82890598 + i * 16;
+    if (M18Load(entry) == handle) {
+      const uint32_t payload = M18Load(entry + 8);
+      return payload >= 0x82800000 && payload <= 0x828FFFA0 &&
+          !(payload & 3) && object == payload + 16;
+    }
+  }
+  return false;
+}
+
+static void ComboDiagnostic(uint32_t object, int enabled) {
+  static const bool selected = [] {
+    const char* v = std::getenv("R3HD_TEST_COMBO_CAPTURE");
+    return v && !std::strcmp(v, "1");
+  }();
+  if (!selected || object < 0x82800000 || object > 0x828FFFA0 ||
+      M18Load(object) != 0x8200FE2C || M18Load(object + 0x58) != 1) return;
+  const auto now = M18Load(0x82C0628C), start = M18Load(0x40CDD64C);
+  const auto window = M18Load(0x40CDD648), age = now - start;
+  const auto state = M18Load(0x8288D618), pending = unsigned(M18Base()[0x40CDD6FE]);
+  const bool binding = ComboPlayableObject(object), layout = ComboPlayableLayout();
+  const unsigned rejected = (!enabled ? 1 : 0) | (!binding ? 2 : 0) | (!layout ? 4 : 0) |
+      (pending != 1 ? 8 : 0) | (state != 2 ? 16 : 0) |
+      (window < 2000 || window > 6000 ? 32 : 0) | (age >= window ? 64 : 0) |
+      (age < window && window - age > 1000 ? 128 : 0);
+  const uint32_t row[] = {object, start, window, state, pending, rejected, M18Load(0x40CDD678)};
+  static uint32_t last[7] = {};
+  if (!std::memcmp(last, row, sizeof(row))) return;
+  std::memcpy(last, row, sizeof(row));
+  REXLOG_INFO("ComboEligibility pc=8219F2D8 now={} object={:08X} handle={} start={} window={} age={} state={} pending={} rejected={} score={}",
+      now, object, M18Load(0x8288D658), start, window, age, state, pending, rejected, row[6]);
+}
+
+void ComboCountdownTest(PPCRegister& object) {
+  static const int enabled = [] {
+    const char* v = std::getenv("R3HD_TEST_COMBO_CLOSE");
+    if (!v) return ComboProfileEnabled() ? 2 : 0;
+    if ((!std::getenv("R3HD_NONINTRUSIVE") && !ComboPlayableTest()) || !v) return 0;
+    if (!std::strcmp(v, "countdown")) return 1;
+    if (!std::strcmp(v, "delayed-countdown")) return 2;
+    return 0;
+  }();
+  ComboDiagnostic(object.u32, enabled);
+  if (!enabled) return;
+  if (ComboPlayableTest() ? (!ComboPlayableObject(object.u32) || !ComboPlayableLayout()) :
+      std::memcmp(M18Base() + 0x82C06221, "knaar_69\0", 9)) return;
+  if (
+      object.u32 < 0x82800000 || object.u32 > 0x82900000 ||
+      M18Load(object.u32) != 0x8200FE2C || M18Load(object.u32 + 0x58) != 1 ||
+      M18Base()[0x40CDD6FE] != 1 || M18Load(0x8288D618) != 2) return;
+  const uint32_t window = M18Load(0x40CDD648), start = M18Load(0x40CDD64C);
+  const uint32_t now = M18Load(0x82C0628C), age = now - start;
+  // E-307: scoring after a long event preserves max(2000, remaining), then
+  // refreshes start. Delayed mode must accept these game-owned intermediate
+  // windows too. Keep the earlier full-window experiment's exact guard.
+  if (age >= window || (enabled == 2 ? (window < 2000 || window > 6000)
+                                    : (window != 2000 && window != 6000))) return;
+  // E-306: leave the game-owned open state alone until the final second.
+  // Scoring's original open/reset restores the row and refreshes start; the
+  // same guard then waits for the refreshed deadline. No extra tracking state.
+  if (enabled == 2 && window - age > 1000) return;
+  const float duration = float(window - age) / 1000.0f, reciprocal = 1.0f / duration;
+  uint32_t duration_bits, reciprocal_bits;
+  std::memcpy(&duration_bits, &duration, sizeof(duration_bits));
+  std::memcpy(&reciprocal_bits, &reciprocal, sizeof(reciprocal_bits));
+  M18Store(0x8288D5AC, duration_bits);
+  M18Store(0x8288D5B0, reciprocal_bits);
+  M18Store(0x8288D614, 0);
+  M18Store(0x8288D618, 3);
+  REXLOG_INFO("{} begin now={} start={} window={} remaining={} duration={} object={:08X} score={} bonus_bits={:08X}",
+      enabled == 2 ? "ComboDelayed" : "ComboCountdown",
+      now, start, window, window - age, duration, object.u32,
+      M18Load(0x40CDD678), M18Load(0x40CDD644));
+}
 #endif

@@ -4,6 +4,10 @@ refusals) plus the release checks of M50. Nothing is uploaded; OUT/dist is never
 
     python tools/m50_build.py OUT --expect-runtime HASHES.json [--test-variant NAME --dpi-proxy PT] [--fast]
     python tools/m50_build.py OUT --record-runtime HASHES.json
+    python tools/m50_build.py private/OUT --expect-runtime HASHES.json --portable-id ID --crt-dir CRT
+
+The optional matched development ZIP uses the same installer stage and source archive;
+MANIFEST.json records the verified pair, and SHA256SUMS.txt covers both formats/sidecars.
 
 Added checks on the staged payload (refusal = exit 2, nothing written to OUT/dist):
   * R-01 keys (tools/m50_r01_audit.py keys): the only key constant in any staged file is the XEX2 retail key, once,
@@ -22,7 +26,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import m49_build as b  # noqa: E402
 from m48p_build import ROOT, Refused  # noqa: E402
 
-b.VERSION = "1.0.2"
+b.VERSION = "1.0.3"
 b.SETUP_NAME = f"Rayman3HDRecompiled-{b.VERSION}-setup.exe"
 b.TAG = "M50_BUILD"
 # D-108: the final Turkish translation (D-106 / D-107: the person's 65 LQA proposals verbatim, the U+2026 glyph, the

@@ -2,6 +2,9 @@
  "schema": 1,
  "note": "M50 (D-089, R-02): origin and licence scope of every tracked file. Rules are fnmatch patterns over git paths; the first matching rule wins. tools/m50_provenance.py check fails when a tracked file matches no rule or a listed file is missing. Technical record, not a legal clearance. 'project' files are MIT (LICENSE, chosen by the person in M50; scope and exclusions in its Scope section); third-party and derived files keep their own terms.",
  "rules": [
+  {"origin": "project", "licence": "MIT (LICENSE)",
+   "detail": "Project-authored scheduled input events for the bounded six-second Combo regression; no game code or assets",
+   "paths": ["config/combo/six_second_inputs.json"]},
   {"origin": "project", "licence": "MIT (LICENSE)", "optional": true,
    "detail": "Public project metadata retained from the recorded public Git history; absent from development exports. Never substitute the untracked development file.",
    "paths": [".recomp.json"]},

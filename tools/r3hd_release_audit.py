@@ -595,7 +595,7 @@ def binary_dev_paths(data):
     return n
 
 
-def audit_payload(root, allow, binaries, pins, hashes):
+def audit_payload(root, allow, binaries, pins, hashes, public_release=False):
     root = os.path.abspath(root)
     files, counts, listed = [], {}, {}
     native = 0
@@ -605,8 +605,8 @@ def audit_payload(root, allow, binaries, pins, hashes):
         with open(mf, "r", encoding="utf-8") as f:
             pdata = json.load(f)
         listed = pdata["files"]
-        if pdata.get("publishable") is not False:
-            manifest_problem = "publishable must be false"
+        if pdata.get("publishable") is not public_release:
+            manifest_problem = "publishable must match the explicitly selected distribution mode"
     except (OSError, ValueError, KeyError) as e:
         manifest_problem = "payload.json unreadable: %s" % e
     seen = set()
@@ -674,7 +674,8 @@ def audit_payload(root, allow, binaries, pins, hashes):
         files.append({"path": "payload.json", "verdict": "FAIL", "reasons": [{"code": "PAYLOAD_MANIFEST"}], "waived": []})
     rejected = sum(1 for x in files if x["verdict"] == "FAIL")
     return {"audit": "r3hd_release_audit payload", "notice": NOT_LEGAL, "private": native > 0,
-            "classification": PRIVATE_NOTICE if native else "no native binary",
+            "classification": ("Approved public distribution mode; rights review remains separate" if public_release
+                               else PRIVATE_NOTICE) if native else "no native binary",
             "verdict": "FAIL" if rejected else "PASS", "files": len(files), "rejected": rejected,
             "reason_counts": counts, "allowed_findings": [], "results": files}
 
@@ -684,7 +685,7 @@ def cmd_payload(args):
     manifests = [args.game_manifest] if args.game_manifest else [DEFAULT_MANIFEST]
     if not os.path.isdir(args.target):
         raise ConfigError("payload target must be a directory: %s" % args.target)
-    res = audit_payload(args.target, allow, binaries, pins, GameHashes(manifests, DEFAULT_RELEASES))
+    res = audit_payload(args.target, allow, binaries, pins, GameHashes(manifests, DEFAULT_RELEASES), args.public_release)
     if res["private"]:
         print("CLASSIFICATION: %s" % res["classification"])
     return finish(res, args)
@@ -936,7 +937,7 @@ def selftest():
         pins = {"app/python/python.exe": hashlib.sha256(base["app/python/python.exe"]).hexdigest(),
                 "app/python/python311.zip": hashlib.sha256(base["app/python/python311.zip"]).hexdigest()}
 
-        def payload(name, files, unlisted=(), lie=None, publishable=False, drop=()):
+        def payload(name, files, unlisted=(), lie=None, publishable=False, drop=(), public_release=False):
             root = os.path.join(tmp, name)
             listed = {}
             for rel, data in files.items():
@@ -952,7 +953,7 @@ def selftest():
                 listed[lie]["sha256"] = "0" * 64
             with open(os.path.join(root, "payload.json"), "w", encoding="utf-8") as f:
                 json.dump({"schema": 1, "publishable": publishable, "files": listed}, f)
-            res = audit_payload(root, pallow, pbin, pins, hashes)
+            res = audit_payload(root, pallow, pbin, pins, hashes, public_release)
             return {r["path"]: {x["code"] for x in r["reasons"]} for r in res["results"]}, res
 
         m, res = payload("clean", base)
@@ -979,6 +980,12 @@ def selftest():
         check("payload: manifest hash differs", has(m, "bin/r3hd.exe", "MANIFEST_MISMATCH"))
         m, _ = payload("pub", base, publishable=True)
         check("payload: publishable flag refused", has(m, "payload.json", "PAYLOAD_MANIFEST"))
+        m, res = payload("public-approved", base, publishable=True, public_release=True)
+        check("payload: explicit public mode accepts matching manifest", res["verdict"] == "PASS")
+        m, _ = payload("public-private", base, public_release=True)
+        check("payload: explicit public mode refuses private manifest", has(m, "payload.json", "PAYLOAD_MANIFEST"))
+        m, _ = payload("public-corrupt", base, lie="bin/r3hd.exe", publishable=True, public_release=True)
+        check("payload: public mode still refuses corrupt content", has(m, "bin/r3hd.exe", "MANIFEST_MISMATCH"))
         zbad = io.BytesIO()
         with zipfile.ZipFile(zbad, "w") as zf:
             zf.writestr("x.pyd", b"MZ")
@@ -1017,6 +1024,7 @@ def main(argv=None):
     common(p)
     p = sub.add_parser("payload", help="audit a staged private installer payload (tools/r3hd_stage.py)")
     p.add_argument("target")
+    p.add_argument("--public-release", action="store_true", help="Audit an explicitly approved public manifest; all content checks still apply")
     common(p)
     sub.add_parser("selftest", help="synthetic fixtures; no game data")
     args = ap.parse_args(argv)

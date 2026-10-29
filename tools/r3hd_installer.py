@@ -310,14 +310,14 @@ class _NoProgress:
 
 # --- environment checks -------------------------------------------------------------------------------------------
 
-def check_platform():
+def check_platform(vc_dir=None):
     machine = (os.environ.get("PROCESSOR_ARCHITEW6432") or platform.machine() or "").upper()
     # platform.machine() comes from the environment; without it the 64-bit Python runtime itself says x64.
     if os.name != "nt" or (machine and machine not in ("AMD64", "X86_64")) or sys.maxsize <= 2 ** 32:
         raise Refusal("UNSUPPORTED_OS", f"{platform.system()} {machine or 'unknown machine'}")
     if sys.getwindowsversion().major < 10:
         raise Refusal("UNSUPPORTED_OS", f"Windows {platform.version()}")
-    sys32 = Path(os.environ.get("R3HD_INSTALL_SYSTEM32") or Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32")
+    sys32 = Path(vc_dir) if vc_dir is not None else Path(os.environ.get("R3HD_INSTALL_SYSTEM32") or Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32")
     missing = [n for n in VC_RUNTIME if not (sys32 / n).is_file()]
     if missing:
         raise Refusal("VC_RUNTIME_MISSING", f"missing in {sys32}: {', '.join(missing)}")
@@ -952,7 +952,7 @@ def new_state(payload: dict, data_rec: dict, settings: dict, prev, desktop_short
             "files": {r: i["sha256"] for r, i in sorted(payload["files"].items())},
             "data": data_rec, "settings": settings, "owned": ["app", "bin", "data", "cache", STATE, HOME_MARK],
             "shortcuts": shortcuts, "history": hist[-50:],
-            "note": "installer state of a private prototype; translated game code and locally extracted game data: "
+            "note": "Rayman 3 HD Recompiled installer state; locally extracted game data and personal files: "
                     "never redistribute this folder"}
 
 
@@ -1773,11 +1773,17 @@ def selftest() -> int:
             check("the launcher itself may still save settings while it runs", read_json(home / "settings.json")["preset"] == "hdplus")
             os.environ["R3HD_INSTALL_FAKE_LAUNCHER"] = "0"
             set_preset(home, "custom", "hdplus", ["cursor=visible"])
-            answers = iter(["3", "", "", "2", "bogus", "separate", "", "", "", "", "", "", ""])  # + default Discord / DualSense
+            # The registry owns the question list; a new preference must not exhaust this fixture.
+            answers = ["3"]
+            for option in describe_options():
+                answers += (["2"] if option["key"] == "render_scale" else
+                            ["bogus", "separate"] if option["key"] == "layer_coords" else [""])
+            answers = iter(answers)
             configure(home, ask=lambda _: next(answers), say=quiet)
             s = read_json(home / "settings.json")
             check("configure (Custom) writes the chosen options through the resolver", s["preset"] == "custom"
-                  and s["overrides"] == {"layer_coords": "separate", "texture_orient": "corrected"}  # M43: Enter keeps HD+'s value
+                  and s["overrides"] == {"combo_close": "delayed", "layer_coords": "separate",
+                                         "texture_orient": "corrected"}  # Enter keeps HD+ values
                   and s["preferences"] == {"cursor": "visible", "render_scale": "2", "dualsense_light": "off",
                                            "dualsense_trigger": "off"})  # D-108: a named DualSense option is kept
             configure(home, ask=lambda _: "", say=quiet)
@@ -1939,8 +1945,8 @@ def selftest() -> int:
             check("D-114: a confirmed removal of the user data removes dev_overlay_config\\ with it",
                   not dev_dir.exists() and "dev_overlay_config" in r["user_data_removed"] and not h11.exists())
             check("describe-options lists the shown adjustable settings only (M31: cursor and save clock hidden)",
-                  [o["key"] for o in describe_options()] == ["display", "window_size", "render_scale", "layer_coords",
-                                                             "texture_orient", "gameplay_subtitles", "discord_presence",
+                  [o["key"] for o in describe_options()] == ["display", "window_size", "render_scale", "combo_close", "layer_coords",
+                                                             "texture_orient", "gameplay_subtitles", "game_language", "discord_presence",
                                                              "dualsense_light", "dualsense_trigger",
                                                              "dualsense_trigger_strength", "diagnostics"])
             r = install(t / "H10", pl, tree, "vanilla", pairs=["render_scale=2"], releases=rels, log=quiet)

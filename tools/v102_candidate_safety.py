@@ -24,7 +24,7 @@ def main():
         setattr(a, name, getattr(a, name).resolve())
     assert a.out.parent in a.home.parents and not a.out.exists()
     assert not any(k.startswith('R3HD_INSTALL_') for k in os.environ)
-    assert json.loads((a.home / 'installer.json').read_bytes())['version'] == '1.0.2'
+    assert json.loads((a.home / 'installer.json').read_bytes())['version'] == json.loads((a.payload / 'payload.json').read_bytes())['version']
     # Reject any fixture link before launching a mutating operation.
     hashes(a.home, tuple(p.name for p in a.home.iterdir()))
     a.out.mkdir()

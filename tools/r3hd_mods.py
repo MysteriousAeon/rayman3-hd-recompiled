@@ -93,10 +93,10 @@ TURKISH_MISSING = "ğĞşŞıİ"
 # Ý, which no shipped string uses either (RE_NOTES "M34"). A glyph override defines the code; text then encodes the
 # letter as that byte.
 TURKISH = {"Ğ": 0xD0, "İ": 0xDD, "Ş": 0xDE, "ğ": 0xF0, "ı": 0xFD, "ş": 0xFE}
-# Every character a glyph override may add, with its byte: the Turkish letters and the ellipsis, Windows-1252 /
+# Every character a glyph override may add, with its byte: Turkish letters, ellipsis and French ligatures, Windows-1252 /
 # Windows-1254 0x85 (undefined in FontRay; only en.18 and en.448 use it, where it draws nothing; RE_NOTES "M37 font
 # gaps"). Text encodes such a character as its byte only when a glyph of the mod (or of a mod it requires) adds it.
-GLYPH_CODES = {**TURKISH, "…": 0x85}
+GLYPH_CODES = {**TURKISH, "…": 0x85, "Œ": 0x8C, "œ": 0x9C}
 # The font as shipped in the one supported release (RE_NOTES "M33" / "M34"): FontDefine = name[50] + 256 records of
 # 14 bytes (u16 x, y, height, width, pixel size, descent (signed); u8 bitmap; u8 defined), big-endian. FontRay twice
 # (the two copies differ in ten button / symbol records, never in a letter), FontPADRay twice, all on one atlas.
@@ -492,7 +492,7 @@ def glyph_chars(m: dict) -> frozenset:
 
 
 def encode_text(text: str, glyphs=frozenset(), defined=None) -> bytes:
-    """Text -> the game's 8-bit bytes. Turkish letters and the ellipsis become their Windows-1254 bytes, only when
+    """Text -> the game's 8-bit bytes. Extra letters/punctuation use their Windows-1252/1254 bytes, only when
     `glyphs` holds them (a glyph override of this mod or of a mod it requires). The Latin-1 letters whose bytes those
     glyphs take (Ð Ý Þ ð ý þ) are then refused. With `defined` (the codes FontRay defines, plus the glyphs) every byte
     must have a glyph."""
@@ -2544,6 +2544,24 @@ def selftest_m34(check, refused, release_ids):
               sorted(e_recs) == sorted(b + 50 + 0x85 * 14 for b in defs[:2])
               and all(v[2:8] == (1, 5, 1, 0, 0, 1) for v in e_recs.values()) and e_txt and e_txt[0].startswith(b"A\x85\0"),
               (sorted(e_recs), e_txt))
+        # Issue #2: CP1252 ligatures have artwork, but no shipped FontRay records.
+        # They remain opt-in glyphs; plain text must never silently draw a blank.
+        for ch, code in (("Œ", 0x8C), ("œ", 0x9C)):
+            check(f"French: {ch} without a glyph is refused",
+                  refused(lambda ch=ch: encode_text(ch), "TEXT_GLYPH_MISSING") is True)
+            check(f"French: {ch} encodes only with its glyph",
+                  encode_text(ch, frozenset(ch), set()) == bytes([code]))
+            lig = dict(ell, char=ch)
+            rs = compile_mod(parse_manifest({"mod.json": (mod(f"x.fr{code}", [lig, text(0x100, "A" + ch)]) /
+                                                          "mod.json").read_bytes()}), {}, paths)
+            recs = {r[1]: struct.unpack(">6H2B", r[2]) for r in rs if r[3].startswith("glyph ")}
+            txt = [r[2] for r in rs if r[3].startswith("text")]
+            check(f"French: {ch} gets both records and the correct text byte",
+                  sorted(recs) == sorted(b + 50 + code * 14 for b in defs[:2])
+                  and all(v[2:8] == (1, 5, 1, 0, 0, 1) for v in recs.values())
+                  and txt and txt[0].startswith(bytes([65, code, 0])))
+        check("French: one ligature never authorizes the other",
+              refused(lambda: encode_text("œŒ", frozenset("œ")), "TEXT_GLYPH_MISSING") is True)
         # moved text
         mv = mod("x.move", [text(0x108, "B"), text(0x100, "Much longer")])
         ranges = compile_mod(parse_manifest({"mod.json": (mv / "mod.json").read_bytes()}), {}, paths)

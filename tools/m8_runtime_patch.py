@@ -2,7 +2,8 @@
 
 Observational only. With R3HD_PLAY set, a normal visible launch keeps the M2..M6 census
 (imports, file opens, swaps, faults) but writes no game-derived dumps into the working
-directory and no per-key / per-stick-sample trace into the log. Emulation semantics, the
+directory (except explicit private Combo event captures) and no per-key / per-stick-sample
+trace into the log. Emulation semantics, the
 hidden XAM test source and the capture policy of hidden runs are unchanged.
 """
 from m3_runtime_patch import SDK
@@ -28,6 +29,9 @@ if __name__ == '__main__':
          '  if (FILE* f = (std::getenv("R3HD_NONINTRUSIVE") || std::getenv("R3HD_PLAY")) ? nullptr : std::fopen(name, "wb")) {'),
         ('  if (std::getenv("R3HD_NONINTRUSIVE")) return m6frame::CaptureAt(swap);',
          '  if (std::getenv("R3HD_NONINTRUSIVE")) return m6frame::CaptureAt(swap);\n'
+         '  const char* combo_capture = std::getenv("R3HD_TEST_COMBO_CAPTURE");\n'
+         '  if (std::getenv("R3HD_PLAY") && combo_capture && !std::strcmp(combo_capture, "1") &&\n'
+         '      std::getenv("R3HD_FRAME_REQUEST")) return m6frame::CaptureAt(swap);\n'
          '  if (std::getenv("R3HD_PLAY")) return false;'),
     ])
     patch_once('src/kernel/xam/xam_input.cpp', [

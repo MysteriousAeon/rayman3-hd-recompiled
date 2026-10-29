@@ -15,6 +15,7 @@ absolute paths). Nothing is uploaded; the payload is private and NOT publishable
 
 usage:
   r3hd_stage.py build OUT [--build-dir D] [--python-dir D] [--skip-codegen-check]
+  r3hd_stage.py portable STAGE --portable-out ZIP --development-id ID --crt-dir CRT
   r3hd_stage.py stdlib-digest [--python-dir D]       print the stdlib zip digest (to pin a new Python)
   r3hd_stage.py selftest
 Exit 0 ok, 2 refused, 1 failure.
@@ -309,17 +310,30 @@ def selftest() -> int:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("cmd", choices=["build", "stdlib-digest", "selftest"])
+    ap.add_argument("cmd", choices=["build", "portable", "stdlib-digest", "selftest"])
     ap.add_argument("out", nargs="?")
     ap.add_argument("--build-dir", default=None)
     ap.add_argument("--python-dir", default=None)
     ap.add_argument("--skip-codegen-check", action="store_true")
+    ap.add_argument("--portable-out", type=Path)
+    ap.add_argument("--development-id")
+    ap.add_argument("--crt-dir", type=Path)
     a = ap.parse_args()
     if a.cmd == "selftest":
         return selftest()
     defn = json.loads(DEFINITION.read_text(encoding="utf-8"))
     py = Path(a.python_dir) if a.python_dir else default_python_dir()
     try:
+        if a.cmd == "portable":
+            if not all((a.out, a.portable_out, a.development_id, a.crt_dir)):
+                raise Refusal("USAGE", "portable STAGE --portable-out ZIP --development-id ID --crt-dir CRT")
+            import r3hd_portable_zip
+            try:
+                r = r3hd_portable_zip.build(Path(a.out), a.portable_out, a.development_id, a.crt_dir)
+            except (OSError, ValueError, KeyError) as e:
+                raise Refusal("PORTABLE_REFUSED", str(e))
+            print("R3HD_PORTABLE_ZIP " + json.dumps(r, sort_keys=True))
+            return 0
         if a.cmd == "stdlib-digest":
             print(sha256_bytes(stdlib_zip(py, defn["python"]["stdlib_exclude"])))
             return 0

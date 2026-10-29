@@ -40,6 +40,9 @@
     of settings.json as well. Standard keeps at most two rotated runtime logs, samples repetitive known runtime
     lines, and in an installed home removes session folders beyond the 10 newest (never save_history).
 
+    Game language (D-136): -GameLanguage en|fr|es|it|de selects native text, subtitles and voices next launch.
+    Turkish and current PT-BR translation mods need English (en). Settings/interface language is independent.
+
     Automated agents must not start the visible window: only -DryRun and -Collect are unattended-safe.
 
 .EXAMPLE
@@ -98,6 +101,8 @@ param(
     # M21 (D-050): 'local' gives the title this PC's time zone, so the save list shows local time; 'utc' keeps
     # the SDK's answer (no zone: the title shows UTC). Saves and the guest clock are UTC in both modes.
     [ValidateSet('local', 'utc')][string]$SaveClock = 'local',
+    # Issue #2 / D-136: native console language, independent of Settings UI and text mods.
+    [ValidateSet('en', 'fr', 'es', 'it', 'de')][string]$GameLanguage = 'en',
     # M23 (D-052, D-054): 'original' draws the two-layer translucent sheets of the `tvt_tVT` shader (haze in The
     # Bog of Murk, clouds in the Land of the Livid Dead) as the Xbox 360 HD release does: both layers on the
     # first layer's texture coordinates. 'separate' gives the second layer its own coordinates and scroll
@@ -109,6 +114,7 @@ param(
     # listed pages are mirrored top to bottom as they are read (exact, nothing written to disk). Supported
     # enhancement, off by default here.
     [ValidateSet('original', 'corrected')][string]$TextureOrient = 'original',
+    [ValidateSet('original', 'delayed')][string]$ComboClose = 'original',
     # M44 (D-081, experimental): 'original' shows a voiced line's subtitle during gameplay only as the Xbox 360 HD
     # release does (in cinematic mode, or for the title's own short list of lines); 'all' lets the title's own
     # subtitle update show every voiced line it starts, with its own text and timing. D-090: a preference (Settings).
@@ -185,6 +191,29 @@ function Get-FileSha256([string]$Path) {
     $hash = [System.Security.Cryptography.SHA256]::Create()
     try { return [BitConverter]::ToString($hash.ComputeHash($stream)).Replace('-', '').ToLowerInvariant() }
     finally { $hash.Dispose(); $stream.Dispose() }
+}
+
+function Get-R3hdRuntimeProblems([string]$HomeRoot, [string]$BinPath, [string]$SystemRootPath) {
+    $portable = $false
+    if ($HomeRoot) {
+        $statePath = Join-Path $HomeRoot 'installer.json'
+        if (Test-Path -LiteralPath $statePath -PathType Leaf) {
+            try {
+                $stateText = Get-Content -LiteralPath $statePath -Raw -Encoding UTF8
+                if (-not $stateText -or -not $stateText.TrimStart().StartsWith('{')) { throw 'Expected an object' }
+                $state = $stateText | ConvertFrom-Json
+                if ($null -eq $state -or $state -isnot [PSCustomObject]) { throw 'Expected an object' }
+            } catch { throw "PREFLIGHT: Cannot read installation state: $statePath" }
+            $portable = $state.distribution -ceq 'portable'
+        }
+    }
+    $runtimeDir = if ($portable) { $BinPath } else { Join-Path $SystemRootPath 'System32' }
+    foreach ($dll in 'MSVCP140.dll', 'VCRUNTIME140.dll', 'VCRUNTIME140_1.dll') {
+        if (-not (Test-Path -LiteralPath (Join-Path $runtimeDir $dll) -PathType Leaf)) {
+            if ($portable) { "Portable Microsoft Visual C++ runtime missing: $dll (extract a fresh ZIP; keep your user files)" }
+            else { "Microsoft Visual C++ runtime missing: $dll (install the Microsoft Visual C++ Redistributable 2015-2022 x64 from aka.ms/vs/17/release/vc_redist.x64.exe)" }
+        }
+    }
 }
 
 function Get-PrimaryDisplayMode {
@@ -363,6 +392,7 @@ foreach ($extra in $ExtraArgs) {
     if ($extra -match '^--(game_data_root|user_data_root|cache_root|log_file|gpu_plugin)=') { throw "Set by the launcher: $extra" }
     if ($extra -match '^--(resolution_scale|draw_resolution_scale_x|draw_resolution_scale_y)=') { throw 'The rendering resolution is chosen with -RenderScale auto|1|2|3, not through -ExtraArgs' }
     if ($extra -match '^--license_mask=') { throw 'The licence mode is chosen with -License full|trial, not through -ExtraArgs' }
+    if ($extra -match '^--user_language=') { throw 'Choose the game language with -GameLanguage en|fr|es|it|de or Settings.' }
     if ($extra -match '^--cl=') { throw 'The guest command line (developer options such as -level:) is for hidden test runs only: tools\run_milestone6.ps1 -TestLevel' }
     if ($extra -match '^--bind_settings=') { throw 'The developer settings overlay (F4) is enabled with -DevOverlay, not through -ExtraArgs' }
     if ($extra -match '^--bind_debug_overlay=') { throw 'The developer debug overlay (F3) is enabled with -DevOverlay, not through -ExtraArgs' }
@@ -404,8 +434,8 @@ $controller = $null
 # M32 (D-069): the resolver runs for every launch, because it also gives the keyboard map; without -Preset or
 # -SettingsFile its preset values are the parameter defaults above (m27_settings_regression.py keeps them equal).
 if ($true) {
-    $settingParams = [ordered]@{ Revisit = 'revisit'; Pacing = 'pacing'; Display = 'display'; Cursor = 'cursor'; SaveClock = 'save_clock';
-        RenderScale = 'render_scale'; LayerCoords = 'layer_coords'; TextureOrient = 'texture_orient'; WindowSize = 'window_size';
+    $settingParams = [ordered]@{ Revisit = 'revisit'; Pacing = 'pacing'; Display = 'display'; Cursor = 'cursor'; SaveClock = 'save_clock'; GameLanguage = 'game_language';
+        RenderScale = 'render_scale'; LayerCoords = 'layer_coords'; TextureOrient = 'texture_orient'; WindowSize = 'window_size'; ComboClose = 'combo_close';
         Diagnostics = 'diagnostics'; GameplaySubtitles = 'gameplay_subtitles'; DiscordPresence = 'discord_presence'; DualSenseLight = 'dualsense_light'; DualSenseTrigger = 'dualsense_trigger';
         DualSenseTriggerStrength = 'dualsense_trigger_strength' }
     $resolverArgs = @((Join-Path $PSScriptRoot 'r3hd_settings.py'), 'resolve')
@@ -456,9 +486,7 @@ if (-not (Test-Path -LiteralPath $exe -PathType Leaf)) { $problems += "Executabl
 foreach ($dll in 'rexruntime.dll', 'rexgpu-xenos.dll', 'ffmpeg.dll', 'mspack.dll') {
     if (-not (Test-Path -LiteralPath (Join-Path $bin $dll) -PathType Leaf)) { $problems += "Runtime library missing next to the executable: $dll ($binHint)" }
 }
-foreach ($dll in 'MSVCP140.dll', 'VCRUNTIME140.dll', 'VCRUNTIME140_1.dll') {
-    if (-not (Test-Path -LiteralPath (Join-Path $env:SystemRoot "System32\$dll"))) { $problems += "Microsoft Visual C++ runtime missing: $dll (install the Microsoft Visual C++ Redistributable 2015-2022 x64 from aka.ms/vs/17/release/vc_redist.x64.exe)" }
-}
+$problems += @(Get-R3hdRuntimeProblems $homeRoot $bin $env:SystemRoot)
 $xex = Join-Path $game 'Default.xex'
 if (-not (Test-Path -LiteralPath $xex -PathType Leaf)) { $problems += "Extracted game content missing: $xex ($dataHint)" }
 elseif ((Get-FileSha256 $xex) -ne $xexSha256) { $problems += "Default.xex does not match the hash this build was translated from ($dataHint)" }
@@ -515,6 +543,8 @@ if ($RenderScale -eq 'auto') {
 } else { $scale = [int]$RenderScale }
 $arguments += "--resolution_scale=$scale"
 $arguments += $keyArgs
+$gameLanguageId = @{ en = 1; fr = 4; es = 5; it = 6; de = 3 }[$GameLanguage]
+$arguments += "--user_language=$gameLanguageId"
 $renderText = "$(1280 * $scale)x$(720 * $scale) internal image (scale $scale, -RenderScale $RenderScale), shown in $($target.width)x$($target.height) ($($target.source))"
 $arguments += $ExtraArgs
 # The host sets licence bit 0 by default (D-032); trial mode is requested through R3HD_TRIAL. No mask is passed here.
@@ -574,7 +604,9 @@ if ($DryRun) {
     Write-Host "revisit    : $Revisit"
     Write-Host "cursor     : $Cursor"
     Write-Host "save clock : $SaveClock"
+    Write-Host "game lang  : $GameLanguage (text, subtitles, voices; translation mods may override text)"
     Write-Host "layer coord: $LayerCoords"
+    Write-Host "combo close: $ComboClose"
     Write-Host "texture ori: $TextureOrient"
     Write-Host "gameplay sub: $GameplaySubtitles"
     Write-Host "dualsense  : light=$DualSenseLight trigger=$DualSenseTrigger strength=$DualSenseTriggerStrength"
@@ -598,11 +630,11 @@ foreach ($old in $prune) { try { Remove-Item -LiteralPath $old.FullName -Recurse
 Move-DevConfig $devConfig
 New-Item -ItemType Directory -Path $session, $user, $cache -Force | Out-Null
 # Written before the launch so the selected licence mode is on record even if this script is interrupted.
-[ordered]@{ session = $stamp; profile = $Profile; preset = $presetLabel; settings_file = $SettingsFile; license_mode = $License; license_mask = $licenseMask; display = $Display; window = $window; render_scale = $scale; render_scale_option = $RenderScale; pacing = $Pacing; revisit = $Revisit; cursor = $Cursor; save_clock = $SaveClock; layer_coords = $LayerCoords; texture_orient = $TextureOrient; gameplay_subtitles = $GameplaySubtitles; diagnostics = $Diagnostics; dualsense_light = $DualSenseLight; dualsense_trigger = $DualSenseTrigger; dualsense_trigger_strength = $DualSenseTriggerStrength; keyboard = $keyText; controller = $padText; mods = $modsText; mods_notes = $modsNotes; dev_overlay = $devText; sessions_removed = $pruned; render_target = $target; arguments = $arguments } |
+[ordered]@{ session = $stamp; profile = $Profile; preset = $presetLabel; settings_file = $SettingsFile; license_mode = $License; license_mask = $licenseMask; display = $Display; window = $window; render_scale = $scale; render_scale_option = $RenderScale; pacing = $Pacing; revisit = $Revisit; cursor = $Cursor; save_clock = $SaveClock; game_language = $GameLanguage; layer_coords = $LayerCoords; texture_orient = $TextureOrient; combo_close = $ComboClose; gameplay_subtitles = $GameplaySubtitles; diagnostics = $Diagnostics; dualsense_light = $DualSenseLight; dualsense_trigger = $DualSenseTrigger; dualsense_trigger_strength = $DualSenseTriggerStrength; keyboard = $keyText; controller = $padText; mods = $modsText; mods_notes = $modsNotes; dev_overlay = $devText; sessions_removed = $pruned; render_target = $target; arguments = $arguments } |
     ConvertTo-Json -Depth 3 | Set-Content -LiteralPath (Join-Path $session 'launch.json') -Encoding UTF8
 $testOnly = 'R3HD_NONINTRUSIVE', 'R3HD_TEST_SECONDS', 'R3HD_INPUT_SCHEDULE', 'R3HD_INPUT_FOLLOW', 'R3HD_M5_CAPTURE',
     'R3HD_FRAME_REQUEST', 'R3HD_AUDIO_CAPTURE', 'R3HD_AUDIO_AFTER', 'R3HD_M5_VB_RESIDENCY_CACHE', 'R3HD_PLAY', 'R3HD_TRIAL',
-    'R3HD_FRAME_TRACE', 'R3HD_VBLANK_SPIN_US', 'R3HD_TEST_WORLD_END',
+    'R3HD_FRAME_TRACE', 'R3HD_VBLANK_SPIN_US', 'R3HD_TEST_WORLD_END', 'R3HD_TEST_COMBO_CLOSE', 'R3HD_TEST_COMBO_PLAYTEST', 'R3HD_TEST_COMBO_CAPTURE',
     'R3HD_SAVE_FAULT', 'R3HD_SAVE_COMMIT', 'R3HD_CURSOR', 'R3HD_TIMEZONE',
     'R3HD_M22_DRAW_TRACE', 'R3HD_M22_AUDIO', 'R3HD_AUDIO_AUDIBLE', 'R3HD_M24_EVENTS', 'R3HD_DIAGNOSTICS', 'R3HD_KEYMAP_TEST', 'R3HD_PADMAP_TEST', 'R3HD_PAD_MAP', 'R3HD_DISCORD', 'R3HD_DS_LIGHT', 'R3HD_DS_TRIGGER', 'R3HD_DS_TRIGGER_STRENGTH', 'R3HD_ACH_TEXT'
 $saved = @{}
@@ -623,6 +655,8 @@ $env:R3HD_LAYER_COORDS = $LayerCoords
 $env:R3HD_WATER_LAYERS = $null
 $savedOrient = $env:R3HD_TEXTURE_ORIENT
 $env:R3HD_TEXTURE_ORIENT = $TextureOrient
+$savedComboClose = $env:R3HD_COMBO_CLOSE
+$env:R3HD_COMBO_CLOSE = $ComboClose
 $savedGameplaySubs = $env:R3HD_GAMEPLAY_SUBTITLES
 $env:R3HD_GAMEPLAY_SUBTITLES = $GameplaySubtitles
 # M33: the verified mod plan, or none (a value from the caller's environment never reaches a playtest).
@@ -680,6 +714,7 @@ try {
     $env:R3HD_LAYER_COORDS = $savedLayers
     $env:R3HD_WATER_LAYERS = $savedWater
     $env:R3HD_TEXTURE_ORIENT = $savedOrient
+    $env:R3HD_COMBO_CLOSE = $savedComboClose
     $env:R3HD_GAMEPLAY_SUBTITLES = $savedGameplaySubs
     $env:R3HD_MODS_PLAN = $savedModsPlan
 }
@@ -705,8 +740,10 @@ $result = [ordered]@{
     pacing = $Pacing
     cursor = $Cursor
     save_clock = $SaveClock
+    game_language = $GameLanguage
     layer_coords = $LayerCoords
     texture_orient = $TextureOrient
+    combo_close = $ComboClose
     gameplay_subtitles = $GameplaySubtitles
     mods = $modsText
     dev_overlay = $devText

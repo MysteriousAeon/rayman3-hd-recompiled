@@ -132,6 +132,7 @@ if exist "%R3HD_GAME_DIR%\GAMEDATAbin\fact_55\fact_55_2.btf" private\work\rex\ou
 rem M30 (D-067): the Settings launcher (tools\launcher; static runtime, no PDB), staged into the installer payload.
 call tools\launcher\build_launcher.bat || exit /b 1
 python tools\m6_capture_regression.py || exit /b 1
+python tools\combo_playable_binding_regression.py || exit /b 1
 python tools\m8_crash_regression.py || exit /b 1
 python tools\m9_license_regression.py || exit /b 1
 python tools\m11_shutdown_regression.py || exit /b 1
@@ -142,6 +143,7 @@ python tools\m15_resolution_regression.py || exit /b 1
 python tools\m16_regression.py || exit /b 1
 python tools\m17_regression.py || exit /b 1
 python tools\m18_regression.py || exit /b 1
+python tools\combo_countdown_regression.py || exit /b 1
 python tools\m20_regression.py || exit /b 1
 python tools\m21_regression.py || exit /b 1
 python tools\m22_regression.py || exit /b 1
@@ -156,6 +158,10 @@ python tools\r3hd_build_step.py selftest || exit /b 1
 python tools\r3hd_release_audit.py selftest || exit /b 1
 python tools\m28_portable_regression.py || exit /b 1
 python tools\m29_installer_regression.py || exit /b 1
+call tools\build_utf8_path_test.bat || exit /b 1
+python tools\r3hd_portable_regression.py || exit /b 1
+python tools\r3hd_portable_preflight_regression.py || exit /b 1
+python tools\r3hd_portable_lgpl_regression.py || exit /b 1
 python tools\m30_launcher_regression.py || exit /b 1
 python tools\m31_regression.py || exit /b 1
 python tools\m32_regression.py || exit /b 1

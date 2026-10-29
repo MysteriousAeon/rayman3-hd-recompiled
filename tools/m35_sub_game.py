@@ -31,7 +31,8 @@ ROOT = m12.ROOT
 WORK = ROOT / "private" / "work" / "m35"
 
 
-def one_run(run_name: str, steps: Path, entry_name: str, plan, seconds: int = 0, load: bool = False) -> int:
+def one_run(run_name: str, steps: Path, entry_name: str, plan, seconds: int = 0, load: bool = False,
+            audio_after: int = 0, menu_frame: bool = False) -> int:
     env = dict(os.environ)
     for k in ("R3HD_MODS_PLAN", "R3HD_M22_DRAW_TRACE"):
         env.pop(k, None)
@@ -44,6 +45,7 @@ def one_run(run_name: str, steps: Path, entry_name: str, plan, seconds: int = 0,
     lines = [ln.split("#", 1)[0].strip() for ln in steps.read_text(encoding="utf-8").splitlines()]
     lines = [ln for ln in lines if ln]
     frames = sum(1 for ln in lines if ln.split()[0] == "frame")
+    frames += int(menu_frame)
     waits = sum(float(ln.split()[1]) for ln in lines if ln.split()[0] == "wait")
     if not m12.NAME_RE.fullmatch(run_name) or not 0 <= frames <= 8:
         raise SystemExit("invalid RUN, or more than eight frame steps")
@@ -56,10 +58,14 @@ def one_run(run_name: str, steps: Path, entry_name: str, plan, seconds: int = 0,
     if load:   # the title's Load menu first (the save's level from its start), then the tail
         m12.STEPS.mkdir(parents=True, exist_ok=True)
         full = m12.STEPS / f"{run_name}.txt"
-        full.write_text("\n".join(m12.load_steps(0)[:-1] + lines) + "\n", encoding="ascii")
+        prefix = m12.load_steps(0)[:-1]
+        if menu_frame:
+            prefix.insert(prefix.index("wait 12") + 1, "frame main_menu")
+        full.write_text("\n".join(prefix + lines) + "\n", encoding="ascii")
         steps = full
         seconds += 30
     command = m12.driver_command(run_name, steps, seconds, run_name)
+    command += ["--audio-after", str(audio_after)]
     log = WORK / f"{run_name}.driver.log"
     log.parent.mkdir(parents=True, exist_ok=True)
     with log.open("w", encoding="utf-8") as out:
@@ -261,10 +267,17 @@ def main() -> int:
     ap.add_argument("--entry", required=True)
     ap.add_argument("--plan", type=Path)
     ap.add_argument("--seconds", type=int, default=0)
+    ap.add_argument("--audio-after", type=int, default=0, help="start the existing muted 10 s PCM capture after N seconds")
+    ap.add_argument("--menu-frame", action="store_true", help="entry mode: also capture the main menu before Load")
     a = ap.parse_args()
     if len(a.args) != 2:
         ap.error(f"{a.mode} RUN STEPS.txt")
-    return one_run(a.args[0], Path(a.args[1]), a.entry, a.plan, a.seconds, load=a.mode == "entry")
+    if a.audio_after < 0:
+        ap.error("--audio-after must be nonnegative")
+    if a.menu_frame and a.mode != "entry":
+        ap.error("--menu-frame needs entry mode")
+    return one_run(a.args[0], Path(a.args[1]), a.entry, a.plan, a.seconds, load=a.mode == "entry",
+                   audio_after=a.audio_after, menu_frame=a.menu_frame)
 
 
 if __name__ == "__main__":

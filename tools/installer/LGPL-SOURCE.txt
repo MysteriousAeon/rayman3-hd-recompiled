@@ -59,3 +59,17 @@ avcodec_free_context, avcodec_open2, avcodec_receive_frame, avcodec_send_packet;
 lzxd_decompress, lzxd_free (it also reads the window and ref_data_size fields of struct lzxd_stream, lzx.h). An
 upstream FFmpeg build has no xmaframes decoder, so game audio needs a build of this fork or a compatible one.
 The installer's repair checks the shipped files by hash and puts the originals back if you run it again.
+
+Portable copies: close both game and Settings, keep originals OUTSIDE app/ and bin/, then replace exactly
+bin/ffmpeg.dll and/or bin/mspack.dll. Startup allows different sizes/hashes for these two paths only. Missing
+files or files without a Windows x64 DLL header are refused with a specific diagnostic. Passing preparation
+allows a replacement attempt; it does not certify exports, structure layouts, decoder support or dependencies.
+A loader/runtime failure can still occur. Restore your saved originals or rebuild against the documented ABI.
+The original ZIP audit still checks ALL shipped hashes, including these DLLs: audit it before replacement.
+No automatic portable repair restores the libraries. Whole-folder relocation keeps them. For a fresh-folder
+update, first verify the new ZIP, then deliberately reapply a compatible replacement; do not copy all of bin/.
+The game executable and its imported libraries are adjacent in bin/; Windows resolves the normal named DLL
+imports there under the existing loader rules. This policy changes no search directory and adds no PATH,
+current-directory or plugin loading override. Dependencies must also be available under normal Windows
+loading rules; portable refuses unlisted app/bin files. Builds needing extra private dependencies there need
+separate packaging support and are not tested by this replacement contract.

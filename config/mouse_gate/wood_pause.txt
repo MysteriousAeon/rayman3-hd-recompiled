@@ -1,0 +1,14 @@
+log wood_10\wood_10.lvl result=00000000 60
+wait 20
+press 40
+wait 4
+press 8
+wait 2
+press 20
+wait 2
+press 44
+wait 5
+press 40
+wait 3
+press 40
+wait 5

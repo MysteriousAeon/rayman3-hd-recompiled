@@ -1,0 +1,24 @@
+Microsoft Visual C++ Runtime - portable application-local deployment
+
+Copyright Microsoft Corporation. All rights reserved.
+Unmodified retail x64 Microsoft.VC145.CRT files, version 14.50.35719.0,
+from the Visual Studio Build Tools 18 VC/Redist/MSVC/14.50.35710 directory.
+Hashes and exact names: portable_crt.json beside this notice.
+bin/ carries the retail CRT DLLs; app/python/ also carries vcruntime140.dll.
+These components retain Microsoft's terms; they are not covered by our MIT license.
+
+Applicable software license terms:
+https://visualstudio.microsoft.com/license-terms/vs2026-ga-diagnostic-buildtools/
+Distributable list (Visual C++ Runtime Files, VC/redist; excludes debug_nonredist):
+https://learn.microsoft.com/en-us/visualstudio/releases/2026/redistribution
+Local deployment guidance:
+https://learn.microsoft.com/en-us/cpp/windows/determining-which-dlls-to-redistribute
+
+This supplements app/THIRD_PARTY_NOTICES.txt: its statement that VC++ DLLs are
+not included describes the installer payload. This portable wrapper adds only
+the pinned retail runtime files; it does not run a system redistributable setup.
+The Windows 10/11 Universal CRT and operating-system components are OS prerequisites.
+Future portable releases must maintain and revalidate these local DLLs; they do
+not receive central VC++ redistributable updates automatically.
+Redistribution remains subject to the applicable Microsoft license terms and
+the project's release review; this private development package is not clearance.

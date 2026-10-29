@@ -859,7 +859,8 @@ void BuildControls() {
   g.modUp = Make(L"BUTTON", T(L"&Up"), BS_PUSHBUTTON | WS_TABSTOP, kIdModUp);
   g.modDown = Make(L"BUTTON", T(L"&Down"), BS_PUSHBUTTON | WS_TABSTOP, kIdModDown);
   g.modRemove = Make(L"BUTTON", T(L"&Remove"), BS_PUSHBUTTON | WS_TABSTOP, kIdModRemove);
-  g.modsNote = Text(T(L"Changes apply the next time the game starts. A mod that does not fit this game version is not "
+  g.modsNote = Text(T(L"Turkish and PT-BR translation mods need Game language set to English. Settings language only changes this app.") + L" " +
+                    T(L"Changes apply the next time the game starts. A mod that does not fit this game version is not "
                     L"applied and the reason is shown here."), true);
   g.modsPage = {g.modsTitle, g.modsText, g.modList, g.modDetail, g.modZip, g.modFolder, g.modToggle, g.modUp, g.modDown,
                 g.modRemove, g.modsNote};

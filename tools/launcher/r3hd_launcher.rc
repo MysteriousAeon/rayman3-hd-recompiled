@@ -8,8 +8,8 @@
 2 ICON "r3hd_settings.ico"
 
 1 VERSIONINFO
-FILEVERSION 1,0,2,0
-PRODUCTVERSION 1,0,2,0
+FILEVERSION 1,0,3,0
+PRODUCTVERSION 1,0,3,0
 FILEFLAGSMASK 0x3F
 FILEFLAGS 0x0
 FILEOS 0x40004
@@ -21,11 +21,11 @@ BEGIN
     BLOCK "040904B0"
     BEGIN
       VALUE "FileDescription", "Rayman 3 HD Recompiled Settings"
-      VALUE "FileVersion", "1.0.2"
+      VALUE "FileVersion", "1.0.3"
       VALUE "InternalName", "r3hd_launcher"
       VALUE "OriginalFilename", "r3hd_launcher.exe"
       VALUE "ProductName", "Rayman 3 HD Recompiled"
-      VALUE "ProductVersion", "1.0.2"
+      VALUE "ProductVersion", "1.0.3"
     END
   END
   BLOCK "VarFileInfo"

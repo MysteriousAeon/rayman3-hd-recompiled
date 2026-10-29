@@ -67,7 +67,7 @@ def resolver_checks():
     prefs = {k for k, s in S.items() if rs.scope(s) == "preference"}
     check("registry: display, rendering resolution, cursor and save clock are preferences (M31: window size, diagnostics)",
           prefs == {"display", "window_size", "render_scale", "cursor", "save_clock", "diagnostics",
-                      "gameplay_subtitles", "ui_language", "discord_presence", "dualsense_light",
+                      "gameplay_subtitles", "game_language", "ui_language", "discord_presence", "dualsense_light",
                       "dualsense_trigger", "dualsense_trigger_strength"})  # independent Settings preferences
     check("registry: the corrections stay preset settings; HD+ = layer_coords separate, texture_orient corrected (M43)",
           rs.scope(S["layer_coords"]) == rs.scope(S["texture_orient"]) == "preset"
@@ -186,6 +186,8 @@ def static_checks():
     reg = rs.load_registry()
     names = {k for k, s in reg["settings"].items() if k != "ui_language"} | {lbl for key, s in reg["settings"].items() if key != "ui_language" for lbl in s.get("value_labels", {}).values()
                                     if len(lbl) > 3}
+    # Game Language reuses English, already named by the independent Settings-language control.
+    names -= set(reg["settings"]["ui_language"].get("value_labels", {}).values())
     leaked = sorted(n for n in names if re.search(r"\b" + re.escape(n) + r"\b", src))
     check("launcher source names no setting, value label or preset default (the registry is the one source)", not leaked, leaked)
     check("launcher starts only the bundled Python and Windows PowerShell; never r3hd.exe",
@@ -230,7 +232,7 @@ def static_checks():
     pallow = json.loads((ROOT / "config" / "release" / "payload_allowlist.json").read_text(encoding="utf-8"))
     check("payload: the launcher is staged to app/r3hd_launcher.exe with the launcher_native role",
           defn["launcher"]["dest"] == engine.LAUNCHER == "app/r3hd_launcher.exe"
-          and pallow["binaries"].get("app/r3hd_launcher.exe") == "launcher_native" and defn["version"].startswith(("0.30.0", "0.31.0", "0.32.0", "0.33.0", "0.34.0", "0.35.0", "0.36.0", "0.49.0", "0.50.0", "1.0.0", "1.0.1", "1.0.2")))
+          and pallow["binaries"].get("app/r3hd_launcher.exe") == "launcher_native" and defn["version"].startswith(("0.30.0", "0.31.0", "0.32.0", "0.33.0", "0.34.0", "0.35.0", "0.36.0", "0.49.0", "0.50.0", "1.0.0", "1.0.1", "1.0.2", "1.0.3")))
     bat = (TOOLS / "build_milestone8.bat").read_text(encoding="utf-8")
     check("build: launcher built before the regressions, this regression in the build",
           "call tools\\launcher\\build_launcher.bat || exit /b 1" in bat and "python tools\\m30_launcher_regression.py || exit /b 1" in bat
@@ -360,8 +362,8 @@ def launcher_checks(keep, skip_runtime=False):
                       and d["c3"]["setting.display"] == "fullscreen enabled=1")
                 check("UI: no control overlaps another or leaves the window at 96, 120 and 144 DPI",
                       all(layout_ok(d[k]) for k in ("initial", "d120", "d144")), str([d[k].get("controls") for k in ("initial", "d120", "d144")]))
-                check("UI: the window is compact (at most 600 px tall at 96 DPI, 900 at 144 DPI)",
-                      int(i["client"].split("x")[1].split()[0]) <= 600 and int(d["d144"]["client"].split("x")[1].split()[0]) <= 900,
+                check("UI: the window is compact (at most 680 px tall at 96 DPI, 1020 at 144 DPI; includes Combo animation)",
+                      int(i["client"].split("x")[1].split()[0]) <= 680 and int(d["d144"]["client"].split("x")[1].split()[0]) <= 1020,
                       i["client"] + " / " + d["d144"]["client"])
                 check("UI: Play in test mode is a dry run that saves first and reports play.ps1's message",
                       "could not be started" in d["played"]["status"] and "Default.xex does not match" in d["played"]["status"]

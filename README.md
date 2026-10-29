@@ -15,14 +15,15 @@ Rayman 3 was one of my favorite games growing up, and I wanted my wife to experi
 ## Features
 
 - **Native Windows port:** Play the Xbox 360 HD version without running an emulator.
-- **HD+ enhancements:** Optional visual corrections, alongside Vanilla and Custom profiles.
+- **HD+ enhancements:** Optional visual corrections and a new Combo Meter closing animation, alongside Vanilla and Custom profiles.
+- **Built-in game languages:** English, French, Spanish, Italian, and German, using the original Xbox 360 HD game data.
 - **Turkish translation:** An optional localization covering game text, menus, subtitles, and achievement descriptions.
-- **Keyboard and controller support:** Two keyboard layouts with customizable key bindings, plus Xbox-compatible controllers.
+- **Keyboard and controller support:** Two keyboard layouts with customizable key bindings and controller button mapping.
 - **DualSense enhancements:** Dynamic lightbar colors based on the game world and power-ups, with adjustable R2 adaptive trigger resistance.
 - **Achievements:** In-game achievement tracking and notifications, with Turkish text when the translation mod is enabled.
 - **Discord Rich Presence:** Optional Discord activity integration.
 - **Mod support:** Install and manage compatible texture, text, font, and subtitle mods through Settings.
-- **Integrated setup and settings:** Import your game package, configure the port, and preserve your preferences across updates.
+- **Installer and portable editions:** Set up the game using your own Xbox 360 package, with persistent settings and saves.
 
 ## Requirements
 
@@ -41,6 +42,18 @@ Rayman 3 was one of my favorite games growing up, and I wanted my wife to experi
 
 The game and Settings can also be launched from the Start menu or optional desktop shortcuts.
 
+### Portable ZIP
+
+A portable edition is available as an alternative to the Windows installer.
+
+Extract the complete ZIP to a writable folder, then open `Play.cmd` to launch the game or `Settings.cmd` to configure it. On first launch, provide your supported Xbox 360 game package or verified extracted data.
+
+The portable edition keeps settings, profiles, saves, and mods inside its own folder. It does not automatically use an installed copy or fall back to AppData.
+
+The complete folder can be moved to another writable location. To update an existing portable copy, follow the included `PORTABLE.txt` instructions and back up your user data before copying files.
+
+The portable ZIP includes its required Visual C++ runtime libraries. A clean non-admin Windows installation has not yet been tested.
+
 ### Updating, repairing, and uninstalling
 
 **Update or repair:** Run the setup again and select the same installation folder. Your saves, settings, and mods are preserved. If the installed game files are intact, you do not need to select the original package again.
@@ -56,6 +69,22 @@ A fresh installation follows the language selected during setup. Updates preserv
 This setting changes only the Settings interface. The game's language is controlled separately through the Turkish translation mod.
 
 **Türkçe kurulum rehberi:** [docs/KURULUM.md](docs/KURULUM.md)
+
+### Game language
+
+Under **Settings → Advanced → Game Language**, choose from the five languages included in the original Xbox 360 HD release:
+
+- English
+- French
+- Spanish
+- Italian
+- German
+
+The selected language applies to the game's text, subtitles, and available voice audio. It is saved independently of the Settings interface language and game profile, and takes effect the next time the game starts.
+
+The Turkish and Brazilian Portuguese translation mods currently replace English-language content. Select **English** as the game language when using either mod, and avoid enabling multiple language mods simultaneously.
+
+French text, subtitles, and representative cinematic audio have been verified. Voice coverage throughout the full campaign has not yet been checked.
 
 ## Controls
 
@@ -91,6 +120,16 @@ Choose a profile under Settings → Game profile:
 
 Changing the game profile does not reset display, control, or advanced settings. Changes take effect the next time the game starts.
 
+### Combo Meter Animation
+
+**Combo Meter Animation**, under Settings → Corrections, adds an upward closing animation during the final second of a combo.
+
+- **Vanilla:** Keeps the original abrupt closing behavior.
+- **HD+:** Enables the animation by default.
+- **Custom:** Allows the animation to be turned on or off independently.
+
+The preference is saved across launches. Changing it does not reset other Custom settings.
+
 ### Subtitles
 
 For cinematic subtitles, enable the original game's **Subtitles** setting under Options → Audio. This option starts disabled on a new game profile.
@@ -112,6 +151,14 @@ The game can be played in Turkish using the optional translation mod.
 The translation covers the game's menus, dialogue, subtitles, and achievement text. It has received additional human localization review and corrections for this release.
 
 For complete Turkish instructions, see the [Türkçe Yama guide](docs/turkce-yama.md).
+
+## Community Translations
+
+- **Brazilian Portuguese — [PINHATT](https://github.com/crispinhatt/Rayman3HD-Traducao-PTBR):** An independently maintained community translation for Rayman 3 HD Recompiled. Follow the author's installation instructions.
+
+The Brazilian Portuguese mod has passed target-data validation and limited runtime compatibility testing. Full-game translation review remains pending.
+
+Only one language translation mod should be enabled at a time. Restart the game after changing language mods.
 
 ## DualSense enhancements
 

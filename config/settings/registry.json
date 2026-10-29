@@ -83,6 +83,20 @@
       "decision": "D-042",
       "why": "the same 1280x720 frame drawn at a larger internal size; 1 is the original resolution"
     },
+    "combo_close": {
+      "label": "Combo Meter Animation",
+      "help": "Adds a smooth exit animation to the Combo Meter during the final second of a combo.",
+      "group": "corrections",
+      "category": "enhancement",
+      "values": ["original", "delayed"],
+      "value_labels": {"original": "Off (as on Xbox 360)", "delayed": "On"},
+      "vanilla": "original",
+      "hdplus": "delayed",
+      "launcher": "ComboClose",
+      "decision": "D-135",
+      "validation": "E-312: recreated HUD and short nonzero scoring comparison; real 2s/6s windows, refresh and human appearance accepted",
+      "why": "reuse the title's upward HUD exit during the final second of the actual combo countdown"
+    },
     "layer_coords": {
       "label": "Separate texture coordinates for two-layer effects",
       "help": "Makes haze and cloud layers move separately in the Bog of Murk and Land of the Livid Dead.",
@@ -126,6 +140,21 @@
       "decision": "D-081, D-090",
       "validation": "M44 (D-081): the title's rule VERIFIED from its code and hidden traces; D-090: a per-installation preference (Settings > Corrections), on for a fresh HD+ installation",
       "why": "the Xbox 360 HD release shows gameplay voice subtitles only in cinematic mode or for a fixed list of lines (title design, not a port defect)"
+    },
+    "game_language": {
+      "label": "Game language",
+      "help": "Applies next launch: text, subtitles and voices. Turkish/PT-BR mods need English; disable them for the other languages.",
+      "group": "advanced",
+      "category": "platform",
+      "scope": "preference",
+      "values": ["en", "fr", "es", "it", "de"],
+      "value_labels": {"en": "English", "fr": "Français", "es": "Español", "it": "Italiano", "de": "Deutsch"},
+      "vanilla": "en",
+      "hdplus": "en",
+      "launcher": "GameLanguage",
+      "decision": "D-136",
+      "validation": "Issue #2: native menus, subtitles and selected movie audio verified for all five; full campaign audio not audited",
+      "why": "Selects the target's native emulated-console language; independent of the Settings interface and mods"
     },
     "ui_language": {
       "label": "Settings language",

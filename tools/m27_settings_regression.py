@@ -48,6 +48,10 @@ v = rs.resolve(reg)
 check(v["preset"] == "vanilla" and all(v["values"][k] == S[k]["vanilla"] for k in S), "no preset = vanilla")
 check(all(src == "vanilla" for src in v["sources"].values()) and not v["warnings"], "vanilla: every source vanilla, no note")
 h = rs.resolve(reg, "hdplus")
+check(h["values"]["combo_close"] == "delayed" and v["values"]["combo_close"] == "original",
+      "Combo exit: HD+ delayed, Vanilla original")
+check(S["combo_close"].get("ui") != "hidden" and S["combo_close"]["group"] == "corrections",
+      "Combo animation is visible in Corrections using the existing profile")
 check(h["values"]["layer_coords"] == "separate" and h["sources"]["layer_coords"] == "hdplus", "hdplus: layer_coords separate")
 check(h["values"]["texture_orient"] == "corrected" and any("texture_orient" in w and "provisional" in w for w in h["warnings"]),
       "hdplus: texture_orient corrected, provisionally (M43, D-080), with a note")
@@ -177,7 +181,10 @@ if EXE.exists() and "--skip-runtime-dry-run" not in sys.argv[1:]:
               and out.get("texture ori") == "original" and out.get("revisit") == "fixed", "dry run: legacy launch = vanilla")
         code, out, _ = dry("-Preset", "hdplus")
         check(code == 0 and out.get("preset") == "hdplus" and out.get("layer coord") == "separate"
-              and out.get("texture ori") == "corrected" and out.get("preset note", "").startswith("texture_orient"), "dry run: hdplus")
+              and out.get("texture ori") == "corrected" and out.get("combo close") == "delayed"
+              and out.get("preset note", "").startswith("texture_orient"), "dry run: hdplus")
+        code, out, _ = dry("-Preset", "vanilla")
+        check(code == 0 and out.get("combo close") == "original", "dry run: Vanilla original Combo exit")
         code, out, _ = dry("-Preset", "hdplus", "-TextureOrient", "original")
         check(code == 0 and out.get("texture ori") == "original" and out.get("preset") == "hdplus+explicit",
               "dry run: the provisional HD+ correction is turned off by its parameter (M43)")

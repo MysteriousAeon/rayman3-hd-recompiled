@@ -62,7 +62,7 @@
     "private/work/default_image.bin": "94517a5843dcc22bf7a28646ad02e7e4d0ea434e2fe991ac4b00344b673f0847",
     "private/work/pe_analysis.json": "written once by tools/pe_analyze.py (E-04); not identical to the tracked reports/milestone1/data/pe_analysis.json"
   },
-  "codegen": {"how": "tools/r3hd_build_step.py digest: partition-independent (functions by name, file-scope and declaration lines as sets, unpartitioned files whole; CRLF -> LF; the build's M2 / M5 instrumentation removed). Equal for the developer tree and a fresh clone (E-151). A user build (R3HD_BUILD_MODE=user) must reproduce it; developer builds report it", "files": 247, "digest": "9c75503486ab7c4e50199bc79f2faeb04eed0ecfa77893e6f0fead37cf9dd8cf"},
+  "codegen": {"how": "tools/r3hd_build_step.py digest: partition-independent (functions by name, file-scope and declaration lines as sets, unpartitioned files whole; CRLF -> LF; the build's M2 / M5 instrumentation removed). Equal for the developer tree and a fresh clone (E-151). A user build (R3HD_BUILD_MODE=user) must reproduce it; developer builds report it", "files": 247, "digest": "d994b6c39026150d250eb86edc74901343f87c854d4e5c9e864d35b795c04468"},
   "build_rewrites_tracked_files": ["reports/milestone4/emission.json", "reports/milestone4/target_audit.json", "config/rexglue/r3hd_indirect.toml"],
   "outputs": {
     "executable": "private/work/rex/out/build/win-amd64-release/r3hd.exe",

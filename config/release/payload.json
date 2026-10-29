@@ -2,7 +2,7 @@
   "schema": 1,
   "note": "M29 (D-066): definition of the PRIVATE installer payload that tools/r3hd_stage.py builds. The payload is a prebuilt application for the user-supplied-data model (D-065): the runtime binaries of the current verified build (r3hd.exe, rexruntime.dll, rexgpu-xenos.dll and, since M46, the LGPL DLLs ffmpeg.dll / mspack.dll), the installer engine and launcher, the configs they read, and a private Python runtime; never game data, saves, captures, debug symbols or test executables. It contains translated game code and a runtime with the public XEX keys compiled in: it is NOT publishable until the gates of D-065 / D-066 are met. Text files are copied with LF line endings so the payload does not depend on the checkout's core.autocrlf.",
   "product": "Rayman 3 HD Recompiled",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "publishable": false,
   "binaries": {
     "build_dir": "private/work/rex/out/build/win-amd64-release",

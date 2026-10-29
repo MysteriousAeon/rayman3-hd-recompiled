@@ -1512,6 +1512,42 @@
     "The keys of the 2003 Windows release: arrow keys, C to jump, Space to shoot, Ctrl to lock on, Esc to pause. W rolls, hold X to look, V shows health / grimace. The camera is on the numeric keypad (or A S D) and Shift walks.": {
       "en": "The keys of the 2003 Windows release: arrow keys, C to jump, Space to shoot, Ctrl to lock on, Esc to pause. W rolls, hold X to look, V shows health / grimace. The camera is on the numeric keypad (or A S D) and Shift walks.",
       "tr": "2003 PC sürümünün tuşları: oklarla hareket, C ile zıplama, Boşluk ile saldırı, Ctrl ile hedefe kilitlenme, Esc ile duraklatma. W ile yuvarlan, bakış modu için X basılı tut, V ile can barını göster / dil çıkar. Kamera sayısal tuş takımında (veya A S D), yürüme Shift tuşunda."
+    },
+    "Game language": {
+      "en": "Game language",
+      "tr": "Oyun dili"
+    },
+    "Français": {
+      "en": "Français",
+      "tr": "Français"
+    },
+    "Turkish and PT-BR translation mods need Game language set to English. Settings language only changes this app.": {
+      "en": "Turkish and PT-BR translation mods need Game language set to English. Settings language only changes this app.",
+      "tr": "Türkçe ve PT-BR çeviri modları için Oyun dili: English seçin. Ayarlar dili yalnızca bu uygulamayı değiştirir."
+    },
+    "Español": {
+      "en": "Español",
+      "tr": "Español"
+    },
+    "Italiano": {
+      "en": "Italiano",
+      "tr": "Italiano"
+    },
+    "Deutsch": {
+      "en": "Deutsch",
+      "tr": "Deutsch"
+    },
+    "Applies next launch: text, subtitles and voices. Turkish/PT-BR mods need English; disable them for the other languages.": {
+      "en": "Applies next launch: text, subtitles and voices. Turkish/PT-BR mods need English; disable them for the other languages.",
+      "tr": "Metin, altyazı ve ses dili; sonraki açılışta uygulanır. Türkçe/PT-BR modları için English seçin; diğer dillerde bu modları kapatın."
+    },
+    "Combo Meter Animation": {
+      "en": "Combo Meter Animation",
+      "tr": "Kombo Göstergesi Animasyonu"
+    },
+    "Adds a smooth exit animation to the Combo Meter during the final second of a combo.": {
+      "en": "Adds a smooth exit animation to the Combo Meter during the final second of a combo.",
+      "tr": "Kombonun son saniyesinde Kombo Göstergesine yumuşak bir kapanış animasyonu ekler."
     }
   }
 }

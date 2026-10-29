@@ -32,7 +32,12 @@ def read(path: Path) -> str:
 # --- hook configuration --------------------------------------------------------------------------------------------
 compat = tomllib.loads(read(ROOT / "config/rexglue/r3hd_compat.toml"))["midasm_hook"]
 by_name = {hook["name"]: hook for hook in compat}
-check(sorted(by_name) == ["M18RevisitRedirect", "M18TestWorldEnd"], "the compatibility file holds exactly the two M18 hooks")
+check(sorted(by_name) == ["ComboCountdownTest", "ComboTimedCloseTest", "M18RevisitRedirect", "M18TestWorldEnd"],
+      "the file holds the two M18 hooks and the two explicit private Combo experiments only")
+check(by_name.get("ComboCountdownTest") == dict(address=0x8219F2D8, name="ComboCountdownTest",
+      registers=["r3"]), "private countdown hook is after the native update-disable gate, no jump flag")
+check(by_name.get("ComboTimedCloseTest") == dict(address=0x8219E9D4, name="ComboTimedCloseTest",
+      registers=["r31", "r27", "f13", "f30"]), "private Combo experiment has no return / jump flag")
 redirect, trigger = by_name.get("M18RevisitRedirect", {}), by_name.get("M18TestWorldEnd", {})
 check(redirect.get("address") == 0x82102E3C and redirect.get("registers") == ["r1"]
       and redirect.get("jump_address_on_true") == 0x82102E58, "redirect hook: site 82102E3C, continues at 82102E58 when true")
@@ -88,7 +93,7 @@ if installed.is_file():
 check(all(word not in header for word in ("windows.h", "PPC", "REX", "getenv")), "the decision header is pure (no guest or host access)")
 section = host[host.index("// M18 (D-047)"):]
 redirect_body = section[section.index("bool M18RevisitRedirect("):section.index("void M18TestWorldEnd(")]
-trigger_body = section[section.index("void M18TestWorldEnd("):]
+trigger_body = section[section.index("void M18TestWorldEnd("):section.index("void ComboTimedCloseTest(")]
 check(host[:host.index("// M18 (D-047)")].count("M18") == 0, "nothing before the M18 section refers to it")
 check("M18Store(" not in trigger_body and "memcpy(M18Base()" not in trigger_body, "the test trigger writes no guest memory")
 check('std::getenv("R3HD_TEST_WORLD_END")' in trigger_body and '!std::strcmp(v, "1")' in trigger_body,

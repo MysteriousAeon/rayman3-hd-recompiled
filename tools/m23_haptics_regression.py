@@ -125,13 +125,38 @@ for legacy in ("run_milestone2.ps1", "run_milestone3.ps1", "run_milestone4.ps1",
     check("if (-not $env:R3HD_LEGACY_VISIBLE_RUN) { throw 'Superseded runner (D-053)" in text
           and text.index("R3HD_LEGACY_VISIBLE_RUN") < text.index("$ErrorActionPreference"), f"{legacy}: refuses unattended use")
 check('if [ -z "$R3HD_LEGACY_VISIBLE_RUN" ]; then' in read(TOOLS / "m5_pilot_run.sh"), "m5_pilot_run.sh: refuses unattended use")
-# No tool but the hidden runner and the launcher starts the game.
+# Known runners plus the explicitly user-invoked E-304 visible observer.
 # (m8_crash_regression.py starts m8_crash_test.exe, a host test without input code; this file names the patterns.)
 starters = sorted(p.name for p in list(TOOLS.glob("*.py")) + list(TOOLS.glob("*.ps1")) + list(TOOLS.glob("*.sh"))
                   if p.name not in ("m23_haptics_regression.py", "m8_crash_regression.py")
-                  and re.search(r"ProcessStartInfo|Start-Process[^\n]*\$exe|\"\$EXE\"|subprocess\.\w+\(\[str\(EXE\)", read(p)))
+                  and (p.name in ("combo_close_visual.py", "combo_close_playtest.py") or re.search(r"ProcessStartInfo|Start-Process[^\n]*\$exe|\"\$EXE\"|subprocess\.\w+\(\[str\(EXE\)", read(p))))
 check(set(starters) <= {"play.ps1", "run_milestone2.ps1", "run_milestone3.ps1", "run_milestone4.ps1", "run_milestone5.ps1",
-                        "run_milestone6.ps1", "m5_pilot_run.sh"}, f"game starters are the known runners only (found {starters})")
+                        "run_milestone6.ps1", "m5_pilot_run.sh", "combo_close_visual.py", "combo_close_playtest.py"}, f"game starters are the known runners only (found {starters})")
+playable = read(TOOLS / 'combo_close_playtest.py')
+check("mode.add_argument('--manual'" in playable and "input('Press Enter" in playable
+      and "R3HD_TEST_COMBO_PLAYTEST='1'" in playable and "'--mnk_mode=true'" in playable
+      and "if not k.upper().startswith('R3HD_')" in playable,
+      'private playable Combo: explicit manual launch, real input, inherited experiments removed')
+diagnostic = read(TOOLS / 'combo_hud_diagnostic.py')
+check("R3HD_TEST_COMBO_CAPTURE='1'" in diagnostic and "'R3HD_TEST_COMBO_CAPTURE'" in play
+      and 'return m6frame::CaptureAt(swap)' in read(TOOLS / 'm8_runtime_patch.py')
+      and '!std::strcmp(combo_capture, "1")' in read(TOOLS / 'm8_runtime_patch.py'),
+      'private Combo captures: explicit diagnostic flag, bounded request policy, cleared by ordinary Play')
+check("env.pop('R3HD_TEST_COMBO_CLOSE', None)" in diagnostic
+      and "env.pop('R3HD_TEST_COMBO_PLAYTEST', None)" in diagnostic
+      and "session / \"user\"" in diagnostic and "session / \"cache\"" in diagnostic,
+      'private HUD control removes both prototype flags and redirects disposable writes')
+check('Process(process_id,' in diagnostic and 'len(captures) < 8' in diagnostic
+      and 'score_events < 4' in diagnostic and 'WriteProcessMemory' not in diagnostic,
+      'private HUD diagnostics: owned child, read-only event sampling, at most eight captures')
+visual = read(TOOLS / "combo_close_visual.py")
+check("R3HD_NONINTRUSIVE='1'" in visual and "R3HD_TEST_COMBO_CLOSE=combo_mode" in visual
+      and "if combo_mode not in ('timed', 'countdown', 'delayed-countdown'):" in visual
+      and "if not k.upper().startswith('R3HD_')" in visual,
+      "manual Combo observer: child-only device suppression, inherited experiments removed")
+check("mode.add_argument('--manual'" in visual and "input('Press Enter" in visual
+      and "owner.value == pid" in visual and "ui.ShowWindow(hwnd, 4)" in visual,
+      "manual Combo observer: explicit invocation/readiness, reveal only owned window without activation")
 
 # Build chain.
 discord = read(TOOLS / "m2_host" / "r3hd_discord.h")

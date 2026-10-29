@@ -1,0 +1,25 @@
+log VIDEOS\ubi.bik result=00000000
+log menumap\menumap.lvl result=00000000
+wait 10
+press 40
+wait 12
+press 22
+wait 1.5
+press 22
+wait 2
+press 44
+wait 6
+press 42
+wait 6
+press 22
+wait 1.5
+press 26
+wait 2
+press 44
+wait 8
+press 44
+log VIDEOS\intro.bik result=00000000 40
+wait 3
+press 40
+log intro_10\intro_10.lvl result=00000000 60
+wait 20

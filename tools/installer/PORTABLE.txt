@@ -1,0 +1,77 @@
+Rayman 3 HD Recompiled - Portable Edition 1.0.3
+
+Extract the whole ZIP into a new writable folder. Start Play.cmd or Settings.cmd.
+No administrator access, registry entry or shortcut is needed. First startup asks
+for your legally obtained Xbox 360 Rayman 3 HD package (title ID 5841123F,
+without a title update) or its verified extracted data. No game files are included.
+Nothing is downloaded. The package is copied/extracted and fully checked by the
+same intake used by setup. Blank input cancels. Damaged data requires that source
+again; no save or setting is reset. Each startup verifies program and game hashes,
+except the two replaceable LGPL DLLs described below.
+
+REQUIREMENTS
+Windows 10 version 1903 or newer / Windows 11 x64. The portable wrapper includes pinned application-local retail
+Microsoft VC++ runtime DLLs and Python. It needs no system VC++ installation.
+Startup refuses damaged/missing files. It does not install or elevate anything.
+app/licenses/PORTABLE-CRT.txt supplements the installer-specific VC++ notice.
+See app/THIRD_PARTY_NOTICES.txt, app/PROVENANCE.md, app/licenses and the included
+version-matched r3hd-lgpl-source archive. No translation mod is bundled.
+
+YOUR FILES (all relative to the extracted folder)
+settings.json              Settings, keyboard/controller assignments, language
+profiles/<name>/user/       Saves and achievements
+save_history/              Save snapshots
+mods/                      Imported translations and other data mods
+data/content/              Your verified game data
+data/intake.json            Intake record; original source path is informational
+cache/, sessions/          Runtime cache and session logs
+installer.json, r3hd_home.json   Local state, made at first preparation
+app/, bin/                 Same program layout as the installed edition
+
+Keep the entire folder together when moving or renaming it. Launch paths come
+from the command file/executable location, never the current working directory.
+Use the top-level entry points; do not start binaries in app/ or bin/ directly.
+Portable entry points clear R3HD_* environment overrides to isolate this folder.
+Keep user folders as real local directories, not links to another installation.
+Restricted/read-only locations are unsupported: move to a writable folder. There
+is no fallback to AppData or an installed edition, and no automatic migration.
+Settings may still use the word 'installation'; its folder is this portable home.
+For repair use these entry points, not Windows setup pointed at this folder.
+
+COEXISTENCE / SWITCHING
+Installed and portable editions keep separate files. Close one before starting
+the other (existing single-game and Settings guards still apply). To transfer
+state, close both, back up both folders, then explicitly COPY settings.json,
+profiles, save_history and mods to the destination. Preserve names, including
+leading spaces. Never overwrite a newer save unintentionally. No automatic merge.
+
+UPDATES
+Close the game and Settings. Extract a newer ZIP into a NEW empty folder; do not
+overlay an active/old folder. Back up the old folder, then explicitly copy the
+user files listed above plus data/ to the new one. Do not copy app/, bin/,
+portable.json, payload.json, installer.json, r3hd_home.json or transaction files.
+The new entry point validates the copied data and preserves existing settings.
+Keep the old folder until the update and saves have been checked. No downgrade
+or saved-data compatibility beyond the existing application is promised.
+
+REMOVAL / SHARING
+There is no uninstaller. Removing this folder also removes its saves and mods;
+back up your user files first. No other home is touched. Never share a folder
+after first run: it contains proprietary game data and personal files. Only an
+untouched public release ZIP should be redistributed, with its notices and source.
+Do not redistribute your extracted game data or personal files.
+
+BACKUP / RECOVERY
+Close the game and Settings, then copy settings.json, profiles/, save_history/
+and mods/ to a separate safe location. Preserve file names exactly. If program
+files are damaged, extract a fresh public ZIP into a new folder and follow UPDATES.
+If a save needs recovery, keep the current profile and save_history backup first;
+restore only a deliberately selected snapshot, never overwrite the only copy.
+Clean non-admin Windows execution has not been tested.
+
+LGPL REPLACEMENTS
+After verifying the original ZIP, you may replace bin/ffmpeg.dll and bin/mspack.dll
+with compatible Windows x64 builds. Save originals outside app/ and bin/. Startup
+allows changed hashes for only these two DLLs; format checks do not certify ABI or
+runtime compatibility. No automatic restore occurs. See app/licenses/LGPL-SOURCE.txt
+for source, build, loader, dependency and fresh-folder update instructions.

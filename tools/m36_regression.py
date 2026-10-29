@@ -90,7 +90,7 @@ check("patch_once" in patch and "generated" not in patch.split('"""')[2], "patch
 
 # tools
 pay = json.loads((ROOT / "config" / "release" / "payload.json").read_text(encoding="utf-8"))
-check(rm.version_key(pay["version"]) >= rm.version_key(rm.SUB_GROW_PORT) and pay["version"].startswith(("0.36.0", "0.49.0", "0.50.0", "1.0.0", "1.0.1", "1.0.2")),
+check(rm.version_key(pay["version"]) >= rm.version_key(rm.SUB_GROW_PORT) and pay["version"].startswith(("0.36.0", "0.49.0", "0.50.0", "1.0.0", "1.0.1", "1.0.2", "1.0.3")),
       f"payload: version {pay['version']} serves grown subtitles (gate {rm.SUB_GROW_PORT})")
 check('#define AppVersion "' + pay["version"] + '"' in read(TOOLS / "installer" / "r3hd_setup.iss"),
       "setup: the same version as the payload")
