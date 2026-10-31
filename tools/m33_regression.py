@@ -289,7 +289,7 @@ def launcher_checks(t: Path, keep):
         if not d:
             return
         check("UI: the Mods page opens with an empty list and says how to install",
-              d["empty"]["page"] == "mods" and d["empty"]["page_buttons"] == "0001"
+              d["empty"]["page"] == "mods" and d["empty"]["page_buttons"] == "00010"
               and "mods_count=0" in d["empty"]["mods_visible"] and "No mods are installed" in d["empty"]["mod_detail"])
         check("UI: a valid .zip is installed (off until enabled) and selected",
               d["imported"].get("mod.ui.alpha") == "off disabled " and "mods_count=1" in d["imported"]["mods_visible"]

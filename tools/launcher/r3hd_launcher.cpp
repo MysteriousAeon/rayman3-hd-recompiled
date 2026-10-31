@@ -236,12 +236,18 @@ struct Setting {
   bool Toggle() const { return !slider && values.size() == 2 && (scope == L"preset" || group == L"corrections" ||
       (values[0].value == L"off" && values[1].value == L"on")); }
   const std::wstring& Column(const std::wstring& preset) const { return preset == L"hdplus" ? hdplus : vanilla; }
+  // D-151: a correction check box that is a preference (gameplay subtitles) applies to every profile; it is shown at
+  // the end of the right column's first group, so Corrections holds only the profile's corrections. Its group, key
+  // and saving are unchanged. shown = that group (set when the page is made).
+  bool Moved() const { return group == L"corrections" && scope == L"preference" && Toggle(); }
+  std::wstring shown;
+  const std::wstring& Shown() const { return shown.empty() ? group : shown; }
   HWND title = nullptr, control = nullptr, helpText = nullptr, valueText = nullptr;
 };
 struct Preset { std::wstring key, name, text; };
 // M32 (D-069): the keyboard map, all from the model's KEY* rows (config/controls/keymap.json and the saved keys).
 using Slots = std::array<std::wstring, 2>;
-struct KeyName { std::wstring name, label, reserved; std::vector<std::wstring> scans; };
+struct KeyName { std::wstring name, label, reserved; std::vector<std::wstring> scans; bool mouse = false; };  // D-138: a mouse button has no scans
 struct KeyInput {
   std::wstring id, group, pad, action;
   bool hidden = false, required = false;
@@ -256,6 +262,7 @@ struct Model {
   std::wstring home, product, version, install, files, filesFirst, data, dataDetail;
   std::wstring languageKey, language = L"en";
   std::wstring settingsState, preset, base, presetLabel, settingsDetail, lastStamp, lastExit;
+  std::wstring revision;  // D-139: settings.json as read; a save names it so it never replaces a newer file
   int filesMissing = 0;
   bool running = false, lastFailed = false;
   std::vector<Preset> presets;
@@ -309,7 +316,8 @@ bool LoadModel(const Paths& p, Model& m, std::wstring& error) {
     else if (k == L"LASTRUN") { m.lastStamp = at(1); m.lastExit = at(2); m.lastFailed = at(3) == L"1"; }
     else if (k == L"SETTINGS") {
       m.settingsState = at(1); m.preset = at(2); m.base = at(3); m.presetLabel = at(4); m.settingsDetail = at(5);
-    } else if (k == L"PRESET") m.presets.push_back({at(1), at(2), at(3)});
+    } else if (k == L"REVISION") m.revision = at(1);
+    else if (k == L"PRESET") m.presets.push_back({at(1), at(2), at(3)});
     else if (k == L"GROUP") m.groups.push_back({at(1), at(2)});
     else if (k == L"SETTING") {
       Setting s;
@@ -339,7 +347,7 @@ bool LoadModel(const Paths& p, Model& m, std::wstring& error) {
     } else if (k == L"KEYBIND") {
       for (auto& i : m.keyInputs)
         if (i.id == at(1)) i.saved = {at(2), at(3)};
-    } else if (k == L"KEYNAME") m.keyNames.push_back({at(1), at(2), at(4), Split(at(3), L',')});
+    } else if (k == L"KEYNAME") m.keyNames.push_back({at(1), at(2), at(4), Split(at(3), L','), at(5) == L"1"});
     else if (k == L"KEYFALLBACK") m.fallbacks.push_back({at(1), at(2)});
     else if (k == L"KEYNOTE") m.keyNote = at(1);
     else if (k == L"PADSTATE") { m.padState = at(1); m.padWarning = at(2); }
@@ -365,7 +373,7 @@ bool LoadModel(const Paths& p, Model& m, std::wstring& error) {
 // The engine's set-preset: the resolver validates the choice and writes settings.json.
 bool SaveSettings(const Paths& p, const std::wstring& preset, const std::wstring& base,
                   const std::vector<std::wstring>& pairs, const std::vector<std::wstring>& keyboard,
-                  const std::vector<std::wstring>& controller, std::wstring& message) {
+                  const std::vector<std::wstring>& controller, const std::wstring& revision, std::wstring& message) {
   wchar_t dir[MAX_PATH], file[MAX_PATH];
   GetTempPathW(MAX_PATH, dir);
   GetTempFileNameW(dir, L"r3h", 0, file);
@@ -375,6 +383,7 @@ bool SaveSettings(const Paths& p, const std::wstring& preset, const std::wstring
   if (!pairs.empty()) { a.push_back(L"--set"); a.insert(a.end(), pairs.begin(), pairs.end()); }
   a.insert(a.end(), keyboard.begin(), keyboard.end());  // M32: --keyboard LAYOUT [--key INPUT=KEYS ...]
   a.insert(a.end(), controller.begin(), controller.end());  // D-115: --pad [INPUT=BUTTON ...]
+  if (!revision.empty()) a.insert(a.end(), {L"--expect-revision", revision});  // D-139
   a.insert(a.end(), {L"--result-file", file});
   std::string out;
   DWORD code = 1;
@@ -383,9 +392,15 @@ bool SaveSettings(const Paths& p, const std::wstring& preset, const std::wstring
   DeleteFileW(file);
   if (!result.empty() && result[0] == 0xFEFF) result.erase(0, 1);
   message.clear();
-  for (const auto& line : Split(result, L'\n'))
+  bool stale = false;
+  for (const auto& line : Split(result, L'\n')) {
     if (line.rfind(L"MESSAGE=", 0) == 0) message = Trim(line.substr(8));
+    if (Trim(line) == L"CODE=STALE") stale = true;
+  }
   if (code != 0) message = T(L"Settings could not be saved. Check folder access and try again.");
+  // D-139: the in-game PC Settings (or another Settings window) saved first; never replace its newer file.
+  if (code != 0 && stale)
+    message = T(L"The settings were changed elsewhere (for example in the game) after this window opened. Close Settings and open it again.");
   if (!ran) message = T(L"The settings component could not be started.");
   return ran && code == 0;
 }
@@ -564,10 +579,10 @@ Launch StartGame(const Paths& p, bool dryRun, std::wstring& detail, void (*idle)
 enum : int { kIdSave = 10, kIdPlay = 11, kIdFolder = 12, kIdControls = 13, kIdPageSettings = 14, kIdAdvanced = 15,
               kIdLayout = 16, kIdRestoreKeys = 17, kIdLanguage = 18, kIdMods = 19, kIdModList = 20, kIdModZip = 21,
               kIdModFolder = 22, kIdModToggle = 23, kIdModUp = 24, kIdModDown = 25, kIdModRemove = 26,
-              kIdRestorePad = 27, kIdKeyTab = 28, kIdPadTab = 29, kIdRadio = 100, kIdSetting = 200, kIdKey = 400,
+              kIdRestorePad = 27, kIdKeyTab = 28, kIdPadTab = 29, kIdCorrections = 30, kIdRadio = 100, kIdSetting = 200, kIdKey = 400,
               kIdPad = 600 };
 enum : UINT_PTR { kTimerPadPoll = 1, kTimerPadStatus = 2 };  // D-116
-enum class Page { Settings, Controls, Advanced, Mods };
+enum class Page { Settings, Controls, Advanced, Mods, Corrections };  // D-161: Corrections, its own page
 
 // D-116: one reading of a controller, in the Xbox 360 pad's terms (buttons = X_INPUT_GAMEPAD_* bits).
 struct PadSample {
@@ -596,6 +611,8 @@ struct Ui {
   HWND radios[3] = {}, radioText[3] = {}, lastFocus = nullptr;
   // M32 (D-069): three pages in one window: settings, the keyboard (Controls) and Advanced (troubleshooting).
   HWND controlsButton = nullptr, settingsButton = nullptr, advancedButton = nullptr;
+  // D-161: the Corrections page: its selector and the line naming the profile that sets the corrections.
+  HWND correctionsButton = nullptr, correctionsProfile = nullptr;
   HWND layoutTitle = nullptr, layoutBox = nullptr, restoreKeys = nullptr, controlsNote = nullptr, keyHead[6] = {},
        controlsRule = nullptr;
   HWND padTitle = nullptr, padRestore = nullptr;  // D-115
@@ -608,7 +625,7 @@ struct Ui {
   std::vector<HWND> keyPage, padPage;  // the two tabs' controls (both also in controlsPage)
   HWND advancedTitle = nullptr, advancedText = nullptr, languageTitle = nullptr, languageBox = nullptr;
 
-  std::vector<HWND> settingsPage, controlsPage, advancedPage, modsPage;
+  std::vector<HWND> settingsPage, controlsPage, advancedPage, modsPage, correctionsPage;
   // M33 (D-070): the Mods page (rows of r3hd_mods.py list, read when the page is first shown).
   HWND modsButton = nullptr, modsTitle = nullptr, modsText = nullptr, modList = nullptr, modDetail = nullptr,
        modZip = nullptr, modFolder = nullptr, modToggle = nullptr, modUp = nullptr, modDown = nullptr, modRemove = nullptr,
@@ -743,14 +760,28 @@ void BuildControls() {
   for (int i = 0; i < 3; ++i) { g.settingsPage.push_back(g.radios[i]); g.settingsPage.push_back(g.radioText[i]); }
   g.settingsPage.push_back(g.profileHint);
   bool firstInGroup = true;
-  for (const auto& gr : g.model.groups) {
+  for (const auto& gr : g.model.groups)
+    if (gr.first != L"corrections" && gr.first != L"advanced") {
+      for (auto& s : g.model.settings) if (s.Moved()) s.shown = gr.first;
+      break;
+    }
+  // D-151: controls are made, and so tabbed, in reading order: the corrections (D-161: their own page, which shows
+  // the profile that sets them), then the Settings page's groups.
+  auto groups = g.model.groups;
+  std::stable_partition(groups.begin(), groups.end(), [](const auto& gr) { return gr.first == L"corrections"; });
+  for (const auto& gr : groups) {
     if (!g.groupTitle.count(gr.first)) g.groupTitle[gr.first] = Make(L"STATIC", gr.second, SS_LEFT | SS_NOPREFIX);
     // M32: the troubleshooting group lives on the Advanced page, out of the everyday settings.
-    std::vector<HWND>& pageList = gr.first == L"advanced" ? g.advancedPage : g.settingsPage;
+    std::vector<HWND>& pageList = gr.first == L"advanced" ? g.advancedPage
+                                : gr.first == L"corrections" ? g.correctionsPage : g.settingsPage;
     pageList.push_back(g.groupTitle[gr.first]);
+    if (gr.first == L"corrections") {
+      g.correctionsProfile = Text(L"");  // its text is the profile shown now (Show)
+      pageList.push_back(g.correctionsProfile);
+    }
     for (size_t i = 0; i < g.model.settings.size(); ++i) {
       Setting& s = g.model.settings[i];
-      if (s.group != gr.first) continue;
+      if (s.Shown() != gr.first) continue;
       int id = kIdSetting + (int)i;
       if (s.slider) {
         s.title = Make(L"STATIC", SettingLabel(s), SS_LEFT | SS_NOPREFIX);  // before the bar: its accessible name
@@ -760,7 +791,8 @@ void BuildControls() {
         SendMessageW(s.control, TBM_SETPAGESIZE, 0, 10);
         s.valueText = Make(L"STATIC", L"", SS_RIGHT | SS_NOPREFIX);
       } else if (s.Toggle()) {
-        s.control = Make(L"BUTTON", SettingLabel(s), BS_AUTOCHECKBOX | WS_TABSTOP | (firstInGroup ? WS_GROUP : 0), id);
+        s.control = Make(L"BUTTON", SettingLabel(s), BS_AUTOCHECKBOX | WS_TABSTOP | (firstInGroup || s.Moved() ? WS_GROUP : 0),
+                         id);
       } else {
         s.title = Make(L"STATIC", SettingLabel(s), SS_LEFT | SS_NOPREFIX);  // before its box: the box's accessible name
         s.control = Make(WC_COMBOBOXW, L"", CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP | WS_GROUP, id);
@@ -869,6 +901,7 @@ void BuildControls() {
   g.status = Text(L"");
   // The page selector: push-like radio buttons, the shown page's one pressed.
   g.settingsButton = Make(L"BUTTON", T(L"Se&ttings"), BS_AUTORADIOBUTTON | BS_PUSHLIKE | WS_TABSTOP | WS_GROUP, kIdPageSettings);
+  g.correctionsButton = Make(L"BUTTON", T(L"Correctio&ns"), BS_AUTORADIOBUTTON | BS_PUSHLIKE, kIdCorrections);
   g.controlsButton = Make(L"BUTTON", T(L"&Controls"), BS_AUTORADIOBUTTON | BS_PUSHLIKE, kIdControls);
   g.advancedButton = Make(L"BUTTON", T(L"&Advanced"), BS_AUTORADIOBUTTON | BS_PUSHLIKE, kIdAdvanced);
   g.modsButton = Make(L"BUTTON", T(L"&Mods"), BS_AUTORADIOBUTTON | BS_PUSHLIKE, kIdMods);
@@ -905,10 +938,16 @@ int LineHeight(HFONT font) {
   return tm.tmHeight;
 }
 
+/// The shown page's name in notes and test dumps.
+const wchar_t* PageName() {
+  return g.page == Page::Controls ? L"controls" : g.page == Page::Advanced ? L"advanced" : g.page == Page::Mods ? L"mods"
+         : g.page == Page::Corrections ? L"corrections" : L"settings";
+}
+
 /// D-116: the list of the page shown now (its controls scroll; everything else is the header and the button row).
 const std::vector<HWND>& PageList() {
   return g.page == Page::Controls ? g.controlsPage : g.page == Page::Advanced ? g.advancedPage
-         : g.page == Page::Mods ? g.modsPage : g.settingsPage;
+         : g.page == Page::Mods ? g.modsPage : g.page == Page::Corrections ? g.correctionsPage : g.settingsPage;
 }
 
 // Places every control for the current DPI and scroll position; returns the content height (pixels). D-116: the
@@ -1127,8 +1166,32 @@ int Layout() {
     int nh2 = Measure(g.modsNote, g.body, full);
     put(g.modsNote, margin, my, full, nh2);
     bottom = my + nh2;
+  } else if (g.page == Page::Corrections) {
+    // D-161: the corrections in one column, under the line naming the profile that sets them; each help text under
+    // its check box, as the Settings page showed them.
+    int full = width - 2 * margin, cy = top;
+    HWND ht = g.groupTitle[L"corrections"];
+    int gh = Measure(ht, g.bold, full);
+    put(ht, margin, cy, full, gh);
+    cy += gh + S(4);
+    int pl = Measure(g.correctionsProfile, g.body, full);
+    put(g.correctionsProfile, margin, cy, full, pl);
+    cy += pl + S(12);
+    for (auto& s : g.model.settings) {
+      if (s.Shown() != L"corrections") continue;
+      int ch = std::max(Measure(s.control, g.body, full - S(22)), rowH - S(4));
+      put(s.control, margin, cy, full, ch);
+      cy += ch;
+      if (s.helpText) {
+        int hh2 = Measure(s.helpText, g.body, full - S(22));
+        put(s.helpText, margin + S(22), cy, full - S(22), hh2);
+        cy += hh2;
+      }
+      cy += S(10);
+    }
+    bottom = cy;
   } else {
-    // Left column: profile and corrections.
+    // Left column: the profile (D-161: the corrections it sets are on their own page).
     int x = margin, ly = top, hh = Measure(g.groupTitle[L"profile"], g.bold, col);
     put(g.groupTitle[L"profile"], x, ly, col, hh);
     ly += hh + S(8);
@@ -1137,28 +1200,30 @@ int Layout() {
       ly += rowH - S(4);
       int dh = Measure(g.radioText[i], g.body, col - S(22));
       put(g.radioText[i], x + S(22), ly, col - S(22), dh);
-      ly += dh + S(8);
+      ly += dh + S(3);  // D-151, D-156: tighter, so the five corrections fit at 150 % on a 1080p screen
     }
     int ph = Measure(g.profileHint, g.body, col);
     put(g.profileHint, x, ly, col, ph);
     ly += ph;
-    // The corrections group continues the left column (it belongs to the profile); the other groups fill the right.
+    // The other groups fill the right column.
     int rx = margin + col + gap, ry = top;
     for (const auto& gr : g.model.groups) {
-      if (gr.first == L"advanced") continue;  // M32: on the Advanced page
+      if (gr.first == L"advanced" || gr.first == L"corrections") continue;  // M32, D-161: on their own pages
       bool left = gr.first == L"corrections";
       int& cy = left ? ly : ry;
       int cx = left ? x : rx;
-      if (left) cy += S(12);  // D-090: room for the gameplay subtitles check box
+      if (left) cy += S(4);
       else if (cy != top) cy += S(18);
       HWND ht = g.groupTitle[gr.first];
       int gh = Measure(ht, g.bold, col);
       put(ht, cx, cy, col, gh);
       cy += gh + S(8);
       for (auto& s : g.model.settings) {
-        if (s.group != gr.first) continue;
+        if (s.Shown() != gr.first) continue;
         if (s.Toggle()) {
-          int ch = std::max(Measure(s.control, g.body, col - S(22)), rowH - S(4));
+          // D-156: a check box row is at least rowH - 8 (still taller than its text) and rows are 4 apart, so the five
+          // corrections fit at 150 % on a 1080p screen with room to spare.
+          int ch = std::max(Measure(s.control, g.body, col - S(22)), rowH - S(8));
           put(s.control, cx, cy, col, ch);
           cy += ch;
           if (s.helpText) {
@@ -1166,12 +1231,19 @@ int Layout() {
             put(s.helpText, cx + S(22), cy, col - S(22), hh2);
             cy += hh2;
           }
-          cy += S(10);
+          cy += S(4);
         } else {
           int lw = S(150);
           int lh = Measure(s.title, g.body, lw);
           put(s.title, cx, cy + std::max(0, (rowH - lh) / 2), lw, lh);
-          put(s.control, cx + lw + S(8), cy, col - lw - S(8), rowH + S(200));  // the height includes the list
+          if (s.slider) {  // D-138: label, bar, value ("50%") in one row, as on the Advanced page
+            int vw = S(48), bw2 = col - lw - S(8) - vw - S(6);
+            put(s.control, cx + lw + S(8), cy, bw2, rowH);
+            int vh = Measure(s.valueText, g.body, vw);
+            put(s.valueText, cx + lw + S(8) + bw2 + S(6), cy + std::max(0, (rowH - vh) / 2), vw, vh);
+          } else {
+            put(s.control, cx + lw + S(8), cy, col - lw - S(8), rowH + S(200));  // the height includes the list
+          }
           cy += std::max(rowH, lh) + S(4);
           if (s.helpText) {
             int hh2 = Measure(s.helpText, g.body, col);
@@ -1187,18 +1259,37 @@ int Layout() {
   // The button row: under the page, or (D-116) at the bottom of a window shorter than the content.
   const int sh = std::max(Measure(g.status, g.body, width - 2 * margin), line);
   const int bw = S(100), bhgt = S(30), bgap = S(8);
-  const int footH = S(8) + S(12) + sh + S(10) + bhgt + S(16);
+  // D-161: five page buttons of one width, wide enough for the longest caption; when they do not fit beside the
+  // action buttons, they take a line of their own above them.
+  const HWND pageButtons[] = {g.settingsButton, g.correctionsButton, g.controlsButton, g.advancedButton, g.modsButton};
+  int pbw = S(84);
+  {
+    HDC dc = GetDC(g.hwnd);
+    HGDIOBJ old = SelectObject(dc, g.body);
+    for (HWND b : pageButtons) {
+      wchar_t text[128] = {};
+      GetWindowTextW(b, text, 128);
+      RECT m{0, 0, 0, 0};
+      DrawTextW(dc, text, -1, &m, DT_CALCRECT | DT_SINGLELINE);
+      pbw = std::max<int>(pbw, m.right + S(20));
+    }
+    SelectObject(dc, old);
+    ReleaseDC(g.hwnd, dc);
+  }
+  const int barW = 5 * pbw + 4 * bgap, actionsX = width - margin - 3 * bw - 2 * bgap;
+  const bool barLine = margin + barW + S(16) > actionsX;
+  const int footH = S(8) + S(12) + sh + S(10) + (barLine ? bhgt + bgap : 0) + bhgt + S(16);
   const int content = bottom + footH;
   y = scrolling ? std::max<int>(client.bottom - footH, headBottom) + S(8) : bottom + S(8);
   const int footTop = y - S(8);
-  place(g.rule2, margin, y, width - 2 * margin, S(2));
+  // D-161: exactly the two pixel rows the etched line paints; a third row (S(2) above 96 DPI) is never painted and kept
+  // the previous page's text when a shorter page (Corrections) put the rule over it.
+  place(g.rule2, margin, y, width - 2 * margin, 2);
   y += S(12);
   place(g.status, margin, y, width - 2 * margin, sh);
   y += sh + S(10);
-  place(g.settingsButton, margin, y, bw, bhgt);
-  place(g.controlsButton, margin + bw + bgap, y, bw, bhgt);
-  place(g.advancedButton, margin + 2 * (bw + bgap), y, bw, bhgt);
-  place(g.modsButton, margin + 3 * (bw + bgap), y, bw, bhgt);
+  for (int i = 0; i < 5; ++i) place(pageButtons[i], margin + i * (pbw + bgap), y, pbw, bhgt);
+  if (barLine) y += bhgt + bgap;
   place(g.closeButton, width - margin - bw, y, bw, bhgt);
   place(g.playButton, width - margin - 2 * bw - bgap, y, bw, bhgt);
   place(g.saveButton, width - margin - 3 * bw - 2 * bgap, y, bw, bhgt);
@@ -1215,10 +1306,12 @@ int Layout() {
   show(g.controlsPage, g.page == Page::Controls);
   show(g.advancedPage, g.page == Page::Advanced);
   show(g.modsPage, g.page == Page::Mods);
+  show(g.correctionsPage, g.page == Page::Corrections);
   SendMessageW(g.settingsButton, BM_SETCHECK, g.page == Page::Settings ? BST_CHECKED : BST_UNCHECKED, 0);
   SendMessageW(g.controlsButton, BM_SETCHECK, g.page == Page::Controls ? BST_CHECKED : BST_UNCHECKED, 0);
   SendMessageW(g.advancedButton, BM_SETCHECK, g.page == Page::Advanced ? BST_CHECKED : BST_UNCHECKED, 0);
   SendMessageW(g.modsButton, BM_SETCHECK, g.page == Page::Mods ? BST_CHECKED : BST_UNCHECKED, 0);
+  SendMessageW(g.correctionsButton, BM_SETCHECK, g.page == Page::Corrections ? BST_CHECKED : BST_UNCHECKED, 0);
   SendMessageW(g.keyTab, BM_SETCHECK, g.padTabShown ? BST_UNCHECKED : BST_CHECKED, 0);
   SendMessageW(g.padTab, BM_SETCHECK, g.padTabShown ? BST_CHECKED : BST_UNCHECKED, 0);
   return content;
@@ -1336,6 +1429,18 @@ void Show() {
     }
   }
   EnableWindow(g.saveButton, g.dirty && g.model.install == L"ok");
+  // D-161: the Corrections page names the profile that sets its check boxes (they change only in Custom).
+  std::wstring profileLine = g.profile == 2
+      ? F(L"Active profile: Custom, starting from {base}. Your choices here are saved as Custom.",
+          {{L"base", g.customBase == L"hdplus" ? L"HD+" : L"Vanilla"}})
+      : F(L"Active profile: {profile}. Its corrections are shown here; to change them, choose Custom on the Settings page.",
+          {{L"profile", g.profile == 1 ? L"HD+" : L"Vanilla"}});
+  wchar_t shown[512] = {};
+  if (g.correctionsProfile) GetWindowTextW(g.correctionsProfile, shown, 512);
+  if (g.correctionsProfile && profileLine != shown) {
+    SetWindowTextW(g.correctionsProfile, profileLine.c_str());
+    if (g.page == Page::Corrections && IsWindowVisible(g.hwnd)) Fit();  // a line of another length
+  }
 }
 
 void SetStatus(const std::wstring& s, bool error = false) {
@@ -1411,7 +1516,7 @@ void ShowKeys() {
   for (size_t i = 0; i < g.model.keyInputs.size(); ++i) {
     KeyInput& in = g.model.keyInputs[i];
     for (int s = 0; s < 2; ++s) {
-      std::wstring t = (int)i == g.captureInput && s == g.captureSlot ? T(L"Press a key...") : KeyLabel(g.keys[in.id][s]);
+      std::wstring t = (int)i == g.captureInput && s == g.captureSlot ? T(L"Press a key or mouse button...") : KeyLabel(g.keys[in.id][s]);
       SetText(in.button[s], t);
     }
   }
@@ -1899,6 +2004,12 @@ bool CaptureFilter(const MSG& msg) {
     swallowUp = 0;
     return true;
   }
+  // D-138: the release of the mouse button that ended a capture.
+  static UINT swallowMouseUp = 0;
+  if (swallowMouseUp && ours && msg.message == swallowMouseUp) {
+    swallowMouseUp = 0;
+    return true;
+  }
   if (g.padCapture >= 0) {  // D-116: a controller capture: Esc cancels; the keyboard does nothing else meanwhile
     if (!ours) return false;
     if (msg.message == WM_KEYDOWN || msg.message == WM_SYSKEYDOWN) {
@@ -1928,7 +2039,28 @@ bool CaptureFilter(const MSG& msg) {
     }
     if (msg.message == WM_KEYUP || msg.message == WM_SYSKEYUP || msg.message == WM_CHAR || msg.message == WM_SYSCHAR)
       return true;
-    if (msg.message == WM_LBUTTONDOWN || msg.message == WM_RBUTTONDOWN || msg.message == WM_NCLBUTTONDOWN) {
+    // D-138: a mouse button pressed on the waiting key button is the choice (the click that started the capture is
+    // already over: it started on its release). Its release is swallowed, so no BN_CLICKED restarts a capture.
+    const wchar_t* mouseName = nullptr;
+    UINT mouseUp = 0;
+    switch (msg.message) {
+      case WM_LBUTTONDOWN: case WM_LBUTTONDBLCLK: mouseName = L"LMB"; mouseUp = WM_LBUTTONUP; break;
+      case WM_RBUTTONDOWN: case WM_RBUTTONDBLCLK: mouseName = L"RMB"; mouseUp = WM_RBUTTONUP; break;
+      case WM_MBUTTONDOWN: case WM_MBUTTONDBLCLK: mouseName = L"MMB"; mouseUp = WM_MBUTTONUP; break;
+      case WM_XBUTTONDOWN: case WM_XBUTTONDBLCLK:
+        mouseName = GET_XBUTTON_WPARAM(msg.wParam) == XBUTTON1 ? L"MB4" : GET_XBUTTON_WPARAM(msg.wParam) == XBUTTON2 ? L"MB5" : L"";
+        mouseUp = WM_XBUTTONUP;
+        break;
+      default: break;
+    }
+    if (mouseName && msg.hwnd == g.model.keyInputs[g.captureInput].button[g.captureSlot]) {
+      const KeyName* k = *mouseName ? FindKeyName(mouseName) : nullptr;
+      if (!k) return true;  // a button the game cannot read: ignored, the capture continues
+      swallowMouseUp = mouseUp;
+      AssignKey(g.captureInput, g.captureSlot, *k);
+      return true;
+    }
+    if (mouseName || msg.message == WM_LBUTTONDOWN || msg.message == WM_RBUTTONDOWN || msg.message == WM_NCLBUTTONDOWN) {
       bool same = msg.hwnd == g.model.keyInputs[g.captureInput].button[g.captureSlot];
       EndCapture();
       if (same) { SetStatus(T(L"Key not changed.")); return true; }  // a click on the capturing button cancels it
@@ -2054,7 +2186,7 @@ bool Save() {
   for (const auto& b : g.model.padButtons)
     if (g.pad[b.id] != b.id) controller.push_back(b.id + L"=" + g.pad[b.id]);
   std::wstring msg;
-  if (!SaveSettings(g.paths, preset, base, pairs, keyboard, controller, msg)) {
+  if (!SaveSettings(g.paths, preset, base, pairs, keyboard, controller, g.model.revision, msg)) {
     SetStatus(T(L"Not saved: ") + msg, true);
     return false;
   }
@@ -2062,6 +2194,7 @@ bool Save() {
   Model fresh;
   if (LoadModel(g.paths, fresh, error)) {
     g.model.settingsState = fresh.settingsState;
+    g.model.revision = fresh.revision;
     g.model.preset = fresh.preset;
     g.model.base = fresh.base;
     g.model.running = fresh.running;
@@ -2273,10 +2406,14 @@ bool ChangeLanguage(const std::wstring& language) {
   if (language == uiLanguage || (language != L"en" && language != L"tr")) return true;
   auto args = EngineArgs(g.paths, L"set-option");
   args.insert(args.end(), {L"--set", g.model.languageKey + L"=" + language});
+  if (!g.model.revision.empty()) args.insert(args.end(), {L"--expect-revision", g.model.revision});  // D-139
   std::string output;
   DWORD code = 1;
   if (!RunCapture(g.paths.python, args, output, code) || code != 0) {
-    SetStatus(T(L"Settings could not be saved. Check folder access and try again."), true);
+    SetStatus(output.find("REFUSED STALE") != std::string::npos
+                  ? T(L"The settings were changed elsewhere (for example in the game) after this window opened. Close Settings and open it again.")
+                  : T(L"Settings could not be saved. Check folder access and try again."),
+              true);
     SendMessageW(g.languageBox, CB_SETCURSEL, uiLanguage == L"tr" ? 1 : 0, 0);
     return false;
   }
@@ -2287,6 +2424,7 @@ bool ChangeLanguage(const std::wstring& language) {
     return false;
   }
   g.model.language = language;
+  g.model.revision = fresh.revision;  // D-139: this window's own write; later saves name it
   // Preserve the form state. Only child controls are rebuilt; no Populate(), save or mod operation.
   int selected = SelectedMod();
   std::wstring selectedId = selected >= 0 ? g.mods[selected].id : L"";
@@ -2294,7 +2432,8 @@ bool ChangeLanguage(const std::wstring& language) {
   EndPadCapture();
   while (HWND child = GetWindow(g.hwnd, GW_CHILD)) DestroyWindow(child);  // the page host with its controls
   g.host = nullptr;
-  g.settingsPage.clear(); g.controlsPage.clear(); g.advancedPage.clear(); g.modsPage.clear();
+  g.settingsPage.clear(); g.controlsPage.clear(); g.advancedPage.clear(); g.modsPage.clear(); g.correctionsPage.clear();
+  g.correctionsProfile = nullptr;
   g.keyPage.clear(); g.padPage.clear(); g.padGroupTitles.clear();
   g.groupTitle.clear(); g.keyGroupTitles.clear(); g.secondary.clear();
   for (auto& setting : g.model.settings) setting.title = setting.control = setting.helpText = nullptr;
@@ -2366,21 +2505,27 @@ void OnCommand(int id, int code) {
     case kIdPageSettings:
     case kIdControls:
     case kIdAdvanced:
-    case kIdMods: {
+    case kIdMods:
+    case kIdCorrections: {
       if (code != BN_CLICKED) break;
       EndCapture();
       EndPadCapture();
       g.page = id == kIdControls ? Page::Controls : id == kIdAdvanced ? Page::Advanced : id == kIdMods ? Page::Mods
-             : Page::Settings;
+             : id == kIdCorrections ? Page::Corrections : Page::Settings;
       if (g.page == Page::Mods && !g.modsLoaded) ShowMods(L"");
       if (g.page == Page::Controls && g.padTabShown) UpdatePadStatus();
       g.scrollY = 0;
       Fit(true);  // M43: the new page's height around the same centre
       PadTimers();
-      SetFocus(g.page == Page::Controls ? (g.padTabShown ? g.padTab : g.layoutBox) : g.page == Page::Advanced ? g.folderButton
-               : g.page == Page::Mods ? g.modList : g.radios[g.profile]);
-      Note(std::wstring(L"page: ") + (g.page == Page::Controls ? L"controls" : g.page == Page::Advanced ? L"advanced"
-                                      : g.page == Page::Mods ? L"mods" : L"settings"));
+      {
+        // D-161: Corrections: its first check box that can change (Custom), otherwise its own page button.
+        HWND corrections = g.correctionsButton;
+        for (const auto& s : g.model.settings)
+          if (s.Shown() == L"corrections" && IsWindowEnabled(s.control)) { corrections = s.control; break; }
+        SetFocus(g.page == Page::Controls ? (g.padTabShown ? g.padTab : g.layoutBox) : g.page == Page::Advanced ? g.folderButton
+                 : g.page == Page::Mods ? g.modList : g.page == Page::Corrections ? corrections : g.radios[g.profile]);
+      }
+      Note(std::wstring(L"page: ") + PageName());
       InvalidateRect(g.hwnd, nullptr, TRUE);
       break;
     }
@@ -2723,8 +2868,7 @@ std::wstring StateDump() {
          std::to_wstring(IsWindowVisible(st.control) != 0) + L" value=" + value + L" label=" + label + L"\n";
   }
   // M32: the Controls page as its controls show it (button captions read back from the window, not the model).
-  s += std::wstring(L"page=") + (g.page == Page::Controls ? L"controls" : g.page == Page::Advanced ? L"advanced"
-                                 : g.page == Page::Mods ? L"mods" : L"settings") + L"\n";
+  s += std::wstring(L"page=") + PageName() + L"\n";
   // M33: the Mods page as its controls show it.
   s += L"mods_visible=" + std::to_wstring(IsWindowVisible(g.modList) != 0) + L" mods_count=" +
        std::to_wstring(SendMessageW(g.modList, LB_GETCOUNT, 0, 0)) + L" mods_selected=" +
@@ -2751,6 +2895,31 @@ std::wstring StateDump() {
          std::to_wstring(bar ? si.nMax : -1) + L" scroll_page=" + std::to_wstring(bar ? (int)si.nPage : -1) + L"\n";
     GetWindowTextW(g.modToggle, buf, (int)std::size(buf));
     s += L"mod_toggle=" + std::wstring(buf) + L" enabled=" + std::to_wstring(IsWindowEnabled(g.modToggle) != 0) + L"\n";
+  }
+  // D-151: the Settings page's keyboard order as Tab walks it (enabled, visible controls): profile, then setting keys.
+  // D-161: the same for the Corrections page.
+  if (g.page == Page::Settings || g.page == Page::Corrections) {
+    std::wstring order, last;
+    HWND first = GetNextDlgTabItem(g.host, nullptr, FALSE), h = first;
+    for (int n = 0; h && n < 200; ++n) {
+      std::wstring name;
+      for (int i = 0; i < 3; ++i) if (h == g.radios[i]) name = L"profile";
+      for (const auto& st : g.model.settings) if (h == st.control) name = st.key;
+      if (!name.empty() && name != last) { order += (order.empty() ? L"" : L",") + name; last = name; }
+      h = GetNextDlgTabItem(g.host, h, FALSE);
+      if (h == first) break;
+    }
+    s += std::wstring(g.page == Page::Settings ? L"settings" : L"corrections") + L"_tab_order=" + order + L"\n";
+  }
+  {  // D-161: the Corrections page's profile line and the control holding the focus (a setting key, or its caption)
+    wchar_t line[512] = {};
+    if (g.correctionsProfile) GetWindowTextW(g.correctionsProfile, line, 512);
+    s += std::wstring(L"corrections_profile=") + line + L"\n";
+    HWND f = GetFocus();
+    std::wstring name;
+    for (const auto& st : g.model.settings) if (f && f == st.control) name = st.key;
+    if (name.empty() && f) { wchar_t cap[256] = {}; GetWindowTextW(f, cap, 256); name = cap; }
+    s += L"focus=" + name + L"\n";
   }
   s += L"key_layout=" + g.keyLayout + L"\n";
   s += L"key_capture=" + (g.captureInput >= 0 ? g.model.keyInputs[g.captureInput].id + L"." + std::to_wstring(g.captureSlot) : L"") + L"\n";
@@ -2792,7 +2961,8 @@ std::wstring StateDump() {
   s += L"page_buttons=" + std::to_wstring(SendMessageW(g.settingsButton, BM_GETCHECK, 0, 0) == BST_CHECKED) +
        std::to_wstring(SendMessageW(g.controlsButton, BM_GETCHECK, 0, 0) == BST_CHECKED) +
        std::to_wstring(SendMessageW(g.advancedButton, BM_GETCHECK, 0, 0) == BST_CHECKED) +
-       std::to_wstring(SendMessageW(g.modsButton, BM_GETCHECK, 0, 0) == BST_CHECKED) + L"\n";
+       std::to_wstring(SendMessageW(g.modsButton, BM_GETCHECK, 0, 0) == BST_CHECKED) +
+       std::to_wstring(SendMessageW(g.correctionsButton, BM_GETCHECK, 0, 0) == BST_CHECKED) + L"\n";  // D-161: fifth
   s += L"tab_buttons=" + std::to_wstring(SendMessageW(g.keyTab, BM_GETCHECK, 0, 0) == BST_CHECKED) +
        std::to_wstring(SendMessageW(g.padTab, BM_GETCHECK, 0, 0) == BST_CHECKED) + L"\n";
   GetWindowTextW(g.banner, buf, (int)std::size(buf));
@@ -2865,7 +3035,9 @@ std::wstring StateDump() {
     // Text that does not fit its control: a push button's one line wider than it, a static's wrapped text taller.
     int textClipped = 0;
     std::wstring which;
-    for (HWND c : PageList()) {
+    std::vector<HWND> checked = PageList();  // D-161: and the page buttons, whose captions grow with the language
+    checked.insert(checked.end(), {g.settingsButton, g.correctionsButton, g.controlsButton, g.advancedButton, g.modsButton});
+    for (HWND c : checked) {
       if (!IsWindowVisible(c)) continue;
       wchar_t cls[32];
       GetClassNameW(c, cls, 32);
@@ -2968,7 +3140,7 @@ int RunUiTest(HINSTANCE inst, const std::wstring& script, const std::wstring& ou
       else SendMessageW(b, BM_CLICK, 0, 0);
     } else if (cmd == L"page") {  // M31 / M32: settings | controls | advanced; M33: mods; D-116: keys | pad (a tab)
       HWND b = a1 == L"controls" || a1 == L"keys" || a1 == L"pad" ? g.controlsButton : a1 == L"advanced" ? g.advancedButton
-             : a1 == L"mods" ? g.modsButton : g.settingsButton;
+             : a1 == L"mods" ? g.modsButton : a1 == L"corrections" ? g.correctionsButton : g.settingsButton;
       SendMessageW(b, BM_CLICK, 0, 0);
       if (a1 == L"keys" || a1 == L"pad") { Pump(); SendMessageW(a1 == L"pad" ? g.padTab : g.keyTab, BM_CLICK, 0, 0); }
     } else if (cmd == L"layout") {  // M32: choose a keyboard layout in the box
@@ -2988,6 +3160,27 @@ int RunUiTest(HINSTANCE inst, const std::wstring& script, const std::wstring& ou
       else if (!IsWindowVisible(g.model.keyInputs[found].button[slot])) g.log.push_back(L"key button hidden: " + a1);
       else if (cmd == L"key") SendMessageW(g.model.keyInputs[found].button[slot], BM_CLICK, 0, 0);
       else SendMessageW(g.hwnd, WM_CONTEXTMENU, (WPARAM)g.model.keyInputs[found].button[slot], 0);
+    } else if (cmd == L"mouse") {  // D-138: INPUT SLOT BUTTON(left|right|middle|x1|x2): press and release it over that key button
+      int found = -1;                // through the capture filter and then the control, as the message loop does; never real input
+      for (size_t i = 0; i < g.model.keyInputs.size(); ++i) if (g.model.keyInputs[i].id == a1) found = (int)i;
+      int slot = _wtoi(a2.c_str());
+      std::wstring which = f.size() > 3 ? f[3] : L"";
+      UINT down = which == L"left" ? WM_LBUTTONDOWN : which == L"right" ? WM_RBUTTONDOWN : which == L"middle" ? WM_MBUTTONDOWN
+                : which == L"x1" || which == L"x2" ? WM_XBUTTONDOWN : 0;
+      if (found < 0 || slot < 0 || slot > 1 || !down) { g.log.push_back(L"no mouse target " + a1 + L" " + a2 + L" " + which); ++failures; }
+      else if (!IsWindowVisible(g.model.keyInputs[found].button[slot])) g.log.push_back(L"key button hidden: " + a1);
+      else {
+        WORD x = which == L"x1" ? XBUTTON1 : which == L"x2" ? XBUTTON2 : 0;
+        for (int phase = 0; phase < 2; ++phase) {
+          MSG m = {};
+          m.hwnd = g.model.keyInputs[found].button[slot];
+          m.message = phase == 0 ? down : down + 1;  // WM_*BUTTONUP follows WM_*BUTTONDOWN
+          m.wParam = MAKEWPARAM(phase == 0 ? (down == WM_LBUTTONDOWN ? MK_LBUTTON : down == WM_RBUTTONDOWN ? MK_RBUTTON
+                                                : down == WM_MBUTTONDOWN ? MK_MBUTTON : x == XBUTTON1 ? MK_XBUTTON1 : MK_XBUTTON2) : 0, x);
+          m.lParam = MAKELPARAM(4, 4);
+          if (!CaptureFilter(m)) SendMessageW(m.hwnd, m.message, m.wParam, m.lParam);
+        }
+      }
     } else if (cmd == L"pad") {  // D-116: click the button of the row of INPUT (starts its capture, or cancels it)
       int action = -1;
       for (size_t i = 0; i < g.model.padActions.size(); ++i) if (g.model.padActions[i].id == a1) action = (int)i;

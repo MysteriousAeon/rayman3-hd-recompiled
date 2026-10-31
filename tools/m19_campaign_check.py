@@ -67,9 +67,10 @@ def attach(run_dir: Path) -> tuple[int, str]:
 
 
 def hidden_run(run: str, steps: Path, seconds: int, *, user_root: str = "", test_level: str = "", env: dict | None = None,
-               beside=None) -> list:
+               beside=None, audio_after: int = 0) -> list:
     """One hidden run with the progression watcher. `beside(run_dir, game, log)` may drive read-only tools and
-    scoped input while the game runs; it returns failure reasons. Returns the driver-side reasons."""
+    scoped input while the game runs; it returns failure reasons. Returns the driver-side reasons. `audio_after`
+    moves the runner's private 10 s mix capture (m9_license_run.py --audio-after)."""
     WORK.mkdir(parents=True, exist_ok=True)
     run_dir = m12.RUNS / run
     if run_dir.exists():
@@ -77,6 +78,7 @@ def hidden_run(run: str, steps: Path, seconds: int, *, user_root: str = "", test
     command = [sys.executable, str(TOOLS / "m9_license_run.py"), run, str(steps), "--license-mask", "1",
                "--seconds", str(seconds), "--play"]
     command += ["--test-level", test_level] if test_level else ["--user-root", user_root]
+    command += ["--audio-after", str(audio_after)] if audio_after else []
     environment = {k: v for k, v in os.environ.items() if k not in SWITCHES}
     environment.update(env or {})
     reasons = []

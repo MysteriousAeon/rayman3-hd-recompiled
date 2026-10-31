@@ -46,6 +46,15 @@ def judge_run(name: str) -> None:
     check(bool(policy) and set(policy) == {("suppressed", "none")}, f"{name}: policy suppressed, no pad driver (got {sorted(set(policy))})")
     for needle in ("SDL input driver initialized", "SDL OnControllerDeviceAdded", "XInput driver"):
         check(needle not in log, f"{name}: '{needle}' absent (no controller opened)")
+    # D-141: the controller speaker decodes and logs in a hidden run, but never looks for or opens an endpoint.
+    speaker = re.findall(r"R3HD ds_speaker on=\d volume=\d+ policy=(\w+)", log)
+    check(set(speaker) <= {"suppressed"}, f"{name}: controller speaker suppressed (got {sorted(set(speaker))})")
+    # E-332: nor writes the controller's audio route ("output=played" is the pre-E-332 wording of "output=submitted").
+    for needle in ("R3HD ds_speaker endpoint=", "output=submitted", "output=played", "R3HD ds_speaker route="):
+        check(needle not in log, f"{name}: '{needle}' absent (no controller speaker output)")
+    # E-334 / E-335: the jingle, the can pickup, the expiry warning and the expiry are all refused as suppressed.
+    outputs = re.findall(r"R3HD ds_speaker event=(?:activate|pickup|expiry_warning|expiry)\b.*? output=(\w+)", log)
+    check(set(outputs) <= {"suppressed"}, f"{name}: speaker events suppressed (got {sorted(set(outputs))})")
 
 
 if "--run" in sys.argv:
@@ -172,14 +181,48 @@ for fn in ("void Step(", "void ReleaseAll(", "void Renumbered("):   # D-105 entr
     check("if (m23haptics::Suppressed()" in body and body.index("m23haptics::Suppressed()") < body.index("Apply("),
           f"DualSense {fn.split()[1]} hidden runs return before any output")
 ds_code = code_only(ds)
-check(ds_code.count("SDL_SetGamepadLED(") == 1 and ds_code.count("SDL_SendGamepadEffect(") == 1
-      and ds_code.count("Apply(") == 4, "DualSense: one light call, one effect call, reached only through Step / "
+# E-332: the second effect call is the speaker's audio route (SendRoute), reached only through StepRoute (from Step)
+# and ReleaseAll, both after their hidden-run return.
+check(ds_code.count("SDL_SetGamepadLED(") == 1 and ds_code.count("SDL_SendGamepadEffect(") == 2
+      and ds_code.count("Apply(") == 4 and ds_code.count("SendRoute(") == 3 and ds_code.count("StepRoute(") == 2,
+      "DualSense: one light call, two effect calls (trigger, speaker route), reached only through Step / "
       "ReleaseAll / Renumbered")
+for fn, call in (("void Step(", "StepRoute("), ("void ReleaseAll(", "SendRoute(")):
+    body = ds[ds.index(fn):]
+    body = body[:body.index("\n}\n")]
+    check(call in body and body.index("m23haptics::Suppressed()") < body.index(call),
+          f"DualSense {fn.split()[1]}: hidden runs return before the speaker route ({call[:-1]})")
 check("SDL_SetGamepadPlayerIndex(" not in ds_code, "DualSense: the light is given back by an LED write (D-105)")
 check("DualSense" not in sdl or "r3hd_ds::Step(" in sdl, "DualSense: the driver steps through the gated helper")
 check("r3hd_ds::" not in sdl or all(f'r3hd_ds::ReleaseAll(controllers_, "{r}")' in sdl
                                     for r in ("focus", "close", "title_exit")),
       "DualSense: released at focus loss, window close and title exit (D-105)")
+# D-141: the controller speaker is the one audio output besides the game's own; its device side is one header.
+spk = read(TOOLS / "r3hd_ds_speaker_sdl.h")
+check(read(SDK / "include/rex/r3hd_ds_speaker_sdl.h") == spk and
+      read(SDK / "include/rex/r3hd_ds_speaker.h") == read(TOOLS / "r3hd_ds_speaker.h"),
+      "r3hd_ds_speaker*.h: installed copies equal tools/")
+spk_code = code_only(spk)
+check(spk_code.count("m23haptics::Suppressed()") == 1 and "if (!suppressed) Endpoint(true);" in spk_code and
+      spk_code.index('else if (suppressed) why = "suppressed";') < spk_code.index("else if (!Endpoint(false))"),
+      "controller speaker: a hidden run returns before any endpoint lookup or output")
+# E-334: one logical device on the matched endpoint, a stream per clip bound to that device only.
+check(spk_code.count("SDL_OpenAudioDevice(id, nullptr)") == 1 and spk_code.count("SDL_OpenAudioDevice") == 1 and
+      spk_code.count("SDL_BindAudioStream(") == 1 and "SDL_BindAudioStream(logical, v.stream)" in spk_code and
+      spk_code.count("SDL_CreateAudioStream(") == 1 and len(re.findall(r"(?<!Find)Endpoint\(", spk_code)) == 3 and
+      "SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK" not in spk_code,
+      "controller speaker: one device, opened only on the matched endpoint, never the default device")
+check(spk_code.count("void Play(") == 1 and spk_code.count("Play(voices_[") == 4,
+      "controller speaker: jingle, pickup, warning and expiry share the one output path (and its hidden-run refusal)")
+xma = read(SDK / "src/audio/xma_context.cpp")
+spk_h = code_only(read(TOOLS / "r3hd_ds_speaker.h"))
+check(xma.count("r3hd_ds_speaker::OnXmaBuffer(") == 1 and "Post(m->request)" in spk_h and
+      "Request::kPickup" not in spk_h.replace("{&kCanPickup, Request::kPickup}", "") and
+      all(e in spk_h for e in ("{&kCanPickup, Request::kPickup}", "{&kTimerAlert, Request::kAlert}",
+                               "{&kPowerDown, Request::kPowerDown}")),
+      "controller speaker: pickup, warning and expiry come only from the game's own XMA buffer start")
+check("r3hd_ds_speaker_sdl.h" in read(SDK / "src/audio/sdl/sdl_audio_driver.cpp"),
+      "controller speaker: device side compiled in the SDL audio driver")
 check("python tools\\r3hd_dualsense_patch.py" in bat and bat.index("m50_runtime_patch.py") < bat.index("r3hd_dualsense_patch.py")
       < bat.index("cmake --build external"), "build replays the DualSense patch last, before the SDK build")
 check("python tools\\m23_haptics_patch.py" in bat, "build replays the haptics patch")

@@ -26,7 +26,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import m49_build as b  # noqa: E402
 from m48p_build import ROOT, Refused  # noqa: E402
 
-b.VERSION = "1.0.3"
+b.VERSION = "1.1.0"
 b.SETUP_NAME = f"Rayman3HDRecompiled-{b.VERSION}-setup.exe"
 b.TAG = "M50_BUILD"
 # D-108: the final Turkish translation (D-106 / D-107: the person's 65 LQA proposals verbatim, the U+2026 glyph, the

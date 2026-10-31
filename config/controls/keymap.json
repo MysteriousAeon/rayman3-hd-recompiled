@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "note": "M32 (D-069): the keyboard map. The runtime's keyboard driver (external/rexglue-sdk/src/input/mnk/mnk_input_driver.cpp) turns keys into the Xbox 360 pad inputs that the game reads; every pad input has one keybind_* setting. This file is the one definition of what a person may bind: the pad inputs and what the game does with them (only behaviour seen in tests or reported by a person is named; the rest is hidden from the ordinary view and says so), the keys the runtime can see (names of external/rexglue-sdk/src/ui/keybinds.cpp that SDL produces, by their PC set-1 scan code: the runtime reads physical key positions, so the Settings window captures scan codes too), the keys that may not be bound and why, and the layouts. tools/r3hd_settings.py resolves it with a settings file's 'keyboard' section (a layout plus the inputs a person changed); tools/play.ps1 passes the result as keybind_* arguments; tools/m32_regression.py ties every name here to the SDK sources. Visual presets (Vanilla / HD+ / Custom) never change keys.",
+  "note": "M32 (D-069): the keyboard map. The runtime's keyboard driver (external/rexglue-sdk/src/input/mnk/mnk_input_driver.cpp) turns keys into the Xbox 360 pad inputs that the game reads; every pad input has one keybind_* setting. This file is the one definition of what a person may bind: the pad inputs and what the game does with them (only behaviour seen in tests or reported by a person is named; the rest is hidden from the ordinary view and says so), the keys the runtime can see (names of external/rexglue-sdk/src/ui/keybinds.cpp that SDL produces, by their PC set-1 scan code: the runtime reads physical key positions, so the Settings window captures scan codes too), the keys that may not be bound and why, and the layouts. tools/r3hd_settings.py resolves it with a settings file's 'keyboard' section (a layout plus the inputs a person changed); tools/play.ps1 passes the result as keybind_* arguments; tools/m32_regression.py ties every name here to the SDK sources. Mouse buttons (LMB RMB MMB MB4 MB5, marked \"mouse\": true, no scan code) are keys like the others for binding and conflicts, but act in gameplay only with the Mouse Buttons setting on (D-138). Visual presets (Vanilla / HD+ / Custom) never change keys.",
   "default_layout": "modern",
   "slots": 2,
   "shared_keys": [{"key": "V", "inputs": ["left_shoulder", "right_shoulder"]}],
@@ -52,7 +52,7 @@
       "keys": {
         "lstick_up": ["W"], "lstick_down": ["S"], "lstick_left": ["A"], "lstick_right": ["D"], "walk": ["Control"],
         "rstick_up": ["Up"], "rstick_down": ["Down"], "rstick_left": ["Left"], "rstick_right": ["Right"],
-        "a": ["Space"], "x": ["E"], "right_trigger": ["Shift"], "left_trigger": ["Q"],
+        "a": ["Space"], "x": ["E", "LMB"], "right_trigger": ["Shift", "RMB"], "left_trigger": ["Q"],
         "start": ["Return", "P"], "b": ["Escape", "Backspace"],
         "y": ["R"], "left_shoulder": ["1"], "right_shoulder": ["3"], "back": ["Tab"],
         "dpad_up": ["Numpad8", "I"], "dpad_down": ["Numpad2", "K"], "dpad_left": ["Numpad4", "J"], "dpad_right": ["Numpad6", "L"],
@@ -67,7 +67,7 @@
       "keys": {
         "lstick_up": ["Up"], "lstick_down": ["Down"], "lstick_left": ["Left"], "lstick_right": ["Right"], "walk": ["Shift"],
         "rstick_up": ["Numpad8"], "rstick_down": ["Numpad2", "S"], "rstick_left": ["Numpad4", "A"], "rstick_right": ["Numpad6", "D"],
-        "a": ["C", "Return"], "x": ["Space"], "right_trigger": ["Control"], "left_trigger": ["F1"],
+        "a": ["C", "Return"], "x": ["Space", "LMB"], "right_trigger": ["Control", "RMB"], "left_trigger": ["F1"],
         "start": ["Escape"], "b": ["W", "Backspace"],
         "y": ["X"], "left_shoulder": ["V"], "right_shoulder": ["V"], "back": ["Tab"],
         "dpad_up": ["I"], "dpad_down": ["K"], "dpad_left": ["J"], "dpad_right": ["L"],
@@ -120,6 +120,9 @@
     {"name": "Numpad6", "label": "Num 6", "scan": ["4D"]}, {"name": "Numpad7", "label": "Num 7", "scan": ["47"]},
     {"name": "Numpad8", "label": "Num 8", "scan": ["48"]}, {"name": "Numpad9", "label": "Num 9", "scan": ["49"]},
     {"name": "NumpadPlus", "label": "Num +", "scan": ["4E"]}, {"name": "NumpadMinus", "label": "Num -", "scan": ["4A"]},
-    {"name": "NumpadStar", "label": "Num *", "scan": ["37"]}, {"name": "NumpadSlash", "label": "Num /", "scan": ["E035"]}
+    {"name": "NumpadStar", "label": "Num *", "scan": ["37"]}, {"name": "NumpadSlash", "label": "Num /", "scan": ["E035"]},
+    {"name": "LMB", "label": "Mouse L", "mouse": true}, {"name": "RMB", "label": "Mouse R", "mouse": true},
+    {"name": "MMB", "label": "Mouse M", "mouse": true}, {"name": "MB4", "label": "Mouse 4", "mouse": true},
+    {"name": "MB5", "label": "Mouse 5", "mouse": true}
   ]
 }

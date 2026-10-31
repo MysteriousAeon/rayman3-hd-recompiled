@@ -48,6 +48,8 @@ def sdl_scancodes(km) -> dict:
     table = re.findall(r"/\*0x[0-9a-fA-F]+\*/\s*(SDL_SCANCODE_\w+)", (SDL / "src/events/scancodes_windows.h").read_text())
     out = {}
     for k in km["keys"]:
+        if k.get("mouse"):  # D-138: a mouse button has no scan code
+            continue
         s = k["scan"][0]
         out[k["name"]] = num[table[int(s[-2:], 16) | (0x80 if len(s) == 4 else 0)]]
     return out

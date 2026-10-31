@@ -92,9 +92,9 @@ check("fwrite" not in probe, "probe: no sample data written")
 check("const float* data" in probe and "float* data" not in probe.replace("const float* data", ""), "probe: output samples are const")
 check(driver.count("m22audio::Output(driver, data, sample_count, driver->sdl_device_channels_,") == 2, "probe: both output paths")
 for call in ("m22audio::XmaInput(id(), data.IsAnyInputBufferValid());", "m22audio::XmaReset(id());",
-             "m22audio::XmaFrame(id());", "m22audio::XmaError(id(), 1);"):
+             "m22audio::XmaFrame(id());", "m22audio::XmaError(id(), 1);", "m22audio::XmaBuffer(id(), "):
     check(xma.count(call) == 1, f"probe: {call.split('(')[0]} once")
-for name in ("XmaInput", "XmaReset", "XmaFrame", "XmaError", "Output"):
+for name in ("XmaInput", "XmaReset", "XmaFrame", "XmaError", "XmaBuffer", "Output"):
     body = probe[probe.index(f"inline void {name}("):]
     body = body[:body.index("\n}\n")]
     check("if (!file) return;" in body, f"probe: {name} does nothing without the file")

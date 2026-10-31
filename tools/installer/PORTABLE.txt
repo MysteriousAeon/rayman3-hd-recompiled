@@ -1,4 +1,4 @@
-Rayman 3 HD Recompiled - Portable Edition 1.0.3
+Rayman 3 HD Recompiled - Portable Edition 1.1.0
 
 Extract the whole ZIP into a new writable folder. Start Play.cmd or Settings.cmd.
 No administrator access, registry entry or shortcut is needed. First startup asks

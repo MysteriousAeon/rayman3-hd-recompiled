@@ -33,6 +33,22 @@
       "en": "0% turns the resistance off. Applies the next time the game starts.",
       "tr": "%0 direnci kapatır. Değişiklik, oyun bir sonraki başlatılışında uygulanır."
     },
+    "DualSense controller speaker": {
+      "en": "DualSense controller speaker",
+      "tr": "DualSense kumanda hoparlörü"
+    },
+    "Plays the game's own power-up jingle through the DualSense speaker when Rayman gains a power. USB only; the game's normal sound is unchanged. Applies the next time the game starts.": {
+      "en": "Plays the game's own power-up jingle through the DualSense speaker when Rayman gains a power. USB only; the game's normal sound is unchanged. Applies the next time the game starts.",
+      "tr": "Rayman yeni bir güç kazandığında oyunun kendi güç kazanma melodisini DualSense hoparlöründen çalar. Yalnızca USB; oyunun normal sesi değişmez. Değişiklik, oyun bir sonraki başlatılışında uygulanır."
+    },
+    "Controller Speaker Volume": {
+      "en": "Controller Speaker Volume",
+      "tr": "Kumanda Hoparlörü Ses Düzeyi"
+    },
+    "Volume of the controller speaker effect. 0% is silent. Applies the next time the game starts.": {
+      "en": "Volume of the controller speaker effect. 0% is silent. Applies the next time the game starts.",
+      "tr": "Kumanda hoparlörü efektinin ses düzeyi. %0 sessizdir. Değişiklik, oyun bir sonraki başlatılışında uygulanır."
+    },
     "{n}%": {
       "en": "{n}%",
       "tr": "%{n}"
@@ -101,13 +117,13 @@
       "en": "Rendering resolution",
       "tr": "Görüntü çözünürlüğü"
     },
-    "The size the game draws its 3D image at. Auto follows your screen or window (up to 2160p). Higher sizes need a faster graphics card.": {
-      "en": "The size the game draws its 3D image at. Auto follows your screen or window (up to 2160p). Higher sizes need a faster graphics card.",
-      "tr": "Oyunun 3B görüntü çözünürlüğü. Otomatik, ekran veya pencereye göre seçer (en fazla 2160p). Yüksek çözünürlük daha güçlü ekran kartı gerektirir."
+    "Auto selects the smallest supported rendering resolution that covers your screen in Fullscreen, or your window in Window mode, up to 2160p. In Fullscreen on a 1080p display, the game renders at 1440p. If performance is poor, manually selecting 720p can help.": {
+      "en": "Auto selects the smallest supported rendering resolution that covers your screen in Fullscreen, or your window in Window mode, up to 2160p. In Fullscreen on a 1080p display, the game renders at 1440p. If performance is poor, manually selecting 720p can help.",
+      "tr": "Otomatik, tam ekran modunda ekran boyutunuza, pencere modunda ise pencere boyutuna göre uygun olan en düşük desteklenen görüntü çözünürlüğünü seçer (en fazla 2160p). Örneğin, 1080p ekranda tam ekran oynarken oyun 1440p çözünürlükte işlenir. Performans sorunu yaşıyorsanız 720p seçeneğini deneyebilirsiniz."
     },
-    "Auto (recommended)": {
-      "en": "Auto (recommended)",
-      "tr": "Otomatik (önerilen)"
+    "Auto": {
+      "en": "Auto",
+      "tr": "Otomatik"
     },
     "720p (1x, original)": {
       "en": "720p (1x, original)",
@@ -133,13 +149,49 @@
       "en": "Off",
       "tr": "Kapalı"
     },
+    "Correct HD Lighting Colors": {
+      "en": "Correct HD Lighting Colors",
+      "tr": "HD Aydınlatma Renklerini Düzelt"
+    },
+    "Removes the unnatural pink tint introduced by the HD release in Hoodlum Headquarters and the Tower of the Leptys.": {
+      "en": "Removes the unnatural pink tint introduced by the HD release in Hoodlum Headquarters and the Tower of the Leptys.",
+      "tr": "HD sürümünün Hoodlum Karargâhı ve Leptys Kulesi'nde eklediği doğal olmayan pembe tonu kaldırır."
+    },
+    "Correct Charge Trail Colors": {
+      "en": "Correct Charge Trail Colors",
+      "tr": "Yumruk Şarj İzi Renklerini Düzelt"
+    },
+    "Restores the red-to-orange glow of the trail behind Rayman's charged punch.": {
+      "en": "Restores the red-to-orange glow of the trail behind Rayman's charged punch.",
+      "tr": "Rayman'ın şarjlı yumruğunun arkasındaki izin kırmızıdan turuncuya parıltısını geri getirir."
+    },
+    "Correctio&ns": {
+      "en": "Correctio&ns",
+      "tr": "Dü&zeltmeler"
+    },
+    "Active profile: {profile}. Its corrections are shown here; to change them, choose Custom on the Settings page.": {
+      "en": "Active profile: {profile}. Its corrections are shown here; to change them, choose Custom on the Settings page.",
+      "tr": "Etkin profil: {profile}. Bu profilin düzeltmeleri burada gösterilir; değiştirmek için Ayarlar sayfasında Özel'i seçin."
+    },
+    "Active profile: Custom, starting from {base}. Your choices here are saved as Custom.": {
+      "en": "Active profile: Custom, starting from {base}. Your choices here are saved as Custom.",
+      "tr": "Etkin profil: Özel ({base} temel alınarak). Buradaki seçimleriniz Özel olarak kaydedilir."
+    },
+    "Correct Sky Colors": {
+      "en": "Correct Sky Colors",
+      "tr": "Gökyüzü Renklerini Düzelt"
+    },
+    "Restores the sky color in Clearleaf Forest and the Bog of Murk.": {
+      "en": "Restores the sky color in Clearleaf Forest and the Bog of Murk.",
+      "tr": "Berrakyaprak Ormanı ve Kasvet Bataklığı'nda gök rengini düzeltir."
+    },
     "Correct Robo-Pirate statue textures": {
       "en": "Correct Robo-Pirate statue textures",
       "tr": "Robo-Pirate heykellerinin doku yönünü düzelt"
     },
-    "Fixes the texture orientation on four statues in Hoodlum Headquarters.": {
-      "en": "Fixes the texture orientation on four statues in Hoodlum Headquarters.",
-      "tr": "Hoodlum Karargâhı bölümündeki dört heykel dokusunun yönünü düzeltir."
+    "Fixes four upside-down statue textures in Hoodlum Headquarters.": {
+      "en": "Fixes four upside-down statue textures in Hoodlum Headquarters.",
+      "tr": "Hoodlum Karargâhı'ndaki dört heykelin ters dokusunu düzeltir."
     },
     "Gameplay subtitles": {
       "en": "Gameplay subtitles",
@@ -1005,9 +1057,57 @@
       "en": "Press a key for {action}. Esc cancels.",
       "tr": "{action} için bir tuşa basın. Esc iptal eder."
     },
-    "Press a key...": {
-      "en": "Press a key...",
-      "tr": "Bir tuşa basın..."
+    "Press a key or mouse button...": {
+      "en": "Press a key or mouse button...",
+      "tr": "Bir tuşa veya fare tuşuna basın..."
+    },
+    "Mouse": {
+      "en": "Mouse",
+      "tr": "Fare"
+    },
+    "Mouse Camera": {
+      "en": "Mouse Camera",
+      "tr": "Fare ile Kamera"
+    },
+    "Turns the camera with the mouse during gameplay. The pointer stays in the game window only while you play; menus, pause and Alt+Tab release it.": {
+      "en": "Turns the camera with the mouse during gameplay. The pointer stays in the game window only while you play; menus, pause and Alt+Tab release it.",
+      "tr": "Oyun sırasında kamerayı fareyle döndürür. İşaretçi yalnızca oynarken oyun penceresinde kalır; menüler, duraklatma ve Alt+Tab onu serbest bırakır."
+    },
+    "Mouse Sensitivity": {
+      "en": "Mouse Sensitivity",
+      "tr": "Fare Hassasiyeti"
+    },
+    "How fast the mouse turns the camera. 50% is the default.": {
+      "en": "How fast the mouse turns the camera. 50% is the default.",
+      "tr": "Farenin kamerayı ne kadar hızlı döndürdüğü. Varsayılan değer %50."
+    },
+    "Mouse Buttons": {
+      "en": "Mouse Buttons",
+      "tr": "Fare Tuşları"
+    },
+    "In gameplay, uses the mouse buttons assigned on the Controls page (by default left = Attack, right = Lock On).": {
+      "en": "In gameplay, uses the mouse buttons assigned on the Controls page (by default left = Attack, right = Lock On).",
+      "tr": "Oyun sırasında Kontroller sayfasında atanan fare tuşlarını kullanır (varsayılan: sol = Saldırı, sağ = Hedefe kilitlen)."
+    },
+    "Mouse L": {
+      "en": "Mouse L",
+      "tr": "Fare Sol"
+    },
+    "Mouse R": {
+      "en": "Mouse R",
+      "tr": "Fare Sağ"
+    },
+    "Mouse M": {
+      "en": "Mouse M",
+      "tr": "Fare Orta"
+    },
+    "Mouse 4": {
+      "en": "Mouse 4",
+      "tr": "Fare 4"
+    },
+    "Mouse 5": {
+      "en": "Mouse 5",
+      "tr": "Fare 5"
     },
     "Program files are missing ({file}). Run setup again to repair them.": {
       "en": "Program files are missing ({file}). Run setup again to repair them.",
@@ -1548,6 +1648,122 @@
     "Adds a smooth exit animation to the Combo Meter during the final second of a combo.": {
       "en": "Adds a smooth exit animation to the Combo Meter during the final second of a combo.",
       "tr": "Kombonun son saniyesinde Kombo Göstergesine yumuşak bir kapanış animasyonu ekler."
+    },
+    "PC Settings": {
+      "en": "PC Settings",
+      "tr": "PC Ayarları"
+    },
+    "Loading settings...": {
+      "en": "Loading settings...",
+      "tr": "Ayarlar yükleniyor..."
+    },
+    "Apply": {
+      "en": "Apply",
+      "tr": "Uygula"
+    },
+    "Discard changes": {
+      "en": "Discard changes",
+      "tr": "Değişiklikleri at"
+    },
+    "Applied.": {
+      "en": "Applied.",
+      "tr": "Uygulandı."
+    },
+    "Saved.": {
+      "en": "Saved.",
+      "tr": "Kaydedildi."
+    },
+    "Saving...": {
+      "en": "Saving...",
+      "tr": "Kaydediliyor..."
+    },
+    "Applies now.": {
+      "en": "Applies now.",
+      "tr": "Hemen uygulanır."
+    },
+    "Applies the next time the game starts.": {
+      "en": "Applies the next time the game starts.",
+      "tr": "Oyun bir sonraki açılışında uygulanır."
+    },
+    "This session: {value}": {
+      "en": "This session: {value}",
+      "tr": "Bu oturum: {value}"
+    },
+    "Can be changed in the Settings app.": {
+      "en": "Can be changed in the Settings app.",
+      "tr": "Ayarlar uygulamasından değiştirilebilir."
+    },
+    "Set by the profile; change it in the Settings app.": {
+      "en": "Set by the profile; change it in the Settings app.",
+      "tr": "Profil belirler; Ayarlar uygulamasından değiştirin."
+    },
+    "Profile: {profile}": {
+      "en": "Profile: {profile}",
+      "tr": "Profil: {profile}"
+    },
+    "Controls": {
+      "en": "Controls",
+      "tr": "Kontroller"
+    },
+    "Keyboard and controller controls, and the profile's corrections, are changed in the Settings app.": {
+      "en": "Keyboard and controller controls, and the profile's corrections, are changed in the Settings app.",
+      "tr": "Klavye ve kumanda kontrolleri ile profilin düzeltmeleri Ayarlar uygulamasından değiştirilir."
+    },
+    "Open Settings app": {
+      "en": "Open Settings app",
+      "tr": "Ayarlar uygulamasını aç"
+    },
+    "Settings is open. Its changes apply the next time the game starts.": {
+      "en": "Settings is open. Its changes apply the next time the game starts.",
+      "tr": "Ayarlar açıldı. Oradaki değişiklikler oyun bir sonraki açılışında uygulanır."
+    },
+    "The Settings app could not be started.": {
+      "en": "The Settings app could not be started.",
+      "tr": "Ayarlar uygulaması başlatılamadı."
+    },
+    "The game keeps running while this panel is open. Pause first during gameplay.": {
+      "en": "The game keeps running while this panel is open. Pause first during gameplay.",
+      "tr": "Bu panel açıkken oyun çalışmaya devam eder. Oynanış sırasında önce oyunu duraklatın."
+    },
+    "F4 or Esc closes this panel. Changes that are not applied are discarded.": {
+      "en": "F4 or Esc closes this panel. Changes that are not applied are discarded.",
+      "tr": "F4 veya Esc bu paneli kapatır. Uygulanmayan değişiklikler atılır."
+    },
+    "Keep this display mode?": {
+      "en": "Keep this display mode?",
+      "tr": "Bu ekran modu kalsın mı?"
+    },
+    "The previous display mode returns in {seconds} seconds unless you keep this one.": {
+      "en": "The previous display mode returns in {seconds} seconds unless you keep this one.",
+      "tr": "Bu modu korumazsanız {seconds} saniye içinde önceki ekran moduna dönülecek."
+    },
+    "Keep": {
+      "en": "Keep",
+      "tr": "Koru"
+    },
+    "Revert": {
+      "en": "Revert",
+      "tr": "Geri al"
+    },
+    "The previous display mode was restored.": {
+      "en": "The previous display mode was restored.",
+      "tr": "Önceki ekran modu geri yüklendi."
+    },
+    "Applied to this session only: this launch did not start from an installation's settings.": {
+      "en": "Applied to this session only: this launch did not start from an installation's settings.",
+      "tr": "Yalnızca bu oturuma uygulandı: bu açılış bir kurulumun ayarlarıyla başlatılmadı."
+    },
+    "The saved settings could not be read. Only the options of this session are shown.": {
+      "en": "The saved settings could not be read. Only the options of this session are shown.",
+      "tr": "Kayıtlı ayarlar okunamadı. Yalnızca bu oturumun seçenekleri gösteriliyor."
+    },
+    "The settings were changed in the Settings app while this panel was open. They were reloaded: check them and apply again.": {
+      "en": "The settings were changed in the Settings app while this panel was open. They were reloaded: check them and apply again.",
+      "tr": "Bu panel açıkken ayarlar Ayarlar uygulamasında değiştirildi. Yeniden yüklendi: kontrol edip yeniden uygulayın."
+    },
+    "The settings were changed elsewhere (for example in the game) after this window opened. Close Settings and open it again.": {
+      "en": "The settings were changed elsewhere (for example in the game) after this window opened. Close Settings and open it again.",
+      "tr": "Bu pencere açıldıktan sonra ayarlar başka bir yerde (örneğin oyunda) değiştirildi. Ayarlar'ı kapatıp yeniden açın."
     }
   }
 }

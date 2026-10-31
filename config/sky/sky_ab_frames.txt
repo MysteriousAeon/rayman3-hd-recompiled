@@ -1,0 +1,16 @@
+# E-350 (D-153): hidden sky clear A/B. The same schedule in an original run, a second original run (control) and a
+# background run (R3HD_TEST_SKY_CLEAR=background). Opening, idle, then the camera held up at its limit for two frames.
+wait 25
+frame t25
+wait 20
+frame t45
+wait 25
+frame t70
+axis 303 -32767
+wait 3
+frame t73_up
+wait 1
+frame t74_up
+axis 303 0
+wait 3
+frame t77

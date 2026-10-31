@@ -54,7 +54,7 @@ Close the game, then copy your ffmpeg.dll and / or mspack.dll over the files in 
 Keep a copy of the originals. A replacement must keep the interface the program was built with: the same exported
 functions with the same declarations and structure layouts as in the headers at the commits above. rexruntime.dll
 imports from ffmpeg.dll: av_buffer_alloc, av_frame_alloc, av_frame_free, av_log_set_callback, av_packet_alloc,
-av_strerror, avcodec_alloc_context3, avcodec_find_decoder (with the fork's AV_CODEC_ID_XMAFRAMES),
+av_packet_free, av_strerror, avcodec_alloc_context3, avcodec_find_decoder (with the fork's AV_CODEC_ID_XMAFRAMES),
 avcodec_free_context, avcodec_open2, avcodec_receive_frame, avcodec_send_packet; and from mspack.dll: lzxd_init,
 lzxd_decompress, lzxd_free (it also reads the window and ref_data_size fields of struct lzxd_stream, lzx.h). An
 upstream FFmpeg build has no xmaframes decoder, so game audio needs a build of this fork or a compatible one.

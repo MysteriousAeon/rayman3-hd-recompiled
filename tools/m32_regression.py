@@ -119,9 +119,15 @@ def keymap_checks(km):
     check("keymap: SDL's Windows scan code table has its 256 entries", size == 256, size)
     unknown = [k for k in km["_names"] if k not in names]
     check("keymap: every key name is one of the runtime's", not unknown, unknown)
+    mouse = [k for k in km["keys"] if k.get("mouse")]
+    check("keymap (D-138): the mouse buttons are LMB RMB MMB MB4 MB5, marked, without scan codes, and the runtime's names "
+          "(MB4 / MB5 are added to keybinds.cpp by tools/r3hd_mouse_patch.py)",
+          [k["name"] for k in mouse] == ["LMB", "RMB", "MMB", "MB4", "MB5"] and all("scan" not in k and k["mouse"] is True for k in mouse)
+          and all(k.get("scan") for k in km["keys"] if not k.get("mouse")) and km["_mouse"] == [k["name"] for k in mouse]
+          and [names.get(n) for n in ("LMB", "RMB", "MMB", "MB4", "MB5")] == [0x01, 0x02, 0x04, 0x05, 0x06], [k["name"] for k in mouse])
     wrong, listed = [], set()
     for k in km["keys"]:
-        for s in k["scan"]:
+        for s in k.get("scan", []):  # D-138: a mouse button has no scan code
             index = int(s[-2:], 16) | (0x80 if len(s) == 4 else 0)
             listed.add(index)
             if by_index.get(index) != names.get(k["name"]):
@@ -133,6 +139,66 @@ def keymap_checks(km):
     overlay = set(re.findall(r'RegisterBind\("\w+",\s*"(\w+)"', (SDK / "src/ui/rex_app.cpp").read_text()))
     check("keymap: the runtime's overlay keys are reserved", overlay and overlay <= set(km["reserved"]), sorted(overlay))
     o = rs.layout_keys(km, "original_pc")
+    m0 = rs.layout_keys(km, "modern")
+    check("keymap (D-138): the layouts add the left button to Attack and the right button to Lock On as second keys",
+          m0["x"] == ["E", "LMB"] and m0["right_trigger"] == ["Shift", "RMB"]
+          and o["x"] == ["Space", "LMB"] and o["right_trigger"] == ["Control", "RMB"])
+    bad_keys = []
+    for key in ({"name": "LMB", "label": "x", "mouse": True, "scan": ["01"]}, {"name": "LMB", "label": "x"},
+                {"name": "Foo", "label": "x", "mouse": True}, {"name": "LMB", "label": "x", "mouse": 1},
+                {"name": "A", "label": "x", "scan": []}, {"name": "A", "label": "x", "scan": ["ZZ"]}):
+        raw = json.loads((ROOT / "config/controls/keymap.json").read_text(encoding="utf-8"))
+        raw["keys"] = [k for k in raw["keys"] if k["name"] != key["name"]] + [key]
+        with tempfile.TemporaryDirectory(prefix="r3hd_m32_km_") as tmp:
+            f = Path(tmp) / "keymap.json"
+            f.write_text(json.dumps(raw), encoding="utf-8")
+            try:
+                rs.load_keymap(f)
+                bad_keys.append(key)
+            except (rs.Refused, ValueError):
+                pass
+    dup = json.loads((ROOT / "config/controls/keymap.json").read_text(encoding="utf-8"))
+    dup["keys"].append(dict(dup["keys"][0]))
+    with tempfile.TemporaryDirectory(prefix="r3hd_m32_km_") as tmp:
+        f = Path(tmp) / "keymap.json"
+        f.write_text(json.dumps(dup), encoding="utf-8")
+        try:
+            rs.load_keymap(f)
+            bad_keys.append("duplicate")
+        except rs.Refused:
+            pass
+    check("keymap (D-138): a mouse entry without the marker or with a scan code, an unknown mouse name, a keyboard key "
+          "without scans or with a malformed scan, and a duplicate name are all refused", not bad_keys, bad_keys)
+
+    def refused(fn, code):
+        try:
+            fn()
+        except rs.Refused as e:
+            return e.code == code
+        return False
+    check("keymap (D-138): a mouse button on two inputs is a conflict like any key; a swap with both inputs named is valid",
+          refused(lambda: rs.keyboard_section(km, "modern", {"a": "LMB"}), "KEY_CONFLICT")
+          and refused(lambda: rs.keyboard_section(km, "original_pc", {"b": "W,RMB"}), "KEY_CONFLICT")
+          and rs.keyboard_section(km, "modern", {"a": "LMB", "x": "E"})["keys"] == {"a": ["LMB"], "x": ["E"]}
+          and rs.keyboard_section(km, "modern", {"y": "MMB,MB4"})["keys"] == {"y": ["MMB", "MB4"]}
+          and refused(lambda: rs.keyboard_section(km, "modern", {"y": "MB5,MB5"}), "KEY_REPEATED")
+          and refused(lambda: rs.keyboard_section(km, "modern", {"a": "MB6"}), "KEY_UNKNOWN")
+          and refused(lambda: rs.keyboard_section(km, "modern", {"lstick_up": ""}), "KEY_REQUIRED"))
+    old3 = {"layout": "modern", "keys": {"x": ["F"], "lstick_press": ["E"]}}  # a schema 3 home written before the mouse existed
+    old5 = {"layout": "original_pc", "keys": {"x": ["H"], "right_trigger": ["Space"], "a": ["C"]}}
+    r3, r5 = rs.resolve_keyboard(km, old3), rs.resolve_keyboard(km, old5)
+    check("keymap (D-138): older saved keyboard sections stay valid with their explicit changes; unchanged inputs take the "
+          "layout's mouse defaults",
+          r3["state"] == r5["state"] == "saved" and r3["effective"]["x"] == ["F"] and r3["effective"]["right_trigger"] == ["Shift", "RMB"]
+          and r3["effective"]["lstick_press"] == ["E"]
+          and r5["effective"]["x"] == ["H"] and r5["effective"]["right_trigger"] == ["Space"]
+          and rs.keyboard_of(km, {"keyboard": old3}) == {"layout": "modern", "keys": old3["keys"]})
+    r = rs.resolve_keyboard(km, {"layout": "modern", "keys": {"a": ["LMB"], "x": ["E"]}})
+    bad = rs.resolve_keyboard(km, {"layout": "modern", "keys": {"a": ["LMB"], "x": ["E", "LMB"]}})
+    check("keymap (D-138): mouse tokens are in the keybind_* values; a conflicting saved section is invalid with a warning",
+          "--keybind_x=E,LMB" in rs.resolve_keyboard(km)["args"] and "--keybind_right_trigger=Shift,RMB" in rs.resolve_keyboard(km)["args"]
+          and "--keybind_a=LMB" in r["args"] and "--keybind_x=" in " ".join(r["args"])
+          and bad["state"] == "invalid" and bad["warnings"] and "--keybind_a=Space" in bad["args"], bad["args"])
     manual = {"lstick_up": "Up", "lstick_down": "Down", "lstick_left": "Left", "lstick_right": "Right", "a": "C",
               "x": "Space", "right_trigger": "Control", "start": "Escape", "b": "W", "y": "X", "left_shoulder": "V", "right_shoulder": "V", "left_trigger": "F1"}
     check("keymap: the Original PC layout has the 2003 manual's keys as first keys (arrows, C, Space, Ctrl, Esc, "
@@ -177,6 +243,8 @@ def driver_cases(km) -> str:
             lines.append(f"set {name} {value}")
         for input_id, keys in kb["effective"].items():
             for k in keys:
+                if k in km["_mouse"]:  # D-138: the mouse buttons are covered by the mouse driver tests (r3hd_mouse.h)
+                    continue
                 lines += [f"down {k}", "expect %04X %d %d %d %d %d %d" % tuple(pad(*(i for i, v in kb["effective"].items() if k in v))) + f" {layout} {k} -> {input_id}",
                           f"up {k}", "expect 0000 0 0 0 0 0 0" + f" {layout} {k} released"]
         a_key = kb["effective"]["a"][0]
@@ -242,7 +310,7 @@ def play_checks(km):
               code == 0 and "--keybind_x=H" in argv and "--keybind_a=C,Return" in argv and "--keybind_start=Escape" in argv
               and "Original PC" in kb and "saved" in kb and "--layer_coords" not in " ".join(argv), out[-500:])
         code, out, argv, kb = dry_run("-SettingsFile", str(f), "-KeyLayout", "modern")
-        check("play: -KeyLayout wins over the saved map", code == 0 and "--keybind_x=E" in argv and "explicit" in kb, kb)
+        check("play: -KeyLayout wins over the saved map", code == 0 and "--keybind_x=E,LMB" in argv and "explicit" in kb, kb)
         code, out, argv, kb = dry_run("-SettingsFile", str(f), "-ExtraArgs", "--keybind_x=K")
         check("play: keybind_* in -ExtraArgs wins (the map's own argument for that input is left out)",
               code == 0 and argv.count("--keybind_x=K") == 1 and not any(a.startswith("--keybind_x=H") for a in argv), argv)
@@ -357,13 +425,13 @@ def launcher_checks(km, keep):
                 return
             visible = [i["id"] for i in km["inputs"] if not i.get("hidden")]
             check("UI: Controls shows the Modern keys; only characterised inputs are shown",
-                  d["c0"]["key_layout"] == "modern" and key(d["c0"], "a") == "Space," and key(d["c0"], "x") == "E,"
+                  d["c0"]["key_layout"] == "modern" and key(d["c0"], "a") == "Space," and key(d["c0"], "x") == "E,LMB"
                   and int(d["c0"]["key_rows_shown"]) == len(visible)
                   and all(("visible=1" in d["c0"][f"key.{i['id']}"]) != bool(i.get("hidden")) for i in km["inputs"]))
             check("UI: a key button enters capture mode", d["cap"]["key_capture"] == "x.0"
-                  and "caption=Press a key...|" in d["cap"]["key.x"])
+                  and "caption=Press a key or mouse button...|" in d["cap"]["key.x"])
             check("UI: a key used elsewhere is swapped, and the status says where it went",
-                  key(d["swap"], "x") == "F," and key(d["swap"], "lstick_press") == "E," and d["swap"]["key_capture"] == ""
+                  key(d["swap"], "x") == "F,LMB" and key(d["swap"], "lstick_press") == "E," and d["swap"]["key_capture"] == ""
                   and "Keys swapped:" in d["swap"]["status"])
             check("UI: a reserved key is refused and the capture continues; Esc ends it unchanged",
                   d["reserved"]["key_capture"] == "a.0" and "cannot be used" in d["reserved"]["status"]
@@ -375,14 +443,14 @@ def launcher_checks(km, keep):
             check("UI: right-click removes a second key", key(d["removed"], "a") == "Space,")
             s1 = m30.settings(home)
             check("UI: Save stores only the changed inputs of the layout",
-                  s1.get("keyboard") == {"layout": "modern", "keys": {"x": ["F"], "lstick_press": ["E"]}}, s1.get("keyboard"))
+                  s1.get("keyboard") == {"layout": "modern", "keys": {"x": ["F", "LMB"], "lstick_press": ["E"]}}, s1.get("keyboard"))
             # 2: a new Settings window shows the saved keys; another layout; a visual preset change keeps the keys
             d = run("m32b", ["page controls", "dump reloaded", "layout original_pc", "dump orig", "key x 0", "press 23",
                              "click save", "page settings", "profile hdplus", "click save", "dump hdplus"],
                     ("reloaded", "orig", "hdplus"))
             if not d:
                 return
-            check("UI: the saved keys survive closing and opening Settings", key(d["reloaded"], "x") == "F,"
+            check("UI: the saved keys survive closing and opening Settings", key(d["reloaded"], "x") == "F,LMB"
                   and key(d["reloaded"], "lstick_press") == "E,")
             o = rs.layout_keys(km, "original_pc")
             check("UI: choosing a layout shows its keys and its description",
@@ -390,7 +458,7 @@ def launcher_checks(km, keep):
                   and d["orig"]["layout_text"] == "")
             s2 = m30.settings(home)
             check("UI: the new layout and its change are saved, and changing the visual preset kept them",
-                  s2["preset"] == "hdplus" and s2.get("keyboard") == {"layout": "original_pc", "keys": {"x": ["H"]}}, s2)
+                  s2["preset"] == "hdplus" and s2.get("keyboard") == {"layout": "original_pc", "keys": {"x": ["H", "LMB"]}}, s2)
             # 3: Restore defaults, the hidden inputs, the Advanced page, DPI
             d = run("m32c", ["page controls", "click restore", "dump restored", "click save", "dump all",
                              "dpi 144", "dump c144", "shot controls_144", "page advanced", "dump adv",
@@ -409,6 +477,45 @@ def launcher_checks(km, keep):
                   d["adv"]["page"] == "advanced" and d["adv"]["advanced_visible"] == "1"
                   and d["settings96"]["advanced_visible"] == "0" and m30.layout_ok(d["adv"]) and m30.layout_ok(d["settings96"])
                   and "enabled=1" in d["adv"].get("setting.diagnostics", ""))
+            # 4 (D-138): mouse buttons as keys. `mouse INPUT SLOT BUTTON` presses and releases the button over that key
+            # button through the capture filter and then the control (simulated messages; no real or global input).
+            # The home now holds Original PC with its own keys: x = Space,LMB, right_trigger = Control,RMB, y = X, a = C,Return.
+            d = run("m32d", ["page controls", "dump m0",
+                             "mouse y 0 left", "dump started",       # a click starts the capture; it is never the choice
+                             "mouse y 0 right", "dump rmb",          # the next press on the waiting button is the choice
+                             "mouse y 0 left", "mouse a 0 left", "dump elsewhere",  # a click on another key button cancels...
+                             "mouse a 0 x2", "dump mb5",             # ...and starts that one's capture: MB5 is its choice
+                             "mouse b 1 left", "mouse b 1 middle", "dump mmb",
+                             "mouse dpad_up 1 left", "mouse dpad_up 1 x1", "dump mb4",
+                             "mouse x 1 left", "press 01", "dump esc",              # Esc cancels
+                             "click save", "dump saved"],
+                    ("m0", "started", "rmb", "elsewhere", "mb5", "mmb", "mb4", "esc", "saved"))
+            if not d:
+                return
+            check("UI (D-138): mouse buttons are shown by name on the key buttons",
+                  key(d["m0"], "x") == "Space,LMB" and "caption=Space|Mouse L" in d["m0"]["key.x"]
+                  and key(d["m0"], "right_trigger") == "Control,RMB" and "Mouse R" in d["m0"]["key.right_trigger"])
+            check("UI (D-138): the click that starts a capture is not taken as the choice",
+                  d["started"]["key_capture"] == "y.0" and key(d["started"], "y") == "X,"
+                  and "caption=Press a key or mouse button...|" in d["started"]["key.y"])
+            check("UI (D-138): the next mouse press on the waiting button assigns it, swaps a taken button, and its release "
+                  "does not start another capture",
+                  d["rmb"]["key_capture"] == "" and key(d["rmb"], "y") == "RMB," and key(d["rmb"], "right_trigger") == "Control,X"
+                  and "Keys swapped:" in d["rmb"]["status"])
+            check("UI (D-138): a click on another control cancels the capture unchanged and passes through; a side button is taken",
+                  d["elsewhere"]["key_capture"] == "a.0" and key(d["elsewhere"], "y") == "RMB,"
+                  and key(d["mb5"], "a") == "MB5,Return" and d["mb5"]["key_capture"] == ""
+                  and "Mouse 5" in d["mb5"]["key.a"])
+            check("UI (D-138): the middle button and the first side button are assigned like the others",
+                  key(d["mmb"], "b") == "W,MMB" and d["mmb"]["key_capture"] == "" and key(d["mb4"], "b") == "W,MMB"
+                  and d["mb4"]["key_capture"] == "")
+            check("UI (D-138): Esc still cancels a capture started by the mouse", d["esc"]["key_capture"] == ""
+                  and key(d["esc"], "x") == "Space,LMB" and "Key not changed." in d["esc"]["status"])
+            s4 = m30.settings(home).get("keyboard")
+            check("UI (D-138): mouse buttons are saved in the keyboard section like keys",
+                  s4 == {"layout": "original_pc", "keys": {"y": ["RMB"], "right_trigger": ["Control", "X"], "a": ["MB5", "Return"],
+                                                           "b": ["W", "MMB"], "dpad_up": ["I", "MB4"]}}, s4)
+            check("UI (D-138): Controls still lays out without overlap", m30.layout_ok(d["saved"]), d["saved"].get("controls"))
         finally:
             for k, v in saved.items():
                 if v is None:

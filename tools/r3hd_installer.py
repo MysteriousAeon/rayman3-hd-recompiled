@@ -28,6 +28,7 @@ usage:
   r3hd_installer.py verify --home H [--data]                  read-only; exit 3 when something is damaged
   r3hd_installer.py repair --home H --payload P [--source S]
   r3hd_installer.py set-preset --home H --preset P [--base B] [--set KEY=VALUE ...] [--allow-experimental]
+  r3hd_installer.py set-preferences --home H --set KEY=VALUE ... [--expect-revision R]   (D-139: shown preferences only)
   r3hd_installer.py set-option --home H --set KEY=VALUE      one hidden Custom setting, keeping the rest (M48-P)
   r3hd_installer.py status --home H
   r3hd_installer.py uninstall --home H [--remove-user-data --confirm HOME] [--from-uninstaller] [--check]
@@ -660,13 +661,14 @@ def hidden_overrides(reg: dict, settings: dict) -> dict:
     return out
 
 
-def set_ui_language(home: Path, value: str) -> dict:
+def set_ui_language(home: Path, value: str, expect=None) -> dict:
     """Change only the UI preference. In particular, do not normalize or replace saved keyboard data."""
     recover_if_needed(home, lambda *_: None)
     with Lock(home):
         st = read_state(home)
         if st is None:
             raise Refusal("NOT_INSTALLED", str(home))
+        check_revision(home, expect)  # D-139
         try:
             data = presets.load_settings_file(home / "settings.json")
             preferences = data.get("preferences", {})
@@ -687,7 +689,70 @@ def set_ui_language(home: Path, value: str) -> dict:
     return {"action": "set-option", "changed": True, "home": str(home), "preset": settings_state(home)}
 
 
-def set_option(home: Path, key: str, value: str) -> dict:
+def settings_revision(home: Path) -> str:
+    """D-139: the identity of settings.json as a reader saw it (SHA-256 of its bytes; "none" without the file). A writer
+    that names the revision it started from refuses STALE when another writer replaced the file in between."""
+    f = home / "settings.json"
+    return sha256(f) if f.is_file() else "none"
+
+
+def check_revision(home: Path, expect):
+    if expect is not None and settings_revision(home) != expect:
+        raise Refusal("STALE", "settings.json was changed by another window since it was read; reload and try again")
+
+
+def set_preferences(home: Path, pairs, expect=None) -> dict:
+    """D-139: the in-game PC Settings panel's writer. Only shown preferences (registry scope "preference", not
+    ui hidden) are accepted; the preset, its overrides, the keyboard and the controller sections are kept byte for
+    byte as data (never recomputed). Revision check, validation and write happen under the home's lock."""
+    home = Path(os.path.abspath(home))
+    reg = presets.load_registry()
+    changes = {}
+    for pair in pairs:
+        if "=" not in pair:
+            raise Refusal("USAGE", f"--set takes KEY=VALUE, not {pair!r}")
+        key, value = pair.split("=", 1)
+        s = reg["settings"].get(key)
+        if s is None or s["category"] == "mandatory" or presets.scope(s) != "preference" or s.get("ui") == "hidden":
+            raise Refusal("USAGE", f"set-preferences takes a shown preference, not {key!r}")
+        if value not in s["values"]:
+            raise Refusal("USAGE", f"{key} takes one of {s['values'][0]} ... {s['values'][-1]}")
+        changes[key] = value
+    if not changes:
+        raise Refusal("USAGE", "set-preferences needs --set KEY=VALUE ...")
+    if not (home / STATE).is_file():
+        raise Refusal("NOT_INSTALLED", str(home))
+    recover_if_needed(home, lambda *_: None)
+    with Lock(home):
+        st = read_state(home)
+        if st is None:
+            raise Refusal("NOT_INSTALLED", str(home))
+        check_revision(home, expect)
+        if not (home / "settings.json").is_file():
+            raise Refusal("SETTINGS_REFUSED", "settings.json is missing; open Settings to choose a preset")
+        try:
+            data = presets.load_settings_file(home / "settings.json")
+            preferences = data.get("preferences", {})
+            if not isinstance(preferences, dict):
+                raise Refusal("SETTINGS_REFUSED", "preferences must be an object")
+            if all(preferences.get(k) == v for k, v in changes.items()):
+                return {"action": "set-preferences", "changed": False, "home": str(home),
+                        "preset": settings_state(home), "revision": settings_revision(home)}
+            # Schema 1 predates preferences: its existing fields keep their exact values (as set_ui_language).
+            data["schema"] = max(2, data["schema"])
+            data["preferences"] = {**preferences, **changes}
+            presets.resolve(reg, settings=data)
+        except presets.Refused as e:
+            raise Refusal("SETTINGS_REFUSED", f"{e.code}: {e.detail}")
+        write_json(home / "settings.json", data)
+        st["settings"] = data
+        st["history"] = (st.get("history", []) + [{"action": "set-preferences", "keys": sorted(changes), "at": now()}])[-50:]
+        write_json(home / STATE, st)
+    return {"action": "set-preferences", "changed": True, "home": str(home), "preset": settings_state(home),
+            "revision": settings_revision(home)}
+
+
+def set_option(home: Path, key: str, value: str, expect=None) -> dict:
     """M48-P: one adjustable non-preference setting (the playtest setup's gameplay subtitles) without choosing a preset:
     a fixed preset becomes Custom on that preset, Custom keeps its base and overrides; the value is stored explicitly,
     also when it equals the base (an explicit Off is a choice). An equal value of a fixed preset changes nothing."""
@@ -699,7 +764,7 @@ def set_option(home: Path, key: str, value: str) -> dict:
     if value not in s["values"]:
         raise Refusal("USAGE", f"{key} takes one of {', '.join(s['values'])}")
     if key == "ui_language":
-        return set_ui_language(home, value)
+        return set_ui_language(home, value, expect)
     data = {"preset": "vanilla"}
     if (home / "settings.json").is_file():
         try:
@@ -716,7 +781,7 @@ def set_option(home: Path, key: str, value: str) -> dict:
         pairs = [f"{k}={v}" for k, v in (data.get("overrides") or {}).items() if k != key] + [f"{key}={value}"]
         allow = data.get("allow_experimental") is True and cur["preset"] == "custom"
         r = set_preset(home, cur["preset"], cur["base"] if cur["preset"] == "custom" else None,
-                       pairs if cur["preset"] == "custom" else [f"{key}={value}"], allow)
+                       pairs if cur["preset"] == "custom" else [f"{key}={value}"], allow, expect=expect)
         return {**r, "action": "set-option", "changed": True}
     if data.get("preset") in ("vanilla", "hdplus"):
         base, overrides = data["preset"], {}
@@ -730,7 +795,7 @@ def set_option(home: Path, key: str, value: str) -> dict:
     allow = data.get("allow_experimental") is True or any(
         reg["settings"][k]["category"] == "experimental" and v != reg["settings"][k]["values"][0]
         for k, v in overrides.items() if k in reg["settings"])
-    r = set_preset(home, "custom", base, [f"{k}={v}" for k, v in overrides.items()], allow)
+    r = set_preset(home, "custom", base, [f"{k}={v}" for k, v in overrides.items()], allow, expect=expect)
     return {**r, "action": "set-option", "changed": True}
 
 
@@ -1200,15 +1265,18 @@ def repair(home: Path, payload_dir: Path, source=None, releases=None, log=print)
                 "data": data_action, "settings": settings_action, "unexpected_in_bin": rep["unexpected_in_bin"]}
 
 
-def set_preset(home: Path, preset, base=None, pairs=(), allow_exp=False, keyboard=None, controller=None) -> dict:
+def set_preset(home: Path, preset, base=None, pairs=(), allow_exp=False, keyboard=None, controller=None,
+               expect=None) -> dict:
     """keyboard (M32): (layout, {input: keys}) replaces the keyboard map; None keeps the saved one. controller
-    (D-115): {input: button} replaces the controller button map ({} = the original controls); None keeps it."""
+    (D-115): {input: button} replaces the controller button map ({} = the original controls); None keeps it.
+    expect (D-139): the settings revision the caller read (--expect-revision); STALE when the file changed since."""
     home = Path(os.path.abspath(home))
     recover_if_needed(home, lambda *_: None)
     if not (home / STATE).is_file():
         raise Refusal("NOT_INSTALLED", str(home))
     data = settings_from_args(preset, base, pairs, allow_exp, home, keyboard=keyboard, controller=controller)
     with Lock(home):
+        check_revision(home, expect)
         st = read_state(home)
         if (settings_state(home)["state"] == "invalid" or keyboard_state(home)["state"] == "invalid"
                 or controller_state(home)["state"] == "invalid"):
@@ -1420,12 +1488,13 @@ def launcher_model(home: Path, releases=None) -> str:
     Read-only and quick (file presence and sizes, no hashing). Row kinds, in this order:
       R3HD_LAUNCHER_MODEL schema | HOME path | PRODUCT name | VERSION v | INSTALL state | FILES state n first |
       DATA state detail | RUNNING 0/1 | LASTRUN session exit failed(0/1) | SETTINGS state preset base label detail |
+      REVISION sha256|none (D-139) |
       PRESET key name text |
       GROUP key name | SETTING key group scope category label help note vanilla hdplus current (11 fields) |
       VALUE key value label | REQUIRES key other value (M31) | SLIDER key min max unit (D-108) |
       KEYBOARD state layout warnings | KEYLAYOUT key name text | KEYGROUP key name |
       KEYINPUT id group hidden(0/1) required(0/1) pad action | KEYDEFAULT layout id key... |
-      KEYBIND id key... | KEYNAME name label scans reserved_reason | KEYFALLBACK key input | KEYNOTE text |
+      KEYBIND id key... | KEYNAME name label scans reserved_reason mouse(0/1) | KEYFALLBACK key input | KEYNOTE text |
       KEYSHARE key input input (D-120, optional collision exception; no settings schema change) |
       PADSTATE state warnings | PADBUTTON id label kind | PADGROUP key name | PADACTION input group name |
       PADBIND input button | END
@@ -1433,6 +1502,7 @@ def launcher_model(home: Path, releases=None) -> str:
     listed. REQUIRES and SLIDER follow their setting's VALUE rows. M32 (D-069): the keyboard rows are config/controls/keymap.json
     and the resolver's view of the saved map (KEYBIND: the keys a launch uses, one field per slot, '' = empty);
     KEYDEFAULT gives every layout's keys so the window can show a layout or restore one without a rule of its own.
+    D-138: a mouse button is a KEYNAME with no scans and mouse 1; it is bound, swapped and refused like a key.
     D-115: the controller rows are config/controls/padmap.json and the resolver's view of the saved map: PADBUTTON in
     the padmap's order, PADACTION the inputs the window lists, PADBIND every input's button (all 14, so a swap with an
     input that is not listed is still shown correctly); the original controls are each input on its own button.
@@ -1475,6 +1545,7 @@ def launcher_model(home: Path, releases=None) -> str:
             rows.append(("SETTINGS", "ok", out["preset"], out["base"], out["label"], ""))
         except presets.Refused as e:
             rows.append(("SETTINGS", "invalid", "vanilla", "vanilla", "vanilla", f"{e.code}: {e.detail}"))
+    rows.append(("REVISION", settings_revision(home)))  # D-139: what a writer names as --expect-revision
     for key in ("vanilla", "hdplus", "custom"):
         ui = reg.get("preset_ui", {}).get(key, {})
         rows.append(("PRESET", key, ui.get("name", key), ui.get("text", reg["presets"][key])))
@@ -1507,7 +1578,8 @@ def launcher_model(home: Path, releases=None) -> str:
     for input_id, keys in kb["keys"].items():
         rows.append(("KEYBIND", input_id, *keys))
     for k in km["keys"]:
-        rows.append(("KEYNAME", k["name"], k.get("label", k["name"]), ",".join(k["scan"]), km["reserved"].get(k["name"], "")))
+        rows.append(("KEYNAME", k["name"], k.get("label", k["name"]), ",".join(k.get("scan", [])), km["reserved"].get(k["name"], ""),
+                     int(bool(k.get("mouse")))))
     for key, target in km["fallbacks"].items():
         rows.append(("KEYFALLBACK", key, target))
     rows.append(("KEYNOTE", "Escape and Enter also work as Back and Start when no other control uses them."))
@@ -1746,8 +1818,14 @@ def selftest() -> int:
             check("launcher-model rows have a fixed width", all(len(r.split("\t")) == {"SETTING": 11, "VALUE": 4, "PRESET": 4,
                                                                                     "REQUIRES": 4, "KEYINPUT": 7,
                                                                                     "KEYBIND": 4, "KEYDEFAULT": 5, "KEYSHARE": 4,
-                                                                                    "KEYNAME": 5, "KEYBOARD": 4}
+                                                                                    "KEYNAME": 6, "KEYBOARD": 4}
                                                                 .get(r.split("\t")[0], len(r.split("\t"))) for r in rows))
+            check("launcher-model (D-138): mouse buttons are KEYNAME rows with no scans and the mouse marker; keys keep theirs",
+                  "KEYNAME\tLMB\tMouse L\t\t\t1" in rows and "KEYNAME\tMB5\tMouse 5\t\t\t1" in rows
+                  and "KEYNAME\tE\tE\t12\t\t0" in rows
+                  and any(r.startswith("SETTING\tmouse_camera\tmouse\tpreference\tenhancement\tMouse Camera\t") for r in rows)
+                  and "REQUIRES\tmouse_sensitivity\tmouse_camera\ton" in rows and "SLIDER\tmouse_sensitivity\t1\t100\tpercent" in rows
+                  and "GROUP\tmouse\tMouse" in rows)
             km = presets.load_keymap()
             check("launcher-model (M31/M32): window size requires the window mode; keyboard listed; hidden settings absent",
                   "REQUIRES\twindow_size\tdisplay\twindowed" in rows and kinds.count("KEYINPUT") == len(km["inputs"])
@@ -1783,7 +1861,8 @@ def selftest() -> int:
             s = read_json(home / "settings.json")
             check("configure (Custom) writes the chosen options through the resolver", s["preset"] == "custom"
                   and s["overrides"] == {"combo_close": "delayed", "layer_coords": "separate",
-                                         "texture_orient": "corrected"}  # Enter keeps HD+ values
+                                         "red_correction": "bypass", "texture_orient": "corrected", "sky_clear": "background",
+                                         "lit_uv_scroll": "applied"}  # Enter keeps HD+ values
                   and s["preferences"] == {"cursor": "visible", "render_scale": "2", "dualsense_light": "off",
                                            "dualsense_trigger": "off"})  # D-108: a named DualSense option is kept
             configure(home, ask=lambda _: "", say=quiet)
@@ -1815,6 +1894,50 @@ def selftest() -> int:
                   and r["cleanup_pending"] and (home / TXN).is_file() and read_json(home / STATE)["version"] == "0.31.0")
             check("the committed journal is finished by the next run", recover(home, quiet) == "finished"
                   and not list(home.glob(".old-*")) and not (home / TXN).exists() and verify(home, True, rels)["result"] == "healthy")
+            # D-151: an update keeps a Custom file as written. One saved before red_correction was shown follows its base;
+            # a stored choice (e.g. from the L1 experiment) is kept, on either base.
+            before = (home / "settings.json").read_bytes()
+            pl4 = make_fixture(t, "0.32.0", b"v4")[0]
+            for n, (base, overrides, want) in enumerate((
+                    ("hdplus", {"combo_close": "delayed", "layer_coords": "separate", "texture_orient": "corrected"}, "bypass"),
+                    ("vanilla", {"layer_coords": "separate"}, "original"),
+                    ("hdplus", {"red_correction": "original"}, "original"),
+                    ("vanilla", {"red_correction": "bypass"}, "bypass"))):
+                old = json.dumps({"schema": 3, "preset": "custom", "base": base, "overrides": overrides}).encode()
+                (home / "settings.json").write_bytes(old)
+                if n == 0:
+                    install(home, pl4, releases=rels, log=quiet)
+                m = dict((row.split("\t")[1], row.split("\t")) for row in launcher_model(home, rels).splitlines()
+                         if row.startswith("SETTING\t"))
+                check(f"D-151: an update keeps Custom on {base} {sorted(overrides)}; red correction resolves {want}",
+                      (home / "settings.json").read_bytes() == old and settings_state(home)["values"]["red_correction"] == want
+                      and m["red_correction"][-1] == want)
+            check("D-151: the update itself ran", read_json(home / STATE)["version"] == "0.32.0")
+            # D-156: the same for sky_clear, shown after the update: a Custom file without it follows its base, a choice is kept.
+            for base, overrides, want in (("hdplus", {"layer_coords": "separate"}, "background"),
+                                          ("vanilla", {"layer_coords": "separate"}, "original"),
+                                          ("hdplus", {"sky_clear": "original"}, "original"),
+                                          ("vanilla", {"sky_clear": "background"}, "background")):
+                old = json.dumps({"schema": 3, "preset": "custom", "base": base, "overrides": overrides}).encode()
+                (home / "settings.json").write_bytes(old)
+                m = dict((row.split("	")[1], row.split("	")) for row in launcher_model(home, rels).splitlines()
+                         if row.startswith("SETTING	"))
+                check(f"D-156: Custom on {base} {sorted(overrides)} keeps its file; sky clear resolves {want}",
+                      (home / "settings.json").read_bytes() == old and settings_state(home)["values"]["sky_clear"] == want
+                      and m["sky_clear"][-1] == want)
+            # D-161: the same for lit_uv_scroll (the fist-charge trail), new in HD+ after an update.
+            for base, overrides, want in (("hdplus", {"sky_clear": "original"}, "applied"),
+                                          ("vanilla", {"sky_clear": "background"}, "original"),
+                                          ("hdplus", {"lit_uv_scroll": "original"}, "original"),
+                                          ("vanilla", {"lit_uv_scroll": "applied"}, "applied")):
+                old = json.dumps({"schema": 3, "preset": "custom", "base": base, "overrides": overrides}).encode()
+                (home / "settings.json").write_bytes(old)
+                m = dict((row.split("	")[1], row.split("	")) for row in launcher_model(home, rels).splitlines()
+                         if row.startswith("SETTING	"))
+                check(f"D-161: Custom on {base} {sorted(overrides)} keeps its file; the charge trail resolves {want}",
+                      (home / "settings.json").read_bytes() == old and settings_state(home)["values"]["lit_uv_scroll"] == want
+                      and m["lit_uv_scroll"][-1] == want)
+            (home / "settings.json").write_bytes(before)
             # space and foreign directories
             os.environ["R3HD_INSTALL_FREE_BYTES"] = "1000"
             check("insufficient space refused, nothing left", refused(lambda: install(t / "H2", pl, tree, "vanilla", releases=rels,
@@ -1946,9 +2069,11 @@ def selftest() -> int:
                   not dev_dir.exists() and "dev_overlay_config" in r["user_data_removed"] and not h11.exists())
             check("describe-options lists the shown adjustable settings only (M31: cursor and save clock hidden)",
                   [o["key"] for o in describe_options()] == ["display", "window_size", "render_scale", "combo_close", "layer_coords",
-                                                             "texture_orient", "gameplay_subtitles", "game_language", "discord_presence",
+                                                             "red_correction", "texture_orient", "sky_clear", "lit_uv_scroll", "gameplay_subtitles", "mouse_camera", "mouse_sensitivity",
+                                                             "mouse_buttons", "game_language", "discord_presence",
                                                              "dualsense_light", "dualsense_trigger",
-                                                             "dualsense_trigger_strength", "diagnostics"])
+                                                             "dualsense_trigger_strength", "dualsense_speaker",
+                                                             "dualsense_speaker_volume", "diagnostics"])
             r = install(t / "H10", pl, tree, "vanilla", pairs=["render_scale=2"], releases=rels, log=quiet)
             r = install(t / "H10", pl3, None, "hdplus", releases=rels, log=quiet)
             check("an update with an explicit preset keeps the preferences (M30), the install default included (M31)",
@@ -1983,6 +2108,43 @@ def selftest() -> int:
             set_preset(h10, "vanilla", keyboard=("modern", {}))
             check("keyboard (M32): restoring the default layout stores nothing", "keyboard" not in
                   read_json(h10 / "settings.json") and "KEYBOARD\tdefault\tmodern\t\n" in launcher_model(h10, rels))
+            # D-138: the mouse preferences and mouse buttons persist like any preference and key; off / 50 is the default.
+            set_preset(h10, "hdplus", None, ["mouse_camera=on", "MouseSensitivity=75", "MouseButtons=on"],
+                       keyboard=("modern", {"x": "E,MB4", "right_trigger": "Shift,MMB"}))
+            s1 = read_json(h10 / "settings.json")
+            set_preset(h10, "custom", "vanilla", ["texture_orient=corrected"])
+            set_preset(h10, "vanilla")
+            s2 = read_json(h10 / "settings.json")
+            model = launcher_model(h10, rels)
+            check("mouse (D-138): the three preferences and the mouse buttons are stored and kept by preset changes",
+                  s1["preferences"]["mouse_camera"] == s2["preferences"]["mouse_camera"] == "on"
+                  and s1["preferences"]["mouse_sensitivity"] == s2["preferences"]["mouse_sensitivity"] == "75"
+                  and s1["preferences"]["mouse_buttons"] == s2["preferences"]["mouse_buttons"] == "on"
+                  and s1["keyboard"] == s2["keyboard"] == {"layout": "modern", "keys": {"x": ["E", "MB4"],
+                                                                                         "right_trigger": ["Shift", "MMB"]}}
+                  and settings_state(h10)["values"]["mouse_sensitivity"] == "75"
+                  and "KEYBIND\tx\tE\tMB4\n" in model and "KEYBIND\tright_trigger\tShift\tMMB\n" in model
+                  and any(r.startswith("SETTING\tmouse_sensitivity\tmouse\t") and r.endswith("\t50\t50\t75") for r in model.split("\n")))
+            refused_mouse = refused(lambda: set_preset(h10, "vanilla", None, ["mouse_sensitivity=0"]), "SETTINGS_REFUSED")
+            refused_mouse2 = refused(lambda: set_preset(h10, "vanilla", None, ["mouse_sensitivity=101"]), "SETTINGS_REFUSED")
+            refused_mouse3 = refused(lambda: set_preset(h10, "vanilla", None, ["mouse_camera=maybe"]), "SETTINGS_REFUSED")
+            refused_mouse4 = refused(lambda: set_preset(h10, "vanilla", keyboard=("modern", {"a": "RMB"})), "SETTINGS_REFUSED")
+            check("mouse (D-138): a sensitivity outside 1..100, an unknown value and a mouse button used twice are refused; "
+                  "the file is unchanged", refused_mouse and refused_mouse2 and refused_mouse3 and refused_mouse4
+                  and read_json(h10 / "settings.json") == s2)
+            cli = subprocess.run([sys.executable, str(Path(__file__).resolve()), "set-preset", "--home", str(h10), "--preset", "vanilla",
+                                  "--keyboard", "modern", "--key", "x=E,LMB", "--set", "mouse_camera=off", "mouse_sensitivity=50",
+                                  "mouse_buttons=off"], capture_output=True, text=True)
+            s3 = read_json(h10 / "settings.json")
+            check("mouse (D-138): set-preset --key x=E,LMB works; the default values off / 50 are not stored",
+                  cli.returncode == 0 and not any(k.startswith("mouse") for k in s3["preferences"])
+                  and "keyboard" not in s3)
+            check("mouse (D-138): a home that stores no mouse value (a 1.0.3 home) resolves off / 50",
+                  all(presets.resolve(presets.load_registry(), settings=d)["values"][k] == v
+                      for d in ({"schema": 3, "preset": "hdplus", "preferences": {"display": "fullscreen", **DS}},
+                                {"schema": 2, "preset": "vanilla", "preferences": {"render_scale": "2"}},
+                                {"schema": 1, "preset": "custom", "base": "hdplus", "overrides": {"render_scale": "3"}})
+                      for k, v in (("mouse_camera", "off"), ("mouse_sensitivity", "50"), ("mouse_buttons", "off"))))
             bad = read_json(h10 / "settings.json")
             bad["keyboard"] = {"layout": "modern", "keys": {"a": ["Nope"]}}
             bad["preferences"] = {"render_scale": "3"}
@@ -2164,7 +2326,7 @@ def emit(result: dict, args, code: int):
         lines = [f"RESULT={result.get('result', 'ok')}", f"CODE={result.get('code', '')}",
                  f"MESSAGE={' '.join(str(result.get('message', '')).split())}"]
         for k in ("release", "kind", "display_name", "version", "preset_label", "detail", "desktop_shortcut",
-              "settings_shortcut", "gameplay_subtitles", "changed"):
+              "settings_shortcut", "gameplay_subtitles", "changed", "revision"):
             if result.get(k) is not None:
                 lines.append(f"{k.upper()}={' '.join(str(result[k]).split())}")
         Path(args.result_file).write_text("\n".join(lines) + "\n", encoding="utf-8-sig")
@@ -2174,6 +2336,7 @@ def emit(result: dict, args, code: int):
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("cmd", choices=["check-source", "preflight", "install", "verify", "repair", "set-preset", "set-option",
+                                    "set-preferences",
                                     "status", "uninstall", "describe-options", "configure", "launcher-model", "selftest"])
     ap.add_argument("source_arg", nargs="?")
     ap.add_argument("--home")
@@ -2202,6 +2365,8 @@ def main() -> int:
                     help="install: record the front end's Settings desktop shortcut choice (M32)")
     ap.add_argument("--keyboard", help="set-preset: keyboard layout (M32); with --key the inputs changed from it")
     ap.add_argument("--key", nargs="*", default=[], help="set-preset: INPUT=KEY[,KEY] (M32); an empty value unbinds")
+    ap.add_argument("--expect-revision", help="set-preset / set-preferences: refuse STALE unless settings.json is still "
+                                              "the revision a reader saw (launcher-model REVISION, D-139)")
     ap.add_argument("--pad", nargs="*", help="set-preset: INPUT=BUTTON pairs that replace the controller button map "
                                              "(D-115; --pad alone = the original controls); without it the map is kept")
     a = ap.parse_args()
@@ -2266,16 +2431,22 @@ def main() -> int:
                     controller = presets.parse_pad_pairs(a.pad)
                 except presets.Refused as e:
                     raise Refusal("SETTINGS_REFUSED", f"{e.code}: {e.detail}")
-            r = set_preset(Path(a.home), a.preset, a.base, a.pairs, a.allow_experimental, keyboard, controller)
+            r = set_preset(Path(a.home), a.preset, a.base, a.pairs, a.allow_experimental, keyboard, controller,
+                           a.expect_revision)
             r["message"] = f"preset {r['preset'].get('label')}"
             r["preset_label"] = r["preset"].get("label")
         elif a.cmd == "set-option":
             need("home")
             if len(a.pairs) != 1 or "=" not in a.pairs[0]:
                 raise Refusal("USAGE", "set-option --home H --set KEY=VALUE")
-            r = set_option(Path(a.home), *a.pairs[0].split("=", 1))
+            r = set_option(Path(a.home), *a.pairs[0].split("=", 1), a.expect_revision)
             r["message"] = ("changed: " if r["changed"] else "unchanged: ") + str(r["preset"].get("label"))
             r["preset_label"] = r["preset"].get("label")
+            r["changed"] = int(r["changed"])
+        elif a.cmd == "set-preferences":
+            need("home")
+            r = set_preferences(Path(a.home), a.pairs, a.expect_revision)
+            r["message"] = "changed" if r["changed"] else "unchanged"
             r["changed"] = int(r["changed"])
         elif a.cmd == "configure":
             need("home")

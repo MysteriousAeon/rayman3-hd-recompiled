@@ -1,0 +1,20 @@
+# Fist charge (isolated knaar_69, R3HD_M22_DRAW_TRACE=1): private traced frames of X held, at several charge times.
+# `axis 15 1` holds X without releasing; each `frame` step waits 1.5 s after its request.
+wait 12
+frame idle
+axis 15 1
+wait 0.2
+frame h1_02
+frame h1_17
+frame h1_32
+axis 15 0
+wait 3
+axis 15 1
+wait 0.9
+frame h2_09
+frame h2_24
+frame h2_39
+axis 15 0
+wait 0.05
+frame rel
+wait 4

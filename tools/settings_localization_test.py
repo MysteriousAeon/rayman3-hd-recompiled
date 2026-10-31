@@ -113,13 +113,13 @@ def main():
                     commands = []
                     for dpi in (96, 120, 144):
                         commands.append('dpi ' + str(dpi))
-                        for page in ('settings', 'controls', 'advanced', 'mods'):
+                        for page in ('settings', 'corrections', 'controls', 'advanced', 'mods'):
                             tag = page + '_' + str(dpi)
                             commands.extend(['page ' + page, 'dump ' + tag, 'shot ' + tag])
                     commands.append('click close')
                     dumps, _ = run(home, 'pages_' + language, commands)
                     for dpi in (96, 120, 144):
-                        for page in ('settings', 'controls', 'advanced', 'mods'):
+                        for page in ('settings', 'corrections', 'controls', 'advanced', 'mods'):
                             tag = page + '_' + str(dpi)
                             d = dumps.get(tag, {})
                             check(language + ' ' + tag + ': layout, locale and visible captions',
@@ -136,8 +136,16 @@ def main():
                                       d.get('layout_text') == '' and
                                       catalog['Click a key to change it, then press the new key (Esc cancels). Right-click a key or press Delete to remove it. '][language]
                                       in d.get('controls_note', ''), d)
-                            if page == 'settings':
+                            if page == 'corrections':  # D-161: the corrections' own page, with the profile line
                                 visible = '\n'.join(v for k, v in d.items() if k.startswith('visible.'))
+                                check(language + ' ' + tag + ': corrections page names the profile and shows every correction',
+                                      catalog['Correct Charge Trail Colors'][language] in visible
+                                      and catalog['Correct Sky Colors'][language] in visible
+                                      and d.get('corrections_profile', '').startswith('Etkin profil: HD+' if language == 'tr' else 'Active profile: HD+')
+                                      and d.get('text_clipped') == '0', d)
+                                check(language + ' ' + tag + ': on HD+ (fixed corrections) the page button keeps the focus',
+                                      d.get('focus') == catalog['Correctio&ns'][language]
+                                      and d.get('setting.lit_uv_scroll') == 'applied enabled=0', d)
                                 check(language + ' ' + tag + ': concise correction copy has no development qualifier',
                                       catalog['Correct Robo-Pirate statue textures'][language] in visible
                                       and not any(s in visible for s in ('provisional', 'deneme aşamasında', 'Part of HD+', 'HD+ kapsamında')), visible)

@@ -16,6 +16,10 @@
 //      xma T_US CTX starve MS           an enabled context whose two input buffers were both consumed got
 //                                       input again after MS milliseconds without a reset in between
 //      xma T_US CTX error CODE          the decoder refused a frame
+//      xma T_US CTX buf PHYS BYTES BITS FNV   a context reached an input buffer (another address than its last one)
+//                                       or started it again (read position BITS went back): its physical address,
+//                                       size and the FNV-1a 64 of its first 2048 bytes, which names the sound-bank
+//                                       asset it plays (E-334)
 //    It never changes what is decoded, mixed or submitted.
 #pragma once
 #include <algorithm>
@@ -71,6 +75,7 @@ inline void Output(const void* client, const float* data, int count, int channel
 }
 
 struct Context {
+  uint32_t buf_phys = 0, buf_bits = 0;
   bool started = false, starving = false;
   long long start_us = 0, starve_us = 0;
   unsigned frames = 0;
@@ -114,6 +119,20 @@ inline void XmaInput(uint32_t id, bool any_input_valid) {
     const long long now = NowUs();
     std::fprintf(file, "xma %lld %u starve %lld\n", now, id, (now - c.starve_us) / 1000);
   }
+}
+// Called from Decode() with the input buffer the context is about to read (E-334). Reads guest data, never writes.
+inline void XmaBuffer(uint32_t id, uint32_t phys, const uint8_t* p, uint32_t bytes, uint32_t read_bits) {
+  std::FILE* file = File();
+  if (!file) return;
+  std::lock_guard<std::mutex> guard(Lock());
+  Context& c = Ctx(id);
+  const bool fresh = phys != c.buf_phys || read_bits < c.buf_bits;
+  c.buf_phys = phys;
+  c.buf_bits = read_bits;
+  if (!fresh || !p) return;
+  unsigned long long h = 0xcbf29ce484222325ull;
+  for (uint32_t i = 0; i < bytes && i < 2048; ++i) h = (h ^ p[i]) * 0x100000001b3ull;
+  std::fprintf(file, "xma %lld %u buf %08X %u %u %016llX\n", NowUs(), id, phys, bytes, read_bits, h);
 }
 inline void XmaError(uint32_t id, int code) {
   std::FILE* file = File();

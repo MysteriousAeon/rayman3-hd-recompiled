@@ -14,6 +14,7 @@
 
 #include <rex/logging.h>
 #include <rex/m23_haptics.h>
+#include <rex/r3hd_ds_speaker.h>   // D-141: focus and close requests for the controller speaker
 #include <rex/r3hd_ds_state.h>
 #include <rex/r3hd_dualsense.h>
 #include <rex/r3hd_padmap.h>  // D-116: installed by r3hd_padmap_patch.py, which runs before the build compiles
@@ -49,7 +50,37 @@ struct PadOutput {
   bool bluetooth = false;
   uint32_t light_writes = 0, light_restores = 0, trigger_writes = 0;
   bool light_failed_logged = false, trigger_failed_logged = false;
+  // D-141 / E-332: the controller speaker's audio route as this pad last received it.
+  uint32_t route_seen = 0, route_writes = 0;
+  bool routed = false, route_failed_logged = false;
 };
+
+// One audio-route report (r3hd_ds_speaker::RouteBlock): speaker route or path 0.
+inline bool SendRoute(SDL_Gamepad* pad, PadOutput& o, bool speaker) {
+  uint8_t block[r3hd_ds_speaker::kRouteBlockBytes];
+  r3hd_ds_speaker::RouteBlock(speaker, block);
+  if (!SDL_SendGamepadEffect(pad, block, sizeof(block))) {
+    if (!o.route_failed_logged) REXLOG_WARN("R3HD ds_speaker route=failed error={}", SDL_GetError());
+    o.route_failed_logged = true;
+    return false;
+  }
+  o.routed = speaker;
+  ++o.route_writes;
+  REXLOG_INFO("R3HD ds_speaker route={} writes={}", speaker ? "speaker" : "default", o.route_writes);
+  return true;
+}
+
+// The route the speaker worker asked for (r3hd_ds_speaker::Route), written to a USB DualSense when it changed and
+// acknowledged to the worker. A Bluetooth pad has no audio endpoint (the worker finds none) and is left alone.
+inline void StepRoute(SDL_Gamepad* pad, PadOutput& o) {
+  if (o.bluetooth) return;
+  r3hd_ds_speaker::RouteState& r = r3hd_ds_speaker::Route();
+  const uint32_t w = r.wanted.load();
+  if (w == o.route_seen) return;
+  o.route_seen = w;
+  const bool speaker = (w & 1) != 0;
+  if (speaker == o.routed || SendRoute(pad, o, speaker)) r.written.store(w);
+}
 
 // One trigger effect (EffectBlock): R2's, or L2's when the controller map exchanges the triggers (D-116), so the
 // resistance is on the trigger that locks on; the side is fixed for the process, so a release clears the same one.
@@ -94,6 +125,7 @@ void Step(Pad& pad, const std::vector<Pad>& all, int player_index, bool input_ac
   if (m23haptics::Suppressed()) return;
   PadOutput& o = pad.ds;
   if (!o.dualsense) return;
+  StepRoute(pad.sdl, o);
   const Settings s = state::Configured();
   static std::atomic<bool> logged{false};
   if (s.trigger && !logged.exchange(true)) {
@@ -128,6 +160,10 @@ void ReleaseAll(std::vector<Pad>& pads, const char* reason) {
     const Output out = o.policy.Release(static_cast<int>(i));
     queued |= out.set_light || out.send_trigger;
     Apply(pads[i].sdl, o, out);
+    // E-332: path 0 back on the pad now; whatever the worker asked so far counts as seen (it asks again at its next
+    // activation).
+    if (o.routed && !o.bluetooth) queued |= SendRoute(pads[i].sdl, o, false);
+    o.route_seen = r3hd_ds_speaker::Route().wanted.load();
     REXLOG_INFO("R3HD dualsense release reason={} light_writes={} light_restores={} trigger_writes={}", reason,
                 o.light_writes, o.light_restores, o.trigger_writes);
   }

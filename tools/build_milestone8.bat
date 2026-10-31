@@ -19,7 +19,10 @@ rem M45 replaces AMD's DXBC checksum by the DXC-derived container hash (m45_runt
 rem M36 adds the grown-VS.sub patch (m36_runtime_patch.py; tests in m33_mod_overlay_test) and the M36 regression (D-073).
 rem D-101 / D-102 add r3hd_dualsense_patch.py (last: DualSense light bar / R2, achievement display text and glyphs)
 rem and build_r3hd_release_tests.bat (mock-pad policy and display-text tests).
+rem D-139 adds r3hd_pcset_patch.py (last: the in-game PC Settings input gate and pointer hook) and r3hd_pcset_regression.py.
 rem D-115 adds r3hd_padmap_patch.py (after it: the controller button map), its host test and r3hd_padmap_regression.py.
+rem D-150 adds hdl_runtime_patch.py (after M23: the optional HD+ red-correction bypass, off by default) and hdl_regression.py.
+rem D-158 adds uvs_runtime_patch.py (after hdl: the optional lit UV scroll, off by default) and uvs_regression.py.
 rem M23 adds the optional two-layer surface correction patch (off by default), its test and regression (D-052),
 rem and the hidden-run haptics safeguard with its test and regression (D-053).
 setlocal
@@ -59,6 +62,8 @@ python tools\m20_runtime_patch.py || exit /b 1
 python tools\m21_runtime_patch.py || exit /b 1
 python tools\m22_runtime_patch.py || exit /b 1
 python tools\m23_runtime_patch.py || exit /b 1
+python tools\hdl_runtime_patch.py || exit /b 1
+python tools\uvs_runtime_patch.py || exit /b 1
 python tools\m23_haptics_patch.py || exit /b 1
 python tools\m24_runtime_patch.py || exit /b 1
 python tools\m26_runtime_patch.py || exit /b 1
@@ -73,6 +78,8 @@ python tools\m49_runtime_patch.py || exit /b 1
 python tools\m50_runtime_patch.py || exit /b 1
 python tools\r3hd_dualsense_patch.py || exit /b 1
 python tools\r3hd_padmap_patch.py || exit /b 1
+python tools\r3hd_mouse_patch.py || exit /b 1
+python tools\r3hd_pcset_patch.py || exit /b 1
 rem M29 (D-066): the binaries carry no absolute path of the build machine. Source paths (__FILE__, debug info) are
 rem written relative to the repository and the PDB reference is the file name only. A repository path with a space
 rem cannot be one compiler argument inside CMAKE_*_FLAGS, so there the map is left out (the binaries then keep it).
@@ -148,6 +155,8 @@ python tools\m20_regression.py || exit /b 1
 python tools\m21_regression.py || exit /b 1
 python tools\m22_regression.py || exit /b 1
 python tools\m23_regression.py || exit /b 1
+python tools\hdl_regression.py || exit /b 1
+python tools\uvs_regression.py || exit /b 1
 python tools\m23_haptics_regression.py --binaries || exit /b 1
 python tools\m24_regression.py || exit /b 1
 python tools\m26_regression.py || exit /b 1
@@ -163,6 +172,7 @@ python tools\r3hd_portable_regression.py || exit /b 1
 python tools\r3hd_portable_preflight_regression.py || exit /b 1
 python tools\r3hd_portable_lgpl_regression.py || exit /b 1
 python tools\m30_launcher_regression.py || exit /b 1
+python tools\combo_settings_regression.py || exit /b 1
 python tools\m31_regression.py || exit /b 1
 python tools\m32_regression.py || exit /b 1
 python tools\r3hd_mods.py selftest || exit /b 1
@@ -187,5 +197,7 @@ call tools\build_r3hd_release_tests.bat || exit /b 1
 python tools\release_discord_settings_test.py || exit /b 1
 python tools\release_dualsense_settings_test.py || exit /b 1
 python tools\r3hd_padmap_regression.py || exit /b 1
+python tools\r3hd_mouse_feature_regression.py || exit /b 1
+python tools\r3hd_pcset_regression.py || exit /b 1
 echo M8_BUILD_OK
 exit /b 0

@@ -38,3 +38,11 @@ registers = ["r31", "r27", "f13", "f30"]
 address = 0x8219F2D8
 name = "ComboCountdownTest"
 registers = ["r3"]
+
+# E-350 / D-153: PRIVATE hidden diagnostic (R3HD_NONINTRUSIVE and R3HD_TEST_SKY_CLEAR=background only; play.ps1
+# clears the variable). 0x821C354C is in the scene clear 0x821C3538 after its `li r7, 0` (clear colour) and before
+# the D3D Clear call; the hook may set r7 to the title's stored background colour. Off by default.
+[[midasm_hook]]
+address = 0x821C354C
+name = "SkyClearTest"
+registers = ["r7"]

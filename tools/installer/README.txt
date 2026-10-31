@@ -29,7 +29,7 @@ Turkish:           the Turkish translation is a mod. A Turkish setup installs an
                    require Game Language = English. The portable ZIP has no bundled translation; install
                    the separate optional Turkish v1.0.1 ZIP through Settings > Mods if desired.
 Subtitles:         a new game profile starts with the game's own Subtitles option off: switch it on once in the
-                   game's Options (Audio). Subtitles for voiced lines during gameplay: Settings > Corrections >
+                   game's Options (Audio). Subtitles for voiced lines during gameplay: Settings > Display >
                    Gameplay subtitles (on for a new HD+ installation, off for Vanilla); the choice stays when you
                    change the profile.
 Command line:      app\play.cmd [options], e.g. app\play.cmd -Fullscreen -RenderScale 2. An option named here wins over

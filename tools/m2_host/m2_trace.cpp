@@ -430,4 +430,47 @@ void ComboCountdownTest(PPCRegister& object) {
       now, start, window, window - age, duration, object.u32,
       M18Load(0x40CDD678), M18Load(0x40CDD644));
 }
+// E-350 / D-153: hidden diagnostic only, not a player setting. At 821C354C, in the scene clear 821C3538 after its
+// `li r7, 0` and before the D3D Clear call, r7 is the clear colour. With R3HD_NONINTRUSIVE and
+// R3HD_TEST_SKY_CLEAR=background, r7 takes the D3DCOLOR the title stored for this frame at 829A471C (from the
+// level's background light; 0 in a level without one, the same as the literal). R3HD_TEST_SKY_CLEAR=alternate
+// switches between the two every 120 scene clears and logs each switch, so frames of one run show both with the
+// same camera. Reads one guest word, writes none.
+// E-351 / D-155, D-156: the correction. Without a test mode, R3HD_SKY_CLEAR=background (play.ps1 -SkyClear, registry
+// sky_clear: Vanilla original, HD+ background) does the same, but only while the engine's
+// current level name (82C06221, as in r3hd_ds_state.h) is wood_11 (Clearleaf Forest) or swamp_60 (Bog of Murk), the
+// two levels compared with 2003 PC screenshots; every other level keeps the title's black. Also reads that name.
+void SkyClearTest(PPCRegister& r7) {
+  static const int mode = [] {
+    const char* v = std::getenv("R3HD_TEST_SKY_CLEAR");
+    const char* p = std::getenv("R3HD_SKY_CLEAR");
+    int m = !std::getenv("R3HD_NONINTRUSIVE") || !v ? 0 : !std::strcmp(v, "background") ? 1
+        : !std::strcmp(v, "alternate") ? 2 : 0;
+    if (!m && p && !std::strcmp(p, "background")) m = 3;
+    REXLOG_INFO("SkyClearTest mode={}", m == 1 ? "background" : m == 2 ? "alternate" : m == 3 ? "levels" : "original");
+    return m;
+  }();
+  if (!mode) return;
+  if (mode == 2) {
+    static uint64_t calls = 0;
+    const bool on = (calls / 120) % 2 == 1;
+    if (calls % 120 == 0) REXLOG_INFO("SkyClearTest alternate background={} call={}", on, calls);
+    ++calls;
+    if (!on) return;
+  }
+  if (mode == 3) {
+    char level[m18::kNameLimit];
+    M18String(0x82C06221, level, true);
+    const bool on = !std::strcmp(level, "wood_11") || !std::strcmp(level, "swamp_60");
+    static char last_level[m18::kNameLimit] = "";
+    if (std::strcmp(level, last_level)) REXLOG_INFO("SkyClearTest level={} background={}", level, on);
+    std::memcpy(last_level, level, sizeof level);
+    if (!on) return;
+  }
+  static uint32_t last = 0xFFFFFFFF;
+  const uint32_t colour = M18Load(0x829A471C);
+  if (colour != last) REXLOG_INFO("SkyClearTest colour={:08X}", colour);
+  last = colour;
+  r7.u64 = colour;
+}
 #endif

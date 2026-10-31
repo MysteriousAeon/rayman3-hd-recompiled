@@ -1,0 +1,21 @@
+# E-350 (D-153): one hidden run with R3HD_TEST_SKY_CLEAR=alternate (the clear switches every 120 scene clears, about
+# 2 s). Frames about 1.1 s apart, so neighbouring frames fall in different halves; the runtime log says which.
+wait 24
+frame c1
+wait 1.1
+frame c2
+wait 1.1
+frame c3
+wait 40
+axis 303 32767
+wait 4
+frame u1
+wait 1.1
+frame u2
+wait 1.1
+frame u3
+wait 1.1
+frame u4
+wait 1.1
+frame u5
+axis 303 0

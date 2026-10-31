@@ -1,0 +1,13 @@
+# HD+ lighting L1 (D-150): hidden same-frame A/B of the red-correction bypass, with R3HD_RED_CORRECTION_AB=split.
+# Every frame shows the left half of the picture twice: through the title's red-correction pass (left) and
+# through the bypass (right), from the same game state, camera and resolution. Judged by
+# tools/hdl_redcorrection_ab.py. No input: the spawn view (an idle player dies in fact_22 after about 25 s).
+wait 19
+frame split_1
+wait 1
+frame split_2
+wait 1
+frame split_3
+wait 1
+frame split_4
+wait 1

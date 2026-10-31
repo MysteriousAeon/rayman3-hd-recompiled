@@ -129,4 +129,9 @@ if __name__ == '__main__':
         ("    // A dropped frame breaks the carry's adjacency; re-prime rather than splice\n",
          "    m22audio::XmaError(id(), 1);\n"
          "    // A dropped frame breaks the carry's adjacency; re-prime rather than splice\n"),
+        # E-334: which sound-bank asset each context plays (the buffer's address, size and first-packet hash).
+        ('  uint8_t* current_input_buffer = GetCurrentInputBuffer(data);\n',
+         '  uint8_t* current_input_buffer = GetCurrentInputBuffer(data);\n'
+         '  m22audio::XmaBuffer(id(), data->GetCurrentInputBufferAddress(), current_input_buffer,\n'
+         '                      GetCurrentInputBufferSize(data), data->input_buffer_read_offset);\n'),
     ])

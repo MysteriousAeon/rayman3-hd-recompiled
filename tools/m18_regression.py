@@ -32,8 +32,10 @@ def read(path: Path) -> str:
 # --- hook configuration --------------------------------------------------------------------------------------------
 compat = tomllib.loads(read(ROOT / "config/rexglue/r3hd_compat.toml"))["midasm_hook"]
 by_name = {hook["name"]: hook for hook in compat}
-check(sorted(by_name) == ["ComboCountdownTest", "ComboTimedCloseTest", "M18RevisitRedirect", "M18TestWorldEnd"],
-      "the file holds the two M18 hooks and the two explicit private Combo experiments only")
+check(sorted(by_name) == ["ComboCountdownTest", "ComboTimedCloseTest", "M18RevisitRedirect", "M18TestWorldEnd", "SkyClearTest"],
+      "the file holds the two M18 hooks, the two private Combo experiments and the private sky clear diagnostic only")
+check(by_name.get("SkyClearTest") == dict(address=0x821C354C, name="SkyClearTest", registers=["r7"]),
+      "sky clear diagnostic (E-350): site 821C354C, r7 only, no return / jump flag")
 check(by_name.get("ComboCountdownTest") == dict(address=0x8219F2D8, name="ComboCountdownTest",
       registers=["r3"]), "private countdown hook is after the native update-disable gate, no jump flag")
 check(by_name.get("ComboTimedCloseTest") == dict(address=0x8219E9D4, name="ComboTimedCloseTest",
@@ -60,6 +62,8 @@ if image.is_file():
     check(word(0x82102E38) >> 26 == 16 and word(0x82102E58) >> 26 == 18, "the block is entered by fall-through and left at 82102E58")
     check(word(0x82102CC4) >> 26 == 31 and (word(0x82102CC4) >> 21) & 31 == 3,
           "82102CC4 is a register move out of r3, the first use of the requested name")
+    check(word(0x821C3548) == 0x38E00000 and word(0x821C354C) >> 26 == 32 and (word(0x821C354C) >> 21) & 31 == 3
+          and word(0x821C3550) == 0x38C0001F, "821C354C follows li r7, 0 in the scene clear and does not touch r7")
 
 # --- generated code (skipped before the first codegen) -------------------------------------------------------------
 generated = W / "generated" / "default"
@@ -83,6 +87,13 @@ if sources:
         _, text, at = calls["M18TestWorldEnd("][0]
         check(text[at:at + 120].startswith("\tM18TestWorldEnd(ctx.r3);") and "ctx.r30.u64 = ctx.r3.u64;" in text[at:at + 120],
               "the test trigger runs before the name in r3 is first used")
+    sky = [(path, m.start()) for path in sources for m in re.finditer(r"^	SkyClearTest\(ctx\.r7\);", read(path), re.M)]
+    check(len(sky) == 1, "the sky clear diagnostic is called from exactly one place")
+    if len(sky) == 1:
+        text = read(sky[0][0])
+        before = text[max(0, sky[0][1] - 160):sky[0][1]]
+        check("ctx.r7.s64 = 0;" in before and "DEFINE_REX_FUNC(sub_821C3538)" in text[max(0, sky[0][1] - 1200):sky[0][1]],
+              "the sky clear diagnostic runs in sub_821C3538 after li r7, 0")
 
 # --- host code -----------------------------------------------------------------------------------------------------
 header = read(ROOT / "tools/m18_revisit.h")
@@ -113,11 +124,62 @@ check("const PPCContext saved = *ctx;" in redirect_body and "*ctx = saved;" in r
 check(all(word not in section for word in ("0x82836F64", "0x82875F4C", "M18Store(kM18EndOfGame")),
       "highest world, end-of-game flag and the world mask are never written")
 check("achievement" not in section.lower(), "achievements are not touched")
+sky_body = section[section.index("void SkyClearTest("):]
+check('std::getenv("R3HD_NONINTRUSIVE")' in sky_body and 'std::getenv("R3HD_TEST_SKY_CLEAR")' in sky_body
+      and '!std::strcmp(v, "background")' in sky_body and '!std::strcmp(v, "alternate")' in sky_body
+      and "if (!mode) return;" in sky_body,
+      "sky clear diagnostic is off unless a hidden run sets R3HD_TEST_SKY_CLEAR=background")
+check("M18Store(" not in sky_body and "memcpy(M18Base()" not in sky_body and re.findall(r"M18Load\((\w+)\)", sky_body) == ["0x829A471C"]
+      and re.findall(r"M18String\((\w+),", sky_body) == ["0x82C06221"],
+      "sky clear diagnostic reads only the stored clear colour and the level name, and writes no guest memory")
+# E-351 / D-155: the human A/B switch applies only in the two levels compared with 2003 PC screenshots.
+check('std::getenv("R3HD_SKY_CLEAR")' in sky_body and 'if (!m && p && !std::strcmp(p, "background")) m = 3;' in sky_body
+      and 'const bool on = !std::strcmp(level, "wood_11") || !std::strcmp(level, "swamp_60");' in sky_body
+      and sorted(set(re.findall(r'"((?:wood|swamp|moor)_\d+)"', sky_body))) == ["swamp_60", "wood_11"],
+      "R3HD_SKY_CLEAR=background clears to the background colour in wood_11 and swamp_60 only")
 
 # --- launcher and tools --------------------------------------------------------------------------------------------
 play = read(ROOT / "tools/play.ps1")
 check("[ValidateSet('fixed', 'original')][string]$Revisit = 'fixed'" in play and "$env:R3HD_REVISIT = $Revisit" in play
       and "$env:R3HD_REVISIT = $savedRevisit" in play, "launcher: -Revisit fixed is the default, original is explicit, the variable is restored")
+check("'R3HD_TEST_SKY_CLEAR'" in play and play.count("R3HD_TEST_SKY_CLEAR") == 1,
+      "launcher clears the sky clear diagnostic variable and never sets it")
+check("[ValidateSet('original', 'background')][string]$SkyClear = 'original'," in play
+      and "$env:R3HD_SKY_CLEAR = $SkyClear" in play and "$env:R3HD_SKY_CLEAR = $savedSkyClear" in play
+      and "SkyClear = 'sky_clear'" in play,
+      "launcher: -SkyClear original is the default, resolved like every other preset setting, the variable is restored")
+# D-156: human visual pass in wood_11 and swamp_60 (E-352); HD+ selects background, Vanilla keeps the title's black.
+sys.path.insert(0, str(ROOT / "tools"))
+import r3hd_settings as S
+registry = S.load_registry()
+resolve = S.resolve_presets
+reg = registry["settings"]["sky_clear"]
+check(reg["vanilla"] == "original" and reg["hdplus"] == "background" and reg["category"] == "hd_correction"
+      and reg["values"] == ["original", "background"] and reg.get("group") == "corrections"
+      and reg.get("ui", "shown") == "shown" and reg.get("scope", "preset") == "preset" and "provisional" not in reg
+      and "hdplus_candidate" not in reg and str(reg.get("validation", "")).startswith("passed"),
+      "registry sky_clear: Vanilla original, HD+ background, a preset HD correction shown under Corrections, passed")
+check(resolve(registry)["values"]["sky_clear"] == "original" and resolve(registry, "vanilla")["values"]["sky_clear"] == "original"
+      and resolve(registry, settings={"schema": 3, "preset": "vanilla"})["values"]["sky_clear"] == "original",
+      "resolver: no preset, Vanilla and a fixed Vanilla file keep the black clear")
+h = resolve(registry, "hdplus")
+check(h["values"]["sky_clear"] == "background" and h["sources"]["sky_clear"] == "hdplus"
+      and not any("sky_clear" in w for w in h["warnings"]), "resolver: HD+ selects background, without a warning")
+for base, want in (("vanilla", "original"), ("hdplus", "background")):
+    old = {"schema": 3, "preset": "custom", "base": base, "overrides": {"layer_coords": "separate"}}
+    check(resolve(registry, settings=old)["values"]["sky_clear"] == want,
+          f"resolver: a Custom file on {base} that never named sky_clear follows its base ({want})")
+    for value in ("original", "background"):
+        r = resolve(registry, settings={"schema": 3, "preset": "custom", "base": base, "overrides": {"sky_clear": value}})
+        check(r["values"]["sky_clear"] == value and r["sources"]["sky_clear"] == "custom",
+              f"resolver: a stored Custom sky_clear {value} on {base} is kept")
+e = resolve(registry, "vanilla", explicit={"sky_clear": "background"})
+check(e["values"]["sky_clear"] == "background" and e["label"] == "vanilla+explicit",
+      "resolver: -SkyClear background on Vanilla is labelled vanilla+explicit")
+written = S.make_settings(registry, "custom", "hdplus", ["SkyClear=original"])
+check(written["overrides"] == {"sky_clear": "original"}
+      and resolve(registry, settings=written)["values"]["sky_clear"] == "original",
+      "write: Custom stores the sky clear choice under its launcher name too")
 check("'R3HD_TEST_WORLD_END'" in play and play.count("R3HD_TEST_WORLD_END") == 1,
       "launcher clears the test trigger variable and never sets it")
 allowed = {"m18_regression.py", "m18_revisit_check.py", "play.ps1"}

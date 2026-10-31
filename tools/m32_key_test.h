@@ -7,6 +7,8 @@
 #pragma once
 #include <rex/input/mnk/mnk_input_driver.h>
 #include <rex/m6_test_input.h>
+#include <rex/r3hd_hostui_gate.h>
+#include <rex/platform/env.h>
 #include <rex/logging.h>
 #include <rex/ui/sdl_virtual_key.h>
 #include <rex/ui/ui_event.h>
@@ -38,6 +40,10 @@ class Source {
   explicit Source(const char* path) : file_(path ? path : "") {
     driver_ = std::make_unique<rex::input::mnk::MnkInputDriver>(nullptr, 0);
     driver_->SetTestEnabled(true);
+    // D-142: the in-game PC Settings panel holds this instance's input as the SDK's is_active() callback holds the
+    // InputSystem's drivers (this instance is not one of them), so the driver's own gate runs in game timing.
+    driver_->set_is_active_callback(
+        [] { return !rex::platform::env::get(r3hd_hostui::kTestSourceBlocked).has_value(); });
     driver_->Setup();
     rex::ui::UISetupEvent focus(nullptr, false);
     driver_->OnGotFocus(focus);
@@ -62,6 +68,18 @@ class Source {
       }
       if (ms_ > elapsed) break;
       waiting_ = false;
+      // D-138: the mouse, as the window would deliver it: 400 / 401 = relative counts (value), 410 .. 414 = left,
+      // right, middle, side 1, side 2 (value 1 down, 0 up).
+      if (scan_ == 400 || scan_ == 401) {
+        driver_->TestMouseMotion(scan_ == 400 ? float(down_) : 0.0f, scan_ == 401 ? float(down_) : 0.0f);
+        REXLOG_INFO("M32 keymap_test mouse_motion axis={} counts={}", scan_ - 400, down_);
+        continue;
+      }
+      if (scan_ >= 410 && scan_ <= 414 && (down_ == 0 || down_ == 1)) {
+        driver_->TestMouseButton(int(scan_ - 410), down_ != 0);
+        REXLOG_INFO("M32 keymap_test mouse_button button={} down={}", scan_ - 410, down_);
+        continue;
+      }
       if (scan_ >= 300 || down_ < 0 || down_ > 1) {
         REXLOG_INFO("M32 keymap_test ignored scancode={} value={} (analog axes are not keys)", scan_, down_);
         continue;

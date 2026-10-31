@@ -1,0 +1,11 @@
+# HD+ lighting investigation (isolated entry): four private traced frames while the player stands idle at the
+# spawn (which lighting shaders and light constants the guest uses in the scene; census of point-lit draws).
+wait 18
+frame a
+wait 4
+frame b
+wait 4
+frame c
+wait 4
+frame d
+wait 3

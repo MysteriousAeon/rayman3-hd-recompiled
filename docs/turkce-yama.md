@@ -33,7 +33,7 @@ Oyun güncellendiğinde kurulu modlarınız ve açık/kapalı tercihleriniz koru
 
 Türkçe yama, oyunun altyazı metinlerini çevirir. Ancak altyazıların görüntülenmesi için oyunun kendi **Options → Audio → Subtitles** seçeneğinin açık olması gerekir.
 
-Oynanış sırasında duyulan konuşmaların altyazıları için ayrıca **Settings → Corrections → Gameplay subtitles** seçeneğini kullanabilirsiniz.
+Oynanış sırasında duyulan konuşmaların altyazıları için ayrıca **Settings → Display → Gameplay subtitles** seçeneğini kullanabilirsiniz.
 
 Türkçe yama ile Settings uygulamasının arayüz dili birbirinden bağımsızdır.
 

@@ -61,7 +61,8 @@ out_directory_path = "generated/default"
 includes = ["../../../config/rexglue/r3hd_functions.toml", "../../../config/rexglue/r3hd_indirect.toml", "../../../config/rexglue/r3hd_runtime_targets.toml", "../../../config/rexglue/r3hd_observe.toml", "../../../config/rexglue/r3hd_nonlocal.toml"]
 generate_exception_handlers = true
 ''')
-        for name in ('main.cpp', 'r3hd_app.h', 'r3hd_window_icon.h', 'r3hd_discord.h', 'm2_trace.h', 'm2_trace.cpp'):
+        for name in ('main.cpp', 'r3hd_app.h', 'r3hd_window_icon.h', 'r3hd_discord.h', 'r3hd_pc_settings.h', 'm2_trace.h',
+                     'm2_trace.cpp'):
             source, target = ROOT/'tools/m2_host'/name, W/'src'/name
             if not target.exists() or source.read_bytes() != target.read_bytes():
                 shutil.copyfile(source, target)

@@ -59,6 +59,22 @@ def main():
               section['keys'] == {i: [v] for i, v in changes.items()}
               and all(resolved['keys'][i][0] == v for i, v in yielded.items()))
 
+    check('D-138 defaults: the left button is on Attack and the right on Lock On in both layouts, each on one input only',
+          all(lay['effective'][i][-1] == t and [k for k, v in lay['effective'].items() if t in v] == [i]
+              for lay in (original, modern) for i, t in (('x', 'LMB'), ('right_trigger', 'RMB')))
+          and not any(t in v for lay in (original, modern) for v in lay['effective'].values() for t in ('MMB', 'MB4', 'MB5')))
+    try:
+        rs.keyboard_section(km, 'original_pc', {'left_shoulder': 'LMB', 'right_shoulder': 'LMB', 'x': 'Space'})
+        mouse_shared = False
+    except rs.Refused as e:
+        mouse_shared = e.code == 'KEY_CONFLICT'
+    check('D-138: only the documented V pair may share a key; a mouse button on two inputs is a conflict',
+          mouse_shared and not rs.shared_key(km, 'LMB', 'left_shoulder', 'right_shoulder'))
+    section = rs.keyboard_section(km, 'original_pc', {'left_shoulder': 'H', 'right_shoulder': 'MB4', 'y': 'MMB'})
+    check('D-138: mouse buttons roundtrip with a detached shoulder; the shared V yields as before',
+          rs.resolve_keyboard(km, json.loads(json.dumps(section)))['state'] == 'saved'
+          and rs.resolve_keyboard(km, section)['effective']['right_shoulder'] == ['MB4'])
+
     saved = {k: os.environ.get(k) for k in engine.HOOKS}
     try:
         with tempfile.TemporaryDirectory(prefix='r3hd_controls_') as tmp:

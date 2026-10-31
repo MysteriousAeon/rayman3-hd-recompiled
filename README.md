@@ -15,11 +15,13 @@ Rayman 3 was one of my favorite games growing up, and I wanted my wife to experi
 ## Features
 
 - **Native Windows port:** Play the Xbox 360 HD version without running an emulator.
-- **HD+ enhancements:** Optional visual corrections and a new Combo Meter closing animation, alongside Vanilla and Custom profiles.
+- **HD+ enhancements:** Optional fixes for lighting, sky colors, charge effects, texture rendering, and Combo Meter animation, alongside Vanilla and Custom profiles.
+- **Mouse and keyboard support:** Optional mouse camera and button controls, mouse-controlled Look Mode, two keyboard layouts, and customizable bindings.
+- **In-game PC Settings:** Press F4 to adjust common settings without leaving the game.
+- **Controller support:** Customizable controller button mapping, including support for Xbox-compatible controllers and native DualSense controllers.
+- **DualSense enhancements:** Dynamic lightbar colors, adjustable adaptive trigger resistance, and optional controller-speaker effects.
 - **Built-in game languages:** English, French, Spanish, Italian, and German, using the original Xbox 360 HD game data.
 - **Turkish translation:** An optional localization covering game text, menus, subtitles, and achievement descriptions.
-- **Keyboard and controller support:** Two keyboard layouts with customizable key bindings and controller button mapping.
-- **DualSense enhancements:** Dynamic lightbar colors based on the game world and power-ups, with adjustable R2 adaptive trigger resistance.
 - **Achievements:** In-game achievement tracking and notifications, with Turkish text when the translation mod is enabled.
 - **Discord Rich Presence:** Optional Discord activity integration.
 - **Mod support:** Install and manage compatible texture, text, font, and subtitle mods through Settings.
@@ -110,31 +112,57 @@ You can rebind Walk or leave it unassigned.
 
 In Settings → Controls → Controller, capture a button to reassign it. Digital buttons swap with digital buttons, triggers with triggers, and sticks with sticks. One map applies to physical controllers; keyboard bindings remain independent. Xbox-compatible controllers and native DualSense are supported, with physical DualSense Bluetooth acceptance recorded; other device configurations have limited testing. Guide / PS and the touchpad cannot be assigned. Existing saved keyboard choices take precedence over updated defaults.
 
+### Mouse controls
+
+Mouse controls are optional and disabled by default.
+
+Under **Settings → Mouse**, you can configure:
+
+- **Mouse Camera:** Move the camera with the mouse and adjust its sensitivity.
+- **Mouse Buttons:** Use mouse buttons for supported gameplay actions, including attacking.
+
+When Mouse Camera is enabled, the mouse also controls the camera in Look Mode.
+
+Mouse input is limited to gameplay and does not interfere with menus, cinematics, or pause screens. Keyboard and controller controls remain available.
+
+## In-game PC Settings
+
+Press **F4** during gameplay to open the PC Settings panel.
+
+The panel provides quick access to commonly used options without requiring you to close the game. Some changes take effect immediately, while others require restarting the game.
+
+For the complete set of options, use the separate Settings application.
+
 ## Game profiles: Vanilla, HD+, and Custom
 
 Choose a profile under Settings → Game profile:
 
-- **Vanilla:** Preserves the Xbox 360 release's presentation, with compatibility fixes necessary for native Windows execution.
-- **HD+:** Includes Vanilla functionality plus optional corrections for visual issues in the Xbox 360 HD release.
-- **Custom:** Allows you to choose individual corrections.
+- **Vanilla:** Preserves the Xbox 360 release's original presentation, with compatibility fixes necessary for native Windows execution.
+- **HD+:** Enables additional visual corrections for issues inherited from the Xbox 360 HD release.
+- **Custom:** Allows individual corrections to be enabled or disabled.
+
+HD+ includes the following corrections:
+
+| Correction | What it does |
+|---|---|
+| Combo Meter Animation | Adds a smooth closing animation instead of the original abrupt disappearance. |
+| Separate texture coordinates for two-layer effects | Corrects texture coordinate handling for supported layered effects. |
+| Correct HD Lighting Colors | Removes the unnatural pink tint in Hoodlum Headquarters and the Tower of the Leptys. |
+| Correct Robo-Pirate statue textures | Fixes upside-down textures on four statues in Hoodlum Headquarters. |
+| Correct Sky Colors | Restores the intended sky colors in Clearleaf Forest and the Bog of Murk. |
+| Correct Charge Trail Colors | Restores the changing colors of Rayman's fist charge trail. |
+
+Individual corrections can be configured under **Settings → Corrections** when using Custom.
+
+Existing Custom choices are preserved during updates. New corrections without a saved preference follow the base profile selected for Custom.
 
 Changing the game profile does not reset display, control, or advanced settings. Changes take effect the next time the game starts.
-
-### Combo Meter Animation
-
-**Combo Meter Animation**, under Settings → Corrections, adds an upward closing animation during the final second of a combo.
-
-- **Vanilla:** Keeps the original abrupt closing behavior.
-- **HD+:** Enables the animation by default.
-- **Custom:** Allows the animation to be turned on or off independently.
-
-The preference is saved across launches. Changing it does not reset other Custom settings.
 
 ### Subtitles
 
 For cinematic subtitles, enable the original game's **Subtitles** setting under Options → Audio. This option starts disabled on a new game profile.
 
-The separate **Gameplay subtitles** option under Settings → Corrections enables subtitles for voiced dialogue during gameplay.
+The separate **Gameplay subtitles** option under Settings → Display enables subtitles for voiced dialogue during gameplay.
 
 Fresh HD+ installations start with Gameplay subtitles enabled; fresh Vanilla installations start with it disabled. Your subsequent preference is preserved independently of profile changes.
 
@@ -166,13 +194,12 @@ Native DualSense controllers can use additional features when supported by the c
 
 - **Dynamic lightbar colors:** The lightbar changes according to the current game world and active power-up.
 - **Adaptive R2 trigger:** Adds resistance to the R2 trigger during eligible gameplay.
-- **Adjustable strength:** Use Settings → Advanced → Adaptive Trigger Strength to choose a value from 0% to 100%.
+- **Adjustable trigger strength:** Use Settings → Advanced → Adaptive Trigger Strength to choose a value from 0% to 100%.
+- **Controller-speaker effects:** Plays selected power-up sounds through the DualSense's built-in speaker, with a separate volume control under Settings → Advanced.
 
-The default strength is **30%**. Selecting **0%** disables the trigger resistance.
+The default adaptive trigger strength is 30%. Selecting 0% disables trigger resistance.
 
-Lightbar and adaptive trigger effects can be disabled independently. Both are enabled by default on fresh installations; previously saved choices are preserved.
-
-Settings changes take effect the next time the game starts.
+Controller-speaker effects require a USB connection and are disabled by default. Lightbar and adaptive trigger effects can be disabled independently.
 
 These features require access to a supported physical DualSense. Steam Input or virtual controller configurations may prevent them from being available.
 
@@ -214,9 +241,9 @@ To create a compatible mod, see [MODDING.md](tools/installer/MODDING.md), also i
 
 ## Known limitations
 
-- The game has been completed from beginning to end on version 1.0.1 during human playtesting. The final installer candidate has also passed automated runtime and installation checks, but a separate full playthrough on that exact candidate has not been performed.
+- The game was completed from beginning to end during human playtesting of v1.0.1. Automated regression and installation testing is also performed for subsequent releases, but a separate full playthrough of every release has not been completed.
 - Hardware compatibility testing is limited. The port has been exercised on the developer's Windows 11 system and in limited external testing; this does not establish compatibility with every GPU, driver, controller, or display configuration.
-- Some visual issues inherited from the Xbox 360 HD release remain, including examples involving the Clearleaf sky and certain Hoodlum HQ scenes.
+- Some visual differences and issues inherited from the Xbox 360 HD release remain. HD+ addresses several of these, including the Clearleaf sky, Bog of Murk clouds, and lighting colors in Hoodlum Headquarters and the Tower of the Leptys.
 - A rare audio-initialization crash has been observed during testing. Its cause has not been established.
 - Holding Walk while swimming may prevent forward movement. Release Walk to continue swimming.
 - Changing Windows display scaling while Settings is open can leave a minor visual artifact. Reopening Settings resolves it.

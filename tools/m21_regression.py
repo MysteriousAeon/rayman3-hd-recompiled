@@ -75,14 +75,15 @@ check(set(re.findall(r"\b(SDL_\w+|ShowCursor|SetCursor\w*|ClipCursor|SetCapture)
 auto = window.split("bool M21CursorAuto()")[1].split("\n}\n")[0]
 check('!std::getenv("R3HD_NONINTRUSIVE")' in auto and 'std::getenv("R3HD_CURSOR")' in auto, "hidden windows and R3HD_CURSOR are excluded once, at the gate")
 calls = re.findall(r"^(.*)M21ApplyCursor\(M21Tracker\(\)\.(\w+)\(", window, re.M)
-check(len(calls) == 10, "ten event sites")
+check(len(calls) == 11, "eleven event sites (D-139 adds the host panel)")
 check(all("if (M21CursorAuto())" in before or event in ("MouseIdle", "Request", "MouseMoved") for before, event in calls),
       "every one-line event site is behind the gate")
 for event in ("MouseIdle", "Request", "MouseMoved"):
     block = window.split(f"M21ApplyCursor(M21Tracker().{event}(")[0].rsplit("if (M21CursorAuto()) {", 1)
     check(len(block) == 2 and block[1].count("}") == 0, f"{event} site is inside a gated block")
-check({event for _, event in calls} == {"MouseIdle", "Opened", "Focus", "Closed", "Request", "Minimized", "Restored", "MouseMoved"},
-      "open, focus, minimize, restore, mouse, request and close are all covered")
+check({event for _, event in calls} == {"MouseIdle", "Opened", "Focus", "Closed", "Request", "Minimized", "Restored", "MouseMoved",
+                                         "HostUi"},
+      "open, focus, minimize, restore, mouse, request, host panel and close are all covered")
 check(window.count('M21Tracker().Focus(false), "focus_lost"') == 1 and window.count('M21Tracker().Minimized(), "minimized"') == 1
       and window.count('M21Tracker().Closed(), "close"') == 1, "restoration on focus loss, minimize and close")
 close = window.split("void WindowSDL::DestroySDLWindow()")[1].split("\n}\n")[0]

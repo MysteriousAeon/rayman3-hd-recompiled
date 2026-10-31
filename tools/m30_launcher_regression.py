@@ -68,7 +68,8 @@ def resolver_checks():
     check("registry: display, rendering resolution, cursor and save clock are preferences (M31: window size, diagnostics)",
           prefs == {"display", "window_size", "render_scale", "cursor", "save_clock", "diagnostics",
                       "gameplay_subtitles", "game_language", "ui_language", "discord_presence", "dualsense_light",
-                      "dualsense_trigger", "dualsense_trigger_strength"})  # independent Settings preferences
+                      "dualsense_trigger", "dualsense_trigger_strength", "dualsense_speaker", "dualsense_speaker_volume", "mouse_camera", "mouse_sensitivity",
+                      "mouse_buttons"})  # independent Settings preferences (D-138: mouse)
     check("registry: the corrections stay preset settings; HD+ = layer_coords separate, texture_orient corrected (M43)",
           rs.scope(S["layer_coords"]) == rs.scope(S["texture_orient"]) == "preset"
           and S["layer_coords"]["hdplus"] == "separate" and S["texture_orient"]["hdplus"] == "corrected")
@@ -232,7 +233,7 @@ def static_checks():
     pallow = json.loads((ROOT / "config" / "release" / "payload_allowlist.json").read_text(encoding="utf-8"))
     check("payload: the launcher is staged to app/r3hd_launcher.exe with the launcher_native role",
           defn["launcher"]["dest"] == engine.LAUNCHER == "app/r3hd_launcher.exe"
-          and pallow["binaries"].get("app/r3hd_launcher.exe") == "launcher_native" and defn["version"].startswith(("0.30.0", "0.31.0", "0.32.0", "0.33.0", "0.34.0", "0.35.0", "0.36.0", "0.49.0", "0.50.0", "1.0.0", "1.0.1", "1.0.2", "1.0.3")))
+          and pallow["binaries"].get("app/r3hd_launcher.exe") == "launcher_native" and defn["version"].startswith(("0.30.0", "0.31.0", "0.32.0", "0.33.0", "0.34.0", "0.35.0", "0.36.0", "0.49.0", "0.50.0", "1.0.0", "1.0.1", "1.0.2", "1.0.3", "1.1.0")))
     bat = (TOOLS / "build_milestone8.bat").read_text(encoding="utf-8")
     check("build: launcher built before the regressions, this regression in the build",
           "call tools\\launcher\\build_launcher.bat || exit /b 1" in bat and "python tools\\m30_launcher_regression.py || exit /b 1" in bat
@@ -331,7 +332,8 @@ def launcher_checks(keep, skip_runtime=False):
 
             script = "\n".join([
                 "dump initial", "shot vanilla_96", "set render_scale 2", "set display fullscreen", "click save", "dump s1",
-                "profile hdplus", "set gameplay_subtitles all", "click save", "dump s2", "reload", "dump s2r", "profile custom", "dump c1", "set texture_orient original",
+                "profile hdplus", "set gameplay_subtitles all", "click save", "dump s2", "reload", "dump s2r", "profile custom", "dump c1",
+                "page corrections", "dump k1", "dpi 144", "dump k144", "dpi 96", "page settings", "set texture_orient original",
                 "click save", "dump s3", "shot custom_96", "profile vanilla", "dump v1", "profile custom", "dump c2",
                 "profile vanilla", "click save", "reload", "profile custom", "dump c3", "set layer_coords separate",
                 "dpi 144", "dump d144", "shot custom_144", "dpi 120", "dump d120", "click play", "dump played",
@@ -354,6 +356,24 @@ def launcher_checks(keep, skip_runtime=False):
                 check("UI: Custom starts from the profile shown before (HD+), nothing changed yet",
                       d["c1"]["custom_base"] == "hdplus" and d["c1"]["setting.layer_coords"] == "separate enabled=1"
                       and d["c1"]["setting.texture_orient"] == "corrected enabled=1")
+                order = d["c1"].get("settings_tab_order", "").split(",")
+                check("UI (D-151, D-161): Custom on HD+ shows the red correction on; Tab on Settings walks the profile, "
+                      "Display, then gameplay subtitles (moved under Display), then Mouse; no correction is on it",
+                      d["c1"].get("setting.red_correction") == "bypass enabled=1"
+                      and order[:2] == ["profile", "display"] and "render_scale" in order and "gameplay_subtitles" in order
+                      and "mouse_camera" in order and not {"combo_close", "red_correction", "sky_clear", "lit_uv_scroll"} & set(order)
+                      and order.index("display") < order.index("render_scale") < order.index("gameplay_subtitles")
+                      < order.index("mouse_camera"), d["c1"].get("settings_tab_order"))
+                k1 = d.get("k1", {})
+                korder = k1.get("corrections_tab_order", "").split(",")
+                check("UI (D-161): the Corrections page: Tab walks the six corrections in order; focus on the first; "
+                      "it names the Custom profile and its base; the charge trail is on (HD+ base); layout holds at 96 and 144 DPI",
+                      k1.get("page") == "corrections"
+                      and korder == ["combo_close", "layer_coords", "red_correction", "texture_orient", "sky_clear", "lit_uv_scroll"]
+                      and k1.get("setting.lit_uv_scroll") == "applied enabled=1" and k1.get("focus") == "combo_close"
+                      and k1.get("corrections_profile", "").startswith("Active profile: Custom, starting from HD+.")
+                      and all(layout_ok(d.get(k, {})) and d.get(k, {}).get("text_clipped") == "0" for k in ("k1", "k144")),
+                      {k: d.get(k, {}).get(f) for k in ("k1", "k144") for f in ("corrections_tab_order", "focus", "controls", "text_clipped")})
                 check("UI: Vanilla shows its own corrections again; Custom choices come back within the session",
                       d["v1"]["setting.texture_orient"] == "original enabled=0"
                       and d["c2"]["setting.texture_orient"] == "original enabled=1" and d["c2"]["custom_base"] == "hdplus")
@@ -404,6 +424,27 @@ def launcher_checks(keep, skip_runtime=False):
                   and settings(home3)["preferences"] == {"diagnostics": "detailed", "display": "fullscreen", "ui_language": "en",
                                                      "dualsense_light": "on", "dualsense_trigger": "on"},  # M31: a new home starts fullscreen; D-108
                   log[-600:] + json.dumps(settings(home3)))
+            home4 = make_home(t, "home4")  # D-138: the Mouse group of the Settings page
+            code, d, log, _ = ui(home4, t, "mouse", chr(10).join([
+                "dump open", "set mouse_sensitivity 75", "dump blocked", "set mouse_camera on", "set mouse_sensitivity 75",
+                "set mouse_buttons on", "dump on", "dpi 144", "dump d144", "dpi 120", "dump d120", "dpi 96", "click save", "dump saved",
+                "reload", "dump reloaded", "set mouse_camera off", "dump off", "click close", ""]))
+            ok = code == 0 and all(k in d for k in ("open", "blocked", "on", "saved", "reloaded", "off"))
+            check("UI (D-138): Mouse group: camera and buttons off, sensitivity 50% and disabled until the camera is on",
+                  ok and d["open"]["setting.mouse_camera"] == "off enabled=1" and d["open"]["setting.mouse_buttons"] == "off enabled=1"
+                  and d["open"]["setting.mouse_sensitivity"].startswith("50 ") and d["open"]["setting.mouse_sensitivity"].endswith("enabled=0")
+                  and d["blocked"]["setting.mouse_sensitivity"].startswith("50 "), log[-300:] + json.dumps(d.get("open", {})))
+            check("UI (D-138): the camera enables the sensitivity; choices are saved as preferences and come back; the "
+                  "sensitivity is disabled (kept) again with the camera off",
+                  ok and d["on"]["setting.mouse_sensitivity"].startswith("75 ") and d["on"]["setting.mouse_sensitivity"].endswith("enabled=1")
+                  and settings(home4)["preferences"].get("mouse_camera") == "on" and settings(home4)["preferences"].get("mouse_sensitivity") == "75"
+                  and settings(home4)["preferences"].get("mouse_buttons") == "on" and d["saved"]["dirty"] == "0"
+                  and d["reloaded"]["setting.mouse_camera"] == "on enabled=1" and d["reloaded"]["setting.mouse_sensitivity"].startswith("75 ")
+                  and d["reloaded"]["setting.mouse_buttons"] == "on enabled=1"
+                  and d["off"]["setting.mouse_sensitivity"].startswith("75 ") and d["off"]["setting.mouse_sensitivity"].endswith("enabled=0"),
+                  json.dumps({k: d.get(k, {}).get("setting.mouse_sensitivity") for k in ("on", "reloaded", "off")}))
+            check("UI (D-138): the Settings page with the Mouse group lays out without overlap at 96, 120 and 144 DPI",
+                  ok and all(layout_ok(d[k]) for k in ("open", "d120", "d144")), str([d.get(k, {}).get("controls") for k in ("open", "d120", "d144")]))
             (home3 / "sessions" / "20261014-101010").mkdir(parents=True)
             (home3 / "sessions" / "20261014-101010" / "session.json").write_text(
                 json.dumps({"exit_code": 1, "exit_hex": "00000001", "clean_exit": False, "crash_report": False}),

@@ -87,6 +87,16 @@ param(
     [ValidateSet('off', 'on')][string]$DualSenseLight = 'off',
     [ValidateSet('off', 'on')][string]$DualSenseTrigger = 'off',
     [ValidateRange(0, 100)][int]$DualSenseTriggerStrength = 30,
+    # D-141: optional controller-speaker effect for a USB DualSense (off by default; volume in percent, read once at game start).
+    [ValidateSet('off', 'on')][string]$DualSenseSpeaker = 'off',
+    [ValidateRange(0, 100)][int]$DualSenseSpeakerVolume = 50,
+    # D-138: native mouse controls, off by default and independent of the presets. MouseCamera turns the camera with the
+    # mouse (--mnk_mouse; the legacy -Mouse switch below is the same as -MouseCamera on); MouseSensitivity is a percent,
+    # 50 = the runtime's default sensitivity 1.0 (--mnk_sensitivity = 2 ** ((percent - 50) / 25)); MouseButtons lets the
+    # mouse buttons assigned in the keyboard map act in gameplay (--mnk_mouse_buttons).
+    [ValidateSet('off', 'on')][string]$MouseCamera = 'off',
+    [ValidateRange(1, 100)][int]$MouseSensitivity = 50,
+    [ValidateSet('off', 'on')][string]$MouseButtons = 'off',
     # M16 (D-043): 'precise' delivers the guest vblank at its deadline (regular frame starts); 'pinned' keeps
     # the SDK's millisecond polling. Default precise since M17 (D-046): it gives the title the constant 16 ms
     # simulation step of an exact 60 Hz vblank; 'pinned' remains for comparison.
@@ -114,6 +124,18 @@ param(
     # listed pages are mirrored top to bottom as they are read (exact, nothing written to disk). Supported
     # enhancement, off by default here.
     [ValidateSet('original', 'corrected')][string]$TextureOrient = 'original',
+    # HD+ lighting L1 (D-150, D-151): 'original' runs the Xbox 360 HD release's final red-correction pass
+    # (Hoodlum Headquarters, Tower of the Leptys, Reflux's arena: deep red turns pink); 'bypass' makes that pass copy
+    # the picture unchanged. Off by default here (the vanilla column); HD+ selects bypass.
+    [ValidateSet('original', 'bypass')][string]$RedCorrection = 'original',
+    # Clearleaf sky (E-351, D-155, D-156): 'original' keeps the Xbox 360 HD release's black scene clear;
+    # 'background' clears to the level's own background colour in wood_11 (Clearleaf Forest) and swamp_60 (Bog of
+    # Murk) only. Off by default here (the vanilla column); HD+ selects background.
+    [ValidateSet('original', 'background')][string]$SkyClear = 'original',
+    # Lit UV scroll (E-353, D-158, D-159): 'original' draws the title's `1t_d_lighting` vertex shader as the Xbox 360
+    # HD release does (the fist-charge trail stays a faint wisp); 'applied' adds the UV offset the engine writes, as
+    # the title's other vertex shaders do. Off by default here (the vanilla column); HD+ selects applied.
+    [ValidateSet('original', 'applied')][string]$LitUvScroll = 'original',
     [ValidateSet('original', 'delayed')][string]$ComboClose = 'original',
     # M44 (D-081, experimental): 'original' shows a voiced line's subtitle during gameplay only as the Xbox 360 HD
     # release does (in cinematic mode, or for the title's own short list of lines); 'all' lets the title's own
@@ -421,6 +443,12 @@ if ($Collect) {
 
 # --- presets (M27, D-060) ----------------------------------------------------------------------
 # tools\r3hd_settings.py is the one resolver; it decides every setting a parameter did not name explicitly.
+# D-138: the legacy -Mouse switch is an explicit -MouseCamera on.
+if ($Mouse) {
+    if ($PSBoundParameters.ContainsKey('MouseCamera') -and $MouseCamera -ne 'on') { throw '-Mouse and -MouseCamera off contradict each other' }
+    $MouseCamera = 'on'
+    $PSBoundParameters['MouseCamera'] = 'on'
+}
 # M30: -Fullscreen is an explicit -Display fullscreen.
 if ($Fullscreen) {
     if ($PSBoundParameters.ContainsKey('Display') -and $Display -ne 'fullscreen') { throw '-Fullscreen and -Display windowed contradict each other' }
@@ -435,9 +463,9 @@ $controller = $null
 # -SettingsFile its preset values are the parameter defaults above (m27_settings_regression.py keeps them equal).
 if ($true) {
     $settingParams = [ordered]@{ Revisit = 'revisit'; Pacing = 'pacing'; Display = 'display'; Cursor = 'cursor'; SaveClock = 'save_clock'; GameLanguage = 'game_language';
-        RenderScale = 'render_scale'; LayerCoords = 'layer_coords'; TextureOrient = 'texture_orient'; WindowSize = 'window_size'; ComboClose = 'combo_close';
+        RenderScale = 'render_scale'; LayerCoords = 'layer_coords'; TextureOrient = 'texture_orient'; RedCorrection = 'red_correction'; SkyClear = 'sky_clear'; LitUvScroll = 'lit_uv_scroll'; WindowSize = 'window_size'; ComboClose = 'combo_close';
         Diagnostics = 'diagnostics'; GameplaySubtitles = 'gameplay_subtitles'; DiscordPresence = 'discord_presence'; DualSenseLight = 'dualsense_light'; DualSenseTrigger = 'dualsense_trigger';
-        DualSenseTriggerStrength = 'dualsense_trigger_strength' }
+        DualSenseTriggerStrength = 'dualsense_trigger_strength'; DualSenseSpeaker = 'dualsense_speaker'; DualSenseSpeakerVolume = 'dualsense_speaker_volume'; MouseCamera = 'mouse_camera'; MouseSensitivity = 'mouse_sensitivity'; MouseButtons = 'mouse_buttons' }
     $resolverArgs = @((Join-Path $PSScriptRoot 'r3hd_settings.py'), 'resolve')
     if ($Preset) { $resolverArgs += @('--preset', $Preset) }
     if ($SettingsFile) { $resolverArgs += @('--settings', $SettingsFile) }
@@ -504,7 +532,12 @@ $arguments = @(
     "--mnk_mode=$((-not $NoKeyboard).ToString().ToLowerInvariant())",
     "--fullscreen=$(($Display -eq 'fullscreen').ToString().ToLowerInvariant())"
 )
-if ($Mouse) { $arguments += '--mnk_mouse=true' }
+if ($MouseCamera -eq 'on') {
+    $mouseScale = [math]::Round([math]::Pow(2, ($MouseSensitivity - 50) / 25), 4).ToString('0.####', [Globalization.CultureInfo]::InvariantCulture)
+    $arguments += '--mnk_mouse=true'
+    $arguments += "--mnk_sensitivity=$mouseScale"
+}
+if ($MouseButtons -eq 'on') { $arguments += '--mnk_mouse_buttons=true' }
 # D-114: the SDK's developer settings overlay (F4) is off unless -DevOverlay; BIN\r3hd.toml is set aside likewise.
 if (-not $DevOverlay) { $arguments += '--bind_settings=None' }
 if (-not $DevOverlay) { $arguments += '--bind_debug_overlay=None' }
@@ -584,6 +617,16 @@ elseif (Test-Path -LiteralPath (Join-Path $modsRoot 'state.json') -PathType Leaf
     }
 }
 
+# D-139: the in-game PC Settings panel (F4) shows this launch's values and saves through the engine of this home, only
+# when the launch uses the home's own settings.json (no -Preset / other -SettingsFile); otherwise it is session-only.
+$pcsetHome = ''; $pcsetPython = ''; $pcsetApp = ''
+if ($installed -and $homeSettings -and $SettingsFile -eq $homeSettings) {
+    $pcsetPython = if ($python -eq 'python') { [string](Get-Command python -ErrorAction SilentlyContinue).Source } else { $python }
+    if ($pcsetPython) { $pcsetHome = $homeRoot }
+    $candidate = Join-Path $repo 'r3hd_launcher.exe'
+    if ($pcsetHome -and (Test-Path -LiteralPath $candidate -PathType Leaf)) { $pcsetApp = $candidate }
+}
+$pcsetText = if ($pcsetHome) { "F4; saves to $pcsetHome" } else { 'F4; this session only (no installation settings)' }
 if ($DryRun) {
     Write-Host 'DRY RUN - nothing was started.'
     Write-Host "executable : $exe"
@@ -608,11 +651,16 @@ if ($DryRun) {
     Write-Host "layer coord: $LayerCoords"
     Write-Host "combo close: $ComboClose"
     Write-Host "texture ori: $TextureOrient"
+    Write-Host "red correct: $RedCorrection"
+    Write-Host "sky clear  : $SkyClear"
+    Write-Host "lit uv scrl: $LitUvScroll"
     Write-Host "gameplay sub: $GameplaySubtitles"
-    Write-Host "dualsense  : light=$DualSenseLight trigger=$DualSenseTrigger strength=$DualSenseTriggerStrength"
+    Write-Host "dualsense  : light=$DualSenseLight trigger=$DualSenseTrigger strength=$DualSenseTriggerStrength speaker=$DualSenseSpeaker speaker_volume=$DualSenseSpeakerVolume"
+    Write-Host "mouse      : camera=$MouseCamera sensitivity=$MouseSensitivity buttons=$MouseButtons"
     Write-Host "keyboard   : $keyText"
     Write-Host "controller : $padText"
     Write-Host "mods       : $modsText"
+    Write-Host "pc settings: $pcsetText"
     $modsNotes | ForEach-Object { Write-Host "mods note  : $_" }
     Write-Host "dev overlay: $(if ($devConfig.state -eq 'set_aside') { $devText -replace ' moved unchanged ', ' would be moved unchanged ' } else { $devText })"
     $arguments | ForEach-Object { Write-Host "argument   : $_" }
@@ -630,13 +678,14 @@ foreach ($old in $prune) { try { Remove-Item -LiteralPath $old.FullName -Recurse
 Move-DevConfig $devConfig
 New-Item -ItemType Directory -Path $session, $user, $cache -Force | Out-Null
 # Written before the launch so the selected licence mode is on record even if this script is interrupted.
-[ordered]@{ session = $stamp; profile = $Profile; preset = $presetLabel; settings_file = $SettingsFile; license_mode = $License; license_mask = $licenseMask; display = $Display; window = $window; render_scale = $scale; render_scale_option = $RenderScale; pacing = $Pacing; revisit = $Revisit; cursor = $Cursor; save_clock = $SaveClock; game_language = $GameLanguage; layer_coords = $LayerCoords; texture_orient = $TextureOrient; combo_close = $ComboClose; gameplay_subtitles = $GameplaySubtitles; diagnostics = $Diagnostics; dualsense_light = $DualSenseLight; dualsense_trigger = $DualSenseTrigger; dualsense_trigger_strength = $DualSenseTriggerStrength; keyboard = $keyText; controller = $padText; mods = $modsText; mods_notes = $modsNotes; dev_overlay = $devText; sessions_removed = $pruned; render_target = $target; arguments = $arguments } |
+[ordered]@{ session = $stamp; profile = $Profile; preset = $presetLabel; settings_file = $SettingsFile; license_mode = $License; license_mask = $licenseMask; display = $Display; window = $window; render_scale = $scale; render_scale_option = $RenderScale; pacing = $Pacing; revisit = $Revisit; cursor = $Cursor; save_clock = $SaveClock; game_language = $GameLanguage; layer_coords = $LayerCoords; texture_orient = $TextureOrient; red_correction = $RedCorrection; sky_clear = $SkyClear; lit_uv_scroll = $LitUvScroll; combo_close = $ComboClose; gameplay_subtitles = $GameplaySubtitles; diagnostics = $Diagnostics; dualsense_light = $DualSenseLight; dualsense_trigger = $DualSenseTrigger; dualsense_trigger_strength = $DualSenseTriggerStrength; dualsense_speaker = $DualSenseSpeaker; dualsense_speaker_volume = $DualSenseSpeakerVolume; mouse_camera = $MouseCamera; mouse_sensitivity = $MouseSensitivity; mouse_buttons = $MouseButtons; keyboard = $keyText; controller = $padText; mods = $modsText; mods_notes = $modsNotes; dev_overlay = $devText; sessions_removed = $pruned; render_target = $target; arguments = $arguments } |
     ConvertTo-Json -Depth 3 | Set-Content -LiteralPath (Join-Path $session 'launch.json') -Encoding UTF8
 $testOnly = 'R3HD_NONINTRUSIVE', 'R3HD_TEST_SECONDS', 'R3HD_INPUT_SCHEDULE', 'R3HD_INPUT_FOLLOW', 'R3HD_M5_CAPTURE',
     'R3HD_FRAME_REQUEST', 'R3HD_AUDIO_CAPTURE', 'R3HD_AUDIO_AFTER', 'R3HD_M5_VB_RESIDENCY_CACHE', 'R3HD_PLAY', 'R3HD_TRIAL',
-    'R3HD_FRAME_TRACE', 'R3HD_VBLANK_SPIN_US', 'R3HD_TEST_WORLD_END', 'R3HD_TEST_COMBO_CLOSE', 'R3HD_TEST_COMBO_PLAYTEST', 'R3HD_TEST_COMBO_CAPTURE',
+    'R3HD_FRAME_TRACE', 'R3HD_VBLANK_SPIN_US', 'R3HD_TEST_WORLD_END', 'R3HD_TEST_COMBO_CLOSE', 'R3HD_TEST_COMBO_PLAYTEST', 'R3HD_TEST_COMBO_CAPTURE', 'R3HD_TEST_SKY_CLEAR',
     'R3HD_SAVE_FAULT', 'R3HD_SAVE_COMMIT', 'R3HD_CURSOR', 'R3HD_TIMEZONE',
-    'R3HD_M22_DRAW_TRACE', 'R3HD_M22_AUDIO', 'R3HD_AUDIO_AUDIBLE', 'R3HD_M24_EVENTS', 'R3HD_DIAGNOSTICS', 'R3HD_KEYMAP_TEST', 'R3HD_PADMAP_TEST', 'R3HD_PAD_MAP', 'R3HD_DISCORD', 'R3HD_DS_LIGHT', 'R3HD_DS_TRIGGER', 'R3HD_DS_TRIGGER_STRENGTH', 'R3HD_ACH_TEXT'
+    'R3HD_M22_DRAW_TRACE', 'R3HD_M22_AUDIO', 'R3HD_AUDIO_AUDIBLE', 'R3HD_M24_EVENTS', 'R3HD_DIAGNOSTICS', 'R3HD_KEYMAP_TEST', 'R3HD_PADMAP_TEST', 'R3HD_PAD_MAP', 'R3HD_DISCORD', 'R3HD_DS_LIGHT', 'R3HD_DS_TRIGGER', 'R3HD_DS_TRIGGER_STRENGTH', 'R3HD_DS_SPEAKER', 'R3HD_DS_SPEAKER_VOLUME', 'R3HD_ACH_TEXT',
+    'R3HD_PCSET_TEST', 'R3HD_PCSET_HOME', 'R3HD_PCSET_PYTHON', 'R3HD_PCSET_TOOLS', 'R3HD_PCSET_SESSION', 'R3HD_PCSET_SETTINGS_APP'
 $saved = @{}
 foreach ($name in $testOnly) { $saved[$name] = [Environment]::GetEnvironmentVariable($name); [Environment]::SetEnvironmentVariable($name, $null) }
 $env:R3HD_PLAY = '1'
@@ -644,7 +693,17 @@ $env:R3HD_DISCORD = $DiscordPresence
 $env:R3HD_DS_LIGHT = $DualSenseLight
 $env:R3HD_DS_TRIGGER = $DualSenseTrigger
 $env:R3HD_DS_TRIGGER_STRENGTH = [string]$DualSenseTriggerStrength
+$env:R3HD_DS_SPEAKER = $DualSenseSpeaker
+$env:R3HD_DS_SPEAKER_VOLUME = [string]$DualSenseSpeakerVolume
 $env:R3HD_PAD_MAP = $padMap  # D-115 (empty: the variable stays unset, the original controls)
+# D-139: what the in-game PC Settings panel needs (decided above; empty values leave the variables unset).
+$env:R3HD_PCSET_SESSION = (@($settingParams.Keys | ForEach-Object { "$($settingParams[$_])=$(Get-Variable -Name $_ -ValueOnly)" }) -join ';')
+if ($pcsetHome) {
+    $env:R3HD_PCSET_HOME = $pcsetHome
+    $env:R3HD_PCSET_PYTHON = $pcsetPython
+    $env:R3HD_PCSET_TOOLS = $PSScriptRoot
+    if ($pcsetApp) { $env:R3HD_PCSET_SETTINGS_APP = $pcsetApp }
+}
 $savedVblank = $env:R3HD_VBLANK
 $env:R3HD_VBLANK = $(if ($Pacing -eq 'precise') { 'deadline' } else { 'poll' })
 $savedRevisit = $env:R3HD_REVISIT
@@ -655,6 +714,12 @@ $env:R3HD_LAYER_COORDS = $LayerCoords
 $env:R3HD_WATER_LAYERS = $null
 $savedOrient = $env:R3HD_TEXTURE_ORIENT
 $env:R3HD_TEXTURE_ORIENT = $TextureOrient
+$savedRedCorrection = $env:R3HD_RED_CORRECTION
+$env:R3HD_RED_CORRECTION = $RedCorrection
+$savedSkyClear = $env:R3HD_SKY_CLEAR
+$env:R3HD_SKY_CLEAR = $SkyClear
+$savedLitUvScroll = $env:R3HD_LIT_UV_SCROLL
+$env:R3HD_LIT_UV_SCROLL = $LitUvScroll
 $savedComboClose = $env:R3HD_COMBO_CLOSE
 $env:R3HD_COMBO_CLOSE = $ComboClose
 $savedGameplaySubs = $env:R3HD_GAMEPLAY_SUBTITLES
@@ -681,6 +746,7 @@ try {
     Write-Host "Revisit mode: $Revisit"
     Write-Host "Mouse cursor: $Cursor; save clock: $SaveClock; layer coordinates: $LayerCoords; texture orientation: $TextureOrient; gameplay subtitles: $GameplaySubtitles"
     Write-Host "Mods: $modsText"
+    Write-Host "In-game PC Settings: $pcsetText"
     $modsNotes | ForEach-Object { Write-Host "Mods note: $_" }
     if ($DevOverlay -or $devConfig.state -ne 'none') { Write-Host "Developer overlays (F3/F4): $devText" }
     Write-Host "Starting r3hd (session $stamp). Close the window or press Alt+F4 to quit."
@@ -714,6 +780,9 @@ try {
     $env:R3HD_LAYER_COORDS = $savedLayers
     $env:R3HD_WATER_LAYERS = $savedWater
     $env:R3HD_TEXTURE_ORIENT = $savedOrient
+    $env:R3HD_RED_CORRECTION = $savedRedCorrection
+    $env:R3HD_SKY_CLEAR = $savedSkyClear
+    $env:R3HD_LIT_UV_SCROLL = $savedLitUvScroll
     $env:R3HD_COMBO_CLOSE = $savedComboClose
     $env:R3HD_GAMEPLAY_SUBTITLES = $savedGameplaySubs
     $env:R3HD_MODS_PLAN = $savedModsPlan
@@ -743,6 +812,9 @@ $result = [ordered]@{
     game_language = $GameLanguage
     layer_coords = $LayerCoords
     texture_orient = $TextureOrient
+    red_correction = $RedCorrection
+    sky_clear = $SkyClear
+    lit_uv_scroll = $LitUvScroll
     combo_close = $ComboClose
     gameplay_subtitles = $GameplaySubtitles
     mods = $modsText

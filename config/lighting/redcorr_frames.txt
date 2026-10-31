@@ -1,0 +1,7 @@
+# HD+ lighting L1 (D-150): whole-frame hidden run for the red-correction switch as a player gets it
+# (R3HD_RED_CORRECTION=original or bypass, no split). Judged by tools/hdl_redcorrection_ab.py --cap.
+wait 19
+frame play_1
+wait 1
+frame play_2
+wait 1

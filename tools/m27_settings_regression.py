@@ -138,6 +138,34 @@ with tempfile.TemporaryDirectory() as tmp:
     r = run("resolve", "--preset", "ultra")
     check(r.returncode == 2 and json.loads(r.stdout)["code"] == "UNKNOWN_PRESET", "CLI refusal exit code 2")
 
+# D-138: native mouse controls: off / 50 / off in every preset, a preference in the "mouse" group, nothing stored by default.
+MOUSE = {"mouse_camera": "off", "mouse_sensitivity": "50", "mouse_buttons": "off"}
+check(all(S[k]["vanilla"] == S[k]["hdplus"] == d and rs.scope(S[k]) == "preference" and S[k]["group"] == "mouse"
+          and S[k]["decision"] == "D-138" and "install_default" not in S[k] for k, d in MOUSE.items())
+      and list(reg["groups"]) == ["display", "corrections", "mouse", "advanced"], "mouse: three preferences, off / 50 / off everywhere")
+check(S["mouse_sensitivity"]["range"] == {"min": 1, "max": 100, "unit": "percent"}
+      and S["mouse_sensitivity"]["requires"] == {"mouse_camera": "on"} and S["mouse_buttons"].get("requires") is None
+      and S["mouse_camera"]["values"] == ["off", "on"] and S["mouse_buttons"]["values"] == ["off", "on"],
+      "mouse: sensitivity 1..100 percent needs the camera; the camera and the buttons are off / on")
+base_home = {"schema": 3, "preset": "hdplus", "preferences": {"display": "fullscreen", "dualsense_light": "on", "dualsense_trigger": "on"}}
+for label, res in (("vanilla", rs.resolve(reg, "vanilla")), ("hdplus", rs.resolve(reg, "hdplus")),
+                   ("custom", rs.resolve(reg, settings={"schema": 3, "preset": "custom", "base": "hdplus",
+                                                       "overrides": {"texture_orient": "original"}})),
+                   ("a 1.0.3 home with no mouse value", rs.resolve(reg, settings=base_home))):
+    check(all(res["values"][k] == d and res["sources"][k] != "explicit" for k, d in MOUSE.items()), f"mouse: {label} resolves off / 50 / off")
+m = rs.resolve(reg, settings={"schema": 3, "preset": "hdplus", "preferences": {"mouse_camera": "on", "mouse_sensitivity": "100",
+                                                                              "mouse_buttons": "on"}})
+check(m["values"]["mouse_camera"] == "on" and m["values"]["mouse_sensitivity"] == "100" and m["values"]["mouse_buttons"] == "on"
+      and m["values"]["layer_coords"] == "separate" and m["label"] == "hdplus", "mouse: stored preferences apply under any preset")
+check(refused(lambda: rs.resolve(reg, settings={"schema": 3, "preset": "vanilla", "preferences": {"mouse_sensitivity": "0"}}), "INVALID_VALUE")
+      and refused(lambda: rs.resolve(reg, settings={"schema": 3, "preset": "vanilla", "preferences": {"mouse_sensitivity": "101"}}), "INVALID_VALUE")
+      and refused(lambda: rs.resolve(reg, settings={"schema": 3, "preset": "vanilla", "preferences": {"mouse_camera": "yes"}}), "INVALID_VALUE")
+      and refused(lambda: rs.resolve(reg, explicit={"mouse_buttons": "1"}), "INVALID_VALUE"), "mouse: out-of-range and unknown values are refused")
+d = rs.make_settings(reg, "hdplus", pairs=["MouseCamera=on", "MouseSensitivity=25", "MouseButtons=on"])
+check(d["preferences"] == {"mouse_buttons": "on", "mouse_camera": "on", "mouse_sensitivity": "25"}
+      and rs.make_settings(reg, "hdplus", pairs=["mouse_camera=off", "mouse_sensitivity=50", "mouse_buttons=off"])["preferences"] == {},
+      "mouse: make_settings stores the choices by launcher name and omits the defaults")
+
 # --- 2. play.ps1 consistency ----------------------------------------------------------------------------------
 play = PLAY.read_text(encoding="utf-8-sig")
 for key, s in S.items():
@@ -205,8 +233,50 @@ if EXE.exists() and "--skip-runtime-dry-run" not in sys.argv[1:]:
         check(code != 0 and "MANDATORY_SETTING" in text and "DRY RUN" not in text, "dry run: a refused settings file stops the launch")
         code, out, text = dry("-Preset", "ultra")
         check(code != 0, "dry run: unknown preset refused by the parameter set")
+        # D-138: native mouse controls (the game is never started)
+        def mouse_args(*args):
+            code, out, text = dry(*args)
+            argv = [line.split(":", 1)[1].strip() for line in text.splitlines() if line.startswith("argument   :")]
+            return code, out, [a for a in argv if a.startswith("--mnk_") and "mouse" in a or a.startswith("--mnk_sensitivity")], text
+        code, out, margs, text = mouse_args()
+        check(code == 0 and margs == [] and out.get("mouse") == "camera=off sensitivity=50 buttons=off",
+              "dry run: no mouse argument by default (a 1.0.3 launch is unchanged)")
+        code, out, margs, text = mouse_args("-MouseCamera", "on")
+        check(code == 0 and margs == ["--mnk_mouse=true", "--mnk_sensitivity=1"] and out.get("mouse") == "camera=on sensitivity=50 buttons=off",
+              "dry run: the camera on passes --mnk_mouse and the default sensitivity 1")
+        for percent, mapped in ((1, "0.257"), (25, "0.5"), (50, "1"), (75, "2"), (100, "4")):
+            code, out, margs, text = mouse_args("-MouseCamera", "on", "-MouseSensitivity", str(percent))
+            check(code == 0 and margs == ["--mnk_mouse=true", f"--mnk_sensitivity={mapped}"]
+                  and abs(float(mapped) - 2 ** ((percent - 50) / 25)) < 0.00006, f"dry run: sensitivity {percent}% = {mapped}")
+        code, out, margs, text = mouse_args("-MouseSensitivity", "100")
+        check(code == 0 and margs == [], "dry run: a sensitivity without the camera passes nothing")
+        code, out, margs, text = mouse_args("-MouseButtons", "on")
+        check(code == 0 and margs == ["--mnk_mouse_buttons=true"], "dry run: the mouse buttons on pass --mnk_mouse_buttons only")
+        code, out, margs, text = mouse_args("-MouseCamera", "on", "-MouseButtons", "on", "-MouseSensitivity", "75")
+        check(code == 0 and margs == ["--mnk_mouse=true", "--mnk_sensitivity=2", "--mnk_mouse_buttons=true"], "dry run: all three on")
+        code, out, margs, text = mouse_args("-Mouse")
+        check(code == 0 and margs == ["--mnk_mouse=true", "--mnk_sensitivity=1"] and out.get("mouse") == "camera=on sensitivity=50 buttons=off",
+              "dry run: the legacy -Mouse is the camera on")
+        code, out, margs, text = mouse_args("-Mouse", "-MouseCamera", "off")
+        check(code != 0 and "contradict" in text, "dry run: -Mouse and -MouseCamera off contradict each other")
+        f = Path(tmp) / "m.json"
+        f.write_text(json.dumps({"schema": 3, "preset": "hdplus", "preferences": {"mouse_camera": "on", "mouse_sensitivity": "100",
+                                                                                 "mouse_buttons": "on"}}), encoding="utf-8")
+        code, out, margs, text = mouse_args("-SettingsFile", str(f))
+        check(code == 0 and margs == ["--mnk_mouse=true", "--mnk_sensitivity=4", "--mnk_mouse_buttons=true"],
+              "dry run: the saved mouse preferences apply")
+        code, out, margs, text = mouse_args("-SettingsFile", str(f), "-MouseCamera", "off", "-MouseButtons", "off")
+        check(code == 0 and margs == [] and out.get("preset") == "hdplus", "dry run: explicit parameters win over saved mouse preferences")
+        code, out, margs, text = mouse_args("-MouseSensitivity", "0")
+        check(code != 0, "dry run: a sensitivity outside 1..100 is refused by the parameter")
+        f.write_text(json.dumps({"schema": 3, "preset": "vanilla", "keyboard": {"layout": "modern", "keys": {"a": ["LMB"], "x": ["E"]}}}),
+                     encoding="utf-8")
+        code, out, text = dry("-SettingsFile", str(f))
+        argv = [line.split(":", 1)[1].strip() for line in text.splitlines() if line.startswith("argument   :")]
+        check(code == 0 and "--keybind_a=LMB" in argv and "--keybind_x=E" in argv and "--keybind_right_trigger=Shift,RMB" in argv,
+              "dry run: mouse tokens reach the keybind_* arguments unchanged")
 else:
-    skipped += 9
+    skipped += 25
     print("SKIP runtime dry runs: explicit skip or missing build")
 
 print(f"M27_SETTINGS_REGRESSION {'PASS' if not failures else 'FAIL'} checks={checks} failures={failures} skipped={skipped}")

@@ -60,6 +60,26 @@ def engine_checks(reg, t):
     for bad in ('101', '-1', '30.5', 'abc', ''):
         check(f'strength {bad!r} refused, the stored value kept',
               refused(lambda: engine.set_option(home, STRENGTH, bad)) and values(reg, home)[STRENGTH] == '57')
+    # D-141: the optional controller speaker; off in every preset, a fresh home and an upgrade (no install_default)
+    SPK, VOL = 'dualsense_speaker', 'dualsense_speaker_volume'
+    for preset in ('vanilla', 'hdplus'):
+        r = settings.resolve(reg, preset=preset)['values']
+        check(f'{preset}: speaker off, volume 50', (r[SPK], r[VOL]) == ('off', '50'))
+    check('no install default for the speaker pair', SPK not in settings.install_defaults(reg) and VOL not in settings.install_defaults(reg))
+    check('speaker volume is 0 ... 100 and needs the speaker on',
+          reg['settings'][VOL]['values'] == [str(i) for i in range(101)] and reg['settings'][VOL]['requires'] == {SPK: 'on'})
+    v = values(reg, home)
+    check('fresh home: speaker off, volume 50', (v[SPK], v[VOL]) == ('off', '50') and SPK not in launcher.settings(home)['preferences'])
+    engine.set_option(home, SPK, 'on')
+    engine.set_option(home, VOL, '80')
+    v = values(reg, home)
+    check('speaker on / volume 80 round trip, trigger pair untouched',
+          (v[SPK], v[VOL]) == ('on', '80') and v[STRENGTH] == '57')
+    for bad in ('101', '-1', '5.5', 'abc', ''):
+        check(f'speaker volume {bad!r} refused, the stored value kept',
+              refused(lambda: engine.set_option(home, VOL, bad)) and values(reg, home)[VOL] == '80')
+    engine.set_option(home, SPK, 'off')
+    engine.set_option(home, VOL, '50')
     engine.set_option(home, 'dualsense_trigger', 'off')
     engine.set_option(home, 'dualsense_light', 'off')
     prefs = launcher.settings(home)['preferences']
@@ -160,10 +180,11 @@ def dry_run_checks(t):
     play = ROOT / 'tools' / 'play.ps1'
     sf = t / 'strength.json'
     sf.write_bytes(json.dumps({'schema': 3, 'preset': 'hdplus', 'preferences': {
-        'dualsense_light': 'on', 'dualsense_trigger': 'on', STRENGTH: '57'}}).encode())
-    for args, want in ((['-SettingsFile', str(sf)], 'light=on trigger=on strength=57'),
-                       (['-SettingsFile', str(sf), '-DualSenseTriggerStrength', '0'], 'light=on trigger=on strength=0'),
-                       ([], 'light=off trigger=off strength=30')):
+        'dualsense_light': 'on', 'dualsense_trigger': 'on', STRENGTH: '57',
+        'dualsense_speaker': 'on', 'dualsense_speaker_volume': '80'}}).encode())
+    for args, want in ((['-SettingsFile', str(sf)], 'light=on trigger=on strength=57 speaker=on speaker_volume=80'),
+                       (['-SettingsFile', str(sf), '-DualSenseTriggerStrength', '0'], 'light=on trigger=on strength=0 speaker=on speaker_volume=80'),
+                       ([], 'light=off trigger=off strength=30 speaker=off speaker_volume=50')):
         r = subprocess.run(['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', str(play), '-DryRun', *args],
                            capture_output=True, text=True, timeout=300, env=launcher.launcher_env())
         line = next((l for l in r.stdout.splitlines() if l.startswith('dualsense')), '')

@@ -35,6 +35,11 @@ put on another input (that section was written before the input existed), so an 
 D-108: "range": {"min": A, "max": B} makes an integer preference (the DualSense trigger strength, a slider in
 Settings); load_registry gives it the values "A" ... "B", so files, explicit pairs and play.ps1 carry decimal strings.
 
+D-138: the keymap's "keys" may hold mouse buttons (LMB RMB MMB MB4 MB5: "mouse": true, no scan code). They are bound,
+swapped, refused and saved exactly like keys (a button on two inputs is a KEY_CONFLICT); the runtime acts on them only
+while the mouse_buttons preference is on. The mouse_camera / mouse_sensitivity preferences are ordinary registry
+settings; play.ps1 maps the sensitivity percent p to the runtime's mnk_sensitivity = 2 ** ((p - 50) / 25).
+
 D-115: the controller button map (config/controls/padmap.json) is a preference of its own like the keyboard: a settings
 file (schema 4; a file without one is still written as schema 3) may hold "controller": {"buttons": {input: button}}
 with only the inputs whose button differs from the original controls. The whole map must stay a bijection of the 14
@@ -71,6 +76,7 @@ SETTINGS_FIELDS[4] = SETTINGS_FIELDS[3] | {"controller"}
 KEYMAP = ROOT / "config" / "controls" / "keymap.json"
 KEYMAP_SCHEMA = 1
 KEYBOARD_FIELDS = {"layout", "keys"}
+MOUSE_KEYS = ("LMB", "RMB", "MMB", "MB4", "MB5")  # D-138: the runtime's names (ui/keybinds.cpp)
 PADMAP = ROOT / "config" / "controls" / "padmap.json"
 PADMAP_SCHEMA = 2  # D-116: analog inputs and the listed actions
 CONTROLLER_FIELDS = {"buttons", "analog"}
@@ -276,7 +282,14 @@ def load_keymap(path: Path = KEYMAP) -> dict:
     ids = [i["id"] for i in km["inputs"]]
     if len(set(ids)) != len(ids) or any(i["group"] not in groups for i in km["inputs"]):
         raise Refused("KEYMAP_INVALID", "inputs: duplicate id or unknown group")
-    names, scans = [k["name"] for k in km["keys"]], [s for k in km["keys"] for s in k["scan"]]
+    for k in km["keys"]:  # D-138: a mouse button is marked "mouse": true and has no scan code; a keyboard key needs scans
+        if "mouse" in k:
+            if k["mouse"] is not True or k["name"] not in MOUSE_KEYS or "scan" in k:
+                raise Refused("KEYMAP_INVALID", f"keys: {k['name']!r}: a mouse button is one of {', '.join(MOUSE_KEYS)}, "
+                                                "marked mouse true, with no scan code")
+        elif not isinstance(k.get("scan"), list) or not k["scan"]:
+            raise Refused("KEYMAP_INVALID", f"keys: {k['name']!r}: a keyboard key needs scan codes")
+    names, scans = [k["name"] for k in km["keys"]], [s for k in km["keys"] for s in k.get("scan", [])]
     if len(set(names)) != len(names) or len(set(scans)) != len(scans):
         raise Refused("KEYMAP_INVALID", "keys: duplicate name or scan code")
     for s in scans:
@@ -295,6 +308,7 @@ def load_keymap(path: Path = KEYMAP) -> dict:
     if any(i.get("yields") and i["id"] in km["required"] for i in km["inputs"]):
         raise Refused("KEYMAP_INVALID", "a required input cannot yield its keys")
     km["_names"] = names
+    km["_mouse"] = [k["name"] for k in km["keys"] if k.get("mouse")]
     km["_labels"] = {k["name"]: k.get("label", k["name"]) for k in km["keys"]}
     km["_ids"] = ids
     for share in km.get("shared_keys", []):

@@ -68,7 +68,7 @@ Oyun profili değiştirildiğinde diğer kişisel ayarlarınız sıfırlanmaz.
 
 Oyunun kendi sinematik altyazıları başlangıçta kapalı olabilir. Bunları açmak için oyunun **Seçenekler → Ses → Altyazılar** menüsünü kullanın.
 
-Oynanış sırasında duyulan seslendirmelerin altyazıları için ayrıca **Ayarlar → Düzeltmeler → Oynanış altyazıları** seçeneği bulunur.
+Oynanış sırasında duyulan seslendirmelerin altyazıları için ayrıca **Ayarlar → Ekran → Oynanış altyazıları** seçeneği bulunur.
 
 Yeni HD+ kurulumlarında oynanış altyazıları açık, yeni Vanilla kurulumlarında kapalı başlar. Sonradan yaptığınız seçim korunur.
 

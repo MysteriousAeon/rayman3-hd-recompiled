@@ -57,6 +57,10 @@ def source_keys():
     keys = set()
     for m in re.finditer(r'\b(?:T|F)\((L"(?:[^"\\]|\\.)*"(?:\s*L"(?:[^"\\]|\\.)*")*)', source):
         keys.add(''.join(json.loads('"' + s + '"') for s in re.findall(r'L"((?:[^"\\]|\\.)*)"', m[1])))
+    # D-139: the in-game PC Settings panel uses the same catalog (UTF-8 literals, T("...")).
+    panel = (ROOT / 'tools/m2_host/r3hd_pc_settings.h').read_text(encoding='utf-8')
+    for m in re.finditer(r'\bT\("((?:[^"\\]|\\.)*)"\)', panel):
+        keys.add(json.loads('"' + m[1] + '"'))
     return keys
 
 

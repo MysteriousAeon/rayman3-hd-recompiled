@@ -140,7 +140,7 @@ def main():
                     engine.set_option(home, LANGUAGE, "fr")
                     before = settings.resolve(reg, settings=launcher.settings(home))["values"]
                     target_custom = name.startswith("custom_")
-                    commands = ["page settings", "dump initial"]
+                    commands = ["page corrections", "dump initial"]  # D-161: the corrections' own page
                     if name == "hdplus":
                         commands.append("shot combo_row_en")
                     if name == "vanilla":
@@ -234,7 +234,7 @@ def main():
                                ui_language="tr", log=lambda *_: None)
                 engine.set_option(tr_home, LANGUAGE, "fr")
                 code, dumps, log, ui_out = launcher.ui(tr_home, out, "turkish_visible",
-                                                        "page settings\ndump visible\nshot combo_row_tr\nclick close\n")
+                                                        "page corrections\ndump visible\nshot combo_row_tr\nclick close\n")
                 tr = dumps.get("visible", {})
                 tr_visible = (ui_out / "visible.txt").read_text(encoding="utf-8")
                 check("UI Turkish: translated Combo label and help are visible in Settings",

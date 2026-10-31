@@ -225,11 +225,11 @@ def launcher_checks(km, keep):
             check("UI: the Walk row is shown with its default key (Ctrl)",
                   "visible=1" in d["c0"].get("key.walk", "") and key(d["c0"], "walk") == "Control,", d["c0"].get("key.walk"))
             check("UI: Left Shift captured for Walk moves from lock-on, which gets Ctrl (a swap)",
-                  key(d["swap"], "walk") == "Shift," and key(d["swap"], "right_trigger") == "Control,"
+                  key(d["swap"], "walk") == "Shift," and key(d["swap"], "right_trigger") == "Control,RMB"  # D-138: the second slot keeps its mouse button
                   and "Keys swapped:" in d["swap"]["status"], (d["swap"].get("key.walk"), d["swap"].get("status")))
             s = m30.settings(home)
             check("UI: Save stores the swap", s.get("keyboard") == {"layout": "modern", "keys": {
-                "walk": ["Shift"], "right_trigger": ["Control"]}}, s.get("keyboard"))
+                "walk": ["Shift"], "right_trigger": ["Control", "RMB"]}}, s.get("keyboard"))
         finally:
             for k, v in saved.items():
                 if v is None:

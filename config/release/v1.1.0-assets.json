@@ -1,0 +1,25 @@
+{
+  "version": "1.1.0",
+  "assets": {
+    "Rayman3HDRecompiled-1.1.0-portable.zip": {
+      "bytes": 41128530,
+      "sha256": "7ebeba6ca85e44fad54c3d94cf5747525babfbe1a3a301016c5dc2196630c264"
+    },
+    "Rayman3HDRecompiled-1.1.0-setup.exe": {
+      "bytes": 17194467,
+      "sha256": "ff7b51cf00c56a78a66a8bdbe29d24b55d093ce3b72b25b328f2da4b27e0963b"
+    },
+    "r3hd-lgpl-source-1.1.0.zip": {
+      "bytes": 18607103,
+      "sha256": "2e06b1cf64553ede39396b396072d6aeeafde9ab84e5b1399fc5948460280d8e"
+    },
+    "rayman3hd-turkish-1.0.1.zip": {
+      "bytes": 83259,
+      "sha256": "348b1ea7584fd2f0cc6cd9cb1cdcfaa7e4ab5378b5c6a7f3c97cc278f7789f97"
+    },
+    "SHA256SUMS.txt": {
+      "bytes": 394,
+      "sha256": "c999a7aa1fa89434efa727044c6b42653f83b82ae02e07d57e37444773ab052b"
+    }
+  }
+}

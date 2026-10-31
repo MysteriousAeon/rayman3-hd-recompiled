@@ -2,7 +2,7 @@
 the optional achievement display text with the overlay's Turkish glyphs (D-101). Idempotent.
 
 Installed headers: r3hd_dualsense.h (policy), r3hd_ds_state.h (guest facts, read-only), r3hd_ds_sdl.h (SDL glue),
-r3hd_achtext.h (display text).
+r3hd_achtext.h (display text), r3hd_ds_speaker.h / r3hd_ds_speaker_sdl.h (D-141 controller speaker; SPEAKER_* below).
   * src/kernel/xboxkrnl/xboxkrnl_video.cpp: VdSwap publishes world / gameplay and, with the light bar on, the active
     power-up (D-104), only while a DualSense option is on; it logs one `R3HD dualsense light=.. trigger=.. policy=..`
     line, then one `R3HD dualsense state world=.. gameplay=.. power=.. code=.. step=..` line per change.
@@ -69,10 +69,12 @@ DS_BLOCK = (
 def migrate_video_block():
     path = SDK / VIDEO
     text = path.read_text()
-    if DS_BLOCK_D102 in text:
-        assert text.count(DS_BLOCK_D102) == 1 and DS_BLOCK not in text, VIDEO
-        path.write_text(text.replace(DS_BLOCK_D102, DS_BLOCK))
-        print('migrated the D-102 block in', VIDEO)
+    for old in (DS_BLOCK_D102, DS_BLOCK_D104):
+        if old in text and DS_BLOCK not in text:
+            assert text.count(old) == 1, VIDEO
+            path.write_text(text.replace(old, DS_BLOCK))
+            print('migrated the DualSense block in', VIDEO)
+            return
 
 
 DRIVER = 'src/input/sdl/sdl_input_driver.cpp'
@@ -135,19 +137,97 @@ def migrate_driver():
             assert text.count(old) == 1 and new not in text, (DRIVER, old[:60])
             text = text.replace(old, new)
             changed = True
+    for old, new in DRIVER_D105:   # D-141 (new contains old for some: migrate only while new is absent)
+        if new not in text and old in text:
+            assert text.count(old) == 1, (DRIVER, old[:60])
+            text = text.replace(old, new)
+            changed = True
     if changed:
         path.write_text(text)
-        print('migrated the D-102 lines in', DRIVER)
+        print('migrated the DualSense lines in', DRIVER)
+
+
+# D-141: the controller speaker. The VdSwap block also runs (and reads the power) while only the speaker option is on,
+# and steps the speaker's activation rule once per guest frame; the input driver forwards window focus and the close
+# paths; the SDL audio driver is the one translation unit of the device side; the host file read logs the guest's
+# reads of the clip's range when R3HD_DS_SPEAKER_TRACE=1 (hidden evidence runs). The D-104 / D-105 blocks above gain
+# these lines; a tree patched before D-141 is migrated in place (migrate_video_block / migrate_driver).
+def _with(text, pairs):
+    for old, new in pairs:
+        assert text.count(old) == 1, old[:60]
+        text = text.replace(old, new)
+    return text
+
+
+SPEAKER_INCLUDE = ('#include <rex/r3hd_ds_state.h>\n', '#include <rex/r3hd_ds_speaker.h>\n#include <rex/r3hd_ds_state.h>\n')
+DS_BLOCK_D104 = DS_BLOCK
+DS_BLOCK = _with(DS_BLOCK_D104, [
+    ('      return s.light || s.trigger;\n', '      return s.light || s.trigger || r3hd_ds_speaker::Configured().on;  // D-141\n'),
+    ('      if (r3hd_ds::state::Swap(memory->virtual_membase(), r3hd_ds::state::Configured().light, readable)) {\n',
+     '      const bool with_power = r3hd_ds::state::Configured().light || r3hd_ds_speaker::Configured().on;\n'
+     '      if (r3hd_ds::state::Swap(memory->virtual_membase(), with_power, readable)) {\n'),
+    ('                    g.gameplay ? 1 : 0, r3hd_ds::state::PowerName(g.power), g.power_code, g.power_step);\n'
+     '      }\n',
+     '                    g.gameplay ? 1 : 0, r3hd_ds::state::PowerName(g.power), g.power_code, g.power_step);\n'
+     '      }\n'
+     '      if (r3hd_ds_speaker::Configured().on) r3hd_ds_speaker::OnSwap(memory->virtual_membase());  // D-141\n'),
+])
+FOCUS_INIT_D105, LOST_FOCUS_D105, GOT_FOCUS_D105, CLOSE_RELEASE_D105, TITLE_EXIT_D105 = (
+    FOCUS_INIT, LOST_FOCUS, GOT_FOCUS, CLOSE_RELEASE, TITLE_EXIT)
+FOCUS_INIT = FOCUS_INIT_D105 + (
+    '    r3hd_ds_speaker::Post(window->HasFocus() ? r3hd_ds_speaker::Request::kFocus\n'
+    '                                             : r3hd_ds_speaker::Request::kUnfocus);  // D-141\n')
+LOST_FOCUS = _with(LOST_FOCUS_D105, [(
+    '  r3hd_ds::WindowFocus().store(false);  // before the lock, so no later step lights the pad again\n',
+    '  r3hd_ds::WindowFocus().store(false);  // before the lock, so no later step lights the pad again\n'
+    '  r3hd_ds_speaker::Post(r3hd_ds_speaker::Request::kUnfocus);  // D-141: stop the controller speaker\n')])
+GOT_FOCUS = _with(GOT_FOCUS_D105, [(
+    '  r3hd_ds::WindowFocus().store(true);  // D-105: the next title poll lights the pad again\n',
+    '  r3hd_ds::WindowFocus().store(true);  // D-105: the next title poll lights the pad again\n'
+    '  r3hd_ds_speaker::Post(r3hd_ds_speaker::Request::kFocus);  // D-141\n')])
+CLOSE_RELEASE = CLOSE_RELEASE_D105 + '    r3hd_ds_speaker::Post(r3hd_ds_speaker::Request::kShutdown);  // D-141\n'
+TITLE_EXIT = _with(TITLE_EXIT_D105, [(
+    '    r3hd_ds::ReleaseAll(controllers_, "title_exit");\n',
+    '    r3hd_ds::ReleaseAll(controllers_, "title_exit");\n'
+    '    r3hd_ds_speaker::Post(r3hd_ds_speaker::Request::kShutdown);  // D-141\n')])
+DRIVER_D105 = [(FOCUS_INIT_D105, FOCUS_INIT), (LOST_FOCUS_D105, LOST_FOCUS), (GOT_FOCUS_D105, GOT_FOCUS),
+               (CLOSE_RELEASE_D105, CLOSE_RELEASE), (TITLE_EXIT_D105, TITLE_EXIT)]
+SPEAKER_READ = (
+    '    // D-141: trace only (R3HD_DS_SPEAKER_TRACE=1): the guest\'s reads of the controller-speaker clip\'s range.\n'
+    '    if (r3hd_ds_speaker::Configured().trace &&\n'
+    '        r3hd_ds_speaker::IsClipFile(static_cast<HostPathEntry*>(entry())->host_path().filename().string().c_str()) &&\n'
+    '        r3hd_ds_speaker::ReadOverlapsClip(byte_offset, buffer.size())) {\n'
+    '      REXLOG_INFO("R3HD ds_speaker guest_read offset=0x{:X} size={}", byte_offset, buffer.size());\n'
+    '    }\n')
 
 
 if __name__ == '__main__':
-    for name in ('r3hd_dualsense.h', 'r3hd_ds_state.h', 'r3hd_ds_sdl.h', 'r3hd_achtext.h'):
+    for name in ('r3hd_dualsense.h', 'r3hd_ds_state.h', 'r3hd_ds_sdl.h', 'r3hd_achtext.h', 'r3hd_ds_speaker.h',
+                 'r3hd_ds_speaker_sdl.h'):
         install(name)
 
     migrate_video_block()
     patch_once(VIDEO, [
         ('#include <rex/cvar.h>\n', '#include <rex/r3hd_ds_state.h>\n#include <rex/cvar.h>\n'),
         (M44_LINE, DS_BLOCK + M44_LINE),
+        SPEAKER_INCLUDE,
+    ])
+
+    patch_once('src/audio/sdl/sdl_audio_driver.cpp', [
+        ('#include <rex/m22_audio_probe.h>\n',
+         '#include <rex/m22_audio_probe.h>\n#include <rex/r3hd_ds_speaker_sdl.h>  // D-141: defines r3hd_ds_speaker::Post\n'),
+    ])
+    patch_once('src/audio/xma_context.cpp', [   # E-334: the game's own can-pickup sound, as it starts
+        ('#include <rex/m22_audio_probe.h>\n\nnamespace rex::audio {\n',   # above M22's include: its anchor stays
+         '#include <rex/r3hd_ds_speaker.h>\n#include <rex/m22_audio_probe.h>\n\nnamespace rex::audio {\n'),
+        ('                      GetCurrentInputBufferSize(data), data->input_buffer_read_offset);\n\n',
+         '                      GetCurrentInputBufferSize(data), data->input_buffer_read_offset);\n'
+         '  r3hd_ds_speaker::OnXmaBuffer(id(), data->GetCurrentInputBufferAddress(), current_input_buffer,\n'
+         '                               GetCurrentInputBufferSize(data), data->input_buffer_read_offset);\n\n'),
+    ])
+    patch_once('src/filesystem/devices/host_path_file.cpp', [
+        ('#include <rex/m33_mod_overlay.h>\n', '#include <rex/m33_mod_overlay.h>\n#include <rex/r3hd_ds_speaker.h>\n'),
+        ('  if (host_read) {\n    // M26 (D-058)', '  if (host_read) {\n' + SPEAKER_READ + '    // M26 (D-058)'),
     ])
 
     patch_once('include/rex/input/sdl/sdl_input_driver.h', [

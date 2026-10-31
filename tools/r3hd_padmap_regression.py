@@ -619,7 +619,7 @@ def launcher_checks(keep):
                                            "analog": {"left_trigger": "right_trigger", "right_trigger": "left_trigger",
                                                       "left_stick": "right_stick", "right_stick": "left_stick"}}
                   and s1["schema"] == 4
-                  and s1.get("keyboard") == {"layout": "modern", "keys": {"x": ["F"], "lstick_press": ["E"]}}, s1)
+                  and s1.get("keyboard") == {"layout": "modern", "keys": {"x": ["F", "LMB"], "lstick_press": ["E"]}}, s1)  # D-138: LMB keeps its slot
             d = run("padb", ["page pad", "dump reloaded", "click restorepad", "dump restored", "click save",
                              "dump saved", "click restorepad", "dump again", "page settings", "profile hdplus",
                              "click save", "dump hdplus"],

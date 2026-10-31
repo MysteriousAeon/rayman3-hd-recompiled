@@ -14,6 +14,7 @@
   "groups": {
     "display": "Display",
     "corrections": "Corrections",
+    "mouse": "Mouse",
     "advanced": "Troubleshooting"
   },
   "settings": {
@@ -71,12 +72,12 @@
     },
     "render_scale": {
       "label": "Rendering resolution",
-      "help": "The size the game draws its 3D image at. Auto follows your screen or window (up to 2160p). Higher sizes need a faster graphics card.",
+      "help": "Auto selects the smallest supported rendering resolution that covers your screen in Fullscreen, or your window in Window mode, up to 2160p. In Fullscreen on a 1080p display, the game renders at 1440p. If performance is poor, manually selecting 720p can help.",
       "group": "display",
       "category": "enhancement",
       "scope": "preference",
       "values": ["auto", "1", "2", "3"],
-      "value_labels": {"auto": "Auto (recommended)", "1": "720p (1x, original)", "2": "1440p (2x)", "3": "2160p (3x)"},
+      "value_labels": {"auto": "Auto", "1": "720p (1x, original)", "2": "1440p (2x)", "3": "2160p (3x)"},
       "vanilla": "auto",
       "hdplus": "auto",
       "launcher": "RenderScale",
@@ -111,9 +112,23 @@
       "validation": "passed (D-054): mechanism VERIFIED from the title's own shaders and traces; hidden before / after runs judged by m23_regression.py --pair; visually indistinct to the user, which D-054 counts for neither side",
       "why": "two-layer translucent sheets sample both layers on the first coordinate set in the HD release"
     },
+    "red_correction": {
+      "label": "Correct HD Lighting Colors",
+      "help": "Removes the unnatural pink tint introduced by the HD release in Hoodlum Headquarters and the Tower of the Leptys.",
+      "group": "corrections",
+      "category": "hd_correction",
+      "values": ["original", "bypass"],
+      "value_labels": {"original": "Off (as on Xbox 360)", "bypass": "On"},
+      "vanilla": "original",
+      "hdplus": "bypass",
+      "launcher": "RedCorrection",
+      "decision": "D-149, D-150, D-151",
+      "validation": "passed (D-151): identity of the bypassed pass VERIFIED from the microcode and hidden same-frame A/B frames (E-346); gate G-HDP-L1 human visual pass in Hoodlum Headquarters and the Tower of the Leptys, 2026-10-31 (E-348)",
+      "why": "the HD release's final red-correction pass turns deep red lava pink in five levels (E-345)"
+    },
     "texture_orient": {
       "label": "Correct Robo-Pirate statue textures",
-      "help": "Fixes the texture orientation on four statues in Hoodlum Headquarters.",
+      "help": "Fixes four upside-down statue textures in Hoodlum Headquarters.",
       "group": "corrections",
       "category": "hd_correction",
       "values": ["original", "corrected"],
@@ -125,6 +140,34 @@
       "decision": "D-058, D-080",
       "validation": "provisional (M43, D-080: in HD+ at the person's request before gate G-HDP-2): transformation VERIFIED offline and delivery byte-exact, the room not yet seen in the renderer with the option on",
       "why": "four Robo-Pirate statue pages stored the other way up from their meshes"
+    },
+    "sky_clear": {
+      "label": "Correct Sky Colors",
+      "help": "Restores the sky color in Clearleaf Forest and the Bog of Murk.",
+      "group": "corrections",
+      "category": "hd_correction",
+      "values": ["original", "background"],
+      "value_labels": {"original": "Off (as on Xbox 360)", "background": "On"},
+      "vanilla": "original",
+      "hdplus": "background",
+      "launcher": "SkyClear",
+      "decision": "D-153, D-154, D-155, D-156",
+      "validation": "passed (D-156): the black scene clear and the level's stored background colour VERIFIED statically and in hidden runs (E-349, E-350); applied in wood_11 and swamp_60 only (E-351); human visual pass against 2003 PC screenshots in Clearleaf Forest and the Bog of Murk, 2026-10-31 (E-352)",
+      "why": "the HD release clears every scene to black, so the transparent top of the sky dome (Clearleaf Forest) and the gaps between the clouds (Bog of Murk) show black instead of the level's background colour"
+    },
+    "lit_uv_scroll": {
+      "label": "Correct Charge Trail Colors",
+      "help": "Restores the red-to-orange glow of the trail behind Rayman's charged punch.",
+      "group": "corrections",
+      "category": "hd_correction",
+      "values": ["original", "applied"],
+      "value_labels": {"original": "Off (as on Xbox 360)", "applied": "On"},
+      "vanilla": "original",
+      "hdplus": "applied",
+      "launcher": "LitUvScroll",
+      "decision": "D-157, D-158, D-159, D-161",
+      "validation": "passed (D-159): the trail's vertex shader 1t_d_lighting drops the UV offset c10 the title writes with the charge (E-353); one-instruction copy, c10 delivery and the shader's other users (offset zero) VERIFIED in hidden runs (E-354); human visual pass against the 2003 PC footage, 2026-10-31 (E-355)",
+      "why": "the HD release's shader for the fist-charge trail ignores the scroll of its fire gradient, so the trail stays a faint grey wisp instead of turning red, then orange, as the charge grows"
     },
     "gameplay_subtitles": {
       "label": "Gameplay subtitles",
@@ -140,6 +183,48 @@
       "decision": "D-081, D-090",
       "validation": "M44 (D-081): the title's rule VERIFIED from its code and hidden traces; D-090: a per-installation preference (Settings > Corrections), on for a fresh HD+ installation",
       "why": "the Xbox 360 HD release shows gameplay voice subtitles only in cinematic mode or for a fixed list of lines (title design, not a port defect)"
+    },
+    "mouse_camera": {
+      "label": "Mouse Camera",
+      "help": "Turns the camera with the mouse during gameplay. The pointer stays in the game window only while you play; menus, pause and Alt+Tab release it.",
+      "group": "mouse",
+      "category": "enhancement",
+      "scope": "preference",
+      "values": ["off", "on"],
+      "value_labels": {"off": "Off", "on": "On"},
+      "vanilla": "off",
+      "hdplus": "off",
+      "launcher": "MouseCamera",
+      "decision": "D-138",
+      "why": "an Xbox 360 pad has no mouse; an optional native PC camera control that is off by default, so an existing installation behaves as before"
+    },
+    "mouse_sensitivity": {
+      "label": "Mouse Sensitivity",
+      "help": "How fast the mouse turns the camera. 50% is the default.",
+      "group": "mouse",
+      "category": "enhancement",
+      "scope": "preference",
+      "range": {"min": 1, "max": 100, "unit": "percent"},
+      "vanilla": "50",
+      "hdplus": "50",
+      "requires": {"mouse_camera": "on"},
+      "launcher": "MouseSensitivity",
+      "decision": "D-138",
+      "why": "the runtime's mnk_sensitivity = 2 ** ((percent - 50) / 25): 50% = 1.0, 1% = about 0.257, 100% = 4.0"
+    },
+    "mouse_buttons": {
+      "label": "Mouse Buttons",
+      "help": "In gameplay, uses the mouse buttons assigned on the Controls page (by default left = Attack, right = Lock On).",
+      "group": "mouse",
+      "category": "enhancement",
+      "scope": "preference",
+      "values": ["off", "on"],
+      "value_labels": {"off": "Off", "on": "On"},
+      "vanilla": "off",
+      "hdplus": "off",
+      "launcher": "MouseButtons",
+      "decision": "D-138",
+      "why": "the mouse buttons assigned on the Controls page act in gameplay only while this is on; off keeps every existing installation as it was"
     },
     "game_language": {
       "label": "Game language",
@@ -259,6 +344,34 @@
       "launcher": "DualSenseTriggerStrength",
       "decision": "D-108",
       "why": "the R2 resistance force as a percentage of the D-105 force (100% = force 60); the start position, R2's input and gameplay are never scaled"
+    },
+    "dualsense_speaker": {
+      "label": "DualSense controller speaker",
+      "help": "Plays the game's own power-up jingle through the DualSense speaker when Rayman gains a power. USB only; the game's normal sound is unchanged. Applies the next time the game starts.",
+      "group": "advanced",
+      "category": "enhancement",
+      "scope": "preference",
+      "values": ["off", "on"],
+      "value_labels": {"off": "Off", "on": "On"},
+      "vanilla": "off",
+      "hdplus": "off",
+      "launcher": "DualSenseSpeaker",
+      "decision": "D-141",
+      "why": "an Xbox 360 pad has no speaker that the PC port can address; an optional, quiet controller-speaker cue for a USB DualSense, off by default so existing audio behaviour is unchanged"
+    },
+    "dualsense_speaker_volume": {
+      "label": "Controller Speaker Volume",
+      "help": "Volume of the controller speaker effect. 0% is silent. Applies the next time the game starts.",
+      "group": "advanced",
+      "category": "enhancement",
+      "scope": "preference",
+      "range": {"min": 0, "max": 100, "unit": "percent"},
+      "vanilla": "50",
+      "hdplus": "50",
+      "requires": {"dualsense_speaker": "on"},
+      "launcher": "DualSenseSpeakerVolume",
+      "decision": "D-141",
+      "why": "gain of the controller-speaker effect only (the main game mix is never scaled)"
     },
     "diagnostics": {
       "label": "Diagnostics",

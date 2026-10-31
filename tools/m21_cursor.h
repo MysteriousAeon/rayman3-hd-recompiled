@@ -26,12 +26,14 @@ struct State {
   bool focused = false;       // it has the input focus
   bool minimized = false;
   bool mouse_recent = false;  // the mouse moved over it within the auto-hide delay
+  bool host_ui = false;       // D-139: a host panel (in-game PC Settings) is open and takes the mouse
   Requested requested = Requested::kVisible;
 };
 
 constexpr Action Decide(const State& s) {
   if (s.nonintrusive) return Action::kNone;
   if (!s.open || !s.focused || s.minimized) return Action::kShow;
+  if (s.host_ui) return Action::kShow;  // D-139: the panel needs the pointer; never a warp or capture
   if (s.requested == Requested::kHidden) return Action::kHide;
   return s.mouse_recent ? Action::kShow : Action::kHide;
 }
@@ -77,6 +79,11 @@ class Tracker {
     if (state_.requested != Requested::kHidden) state_.mouse_recent = true;
     return Apply();
   }
+  Action HostUi(bool open) {
+    state_.host_ui = open;
+    state_.mouse_recent = false;
+    return Apply();
+  }
   Action MouseIdle() {
     state_.mouse_recent = false;
     return Apply();
@@ -98,7 +105,8 @@ class Tracker {
   bool changed() const { return changed_; }
   // The mouse-idle timer is wanted only while movement is what keeps the cursor shown.
   bool wants_idle_timer() const {
-    return !state_.nonintrusive && state_.open && state_.focused && !state_.minimized && state_.mouse_recent &&
+    return !state_.nonintrusive && state_.open && state_.focused && !state_.minimized && !state_.host_ui &&
+           state_.mouse_recent &&
            state_.requested != Requested::kHidden;
   }
 

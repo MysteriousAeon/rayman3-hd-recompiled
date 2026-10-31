@@ -5,6 +5,9 @@ Research only: no game, window, physical devices or injected OS input. PASS
 means baseline reproduced, NOT that mouse attacks meet feature acceptance.
 Run: python tools/r3hd_mouse_regression.py
 Needs the existing installed SDK, built runtime and M32 driver test.
+Historical (E-292 .. E-294): it reproduces the pre-D-138 driver. A runtime with the D-138 mouse patch no longer has
+those limitations, so this baseline fails there by design; the feature's regression is
+tools/r3hd_mouse_feature_regression.py.
 """
 import hashlib
 import os

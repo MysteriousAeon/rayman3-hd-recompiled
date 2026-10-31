@@ -1,0 +1,17 @@
+# HD+ lighting investigation (isolated entry, E-345): private traced frames in play, with the pause menu open
+# (Start, guest-visible pad input from the schedule) and after it closes: does the title's final red-correction pass
+# (or any other post-processing) change while its own overlay is up.
+wait 18
+frame play_a
+wait 3
+press 40
+wait 2.5
+frame paused_a
+wait 2
+frame paused_b
+press 40
+wait 3
+frame resumed_a
+wait 3
+frame resumed_b
+wait 2

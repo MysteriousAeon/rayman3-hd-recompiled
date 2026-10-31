@@ -161,7 +161,7 @@ def work_of(d):
 
 
 def placement_checks(launcher: Path, t: Path, home: Path, keep, baseline=False):
-    pages = ["settings", "controls", "advanced", "mods", "settings", "controls", "settings"]
+    pages = ["settings", "corrections", "controls", "advanced", "mods", "settings", "controls", "corrections", "settings"]  # D-161
     for dpi in (96, 120, 144):
         steps = [[f"dpi {dpi}", f"dump start{dpi}"]] + [[f"page {p}"] for p in pages] + [[f"dump end{dpi}"]]
         code, rects, d, log, out = observed_run(launcher, home, t, f"place{dpi}", steps)
@@ -205,17 +205,16 @@ def placement_checks(launcher: Path, t: Path, home: Path, keep, baseline=False):
                       or win[1] == work[1]), c)
     # A small screen (1366 x 768 at 150 %: a 728 px work area): every page inside it; a taller page scrolls.
     steps = [["dpi 144", "workarea 0 0 1366 728", "dump small_s"], ["page controls", "dump small_c"],
-             ["page mods", "dump small_m"], ["page advanced", "dump small_a"],
+             ["page mods", "dump small_m"], ["page advanced", "dump small_a"], ["page corrections", "dump small_k"],
              ["page controls", "endmove", "page settings", "dump small_s2"]]  # a title-bar click on a clamped page
     code, rects, d, log, out = observed_run(launcher, home, t, "placesmall", steps)
     if keep:
         shutil.copytree(out, Path(keep) / out.name, dirs_exist_ok=True)
-    ok = code == 0 and all(k in d for k in ("small_s", "small_c", "small_m", "small_a", "small_s2"))
+    ok = code == 0 and all(k in d for k in ("small_s", "small_c", "small_m", "small_a", "small_k", "small_s2"))
     check("placement: small work area run completed", ok, log[-300:])
     if ok:
         work = (0, 0, 1366, 728)
-        wins = {k: win_of(d[k]) for k in ("small_s", "small_c", "small_m",
-                                                                                     "small_a", "small_s2")}
+        wins = {k: win_of(d[k]) for k in ("small_s", "small_c", "small_m", "small_a", "small_k", "small_s2")}
         check("placement: on a 1366 x 728 work area at 144 DPI every page is inside it",
               all(inside(w, work) for w in wins.values()), wins)
         tall = [k for k in wins if "scroll=1" in d[k]["window"]]
@@ -233,11 +232,12 @@ def placement_checks(launcher: Path, t: Path, home: Path, keep, baseline=False):
         steps = [[f"dpi {dpi}", "workarea 0 0 1920 1032", "dump w_s"], ["page keys", "dump w_c"],
                  ["wheel 100", "dump w_bottom"],
                  ["focus key:lstick_up", "wait 150", "wheel -100", "dump w_focus"], ["page pad", "dump w_pad"],
-                 ["page advanced", "dump w_a"], ["page mods", "dump w_m"], ["page settings", "dump w_s2"]]
+                 ["page advanced", "dump w_a"], ["page mods", "dump w_m"], ["page corrections", "dump w_k"],
+                 ["page settings", "dump w_s2"]]  # D-161: Corrections
         code, rects, d, log, out = observed_run(launcher, home, t, f"place1032_{dpi}", steps)
         if keep:
             shutil.copytree(out, Path(keep) / out.name, dirs_exist_ok=True)
-        keys = ("w_s", "w_c", "w_bottom", "w_focus", "w_pad", "w_a", "w_m", "w_s2")
+        keys = ("w_s", "w_c", "w_bottom", "w_focus", "w_pad", "w_a", "w_m", "w_k", "w_s2")
         ok = code == 0 and all(k in d for k in keys)
         check(f"placement 1920 x 1032 at {dpi} DPI: run completed", ok, log[-300:])
         if not ok:
@@ -261,6 +261,11 @@ def placement_checks(launcher: Path, t: Path, home: Path, keep, baseline=False):
               and int(d["w_focus"]["in_view"].split("scroll_y=")[1]) == 0
               and (dpi != 144 or int(d["w_bottom"]["in_view"].split("scroll_y=")[1]) > 0),
               {k: (d[k].get("in_view"), d[k].get("text_clipped")) for k in ("w_c", "w_bottom", "w_focus", "w_pad")})
+        check(f"placement 1920 x 1032 at {dpi} DPI (D-161): Settings and Corrections fit without scrolling, no clipped "
+              "text or page button, Save / Play / Close in view",
+              all("scroll=0" in d[k]["window"] and d[k].get("text_clipped") == "0"
+                  and d[k].get("in_view", "").startswith("save:1 play:1 close:1") for k in ("w_s", "w_k", "w_s2")),
+              {k: (d[k]["window"], d[k].get("text_clipped"), d[k].get("in_view")) for k in ("w_s", "w_k")})
         check(f"placement 1920 x 1032 at {dpi} DPI: the whole page's layout holds on every page, the scrolled one too",
               all(m30.layout_ok(d[k]) for k in keys), {k: d[k].get("controls") for k in keys})
     # Key capture, an Esc and a status line never move the window.
