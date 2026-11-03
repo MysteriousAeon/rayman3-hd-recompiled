@@ -8,6 +8,10 @@ The installer uses your own Xbox 360 game package to set up the game on Windows.
 
 This is an independent fan project and is not affiliated with or endorsed by Ubisoft or Microsoft. Rayman 3 HD and related trademarks belong to their respective owners.
 
+## Official Trailer
+
+[Rayman 3 HD Recompiled - Official Trailer](https://youtu.be/OxQLvGyhB7s)
+
 ## Why this project exists
 
 Rayman 3 was one of my favorite games growing up, and I wanted my wife to experience it too. I wanted her to be able to play it in Turkish, so I started working on a way to make that possible. What began as a personal project eventually grew into a native PC port of the Xbox 360 HD version.
