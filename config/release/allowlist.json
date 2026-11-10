@@ -29,6 +29,7 @@
     {"glob": "tools/**/*.sh", "kind": "shell"},
     {"glob": "tools/installer/*.iss", "kind": "text"},
     {"glob": "tools/installer/*.txt", "kind": "text"},
+    {"glob": "tools/linux/THIRD_PARTY_NOTICES.txt", "kind": "text"},
     {"glob": "tools/installer/*.isl", "kind": "text"},
     {"glob": "tools/installer/MODDING.md", "kind": "markdown"},
     {"glob": "tools/installer/*.cmd", "kind": "batch"},

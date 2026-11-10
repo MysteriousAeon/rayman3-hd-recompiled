@@ -1,0 +1,105 @@
+Rayman 3 HD Recompiled - Linux third-party notices
+================================================
+
+No original game data is included. The application uses files extracted locally
+from the owner's supported Xbox 360 package. The native executable contains code
+translated from that game; librexruntime.so contains the public XEX2 retail key
+used to decrypt the owner's Default.xex locally. The project's MIT license does
+not cover the game, translated code, the key or third-party components. No rights
+in those materials are granted or claimed by the project. This independent
+project is not affiliated with or endorsed by Ubisoft or Microsoft.
+
+Project-owned launcher, Settings, installer engine and mod tools: MIT.
+  licenses/Rayman3HDRecompiled-LICENSE.txt
+ReXGlue SDK c94f5eb (including Xenia-derived portions): BSD-3-Clause.
+  licenses/rexglue-LICENSE.txt
+The SDK is compiled into bin/librexruntime.so, bin/librexgpu-xenos.so and the
+application interface in bin/r3hd. Its dependencies retain their own terms:
+
+  SDL 3                         zlib                 licenses/SDL3-LICENSE.txt
+  Dear ImGui                    MIT                  licenses/imgui-LICENSE.txt
+  fmt                           MIT                  licenses/fmt-LICENSE.txt
+  spdlog                        MIT                  licenses/spdlog-LICENSE.txt
+  nlohmann JSON                 MIT                  licenses/nlohmann-json-LICENSE.MIT.txt
+  aes_128                       MIT                  licenses/aes_128-LICENSE.txt
+  o1heap                        MIT                  licenses/o1heap-LICENSE.txt
+  xxHash                        BSD-2-Clause         licenses/xxHash-LICENSE.txt
+  CLI11                         BSD-3-Clause         licenses/CLI11-LICENSE.txt
+  toml++                        MIT                  licenses/tomlplusplus-LICENSE.txt
+  UTF8-CPP                      BSL-1.0              licenses/utfcpp-LICENSE.txt
+  SIMDe                         MIT                  licenses/simde-COPYING.txt
+  cppDES                        MIT                  licenses/cppDES-LICENSE.txt
+  disruptorplus                 MIT                  licenses/disruptorplus-LICENSE.txt
+  TinySHA1                      ISC-style            licenses/TinySHA1-LICENSE.txt
+  DXBC container hash           NCSA                 licenses/DirectXShaderCompiler-LICENSE.txt
+
+Vulkan/SPIR-V components
+-----------------------
+glslang, including its SPIR-V code generator, pinned f4f1d8a: compiled into the
+GPU plugin. Its complete mixed BSD/MIT and component notices are reproduced in
+licenses/glslang-LICENSE.txt.
+Vulkan Memory Allocator: MIT, licenses/VulkanMemoryAllocator-LICENSE.txt.
+Vulkan-Headers: Apache-2.0 OR MIT for the API headers used here; texts in
+licenses/Vulkan-Headers-Apache-2.0.txt and licenses/Vulkan-Headers-MIT.txt;
+licenses/Vulkan-Headers-LICENSE.md identifies copyright and licensing scope.
+SPIRV-Headers: licenses/SPIRV-Headers-LICENSE.txt, including its per-file terms.
+SPIRV-Tools interface headers: Apache-2.0, licenses/SPIRV-Tools-LICENSE.txt.
+Copyright (c) 2015-2020 The Khronos Group Inc. Modifications Copyright (C) 2020
+Advanced Micro Devices, Inc. All rights reserved.
+The SPIRV-Tools optimizer/validation SDK is not bundled. Optional developer
+validation can load a separately installed host SDK; it is not required to play.
+Exact dependency pins are recorded in BUILDINFO.json beside the release archive.
+
+Replaceable LGPL libraries
+-------------------------
+bin/libffmpeg.so: FFmpeg libavcodec/libavutil, wmarti/FFmpeg commit
+0604b464c7cb4ebc94940cf1f324a3b26b87717c, LGPL-2.1-or-later.
+  licenses/FFmpeg-COPYING.LGPLv2.1.txt and licenses/FFmpeg-LICENSE.md
+  CONFIG_GPL=0, CONFIG_NONFREE=0, CONFIG_VERSION3=0; Xenia XMA decoder fork.
+bin/libmspack.so: libmspack lzxd.c, commit
+305907723a4e7ab2018e58040059ffb5e77db837, LGPL-2.1.
+  licenses/libmspack-COPYING.LIB.txt
+librexruntime.so loads these shared libraries by name. You may replace them with
+compatible builds from modified source; no other program component contains their
+code. Source is distributed from the same download location as this program:
+r3hd-lgpl-source-1.1.0-linux-x86_64.zip. See licenses/LGPL-SOURCE.txt for complete
+source contents and rebuild/replacement commands.
+
+Other source-header terms retained by the SDK include stb_image (public domain
+alternative), SHA-256/rijndael (zlib/public domain) and the RenderDoc API interface
+(MIT, reproduced below). No RenderDoc application is bundled.
+
+RenderDoc API interface
+----------------------
+The MIT License (MIT)
+Copyright (c) 2015-2016 Baldur Karlsson
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+Application icons
+-----------------
+Microsoft Fluent UI System Icons, MIT, licenses/Fluent-System-Icons-LICENSE.txt.
+Pinned a347af95478f989038cccbf085978865264c048a. Utility shapes are recolored on
+project-authored tiles; no game artwork is included.
+
+Host dependencies
+-----------------
+Python/Tkinter, glibc, libstdc++, libgcc, desktop libraries, Vulkan loader/ICD and
+audio services come from the user's system. No compiler, complete SDK, NVIDIA
+driver, Windows DLLs or Python runtime is redistributed in this Linux package.
