@@ -1,0 +1,65 @@
+{
+  "schema": 1,
+  "kind": "r3hd-controller-prompt-bundle",
+  "decision": "D-203",
+  "bundling_authorized": true,
+  "publication_authorized": false,
+  "public_candidate_version": "1.2.0",
+  "distribution_status": "Nine accepted native glyphs authorized for intended binary release; normal audit and R-01 controls remain",
+  "rights_status": "R-01 acknowledged and legally unresolved; maintainer accepts the known uncertainty for these exact nine PS3-derived glyphs; not a development milestone blocker",
+  "human_visual_acceptance": {
+    "complete_nine_glyphs": "PASS reported by maintainer; exact artwork preserved"
+  },
+  "source_manifest": "private/work/ps3_complete_glyphs_20261111_a/verified_source/glyphs.json",
+  "provenance": "Nine native PS3 font crops; menu art remains Xbox-contained PS artwork",
+  "files": {
+    "app/assets/playstation_prompts/circle.png": {
+      "size": 1979,
+      "sha256": "940faf42b579a461048a435510a729e8aac752a9aee969d2ba2b841885600ce0"
+    },
+    "app/assets/playstation_prompts/cross.png": {
+      "size": 1870,
+      "sha256": "8d299cd9c3a6f4a894336eb810eecd95d3d7d5aa5d652473c51edd7e33463433"
+    },
+    "app/assets/playstation_prompts/L1.png": {
+      "size": 1698,
+      "sha256": "7fc686343106de5ee1021d8975c211f3fa67d8d3b66582b350097d794b9bbba1"
+    },
+    "app/assets/playstation_prompts/L2.png": {
+      "size": 2145,
+      "sha256": "88788d0f88dea48782ceed5e02468ac86ddfcb8837008adcb6a01f55ff5bc186"
+    },
+    "app/assets/playstation_prompts/R1.png": {
+      "size": 1848,
+      "sha256": "a6e71e39ac0d2333fc3f58e0381d78f063c6221ad328699ebefe5924729b9020"
+    },
+    "app/assets/playstation_prompts/R2.png": {
+      "size": 2149,
+      "sha256": "863a0f08f9f88025ed6037292ea38b119d41510b60a4ad68a43848e0c805ee95"
+    },
+    "app/assets/playstation_prompts/square.png": {
+      "size": 1661,
+      "sha256": "3b54cea2aff361c0fcf543dfd2529691cd3bfba43cd715323c3fe8a9cbf1fbe5"
+    },
+    "app/assets/playstation_prompts/start.png": {
+      "size": 965,
+      "sha256": "e45166d1248ce406bc79577cf2df2f5f2a6a61aedf6264f6c7af663ee5976349"
+    },
+    "app/assets/playstation_prompts/triangle.png": {
+      "size": 1923,
+      "sha256": "5b8ae5c3a71f1fbacc8aa2c6929f934f1835306d9c1142b1aaabed979f5316b6"
+    },
+    "app/assets/playstation_prompts/glyphs.json": {
+      "size": 53,
+      "sha256": "bd5818e02afaa5359c139c02f540b818fa1d4f540ee8f3701eaa725c63d77ab5"
+    }
+  },
+  "rights_risk_acceptance": {
+    "decision": "D-204",
+    "date": "2026-11-11",
+    "scope": "Exact nine PNGs already identified and visually accepted; installer inclusion authorized",
+    "milestone_blocker": false,
+    "legal_clearance": false,
+    "separate_publication_authorization_required": true
+  }
+}

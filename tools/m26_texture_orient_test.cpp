@@ -1,7 +1,9 @@
 // M26 (D-058): the texture orientation correction, deterministic checks. Host-only; every buffer is synthetic.
-// With one argument (the local `fact_55_2.btf`, private; passed by tools/m26_regression.py when the file exists)
+// With one argument (a listed local bundle, private; passed by tools/build_milestone8.bat when available)
 // the whole file is also read through the overlay in uneven pieces and compared with the file itself.
 #include "m26_texture_orient.h"
+#include "m33_mod_overlay.h"
+#include <chrono>
 #include <cstdio>
 
 static int checks = 0, failures = 0;
@@ -136,19 +138,23 @@ int main(int argc, char** argv) {
             big[199] == 0xAA && big[200] == 0x11, "overlay: read that contains the page");
 
   // Table shape and the fail-closed path: a file with the listed name but other contents is returned as read.
-  Check(kBundleCount == 1 && kBundles[0].page_count == 4, "table: one bundle, four pages");
+  Check(kBundleCount == 2 && kBundles[0].page_count == 4 && kBundles[1].page_count == 1,
+        "table: four statue pages and one Ugly page in separate bundles");
   bool table = true;
-  for (size_t p = 0; p < kBundles[0].page_count; ++p) {
-    const Page& g = kBundles[0].pages[p];
+  for (const auto& bundle : kBundles) for (size_t p = 0; p < bundle.page_count; ++p) {
+    const Page& g = bundle.pages[p];
     table &= g.size[0] == 0x40000 && g.size[1] == 0x20000 && g.offset[1] == g.offset[0] + g.size[0] &&
-             g.offset[1] + g.size[1] <= kBundles[0].size && g.stored[0] != g.corrected[0] && g.stored[1] != g.corrected[1];
-    for (size_t q = 0; q < p; ++q) table &= kBundles[0].pages[q].offset[0] != g.offset[0];
+             g.offset[1] + g.size[1] <= bundle.size && g.stored[0] != g.corrected[0] && g.stored[1] != g.corrected[1];
+    for (size_t q = 0; q < p; ++q) table &= bundle.pages[q].offset[0] != g.offset[0];
   }
   Check(table, "table: page ranges inside the file, distinct, stored and corrected hashes differ");
   Check(FindBundle("FACT_55_2.BTF") == &kBundles[0] && !FindBundle("fact_55_2.bhf") && !FindBundle("fact_50_2.btf") &&
             !FindBundle("xfact_55_2.btf"), "table: exact file name, any case");
-  Check(!FindBundle(std::filesystem::path(L"fact_55_2.bt\u0192")) && !FindBundle(std::filesystem::path(L"\u00C7etin.btf")),
+  Check(!FindBundle(std::filesystem::path(std::u8string(u8"fact_55_2.bt\u0192"))) &&
+            !FindBundle(std::filesystem::path(std::u8string(u8"\u00C7etin.btf"))),
         "table: a name outside ASCII does not match and does not throw");
+  Check(FindBundle("SWAMP_50_2.BTF") == &kBundles[1] && !FindBundle("swamp_50_2.bhf") &&
+            !FindBundle("swamp_51_2.btf"), "table: Ugly bundle exact name, other swamp pages untouched");
   Check(Fnv1a(reinterpret_cast<const uint8_t*>("a"), 1) == 0xAF63DC4C8601EC8Cull, "hash: FNV-1a 64 reference value");
 
   state().log = &Collect;
@@ -172,9 +178,15 @@ int main(int argc, char** argv) {
     state().slots.clear();
     lines.clear();
     const std::filesystem::path real = argv[1];
+    const Bundle* target = FindBundle(real.filename());
+    Check(target != nullptr, "target: a listed bundle required");
+    if (!target) return 1;
     std::ifstream f(real, std::ios::binary);
     std::vector<uint8_t> file((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
-    Check(file.size() == kBundles[0].size, "target: file size as listed");
+    Check(file.size() == target->size, "target: file size as listed");
+    std::vector<uint8_t> vanilla(file);
+    Check(AfterRead(real, 0, vanilla.data(), vanilla.size(), false) == 0 && vanilla == file,
+          "target: Vanilla read byte-identical without the switch");
     std::vector<uint8_t> seen(file.size());
     size_t at = 0, piece = 0x7001, replaced = 0;
     while (at < file.size()) {
@@ -184,12 +196,12 @@ int main(int argc, char** argv) {
       at += n;
       piece = piece * 3 % 0x51003 + 0x333;
     }
-    Check(replaced == 4 * 0x60000, "target: exactly the four pages' bytes replaced");
+    Check(replaced == target->page_count * 0x60000, "target: exactly the listed pages' bytes replaced");
     size_t outside_diff = 0;
     bool hashes = true, back = true;
     std::vector<uint8_t> in_page(file.size());
-    for (size_t p = 0; p < 4; ++p) {
-      const Page& g = kBundles[0].pages[p];
+    for (size_t p = 0; p < target->page_count; ++p) {
+      const Page& g = target->pages[p];
       std::vector<uint8_t> again[2];
       for (int b = 0; b < 2; ++b) {
         std::fill(in_page.begin() + long(g.offset[b]), in_page.begin() + long(g.offset[b] + g.size[b]), uint8_t(1));
@@ -201,15 +213,44 @@ int main(int argc, char** argv) {
       for (int b = 0; b < 2; ++b) back &= std::memcmp(again[b].data(), &file[g.offset[b]], size_t(g.size[b])) == 0;
     }
     for (size_t i = 0; i < file.size(); ++i) outside_diff += !in_page[i] && seen[i] != file[i];
-    Check(hashes, "target: stored and corrected hashes of the four pages as listed");
+    Check(hashes, "target: stored and corrected hashes of every listed page");
     Check(back, "target: mirroring the served bytes again gives the file's bytes");
-    Check(outside_diff == 0, "target: every byte outside the four pages equals the file");
+    Check(outside_diff == 0, "target: every byte outside the listed pages equals the file");
     size_t corrected = 0, served = 0;
     for (const auto& l : lines) {
       corrected += l.find("state=corrected") != std::string::npos;
       served += l.find("served_bytes=393216") != std::string::npos;
     }
-    Check(corrected == 4 && served == 4 && lines.size() == 8, "target: one state line and one served line per page");
+    Check(corrected == target->page_count && served == target->page_count && lines.size() == 2 * target->page_count,
+          "target: one state line and one served line per page");
+
+    // Real original bundle identity, then the two overlays in HostPathFile::ReadSync order.
+    // A community mod must win over the correction, without changing its other bytes.
+    const auto mod_dir = std::filesystem::temp_directory_path() /
+        ("m26_mod_priority_" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    Check(std::filesystem::create_directory(mod_dir), "mod: isolated fixture directory");
+    const auto mod_blob = mod_dir / "override.bin", mod_plan = mod_dir / "plan.txt";
+    const auto replacement = Pattern(37, 433);
+    { std::ofstream f(mod_blob, std::ios::binary); f.write(reinterpret_cast<const char*>(replacement.data()), replacement.size()); }
+    auto utf8 = [](const std::filesystem::path& p) { const auto u = p.u8string(); return std::string(u.begin(), u.end()); };
+    auto hex = [](uint64_t h) { char b[17]; std::snprintf(b, sizeof b, "%016llx", static_cast<unsigned long long>(h)); return std::string(b); };
+    const uint64_t mod_offset = target->pages[0].offset[0] + 13;
+    {
+      std::ofstream f(mod_plan);
+      f << "R3HD_MOD_PLAN 1\nmod test.ugly 1\nfile " << file.size() << " " << utf8(std::filesystem::absolute(real))
+        << "\nrange 0 " << mod_offset << " " << replacement.size() << " "
+        << hex(Fnv1a(file.data() + mod_offset, replacement.size())) << " "
+        << hex(Fnv1a(replacement.data(), replacement.size())) << " test.ugly " << utf8(mod_blob) << "\nend 1 1\n";
+    }
+    m33mods::ResetForTest();
+    auto expected_mod = seen;
+    std::copy(replacement.begin(), replacement.end(), expected_mod.begin() + mod_offset);
+    Check(m33mods::AfterRead(real, 0, seen.data(), seen.size(), &mod_plan) == replacement.size() && seen == expected_mod,
+          "mod: verified original-file plan overrides correction only inside its range");
+    m33mods::ResetForTest();
+    std::filesystem::remove(mod_plan, ec);
+    std::filesystem::remove(mod_blob, ec);
+    std::filesystem::remove(mod_dir, ec);
   }
 
   std::printf("M26_TEXTURE_ORIENT_TEST %s checks=%d failures=%d%s\n", failures ? "FAIL" : "PASS", checks, failures,

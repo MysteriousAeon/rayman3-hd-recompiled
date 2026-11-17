@@ -1,0 +1,73 @@
+LGPL components of Rayman 3 HD Recompiled (Linux x86-64): corresponding source and replacement
+==============================================================================================
+
+Two libraries under the GNU Lesser General Public License are used. Each is a separate shared library in bin/
+that bin/librexruntime.so loads by name (DT_NEEDED) when the program starts. No other file of the program
+contains their code.
+
+  bin/libffmpeg.so   FFmpeg libavcodec + libavutil
+                     source: https://github.com/wmarti/FFmpeg, commit 0604b464c7cb4ebc94940cf1f324a3b26b87717c
+                     (the Xenia project's fork of FFmpeg 4.4, branch xenia-ffmpeg-canary-full, which adds the
+                     XMA "xmaframes" decoder). Licence: LGPL version 2.1 or later (FFmpeg/COPYING.LGPLv2.1).
+                     Configuration: FFmpeg/config_linux_x86_64.h of that commit, unchanged (FFmpeg/config.h
+                     selects it on Linux x86-64): CONFIG_GPL 0, CONFIG_NONFREE 0, CONFIG_VERSION3 0. The
+                     decoder, parser and filter lists are ffmpeg-overlay/*_list.c (mp3, mp3float, wmav2,
+                     wmapro, xmaframes; mpegaudio; null). No external libraries, no assembly.
+  bin/libmspack.so   libmspack, the LZX decompressor lzxd.c only (exports lzxd_*)
+                     source: https://github.com/kyz/libmspack, commit 305907723a4e7ab2018e58040059ffb5e77db837,
+                     directory libmspack/mspack. Licence: LGPL version 2.1 (libmspack/COPYING.LIB). Unmodified.
+
+Neither library is modified by this project. The project adds only build files: libffmpeg.so is the two static
+FFmpeg libraries linked into one shared library that exports their "av*" symbols and keeps every other symbol
+local (as FFmpeg's own libavutil.v / libavcodec.v do); libmspack.so is lzxd.c as a shared library.
+
+Corresponding source
+--------------------
+The source archive r3hd-lgpl-source-<version>-linux-x86_64.zip is distributed together with, and from the same
+place as, the program. It holds:
+
+  FFmpeg/                         the complete FFmpeg tree at the commit above
+  libmspack/libmspack/            the complete libmspack library directory at the commit above
+  ffmpeg-overlay/                 the decoder / parser / filter lists and the project's build files
+                                  (m46_ffmpeg_so.cmake writes the av* export list; m46_ffmpeg_dll.c is the
+                                  library's only, empty, translation unit)
+  CMakeLists.txt                  the build of both libraries: the libmspack and FFmpeg sections of the ReXGlue
+                                  SDK's thirdparty/CMakeLists.txt (only the libmspack path changed) and the
+                                  project's libffmpeg.so section, with the SDK's Linux compiler options
+  ReXGlue-SDK-LICENSE.txt         the licence of the SDK build sections and list files (BSD-3-Clause)
+  LGPL-BUILD-FILES-LICENSE.txt    the licence of the project's own build files (LGPL-2.1-or-later)
+  MANIFEST.json                   versions, commits and the SHA-256 of every file in the archive
+  README.txt                      this text
+
+Rebuilding the libraries (Linux x86-64)
+---------------------------------------
+Tools used for the shipped libraries: CMake 3.20 or later, Ninja, LLVM clang and GNU binutils or LLVM's
+linker. Other compilers are not tested (the build uses clang's -ffp-model=strict, as the program does).
+
+  1. Unpack the archive, then in its folder:
+       cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=clang -DCMAKE_C_FLAGS=-march=x86-64-v2
+       cmake --build build --target ffmpeg mspack
+  2. The new libraries are build/libffmpeg.so and build/libmspack.so.
+
+Change any source file under FFmpeg/ or libmspack/ before step 1 to build a modified library.
+
+Replacing the libraries
+-----------------------
+Close the game, keep a copy of the originals outside app/ and bin/, then copy your libffmpeg.so and / or
+libmspack.so over exactly bin/libffmpeg.so and / or bin/libmspack.so of the extracted folder. Play.sh puts bin/
+first on the library search path, so the replacement is used at the next start. Startup allows different sizes
+and hashes for these two paths only; a missing file or one that is not a Linux x86-64 ELF shared library is
+refused with a specific message. Passing that check does not certify exports, structure layouts, decoder
+support or dependencies: a loader or runtime failure can still occur. Restore your saved originals or rebuild
+against the documented interface.
+
+A replacement must keep the interface the program was built with: the same exported functions with the same
+declarations and structure layouts as in the headers at the commits above. librexruntime.so imports from
+libffmpeg.so: av_buffer_alloc, av_frame_alloc, av_frame_free, av_log_set_callback, av_packet_alloc,
+av_packet_free, av_strerror, avcodec_alloc_context3, avcodec_find_decoder (with the fork's AV_CODEC_ID_XMAFRAMES),
+avcodec_free_context, avcodec_open2, avcodec_receive_frame, avcodec_send_packet; and from libmspack.so:
+lzxd_init, lzxd_decompress, lzxd_free (it also reads the window and ref_data_size fields of struct lzxd_stream,
+lzx.h). An upstream FFmpeg build has no xmaframes decoder, so game audio needs a build of this fork or a
+compatible one. The libraries carry no symbol versions and no SONAME requirement beyond their file names.
+Extracting a new version of the program into a fresh folder brings the original libraries back; reapply a
+compatible replacement deliberately.

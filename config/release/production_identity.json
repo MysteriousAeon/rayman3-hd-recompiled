@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "note": "G6-P43 (D-299): the production binaries of the current Windows 1.2.0 candidate, rebuilt by the full replay with the prompt Auto snapshot moved into rexruntime. Live-state rows of the modding checks ('the build folder holds the production identity') compare against 'current'. 'history' lists earlier identities; their retained runtime evidence stays tied to them and is not transferred.",
+  "current": {
+    "decision": "D-299",
+    "binaries": {
+      "r3hd.exe": "766d63af511c3e7582f29cbf921eabebd2f12baf9ad90720ccd60ca58b0d901b",
+      "rexruntime.dll": "1a7357b2da0cf463c18712dc3652cfb5dff638302d7fb56aac3444fde17b0b77",
+      "rexgpu-xenos.dll": "40e313838d7be6db333107266efd466a138a1096c220bd5e239805e025586df0"
+    }
+  },
+  "history": [
+    {
+      "decision": "D-292",
+      "note": "G6-P36 production build (E-525); shipped in the superseded G6-P39 to G6-P42 Windows 1.2.0 candidates. Its host executable inlined the prompt Auto snapshot against its own uninitialized SDL copy (D-299)",
+      "binaries": {
+        "r3hd.exe": "9e85202b1d7095bd2ea707ec61caf6135fb282491eb4bce4683ccb17634c4abd",
+        "rexruntime.dll": "c22375b5d0fd7142aab444e6eeb56aa8d41f58390f336508493867042d38edb4",
+        "rexgpu-xenos.dll": "e78b3cb9b8251ba0721c654c9cd48a588e37cb977e60f6c059db03c614240e04"
+      }
+    },
+    {
+      "decision": "D-286",
+      "note": "G6-P30 production build with the level-transaction policy (E-519); runtime evidence of G6-P30 / G6-P34 belongs to it",
+      "binaries": {
+        "r3hd.exe": "6635d2327179d5a05381fdc5c0be8522d6cfc5c1f52db81e381ea92193a58567",
+        "rexruntime.dll": "784f7b72b7051bc3185e7622a2e2e7dda371bf78b0e6cd6a9e962db885070090"
+      }
+    }
+  ]
+}

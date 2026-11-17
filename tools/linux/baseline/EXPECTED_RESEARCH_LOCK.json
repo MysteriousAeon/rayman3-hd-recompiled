@@ -1,0 +1,187 @@
+{
+  "schema": 1,
+  "purpose": "E-389 private extracted-package research only; not a production pin change",
+  "snapshot": "20261108T000000Z",
+  "packages": [
+    {
+      "Package": "clang-18",
+      "Version": "1:18.1.3-1ubuntu1",
+      "Architecture": "amd64",
+      "Filename": "pool/universe/l/llvm-toolchain-18/clang-18_18.1.3-1ubuntu1_amd64.deb",
+      "Size": "80040",
+      "SHA256": "628b16701014ef7ad648380b20ea74b90dd543857f933b3e34d2fc042783de25",
+      "index": "noble-updates-universe.Packages"
+    },
+    {
+      "Package": "clang-19",
+      "Version": "1:19.1.1-1ubuntu1~24.04.2",
+      "Architecture": "amd64",
+      "Filename": "pool/universe/l/llvm-toolchain-19/clang-19_19.1.1-1ubuntu1~24.04.2_amd64.deb",
+      "Size": "78918",
+      "SHA256": "1b5db5ca78b9a4fa965c8f43b13770224f5cc8f05f691bbde95622c5de667ffb",
+      "index": "noble-updates-universe.Packages"
+    },
+    {
+      "Package": "libc6",
+      "Version": "2.39-0ubuntu8.9",
+      "Architecture": "amd64",
+      "Filename": "pool/main/g/glibc/libc6_2.39-0ubuntu8.9_amd64.deb",
+      "Size": "3264314",
+      "SHA256": "ff5557d99b51f761c4b7c92368b9cc45565eda17df9bf9eb4b134d09825008be",
+      "index": "noble-updates-main.Packages"
+    },
+    {
+      "Package": "libc6-dev",
+      "Version": "2.39-0ubuntu8.9",
+      "Architecture": "amd64",
+      "Filename": "pool/main/g/glibc/libc6-dev_2.39-0ubuntu8.9_amd64.deb",
+      "Size": "2125612",
+      "SHA256": "e13d5fcc1b2a86f75bca8e0026a8e39f24fe97ca86e92be79991f8697eb1306f",
+      "index": "noble-updates-main.Packages"
+    },
+    {
+      "Package": "libclang-common-18-dev",
+      "Version": "1:18.1.3-1ubuntu1",
+      "Architecture": "amd64",
+      "Filename": "pool/universe/l/llvm-toolchain-18/libclang-common-18-dev_18.1.3-1ubuntu1_amd64.deb",
+      "Size": "735998",
+      "SHA256": "d41631bb752815a8196261d1030c096591c59678c8adfbf2e6a740a691b49e80",
+      "index": "noble-updates-universe.Packages"
+    },
+    {
+      "Package": "libclang-common-19-dev",
+      "Version": "1:19.1.1-1ubuntu1~24.04.2",
+      "Architecture": "amd64",
+      "Filename": "pool/universe/l/llvm-toolchain-19/libclang-common-19-dev_19.1.1-1ubuntu1~24.04.2_amd64.deb",
+      "Size": "742982",
+      "SHA256": "951e803e3540e2d1513f44fad07d179a85dc82b8cbb060f09ae3c602e47a8695",
+      "index": "noble-updates-universe.Packages"
+    },
+    {
+      "Package": "libclang-cpp18",
+      "Version": "1:18.1.3-1ubuntu1",
+      "Architecture": "amd64",
+      "Filename": "pool/main/l/llvm-toolchain-18/libclang-cpp18_18.1.3-1ubuntu1_amd64.deb",
+      "Size": "13492572",
+      "SHA256": "e91eda104813ee0468d145d010a4a4e142401f3f17f9a65596c66d416298d018",
+      "index": "noble-updates-main.Packages"
+    },
+    {
+      "Package": "libclang-cpp19",
+      "Version": "1:19.1.1-1ubuntu1~24.04.2",
+      "Architecture": "amd64",
+      "Filename": "pool/universe/l/llvm-toolchain-19/libclang-cpp19_19.1.1-1ubuntu1~24.04.2_amd64.deb",
+      "Size": "14281530",
+      "SHA256": "c0e5aba5eea37be41d0b46ddd96a2f582eae96b1f445bcf09eae44429f3effea",
+      "index": "noble-updates-universe.Packages"
+    },
+    {
+      "Package": "libgcc-14-dev",
+      "Version": "14.2.0-4ubuntu2~24.04.1",
+      "Architecture": "amd64",
+      "Filename": "pool/main/g/gcc-14/libgcc-14-dev_14.2.0-4ubuntu2~24.04.1_amd64.deb",
+      "Size": "2820054",
+      "SHA256": "055dfa5fa7448fe20ad2f3832df2edd2b0ffca7f8a6c5fbbc5576dc61b2eb8b7",
+      "index": "noble-updates-main.Packages"
+    },
+    {
+      "Package": "libllvm18",
+      "Version": "1:18.1.3-1ubuntu1",
+      "Architecture": "amd64",
+      "Filename": "pool/main/l/llvm-toolchain-18/libllvm18_18.1.3-1ubuntu1_amd64.deb",
+      "Size": "27518500",
+      "SHA256": "af6197096ce3b89aab86de59f01c1b5feb008b2ae1514a03906c0664edb8b0b1",
+      "index": "noble-updates-main.Packages"
+    },
+    {
+      "Package": "libllvm19",
+      "Version": "1:19.1.1-1ubuntu1~24.04.2",
+      "Architecture": "amd64",
+      "Filename": "pool/main/l/llvm-toolchain-19/libllvm19_19.1.1-1ubuntu1~24.04.2_amd64.deb",
+      "Size": "28737618",
+      "SHA256": "a62f1074eb7aecf10e00fed9c7c967dc6c801fae444a40b8007e246320f5ee15",
+      "index": "noble-updates-main.Packages"
+    },
+    {
+      "Package": "libstdc++-13-dev",
+      "Version": "13.3.0-6ubuntu2~24.04.1",
+      "Architecture": "amd64",
+      "Filename": "pool/main/g/gcc-13/libstdc++-13-dev_13.3.0-6ubuntu2~24.04.1_amd64.deb",
+      "Size": "2419834",
+      "SHA256": "ee5633e863e19c3381ed97842ce35ed32ede96a3d1ae4e94c051d3036fe21347",
+      "index": "noble-updates-main.Packages"
+    },
+    {
+      "Package": "libstdc++-14-dev",
+      "Version": "14.2.0-4ubuntu2~24.04.1",
+      "Architecture": "amd64",
+      "Filename": "pool/universe/g/gcc-14/libstdc++-14-dev_14.2.0-4ubuntu2~24.04.1_amd64.deb",
+      "Size": "2506670",
+      "SHA256": "6d223262b8cbe6d5150435056d58dffa8159d8582fc0df47fb45ea550cd37424",
+      "index": "noble-updates-universe.Packages"
+    },
+    {
+      "Package": "libstdc++6",
+      "Version": "14.2.0-4ubuntu2~24.04.1",
+      "Architecture": "amd64",
+      "Filename": "pool/main/g/gcc-14/libstdc++6_14.2.0-4ubuntu2~24.04.1_amd64.deb",
+      "Size": "792064",
+      "SHA256": "a51f8de7829211db961a31f02158058ad1a95f92ac6d0a5dff6350e2821c54c0",
+      "index": "noble-updates-main.Packages"
+    },
+    {
+      "Package": "linux-libc-dev",
+      "Version": "6.8.0-149.149",
+      "Architecture": "amd64",
+      "Filename": "pool/main/l/linux/linux-libc-dev_6.8.0-149.149_amd64.deb",
+      "Size": "1698546",
+      "SHA256": "e4b7b9c5023ba727908868661e1113d28ed9b68e47aed00e314723dad4b2b31d",
+      "index": "noble-updates-main.Packages"
+    },
+    {
+      "Package": "libgcc-s1",
+      "Version": "14.2.0-4ubuntu2~24.04.1",
+      "Architecture": "amd64",
+      "Filename": "pool/main/g/gcc-14/libgcc-s1_14.2.0-4ubuntu2~24.04.1_amd64.deb",
+      "Size": "78392",
+      "SHA256": "aa7fadbe33b78bcf99885318040601c550c208929565b179891d9a3cc2aa68cd",
+      "index": "noble-updates-main.Packages"
+    },
+    {
+      "Package": "libicu74",
+      "Version": "74.2-1ubuntu3.1",
+      "Architecture": "amd64",
+      "Filename": "pool/main/i/icu/libicu74_74.2-1ubuntu3.1_amd64.deb",
+      "Size": "10860078",
+      "SHA256": "c9a70989678660eed9a1e904c74fa043da8bec8e2036856fc16e31ced79b04f8",
+      "index": "noble-updates-main.Packages"
+    },
+    {
+      "Package": "libxml2",
+      "Version": "2.9.14+dfsg-1.3ubuntu3.10",
+      "Architecture": "amd64",
+      "Filename": "pool/main/libx/libxml2/libxml2_2.9.14+dfsg-1.3ubuntu3.10_amd64.deb",
+      "Size": "763592",
+      "SHA256": "c5a065f85c1e6f605741e365e40cad71c3ceb0e85e2791400bd35b8896e12ad1",
+      "index": "noble-updates-main.Packages"
+    },
+    {
+      "Package": "libgcc-13-dev",
+      "Version": "13.3.0-6ubuntu2~24.04.1",
+      "Architecture": "amd64",
+      "Filename": "pool/main/g/gcc-13/libgcc-13-dev_13.3.0-6ubuntu2~24.04.1_amd64.deb",
+      "Size": "2680642",
+      "SHA256": "cd689db2691edaa10f37329307292796bb599e722e0505c79e14caaa1fe9a93a",
+      "index": "noble-updates-main.Packages"
+    }
+  ],
+  "sdk_commit": "c94f5ebdcb3c9d1a460ca48e04f9758448f8d518",
+  "input_sha256": {
+    "tools/linux/baseline/feature.cpp": "dcb88cf64e98dacf55857b56fb7366a4b326e45685ff2f4bdf9cbe86b9c63145",
+    "tools/linux/baseline/probe.sh": "f0e0c017dd7379befd07bc498acae5a5ecb68ad692f3a13a0434f0967f68dd54",
+    "external/rexglue-sdk/include/rex/result.h": "edf401e5f6a55ecdf78965fb1927d78e44aefc08608bcb95c7acfd4bafa14850",
+    "external/rexglue-sdk/include/rex/types.h": "37e3f7ba20a4e7668d2253232f6e6cc7edd5f48846c7d5c80f498152c5bb7af2",
+    "external/rexglue-sdk/include/rex/assert.h": "ad25d6dc69545e6ae2c7c3ee749261fe428be74c4f52d382ebad647ceec2d1ce",
+    "external/rexglue-sdk/include/rex/platform.h": "c540993525ba004aa943e3075edad40bd5c530e959177e8ad56093608ce55043"
+  }
+}

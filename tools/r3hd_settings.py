@@ -82,7 +82,7 @@ PADMAP_SCHEMA = 2  # D-116: analog inputs and the listed actions
 CONTROLLER_FIELDS = {"buttons", "analog"}
 ANALOG_IDS = ("left_trigger", "right_trigger", "left_stick", "right_stick")
 SCOPES = ("preset", "preference")
-UI_MODES = ("shown", "hidden")
+UI_MODES = ("shown", "hidden", "profile_radios")
 FIXED_PRESETS = ("vanilla", "hdplus")
 CATEGORIES = ("mandatory", "platform", "hd_correction", "enhancement", "experimental")
 
@@ -136,12 +136,16 @@ def load_registry(path: Path = REGISTRY) -> dict:
             raise Refused("REGISTRY_INVALID", f"{key}: install_default must be one of a preference's values")
         if "preserve_default" in s and (s["preserve_default"] is not True or scope(s) != "preference"):
             raise Refused("REGISTRY_INVALID", f"{key}: preserve_default is true for a preference only")
+        if s.get("ui") == "profile_radios" and (s.get("scope") != "preference" or not 2 <= len(s["values"]) <= 3):
+            raise Refused("REGISTRY_INVALID", f"{key}: profile radios require a two- or three-value preference")
         if s.get("ui", "shown") not in UI_MODES:
             raise Refused("REGISTRY_INVALID", f"{key}: ui {s.get('ui')!r}")
         for other, value in (s.get("requires") or {}).items():
             o = reg["settings"].get(other)
             if o is None or value not in o["values"] or other == key:
                 raise Refused("REGISTRY_INVALID", f"{key}: requires {other}={value!r}")
+    if sum(s.get("ui") == "profile_radios" for s in reg["settings"].values()) > 1:
+        raise Refused("REGISTRY_INVALID", "only one profile radio section is supported")
     reg["_sha256"] = hashlib.sha256(raw).hexdigest()
     return reg
 

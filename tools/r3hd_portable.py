@@ -8,6 +8,8 @@ import argparse
 import json
 import os
 from pathlib import Path
+import re
+import shutil
 import subprocess
 import struct
 import sys
@@ -17,10 +19,102 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import r3hd_installer as engine
 
 # D-126: fixed paths, never a manifest-controlled exemption or a DLL search path.
-REPLACEABLE_LGPL = frozenset(("bin/ffmpeg.dll", "bin/mspack.dll"))
+# LX-4 (E-375): the Linux package is the same portable layout; its replaceable LGPL libraries are shared objects.
+LINUX = os.name != "nt"
+REPLACEABLE_LGPL = (frozenset(("bin/libffmpeg.so", "bin/libmspack.so")) if LINUX
+                    else frozenset(("bin/ffmpeg.dll", "bin/mspack.dll")))
+
+
+def check_lgpl_so(path, rel):
+    if not path.is_file():
+        raise engine.Refusal("PORTABLE_LGPL_MISSING", f"{rel}: restore the original or supply a compatible Linux x86-64 shared library")
+    # Structural check only (ELF64, little-endian, ET_DYN, x86-64); symbols and ABI are judged by the loader/runtime.
+    with path.open("rb") as f:
+        head = f.read(20)
+    if (len(head) != 20 or head[:4] != b"\x7fELF" or head[4] != 2 or head[5] != 1
+            or struct.unpack_from("<H", head, 16)[0] != 3 or struct.unpack_from("<H", head, 18)[0] != 62):
+        raise engine.Refusal("PORTABLE_LGPL_FORMAT", f"{rel}: expected a Linux x86-64 ELF shared library; restore the original or rebuild it")
+
+
+def check_platform_linux(requires=None):
+    machine = os.uname().machine.lower()
+    if not sys.platform.startswith("linux") or machine not in ("x86_64", "amd64") or sys.maxsize <= 2 ** 32:
+        raise engine.Refusal("UNSUPPORTED_OS", f"{sys.platform} {machine}: the Linux package needs Linux x86-64")
+    if sys.version_info < (3, 10):
+        raise engine.Refusal("UNSUPPORTED_OS", "Python 3.10 or newer is required")
+    check_linux_baseline(requires or {}, linux_runtime_versions)
+
+
+def _version(text):
+    return tuple(int(x) for x in re.findall(r"\d+", text or "")) or (0,)
+
+
+def linux_runtime_versions():
+    """B7 (E-378): this system's glibc version and the newest GLIBCXX_ version its libstdc++.so.6 provides."""
+    glibc = (os.confstr("CS_GNU_LIBC_VERSION") or "").split()[-1:] or [None]
+    glibcxx = None
+    try:
+        import ctypes
+        ctypes.CDLL("libstdc++.so.6")
+        with open("/proc/self/maps", encoding="utf-8", errors="replace") as maps:
+            path = next((line.split(None, 5)[5].strip() for line in maps
+                         if len(line.split(None, 5)) == 6 and "libstdc++.so.6" in line), None)
+        if path:
+            with open(path, "rb") as f:
+                found = set(re.findall(rb"GLIBCXX_(\d+\.\d+(?:\.\d+)?)\x00", f.read()))
+            glibcxx = max((v.decode() for v in found), key=_version, default=None)
+    except OSError:
+        pass
+    return {"glibc": glibc[0], "glibcxx": glibcxx}
+
+
+def check_linux_baseline(requires, versions):
+    """Refuse early, with the versions, when the system is older than the package's recorded floor (payload.json
+    requires.glibc / requires.glibcxx) instead of letting the loader fail with "version GLIBC_x not found"."""
+    need = {k: requires.get(k) for k in ("glibc", "glibcxx") if requires.get(k)}
+    if not need:
+        return
+    have = versions()
+    old = [f"{'glibc' if k == 'glibc' else 'libstdc++ (GLIBCXX)'} {v} or newer (this system: {have.get(k) or 'not found'})"
+           for k, v in need.items() if not have.get(k) or _version(have[k]) < _version(v)]
+    if old:
+        raise engine.Refusal("UNSUPPORTED_OS", "This Linux Experimental build needs " + " and ".join(old) +
+                             ". Use a current distribution (see app/README-LINUX.txt, REQUIREMENTS).")
+
+
+def desktop_message(text, run=subprocess.run):
+    """E-379: a message a person started from the application menu can see (no terminal): kdialog, zenity or
+    notify-send when present; always printed too."""
+    print(text, file=sys.stderr)
+    for argv in (["kdialog", "--error", text], ["zenity", "--error", "--text", text],
+                 ["notify-send", "Rayman 3 HD Recompiled", text]):
+        if shutil.which(argv[0]):
+            try:
+                run(argv, timeout=600, check=False)
+                return argv[0]
+            except (OSError, subprocess.SubprocessError):
+                pass
+    return None
+
+
+def ask_preset(log, ask=input):
+    """E-377: the installer's preset page for a new Linux home (Windows shows it in setup, and the portable ZIP opens
+    the Settings window). Same choices and names (registry preset_ui, "HD+ (Recommended)"); Enter keeps the
+    installer's preselection, Vanilla. Custom starts on Vanilla, as the installer does; ./Settings.sh changes it."""
+    ui = engine.presets.load_registry().get("preset_ui", {})
+    keys = ("vanilla", "hdplus", "custom")
+    log("How should the game look? You can change this at any time with ./Settings.sh.")
+    for i, k in enumerate(keys, 1):
+        log(f"  {i}  {ui.get(k, {}).get('name', k)} - {ui.get(k, {}).get('text', '')}")
+    while True:
+        answer = ask("Preset (1-3, Enter = 1): ").strip()
+        if answer in ("", "1", "2", "3"):
+            return keys[int(answer or "1") - 1]
 
 
 def check_lgpl_dll(path, rel):
+    if LINUX:
+        return check_lgpl_so(path, rel)
     if not path.is_file():
         raise engine.Refusal("PORTABLE_LGPL_MISSING", f"{rel}: restore the original or supply a compatible Windows x64 DLL")
     # Structural check only; exports, ABI, decoder support and dependencies are judged by the loader/runtime.
@@ -69,7 +163,7 @@ def check_files(home):
     return engine.load_payload(home, verify=False)
 
 
-def prepare(home, source=None, *, releases=None, ask=False, log=print):
+def prepare(home, source=None, *, releases=None, ask=False, log=print, preset=None):
     home = home.resolve()
     # User-data junctions could silently share saves with another copy. Refuse rather than follow them.
     pending = [home / name for name in (*engine.USER_ITEMS, "data", "app", "bin")]
@@ -82,9 +176,12 @@ def prepare(home, source=None, *, releases=None, ask=False, log=print):
         if path.is_dir():
             pending.extend(path.iterdir())
     payload = check_files(home)
-    engine.check_platform(vc_dir=home / "bin")  # Validate the pinned application-local CRT.
-    if sys.getwindowsversion().build < 18362:
-        raise engine.Refusal("UNSUPPORTED_OS", "Portable UTF-8 paths require Windows 10 version 1903 or newer")
+    if LINUX:
+        check_platform_linux(payload.get("requires") if isinstance(payload, dict) else None)
+    else:
+        engine.check_platform(vc_dir=home / "bin")  # Validate the pinned application-local CRT.
+        if sys.getwindowsversion().build < 18362:
+            raise engine.Refusal("UNSUPPORTED_OS", "Portable UTF-8 paths require Windows 10 version 1903 or newer")
     engine.check_not_running()
     # Never fall back to an installed home or system user-data folder on access failure.
     with engine.Lock(home):
@@ -107,9 +204,13 @@ def prepare(home, source=None, *, releases=None, ask=False, log=print):
         s = engine.settings_state(home)
         if s["state"] == "invalid":
             raise engine.Refusal("SETTINGS_INCOMPATIBLE", s.get("detail", "Keep settings.json and repair it explicitly"))
+        if preset not in ("vanilla", "hdplus", "custom"):  # E-379: the Linux setup window passes its choice
+            preset = ask_preset(log) if LINUX and ask and s["state"] == "missing" else "vanilla"
         settings = engine.presets.load_settings_file(home / "settings.json") if s["state"] == "ok" else \
-            engine.settings_from_args("vanilla", None, (), False, home, fresh=True)
+            engine.settings_from_args(preset, "vanilla" if preset == "custom" else None, (), False, home, fresh=True)
         if previous and data["state"] == "ok" and s["state"] == "ok":
+            if LINUX:
+                engine.write_play_icon(home)  # E-379: kept when present; made while the package is still there
             return {"home": str(home), "data": "verified", "version": payload["version"]}
         staging = home / f".staging-{os.getpid()}"
         staging.mkdir()
@@ -139,14 +240,19 @@ def prepare(home, source=None, *, releases=None, ask=False, log=print):
             raise
         for folder in ("profiles", "cache", "sessions", "save_history", "mods"):
             (home / folder).mkdir(exist_ok=True)
+        if LINUX:  # E-379: the game's own icon from the person's package, as the Windows installer writes it
+            engine.write_play_icon(home)
+            # E-380: this start installed (setup's Finish page follows); a ready home returns above without the key
+            return {"home": str(home), "data": "verified", "version": payload["version"], "installed": True}
         return {"home": str(home), "data": "verified", "version": payload["version"]}
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("action", choices=("play", "settings", "prepare"))
+    ap.add_argument("action", choices=("play", "settings", "prepare", "level-editor"))
     ap.add_argument("--source", type=Path)
     ap.add_argument("--no-input", action="store_true")
+    ap.add_argument("--console", action="store_true", help="Linux: the console questions, not the Settings window")
     a = ap.parse_args()
     home = Path(__file__).resolve().parents[2]
     try:
@@ -154,15 +260,63 @@ def main():
         for key in list(os.environ):
             if key.upper().startswith("R3HD_"):
                 del os.environ[key]
-        result = prepare(home, a.source, ask=not a.no_input)
+        gui = None
+        if LINUX and not a.console and not a.no_input:
+            sys.path.insert(0, str(Path(__file__).resolve().parent / "linux"))
+            import r3hd_settings_gui
+            gui = r3hd_settings_gui if r3hd_settings_gui.gui_available() else None
+        # E-379: a start from the application menu has no terminal. E-380: with a display, the first start is the
+        # setup window (Windows setup's pages) from a terminal too; the console questions are the fallback.
+        terminal = not LINUX or sys.stdin is not None and sys.stdin.isatty()
+        action, window = a.action, False
+        try:
+            result = prepare(home, a.source, ask=not a.no_input and terminal and gui is None)
+        except engine.Refusal as e:
+            if not (LINUX and e.code == "PACKAGE_REQUIRED" and a.action != "prepare" and not a.no_input):
+                raise
+            if gui is None:
+                desktop_message("Rayman 3 HD Recompiled needs your game data. Run ./Play.sh in a terminal, or "
+                                "install Python's tkinter (e.g. the 'tk' package) for the setup window.")
+                raise
+            done = gui.run_setup(home, prepare)
+            if done is None:
+                return 2
+            (result, action), window = done, True
+            result = dict(result or {}, installed=True)
+        if LINUX and result.get("installed") and a.action != "prepare":
+            # E-380: a start that installed ends on setup's Finish page; nothing starts unless the person chooses.
+            if not window:  # the console questions installed (no window): the Finish page in the terminal
+                sys.path.insert(0, str(Path(__file__).resolve().parent / "linux"))
+                import r3hd_settings_gui as finish
+                action = finish.finished_choice() if terminal and not a.no_input else None
+            if action is None:
+                print("R3HD_PORTABLE READY " + json.dumps(result, ensure_ascii=True))
+                return 0
+            a.action = action
         print("R3HD_PORTABLE READY " + json.dumps(result, ensure_ascii=True))
-        print("LGPL replacement policy: bin/ffmpeg.dll and bin/mspack.dll may differ from the shipped hashes. "
+        print(f"LGPL replacement policy: {' and '.join(sorted(REPLACEABLE_LGPL))} may differ from the shipped hashes. "
               "Preparation checks file format only; loading and runtime use determine compatibility. "
               "If loading fails, check exports/dependencies or restore your saved originals.", flush=True)
+        if LINUX and a.action == "level-editor":
+            print("The level editor is part of the Windows edition only.", file=sys.stderr)
+            return 2
+        if LINUX and a.action != "prepare":
+            # LX-4: the Linux launcher reads this home (bin, data/content, settings.json, mods, profiles); Settings is
+            # the engine's console configuration until a Linux Settings window exists. Same engine, same files.
+            tools = Path(__file__).resolve().parent
+            if a.action == "play":
+                args = [sys.executable, "-B", str(tools / "linux" / "r3hd_play.py"), "--home", str(home)]
+            elif gui is not None:  # E-379: the Settings window; the console stays the fallback (--console)
+                return gui.run_settings(home)
+            else:
+                args = [sys.executable, "-B", str(tools / "r3hd_installer.py"), "configure", "--home", str(home)]
+            return subprocess.call(args, cwd=home)
         if a.action != "prepare":
             args = [str(home / "app" / "r3hd_launcher.exe")]
             if a.action == "play":
                 args.append("--play")
+            elif a.action == "level-editor":  # G6-P31 (D-287): the same entry as the installed Start menu item
+                args.append("--level-editor")
             return subprocess.call(args, cwd=home)
         return 0
     except (engine.Refusal, OSError, ValueError, EOFError) as e:

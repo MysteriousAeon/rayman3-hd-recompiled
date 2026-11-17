@@ -11,7 +11,11 @@ config/release/lgpl_components.json; the human-readable notice is tools/installe
   package [--out DIR]    write the corresponding-source archive r3hd-lgpl-source-<version>.zip (deterministic: same
                          pins, same bytes) from the pinned git objects and the patched SDK build sections, then
                          check it. Final line M46_PACKAGE OK <path> <sha256>.
-  rebuild ZIP DIR [--modify]
+  package --platform linux [--out DIR]
+                         B3b (E-378): r3hd-lgpl-source-<version>-linux-x86_64.zip for the Linux package's
+                         libffmpeg.so / libmspack.so: the same pinned trees, the Linux build file (the libffmpeg.so
+                         arrangement of m46_runtime_patch.py, LX-5) and tools/linux/LGPL-SOURCE-LINUX.txt.
+  rebuild ZIP DIR [--modify]   (a Linux archive builds libffmpeg.so / libmspack.so with clang, on Linux)
                          unpack the archive into DIR (must not exist) and build ffmpeg.dll and mspack.dll with the
                          archive's own CMake file, as README.txt tells a recipient to. --modify first changes the
                          sources: FFmpeg logs one warning from the XMA decoder's init, lzxd_init appends a line to
@@ -304,6 +308,11 @@ def standalone_cmake():
     end = 'set_target_properties(ffmpeg ffmpeg_def PROPERTIES FOLDER "FFmpeg")\n'
     fe = text.index(end) + len(end)
     ffmpeg = text[fs:fe]
+    # LM-1: m46_runtime_patch.py opens the Windows DLL arrangement with this guard (its else()/endif() lie after
+    # `fe`); the archive builds the Windows DLLs only, so it carries the arrangement exactly as before LM-1.
+    guard = "if(WIN32)  # M46 (D-084): the DLL arrangement uses a .def export list and LINKER:/DEF.\n"
+    assert ffmpeg.count(guard) <= 1
+    ffmpeg = ffmpeg.replace(guard, "")
     head = (
         "# Rebuilds bin\\ffmpeg.dll and bin\\mspack.dll of Rayman 3 HD Recompiled from this archive (README.txt).\n"
         "# The two sections below are copied from the ReXGlue SDK's thirdparty/CMakeLists.txt as the program builds\n"
@@ -322,6 +331,74 @@ def standalone_cmake():
         "add_compile_options(-fno-strict-aliasing -ffp-model=strict)\n\n"
     )
     return head + "#" + "=" * 77 + "\n" + mspack + "\n" + ffmpeg
+
+
+LINUX_TAG = "linux-x86_64"
+LINUX_README = ROOT / "tools/linux/LGPL-SOURCE-LINUX.txt"
+LINUX_BRANCH = 'elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")\n'
+COMMON_END = '    VISIBILITY_INLINES_HIDDEN ON\n    FOLDER "FFmpeg")\n'
+
+
+def standalone_cmake_linux():
+    """B3b (E-378): the build of libffmpeg.so and libmspack.so as the Linux program builds them.
+
+    The libmspack and common FFmpeg sections (both static libraries) come from the SDK's thirdparty/CMakeLists.txt;
+    the libffmpeg.so arrangement is the Linux branch of tools/m46_runtime_patch.py (LX-5), the text the patch chain
+    inserts after the common section. The head reproduces the SDK's own Linux x86-64 settings for its C code."""
+    sys.path.insert(0, str(ROOT / "tools"))
+    from m46_runtime_patch import FFMPEG_DLL
+    text = (SDK / "thirdparty" / "CMakeLists.txt").read_bytes().replace(b"\r\n", b"\n").decode("utf-8")
+    ms = text.index("# libmspack - LZX decompression")
+    mspack = text[ms:text.index("# o1heap", ms)].rstrip() + "\n"
+    old_dir = '"${CMAKE_CURRENT_SOURCE_DIR}/libmspack/cabextract/mspack"'
+    assert mspack.count(old_dir) == 1
+    mspack = mspack.replace(old_dir, '"${CMAKE_CURRENT_SOURCE_DIR}/libmspack/libmspack/mspack"')
+    fs = text.rfind("#=====", 0, text.index("# FFmpeg - Audio/video codec library"))
+    assert text.count(COMMON_END) == 1
+    common = text[fs:text.index(COMMON_END) + len(COMMON_END)]
+    assert FFMPEG_DLL.count(LINUX_BRANCH) == 1
+    linux = FFMPEG_DLL[FFMPEG_DLL.index(LINUX_BRANCH) + len(LINUX_BRANCH):FFMPEG_DLL.index("else()\n# LM-1")]
+    head = (
+        "# Rebuilds bin/libffmpeg.so and bin/libmspack.so of Rayman 3 HD Recompiled (Linux x86-64) from this archive\n"
+        "# (README.txt). The libmspack and FFmpeg sections below are copied from the ReXGlue SDK's\n"
+        "# thirdparty/CMakeLists.txt (BSD-3-Clause, ReXGlue-SDK-LICENSE.txt), only the libmspack directory changed to\n"
+        "# the library's own; the libffmpeg.so section is the project's (LGPL-BUILD-FILES-LICENSE.txt).\n"
+        "cmake_minimum_required(VERSION 3.20)\n"
+        "project(r3hd_lgpl_components C)\n"
+        "include(GNUInstallDirs)\n"
+        "if(NOT CMAKE_SYSTEM_NAME STREQUAL \"Linux\" OR NOT CMAKE_SYSTEM_PROCESSOR MATCHES \"x86_64|AMD64\")\n"
+        "    message(FATAL_ERROR \"This archive builds the Linux x86-64 shared libraries only\")\n"
+        "endif()\n"
+        "set(IS_X86_64 TRUE)\n"
+        "set(IS_ARM64 FALSE)\n"
+        "set(CMAKE_LIBRARY_OUTPUT_DIRECTORY \"${CMAKE_BINARY_DIR}\")\n"
+        "set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY \"${CMAKE_BINARY_DIR}\")\n"
+        "# The SDK's own settings for all of its code on Linux x86-64 (its top-level CMakeLists.txt).\n"
+        "set(CMAKE_POSITION_INDEPENDENT_CODE ON)\n"
+        "add_compile_options(-mcmodel=large -fno-strict-aliasing -ffp-model=strict)\n\n"
+    )
+    return head + "#" + "=" * 77 + "\n" + mspack + "\n" + common + linux
+
+
+def package_files_linux():
+    """The Linux corresponding-source archive: the same pinned trees, the Linux build file and README."""
+    files, version = package_files()
+    for name in ("m46_ffmpeg_def.cmake",):
+        files.pop("ffmpeg-overlay/" + name)
+    for name in ("m46_ffmpeg_so.cmake", "m46_ffmpeg_dll.c"):  # what the chain installs (install_overlay)
+        files["ffmpeg-overlay/" + name] = (ROOT / "tools" / name).read_bytes().replace(b"\r\n", b"\n")
+    files["CMakeLists.txt"] = standalone_cmake_linux().encode("utf-8")
+    files["README.txt"] = LINUX_README.read_bytes().replace(b"\r\n", b"\n")
+    man = json.loads(files.pop("MANIFEST.json"))
+    man["platform"] = LINUX_TAG
+    for c, lib in (("ffmpeg", "libffmpeg.so"), ("libmspack", "libmspack.so")):
+        man["components"][c].pop("dll", None)
+        man["components"][c]["shared_library"] = lib
+    man["sdk"]["build_sections"] = ("thirdparty/CMakeLists.txt libmspack + FFmpeg sections; the libffmpeg.so section "
+                                    "of tools/m46_runtime_patch.py (LX-5)")
+    man["files"] = {p: sha256(d) for p, d in sorted(files.items())}
+    files["MANIFEST.json"] = (json.dumps(man, indent=1, sort_keys=True) + "\n").encode()
+    return files, version
 
 
 def package_files():
@@ -367,8 +444,20 @@ def write_zip(files, path):
     return sha256(buf.getvalue())
 
 
-def check_package(path):
+def check_package(path, platform="windows"):
     rec = record()
+    if platform == "linux":
+        with zipfile.ZipFile(path) as zf:
+            man = json.loads(zf.read(PREFIX + "MANIFEST.json"))
+            cm = zf.read(PREFIX + "CMakeLists.txt").decode("utf-8")
+        check("archive: Linux x86-64 manifest", man.get("platform") == LINUX_TAG)
+        check("archive: the libffmpeg.so arrangement (version script, av* export list, -Bsymbolic)",
+              all(s in cm for s in ("add_library(ffmpeg SHARED", "--version-script", "m46_ffmpeg_so.cmake",
+                                    "LINKER:-Bsymbolic", "add_library(mspack SHARED")))
+        check("archive: no Windows .def arrangement in the Linux build file", "LINKER:/DEF" not in cm and
+              "ffmpeg-overlay/m46_ffmpeg_def.cmake" not in man["files"])
+        check("archive: the Linux FFmpeg configuration header is in the tree (LGPL 2.1+, no GPL/nonfree)",
+              "FFmpeg/config_linux_x86_64.h" in man["files"] and linux_config_ok(path))
     with zipfile.ZipFile(path) as zf:
         names = zf.namelist()
         check("archive: every entry under r3hd-lgpl-source/", all(n.startswith(PREFIX) for n in names))
@@ -386,20 +475,34 @@ def check_package(path):
         check(f"archive: complete libmspack library directory ({n_ms} files)",
               sum(p.startswith("libmspack/") for p in man["files"]) == n_ms)
         need = ["FFmpeg/COPYING.LGPLv2.1", "FFmpeg/LICENSE.md", "libmspack/libmspack/COPYING.LIB",
-                "libmspack/libmspack/mspack/lzxd.c", "ffmpeg-overlay/m46_ffmpeg_def.cmake", "CMakeLists.txt",
-                "README.txt", "ReXGlue-SDK-LICENSE.txt", "LGPL-BUILD-FILES-LICENSE.txt"]
+                "libmspack/libmspack/mspack/lzxd.c", "CMakeLists.txt",
+                "README.txt", "ReXGlue-SDK-LICENSE.txt", "LGPL-BUILD-FILES-LICENSE.txt",
+                "ffmpeg-overlay/m46_ffmpeg_so.cmake" if platform == "linux" else "ffmpeg-overlay/m46_ffmpeg_def.cmake"]
         check("archive: licence texts, build files and README present", all(p in man["files"] for p in need))
         game = [p for p in man["files"] if re.search(r"\.(xex|bhf|btf|bik|lvl|ptr|sav)$|(^|/)(private|saves?|generated)/", p, re.I)]
         check("archive: no game data, save or private path", not game, str(game[:3]))
 
 
+def linux_config_ok(path):
+    rec = record()["components"]["ffmpeg"]
+    with zipfile.ZipFile(path) as zf:
+        text = zf.read(PREFIX + "FFmpeg/config_linux_x86_64.h").decode("utf-8", "replace")
+    found = dict(re.findall(r"^#define (\w+) (.+?)\s*$", text, re.M))
+    return all(found.get(k) == v for k, v in rec["config_required"].items())
+
+
+def linux_archive_name(version):
+    return f"{record()['package']['name']}-{version}-{LINUX_TAG}.zip"
+
+
 def cmd_package(a):
-    files, version = package_files()
+    linux = getattr(a, "platform", "windows") == "linux"
+    files, version = package_files_linux() if linux else package_files()
     out = Path(a.out) if a.out else ROOT / record()["package"]["dir"]
-    path = out / f"{record()['package']['name']}-{version}.zip"
+    path = out / (linux_archive_name(version) if linux else f"{record()['package']['name']}-{version}.zip")
     digest = write_zip(files, path)
     (path.with_suffix(".zip.sha256")).write_text(f"{digest}  {path.name}\n", encoding="ascii")
-    check_package(path)
+    check_package(path, "linux" if linux else "windows")
     print(f"files {len(files)}, bytes {path.stat().st_size}")
     if failures:
         print("M46_PACKAGE FAIL")
@@ -424,6 +527,7 @@ def rebuild(zip_path, work, modify=False, log=None):
         raise SystemExit(f"{work} exists; give a new directory")
     with zipfile.ZipFile(zip_path) as zf:
         zf.extractall(work)
+        linux = json.loads(zf.read(PREFIX + "MANIFEST.json")).get("platform") == LINUX_TAG
     src = work / PREFIX.rstrip("/")
     if modify:
         edit(src / "FFmpeg/libavcodec/wmaprodec.c",
@@ -437,6 +541,21 @@ def rebuild(zip_path, work, modify=False, log=None):
              "  if (!system) return NULL;\n"
              "  { const char *m46 = getenv(\"M46_MSPACK_MARKER\");\n"
              "    if (m46) { FILE *f = fopen(m46, \"ab\"); if (f) { fputs(\"lzxd_init\\n\", f); fclose(f); } } }\n")
+    if linux:  # B3b (E-378): README.txt's Linux commands, as a recipient runs them
+        libs = {n: src / "build" / n for n in ("libffmpeg.so", "libmspack.so")}
+        with open(log or work / "rebuild.log", "w", encoding="utf-8") as out:
+            rc = 0
+            for argv in (["cmake", "-S", ".", "-B", "build", "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Release",
+                          "-DCMAKE_C_COMPILER=clang", "-DCMAKE_C_FLAGS=-march=x86-64-v2"],
+                         ["cmake", "--build", "build", "--target", "ffmpeg", "mspack"]):
+                out.write("$ " + " ".join(argv) + "\n")
+                out.flush()
+                rc = subprocess.run(argv, cwd=src, stdout=out, stderr=subprocess.STDOUT).returncode
+                if rc:
+                    break
+        if rc or not all(p.is_file() for p in libs.values()):
+            raise SystemExit(f"rebuild failed (exit {rc}); see {log or work / 'rebuild.log'}")
+        return libs
     bat = work / "rebuild.bat"
     bat.write_text("\r\n".join([
         "@echo off",
@@ -610,6 +729,8 @@ def main():
     c.add_argument("--build-tree", action="store_true")
     p = sub.add_parser("package")
     p.add_argument("--out")
+    p.add_argument("--platform", choices=("windows", "linux"), default="windows",
+                   help="linux: the archive for the Linux package's libffmpeg.so / libmspack.so (B3b)")
     r = sub.add_parser("rebuild")
     r.add_argument("zip")
     r.add_argument("dir")

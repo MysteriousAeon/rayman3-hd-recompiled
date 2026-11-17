@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /usr/bin/clang++-19 --gcc-install-dir=/usr/lib/gcc/x86_64-linux-gnu/13 "$@"

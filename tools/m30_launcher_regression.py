@@ -69,7 +69,7 @@ def resolver_checks():
           prefs == {"display", "window_size", "render_scale", "cursor", "save_clock", "diagnostics",
                       "gameplay_subtitles", "game_language", "ui_language", "discord_presence", "dualsense_light",
                       "dualsense_trigger", "dualsense_trigger_strength", "dualsense_speaker", "dualsense_speaker_volume", "mouse_camera", "mouse_sensitivity",
-                      "mouse_buttons"})  # independent Settings preferences (D-138: mouse)
+                      "mouse_buttons", "controller_prompts", "display_vsync"})  # independent Settings preferences (D-138: mouse; D-220: V-Sync)
     check("registry: the corrections stay preset settings; HD+ = layer_coords separate, texture_orient corrected (M43)",
           rs.scope(S["layer_coords"]) == rs.scope(S["texture_orient"]) == "preset"
           and S["layer_coords"]["hdplus"] == "separate" and S["texture_orient"]["hdplus"] == "corrected")
@@ -182,6 +182,20 @@ def pe_subsystem(data: bytes) -> int:
     return struct.unpack_from("<H", data, off + 24 + 68)[0]
 
 
+# D-116 (2026-10-26): the launcher names the family of a connected controller in this one phrase; the D-203
+# controller_prompts value label "Xbox" (2026-11-11) is a different, registry-owned string.
+DEVICE_DESCRIPTIONS = ('L"Xbox-compatible controller"',)
+
+
+def leaked_names(src: str, names) -> list:
+    """Setting keys and value labels that the launcher source names outside comments and the D-116 device text."""
+    code = re.sub(r"/\*.*?\*/", " ", src, flags=re.S)
+    code = re.sub(r"//[^\n]*", " ", code)
+    for phrase in DEVICE_DESCRIPTIONS:
+        code = code.replace(phrase, " ")
+    return sorted(n for n in names if re.search(r"\b" + re.escape(n) + r"\b", code))
+
+
 def static_checks():
     src = (TOOLS / "launcher" / "r3hd_launcher.cpp").read_text(encoding="utf-8")
     reg = rs.load_registry()
@@ -189,11 +203,27 @@ def static_checks():
                                     if len(lbl) > 3}
     # Game Language reuses English, already named by the independent Settings-language control.
     names -= set(reg["settings"]["ui_language"].get("value_labels", {}).values())
-    leaked = sorted(n for n in names if re.search(r"\b" + re.escape(n) + r"\b", src))
+    leaked = leaked_names(src, names)
     check("launcher source names no setting, value label or preset default (the registry is the one source)", not leaked, leaked)
+    # G6-P36: the scan ignores comments and the D-116 device description only; a label in code is still found.
+    check("source-name scan: a value label in a string literal or code is still found; comments and the D-116 "
+          "device description are not settings",
+          leaked_names('auto s = L"Xbox"; // Xbox pad\nT(L"Xbox-compatible controller");', {"Xbox"}) == ["Xbox"]
+          and leaked_names('// Xbox\nT(L"Xbox-compatible controller"); /* Xbox */', {"Xbox"}) == []
+          and leaked_names('T(L"Xbox-compatible controller (Xbox)")', {"Xbox"}) == ["Xbox"])
     check("launcher starts only the bundled Python and Windows PowerShell; never r3hd.exe",
-          src.count("CreateProcessW(") == 2 and "CreateProcessW(exe.c_str()" in src and "CreateProcessW(ps.c_str()" in src
+          src.count("CreateProcessW(") == 3 and "CreateProcessW(exe.c_str()" in src and "CreateProcessW(ps.c_str()" in src
           and not re.search(r"(CreateProcessW|ShellExecuteW)\([^;]*r3hd\.exe", src))
+    # G6-P31 (D-287): the third start is the level editor: the bundled pythonw.exe beside the bundled python.exe, the
+    # editor script of the installation's tools, after the dry-run return.
+    ed = src.split("bool StartLevelEditor(", 1)[1].split("\n}\n", 1)[0] if "bool StartLevelEditor(" in src else ""
+    check("G6-P31: the level editor is the bundled pythonw.exe running the installation's editor; a dry run starts nothing",
+          'Parent(p.python) + L"\\\\pythonw.exe"' in ed
+          # G6-P39 (D-295): the same function starts the 3D editor (threeD); the classic editor is the default
+          and 'p.tools + (threeD ? L"\\\\r3hd_scene_view.py" : L"\\\\r3hd_level_editor.py")' in ed
+          and 'Parent(p.python) + L"\\\\_r3hd_scene_gl.pyd"' in ed and "bool threeD = false" in ed
+          and "CreateProcessW(pyw.c_str()" in ed and ed.index("if (dryRun) return true;") < ed.index("CreateProcessW(")
+          and src.count("StartLevelEditor(") == 4)
     check("Play is play.ps1 -UserHome HOME, hidden; the dry run is play.ps1's own -DryRun",
           'p.tools + L"\\\\play.ps1", L"-UserHome", p.home' in src and 'args.push_back(L"-DryRun")' in src
           and src.count("CREATE_NO_WINDOW") == 2)
@@ -233,7 +263,7 @@ def static_checks():
     pallow = json.loads((ROOT / "config" / "release" / "payload_allowlist.json").read_text(encoding="utf-8"))
     check("payload: the launcher is staged to app/r3hd_launcher.exe with the launcher_native role",
           defn["launcher"]["dest"] == engine.LAUNCHER == "app/r3hd_launcher.exe"
-          and pallow["binaries"].get("app/r3hd_launcher.exe") == "launcher_native" and defn["version"].startswith(("0.30.0", "0.31.0", "0.32.0", "0.33.0", "0.34.0", "0.35.0", "0.36.0", "0.49.0", "0.50.0", "1.0.0", "1.0.1", "1.0.2", "1.0.3", "1.1.0")))
+          and pallow["binaries"].get("app/r3hd_launcher.exe") == "launcher_native" and defn["version"].startswith(("0.30.0", "0.31.0", "0.32.0", "0.33.0", "0.34.0", "0.35.0", "0.36.0", "0.49.0", "0.50.0", "1.0.0", "1.0.1", "1.0.2", "1.0.3", "1.1.0", "1.2.0")))
     bat = (TOOLS / "build_milestone8.bat").read_text(encoding="utf-8")
     check("build: launcher built before the regressions, this regression in the build",
           "call tools\\launcher\\build_launcher.bat || exit /b 1" in bat and "python tools\\m30_launcher_regression.py || exit /b 1" in bat
@@ -329,6 +359,59 @@ def launcher_checks(keep, skip_runtime=False):
             code, out = subprocess.run([str(LAUNCHER), "--no-ui", "--home", str(home), "--python", str(t / "missing.exe"),
                                         "--tools", str(TOOLS)], capture_output=True, text=True).returncode, ""
             check("a missing Python runtime is reported, not a crash", code == 2)
+            # G6-P31 (D-287): the level editor entry (dry run: the files are checked, the command line printed)
+            code, out = run_launcher(home, t, "--level-editor", "--dry-run", "--no-ui")
+            check("G6-P31: --level-editor --dry-run names pythonw.exe, the editor script and this home; nothing starts",
+                  code == 0 and "R3HD_LAUNCHER LEVEL_EDITOR DRY_RUN" in out and "pythonw.exe" in out
+                  and "r3hd_level_editor.py" in out and str(home) in out, out[-300:])
+            r = subprocess.run([str(LAUNCHER), "--level-editor", "--dry-run", "--no-ui", "--home", str(home),
+                                "--python", str(t / "nopython" / "python.exe"), "--tools", str(TOOLS)],
+                               capture_output=True, text=True, timeout=120)
+            check("G6-P31: a missing editor runtime is reported (exit 2), no window",
+                  r.returncode == 2 and "R3HD_LAUNCHER LEVEL_EDITOR FAILED missing" in r.stdout + r.stderr,
+                  (r.stdout + r.stderr)[-300:])
+            code, _d, log, _o = ui(home, t, "editor", "page mods\nclick leveleditor\nclick close\n")
+            check("G6-P31: the Mods page's Level editor button (UI test: dry run, no window)",
+                  code == 0 and "level editor: dry run" in log and "pythonw.exe" in log, log[-400:])
+            # G6-P39 (D-295): the 3D Level Remix Editor entry. A dry run only checks that files exist, so a folder of
+            # empty stand-ins names the bundled runtime layout (pythonw.exe and the OpenGL bridge beside python.exe).
+            py3d = t / "py3d"
+            py3d.mkdir()
+            for n in ("python.exe", "pythonw.exe", "_r3hd_scene_gl.pyd"):
+                (py3d / n).write_bytes(b"")
+            r = subprocess.run([str(LAUNCHER), "--level-editor-3d", "--dry-run", "--no-ui", "--home", str(home),
+                                "--python", str(py3d / "python.exe"), "--tools", str(TOOLS)],
+                               capture_output=True, text=True, timeout=120)
+            check("G6-P39: --level-editor-3d --dry-run names pythonw.exe, r3hd_scene_view.py and this home; nothing "
+                  "starts", r.returncode == 0 and "R3HD_LAUNCHER LEVEL_EDITOR_3D DRY_RUN" in r.stdout
+                  and str(py3d / "pythonw.exe") in r.stdout and "r3hd_scene_view.py" in r.stdout
+                  and str(home) in r.stdout, (r.stdout + r.stderr)[-300:])
+            (py3d / "_r3hd_scene_gl.pyd").unlink()
+            r = subprocess.run([str(LAUNCHER), "--level-editor-3d", "--dry-run", "--no-ui", "--home", str(home),
+                                "--python", str(py3d / "python.exe"), "--tools", str(TOOLS)],
+                               capture_output=True, text=True, timeout=120)
+            check("G6-P39: without the OpenGL bridge the 3D editor is reported missing (exit 2), no window",
+                  r.returncode == 2 and "R3HD_LAUNCHER LEVEL_EDITOR_3D FAILED missing" in r.stdout
+                  and "_r3hd_scene_gl.pyd" in r.stdout, (r.stdout + r.stderr)[-300:])
+            code, _d, log, _o = ui(home, t, "editor3d", "page mods\nclick leveleditor3d\nclick close\n")
+            check("G6-P39: the Mods page's 3D Level Remix Editor button reaches the 3D entry (UI test: dry run; this "
+                  "development Python has no bridge beside it, so the bridge is named as missing)",
+                  code == 0 and "3d level editor: failed missing" in log and "_r3hd_scene_gl.pyd" in log, log[-400:])
+
+            mods_layout = ["page mods"]
+            for language in ("en", "tr"):
+                mods_layout += [f"language {language}", "page mods"]
+                for dpi in (96, 120, 144):
+                    mods_layout += [f"dpi {dpi}", f"dump {language}{dpi}"]
+            mods_layout += ["language en", "click close", ""]
+            code, mod_dumps, log, mod_out = ui(home, t, "mods_captions", "\n".join(mods_layout))
+            if keep:
+                shutil.copytree(mod_out, Path(keep) / mod_out.name, dirs_exist_ok=True)
+            check("G6-P42: Mods controls fit their captions at 96, 120 and 144 DPI in English and Turkish",
+                  code == 0 and len(mod_dumps) == 6 and all(
+                      dump.get("page") == "mods" and layout_ok(dump) and dump.get("text_clipped") == "0"
+                      for dump in mod_dumps.values()),
+                  [(name, dump.get("controls"), dump.get("text_clipped")) for name, dump in mod_dumps.items()])
 
             script = "\n".join([
                 "dump initial", "shot vanilla_96", "set render_scale 2", "set display fullscreen", "click save", "dump s1",
@@ -357,23 +440,26 @@ def launcher_checks(keep, skip_runtime=False):
                       d["c1"]["custom_base"] == "hdplus" and d["c1"]["setting.layer_coords"] == "separate enabled=1"
                       and d["c1"]["setting.texture_orient"] == "corrected enabled=1")
                 order = d["c1"].get("settings_tab_order", "").split(",")
-                check("UI (D-151, D-161): Custom on HD+ shows the red correction on; Tab on Settings walks the profile, "
-                      "Display, then gameplay subtitles (moved under Display), then Mouse; no correction is on it",
+                check("UI (D-151, D-161, D-203): Custom on HD+ shows the red correction on; Tab on Settings walks the "
+                      "profile, the button prompts (below it, left column), Display, then gameplay subtitles (moved under "
+                      "Display), then Mouse; no correction is on it",
                       d["c1"].get("setting.red_correction") == "bypass enabled=1"
-                      and order[:2] == ["profile", "display"] and "render_scale" in order and "gameplay_subtitles" in order
-                      and "mouse_camera" in order and not {"combo_close", "red_correction", "sky_clear", "lit_uv_scroll"} & set(order)
+                      and order[:3] == ["profile", "controller_prompts", "display"] and "render_scale" in order and "gameplay_subtitles" in order
+                      and "mouse_camera" in order and not {"combo_close", "red_correction", "sky_clear", "lit_uv_scroll", "power_swirl", "beam_color",
+                                    "lockon_far_color"} & set(order)
                       and order.index("display") < order.index("render_scale") < order.index("gameplay_subtitles")
                       < order.index("mouse_camera"), d["c1"].get("settings_tab_order"))
                 k1 = d.get("k1", {})
                 korder = k1.get("corrections_tab_order", "").split(",")
-                check("UI (D-161): the Corrections page: Tab walks the six corrections in order; focus on the first; "
+                check("UI (D-161, D-218, D-219, D-221): the Corrections page: Tab walks the nine corrections in order; focus on the first; "
                       "it names the Custom profile and its base; the charge trail is on (HD+ base); layout holds at 96 and 144 DPI",
                       k1.get("page") == "corrections"
-                      and korder == ["combo_close", "layer_coords", "red_correction", "texture_orient", "sky_clear", "lit_uv_scroll"]
+                      and korder == ["combo_close", "layer_coords", "red_correction", "texture_orient", "sky_clear", "lit_uv_scroll",
+                                     "power_swirl", "beam_color", "lockon_far_color"]
                       and k1.get("setting.lit_uv_scroll") == "applied enabled=1" and k1.get("focus") == "combo_close"
                       and k1.get("corrections_profile", "").startswith("Active profile: Custom, starting from HD+.")
                       and all(layout_ok(d.get(k, {})) and d.get(k, {}).get("text_clipped") == "0" for k in ("k1", "k144")),
-                      {k: d.get(k, {}).get(f) for k in ("k1", "k144") for f in ("corrections_tab_order", "focus", "controls", "text_clipped")})
+                      {f"{k}.{f}": d.get(k, {}).get(f) for k in ("k1", "k144") for f in ("corrections_tab_order", "focus", "controls", "text_clipped")})
                 check("UI: Vanilla shows its own corrections again; Custom choices come back within the session",
                       d["v1"]["setting.texture_orient"] == "original enabled=0"
                       and d["c2"]["setting.texture_orient"] == "original enabled=1" and d["c2"]["custom_base"] == "hdplus")

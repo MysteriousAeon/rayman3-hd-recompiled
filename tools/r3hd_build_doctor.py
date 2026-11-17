@@ -112,7 +112,7 @@ def main() -> int:
         ok = hashlib.sha256(xex.read_bytes()).hexdigest() == rel["executable"]["sha256"]
         item("game executable", "OK" if ok else "DIFFERENT", f"{xex} (tools/r3hd_intake.py extract)")
     else:
-        item("game executable", "MISSING", f"{xex}: run tools/r3hd_intake.py extract PACKAGE OUT and set R3HD_GAME_DIR=OUT\content "
+        item("game executable", "MISSING", f"{xex}: run tools/r3hd_intake.py extract PACKAGE OUT and set R3HD_GAME_DIR=OUT\\content "
              "(or place content as private/extracted/5841123F)")
     if a.data:
         r = subprocess.run([sys.executable, str(ROOT / "tools/r3hd_intake.py"), "verify", str(game_dir)],

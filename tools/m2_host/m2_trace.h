@@ -6,3 +6,6 @@ void M2InstallCrashHandler();
 void M2Enter(const char* name, PPCContext& ctx);
 extern thread_local const char* m2_current_function;
 extern thread_local PPCContext* m2_current_context;
+#if !defined(_WIN32)
+#define _byteswap_ulong(x) __builtin_bswap32(x)  // Linux: the one Win32 intrinsic the M18 guest-memory helpers use
+#endif

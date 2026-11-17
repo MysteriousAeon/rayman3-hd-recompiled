@@ -1,0 +1,383 @@
+{
+  "schema": 1,
+  "version": "1.1.0",
+  "platform": "linux-x86_64",
+  "archive": "Rayman3HDRecompiled-1.1.0-linux-x86_64-portable.tar.gz",
+  "github": {
+    "repository": "MysteriousAeon/rayman3-hd-recompiled",
+    "tag": "v1.1.0-linux-rc1",
+    "title": "Rayman 3 HD Recompiled â€” v1.1.0 (Linux pre-release)",
+    "prerelease": true,
+    "make_latest": false,
+    "publication_authorized": false,
+    "release_notes": "MAINTAINER REVIEW PENDING"
+  },
+  "input_archive": {
+    "bytes": 34421014,
+    "sha256": "54d17f45b8bca9431fe98af48a37f93a6500282932c5543b765fa101d1fda15f"
+  },
+  "original_files": {
+    "Play.sh": {
+      "sha256": "1e236f92244e982f397d7add4ccb4ea86e434107ead539b10c359699f04fa0b9",
+      "size": 230
+    },
+    "Settings.sh": {
+      "sha256": "0fec3b64ecf7b047646574b40a074f84f7843a17544664ba7691737defc9e9fc",
+      "size": 238
+    },
+    "app/MODDING.md": {
+      "sha256": "a74abbd6ca36f5c285e03f672ea35c92fc03a18af79fb9a152a4f34936b8ae2a",
+      "size": 9338
+    },
+    "app/PROVENANCE.md": {
+      "sha256": "4be80b1a967d815054e372e057a48ae3bdf5d26dbd14fc69463c0d58fa236d6a",
+      "size": 3003
+    },
+    "app/README-LINUX.txt": {
+      "sha256": "c4e814d8ee14297d054f9a6c5cc397a3668c12b491c978eead3a37276e968ebf",
+      "size": 5643
+    },
+    "app/README.txt": {
+      "sha256": "a3eae1e76bc6776ed61be515e1b5e8ff90a7e0862822315b97c45df4e7d15531",
+      "size": 4706
+    },
+    "app/THIRD_PARTY_NOTICES.txt": {
+      "sha256": "8d8ca7d1855559a15aca4d2b7cf37d7be7806c7dbf1b6e5ec0f64edd7f9695e3",
+      "size": 6205
+    },
+    "app/config/controls/keymap.json": {
+      "sha256": "e3ebe1ab841c6b5da8d564ccf64004b9c00b8860a5fbe8007517e9946c48a48a",
+      "size": 12933
+    },
+    "app/config/controls/padmap.json": {
+      "sha256": "022d7f043a7842c6ee1dba4ece5db458079710d35c464e65bd858b4a678837a9",
+      "size": 4633
+    },
+    "app/config/intake/known_releases.json": {
+      "sha256": "20a9bb47f2961e29654634c20932874e5b35437ff27878f5a695a9b7d2293c33",
+      "size": 1866
+    },
+    "app/config/settings/registry.json": {
+      "sha256": "6637093e598bf7ad98c907d0fcd3c318d337b70ea055c33274868eefda4b3dd4",
+      "size": 20600
+    },
+    "app/config/settings/ui_strings.json": {
+      "sha256": "cd2e656138149c82fc746ef92da85ffc7f2b61b812607908a02ec2e3bff13146",
+      "size": 60713
+    },
+    "app/icons/rayman3hd-recompiled-settings.png": {
+      "sha256": "80814d32ef26e61eaf0e8c0ff1170a858b1a49a6d7be720113f0991d9fa0a9b6",
+      "size": 4020
+    },
+    "app/icons/rayman3hd-recompiled.png": {
+      "sha256": "7c12df08516468bd5e719a2419b8927c6fb441d34af9e128e65ca70fffe990c4",
+      "size": 3075
+    },
+    "app/licenses/CLI11-LICENSE.txt": {
+      "sha256": "3a70a5dffdaefe4c434660a8270f679ae18dd3c34208fb0b461a665bfcfe3e97",
+      "size": 1586
+    },
+    "app/licenses/DirectXShaderCompiler-LICENSE.txt": {
+      "sha256": "5dd468182fe6f5703c17530342f6e2e5a6f4fa83ff1d19cec3fa19cdd778f271",
+      "size": 2496
+    },
+    "app/licenses/FFmpeg-COPYING.LGPLv2.1.txt": {
+      "sha256": "b634ab5640e258563c536e658cad87080553df6f34f62269a21d554844e58bfe",
+      "size": 26526
+    },
+    "app/licenses/FFmpeg-LICENSE.md": {
+      "sha256": "cb48bf09a11f5fb576cddb0431c8f5ed0a60157a9ec942adffc13907cbe083f2",
+      "size": 4376
+    },
+    "app/licenses/Fluent-System-Icons-LICENSE.txt": {
+      "sha256": "69bc45dc42b9acb96a69823adbc6ae538374e3c0bde169b855b32c48eaaef52f",
+      "size": 1078
+    },
+    "app/licenses/LGPL-SOURCE.txt": {
+      "sha256": "8cdbb5a2db7f468a8345eaa6c65a3ca83f757c3b5164c216de0a4dc00a72e54f",
+      "size": 5563
+    },
+    "app/licenses/Rayman3HDRecompiled-LICENSE.txt": {
+      "sha256": "f1de8dfa89a4fb44733c0c46aadd201750481cf160133fde88120baed7ebd023",
+      "size": 2310
+    },
+    "app/licenses/SDL3-LICENSE.txt": {
+      "sha256": "1c040b8271b37e5076359f8fd54240e371114112924d2df81ef87c7d6a1dfdfd",
+      "size": 884
+    },
+    "app/licenses/TinySHA1-LICENSE.txt": {
+      "sha256": "1d97f6c6200a8a8a0d8606563505bb5d0f4adbe242c6b78d10fa74e325ecfe27",
+      "size": 1007
+    },
+    "app/licenses/aes_128-LICENSE.txt": {
+      "sha256": "756965be50afde53fe51d47da4fe180f82fdfaa5e72ed591d84d05df5bef4e3c",
+      "size": 1064
+    },
+    "app/licenses/cppDES-LICENSE.txt": {
+      "sha256": "61445c2be57daec4b5a09a7e21ef05376406f2163c4a7c7b663c409664c17857",
+      "size": 1081
+    },
+    "app/licenses/disruptorplus-LICENSE.txt": {
+      "sha256": "a56f05c0dbd9489e928fd3ca22712f90b310fe749ceef47059e895f6a235100c",
+      "size": 1077
+    },
+    "app/licenses/fmt-LICENSE.txt": {
+      "sha256": "07580f2a3b35709ce703d523f447b242f6dfec7582a8c0df102c7fa2849375f8",
+      "size": 1431
+    },
+    "app/licenses/imgui-LICENSE.txt": {
+      "sha256": "c80c5789748d955c4a650562baa0d750494e2c7128c2ca66aaebe2e3c4e198bf",
+      "size": 1083
+    },
+    "app/licenses/libmspack-COPYING.LIB.txt": {
+      "sha256": "a190dc9c8043755d90f8b0a75fa66b9e42d4af4c980bf5ddc633f0124db3cee7",
+      "size": 26430
+    },
+    "app/licenses/nlohmann-json-LICENSE.MIT.txt": {
+      "sha256": "c983d69523377819db3c377b390d5644f5ec53bec9b7c4a0f1ed893bb743d045",
+      "size": 1076
+    },
+    "app/licenses/o1heap-LICENSE.txt": {
+      "sha256": "9b853befdac9b2907131427795b66e0dbfdd0cfa8ecd25a58167893b8c1f0f4d",
+      "size": 1071
+    },
+    "app/licenses/rexglue-LICENSE.txt": {
+      "sha256": "8e065be1da2ff9a16b1f063d4636d8b67e6a654bb90583ea4332e66ac421bb18",
+      "size": 1659
+    },
+    "app/licenses/simde-COPYING.txt": {
+      "sha256": "75ce0a8c5a7bff42fbd6f8f3b469b518132132c4f4948fb8d02b1ccb5d0df9d8",
+      "size": 1077
+    },
+    "app/licenses/spdlog-LICENSE.txt": {
+      "sha256": "d678c20826e1392578508e1c78649a1e3c31bda05ef4388d967dbd654461b140",
+      "size": 1323
+    },
+    "app/licenses/tomlplusplus-LICENSE.txt": {
+      "sha256": "529bc3900a9571e49db285b0df432397e70b881cc3bf48de6667ae74ff4b06d8",
+      "size": 1094
+    },
+    "app/licenses/utfcpp-LICENSE.txt": {
+      "sha256": "c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566",
+      "size": 1338
+    },
+    "app/licenses/xxHash-LICENSE.txt": {
+      "sha256": "6ffedbc0f7878612d2b23589f1ff2ab15633e1df7963a5d9fc750ec5500c7e7a",
+      "size": 1389
+    },
+    "app/reports/milestone1/data/content_manifest.tsv": {
+      "sha256": "dc2d5b87cb3339c4ba5a9f57a0732632f2c7e4f4bf0ae850a5b8f6fe6fefbe4f",
+      "size": 93906
+    },
+    "app/tools/linux/r3hd_play.py": {
+      "sha256": "8b699061d37b321f5a92c0214ccb8c8c756ccef5fc6e357281b421a38b4ba542",
+      "size": 27433
+    },
+    "app/tools/linux/r3hd_settings_gui.py": {
+      "sha256": "1ad3a471e595f033b68e23f44381fb33d0ccd578592288d4bc8219dc6c67aac6",
+      "size": 40430
+    },
+    "app/tools/r3hd_bundled_mods.py": {
+      "sha256": "3f04cf4234a8d16a1d64f0feceffd950701d9d957bd6777797c2eca278d27135",
+      "size": 15095
+    },
+    "app/tools/r3hd_installer.py": {
+      "sha256": "e723e716fe4b44235bb83df6908b8d97952f6000c0cc384786bb7a1665e509bc",
+      "size": 153366
+    },
+    "app/tools/r3hd_intake.py": {
+      "sha256": "43117df7a1c89c03565236551b9fab80b1959ffad6014573431bda9a19f7286f",
+      "size": 22287
+    },
+    "app/tools/r3hd_modkit.py": {
+      "sha256": "d3d1fb59f8678dfc22d92118e256758d9281e7863e5517361e89f80c3d713a5d",
+      "size": 10105
+    },
+    "app/tools/r3hd_mods.py": {
+      "sha256": "67cfdfbaba92c1e75a3817f88c8e173273d3f7d1d6fdfe952daf3abc1d612a2f",
+      "size": 162670
+    },
+    "app/tools/r3hd_pcmod.py": {
+      "sha256": "e66a732bd15f78337fa9b27166c134573f0146f1a0bbb7c46de24c478fb8127a",
+      "size": 29140
+    },
+    "app/tools/r3hd_portable.py": {
+      "sha256": "b96b49fb888dad129ca86e50ab8000da1e3f1d39631c88ef7f50589292941660",
+      "size": 17803
+    },
+    "app/tools/r3hd_settings.py": {
+      "sha256": "47a26f50f840d041fbe62c794bba0583bf929b3f1192b54d36f3f35c31351d4f",
+      "size": 43054
+    },
+    "app/tools/r3hd_ui_locale.py": {
+      "sha256": "33decbac73205677f86fd9db8a3c0b264309ff09e07d8521914830ead0172c39",
+      "size": 3755
+    },
+    "app/tools/stfs_extract.py": {
+      "sha256": "fd5485996b8379f74000eb76967d69fe81594b9f7ab0ec12bed87923df135251",
+      "size": 7674
+    },
+    "bin/libffmpeg.so": {
+      "sha256": "561c5ca39a90a61362c0bee6c66ea8ad78a35b28e96267e7c4d833332ee6d8e7",
+      "size": 1313200
+    },
+    "bin/libmspack.so": {
+      "sha256": "c5991a2e15fe3883c9f22ecef55a411ed875a828bafcc814dd3795b4e4f6f2ec",
+      "size": 33536
+    },
+    "bin/librexgpu-xenos.so": {
+      "sha256": "23c3174f35d47f09b858b3c8259b2c4fc7fd80f62b3c9c66ccc86112f8932789",
+      "size": 6587616
+    },
+    "bin/librexruntime.so": {
+      "sha256": "ce2a0e8b0e0f628513e7e1010eff719ba2af35e2375a126a25e3836dc68bf28e",
+      "size": 17841736
+    },
+    "bin/r3hd": {
+      "sha256": "00cdd8f61a7393b00fb78c93dd2ebdea215332f02bbcf5ef3ff41cd466636d40",
+      "size": 76022168
+    },
+    "payload.json": {
+      "sha256": "f99ef2ca1ad6f1f50641f2a0f6319b22209b67ca0472677aab876f769f23eb2a",
+      "size": 9166
+    },
+    "portable.json": {
+      "sha256": "b334b012bba15e31fa006abdc72b5f925b23bd8e414ed31e7bda11c70b1045e6",
+      "size": 8588
+    }
+  },
+  "lgpl": {
+    "archive": "r3hd-lgpl-source-1.1.0-linux-x86_64.zip",
+    "bytes": 18607303,
+    "sha256": "ea19e8302f80c75dfcec3ed1649e842c8eb5c74e7f4f4fdb8eea8930a4377f92",
+    "files": 7722,
+    "commits": {
+      "ffmpeg": "0604b464c7cb4ebc94940cf1f324a3b26b87717c",
+      "libmspack": "305907723a4e7ab2018e58040059ffb5e77db837"
+    }
+  },
+  "replacements": {
+    "app/README.txt": "tools/linux/README-LINUX.txt",
+    "app/README-LINUX.txt": "tools/linux/README-LINUX.txt",
+    "app/THIRD_PARTY_NOTICES.txt": "tools/linux/THIRD_PARTY_NOTICES.txt"
+  },
+  "license_additions": {
+    "app/licenses/glslang-LICENSE.txt": {
+      "source": "external/rexglue-sdk/thirdparty/glslang/LICENSE.txt",
+      "sha256": "130b2e98901db02a83e5e83c132b22d22d9279155feb53c49d6471b75af3c352"
+    },
+    "app/licenses/VulkanMemoryAllocator-LICENSE.txt": {
+      "source": "external/rexglue-sdk/thirdparty/vulkan-memory-allocator/LICENSE.txt",
+      "sha256": "8d70e4cf2a9941f6454da71cd60e38484dd3e34810c824760d550e982af6d97a"
+    },
+    "app/licenses/Vulkan-Headers-Apache-2.0.txt": {
+      "source": "external/rexglue-sdk/thirdparty/vulkan-headers/LICENSES/Apache-2.0.txt",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    "app/licenses/Vulkan-Headers-MIT.txt": {
+      "source": "external/rexglue-sdk/thirdparty/vulkan-headers/LICENSES/MIT.txt",
+      "sha256": "1ca3502222d967f3be5751c55f6b7ee735b5383909c3b501495f54b216dbf227"
+    },
+    "app/licenses/SPIRV-Headers-LICENSE.txt": {
+      "source": "external/rexglue-sdk/thirdparty/spirv-headers/LICENSE",
+      "sha256": "ea43b1de38a6f90c488800d66dec1ed671e68cda530266bc96951fb5b6307613"
+    },
+    "app/licenses/SPIRV-Tools-LICENSE.txt": {
+      "source": "external/rexglue-sdk/thirdparty/spirv-tools/LICENSE",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    "app/licenses/Vulkan-Headers-LICENSE.md": {
+      "source": "external/rexglue-sdk/thirdparty/vulkan-headers/LICENSE.md",
+      "sha256": "95ad366d23fadf701d355bc45fb8b82ae2d700239471d35d41286ac3b08ff903"
+    }
+  },
+  "build": {
+    "project_commit": "0414e72ed512cd3057eea63d7b06f7d4ad3c4734",
+    "sdk_commit": "c94f5ebdcb3c9d1a460ca48e04f9758448f8d518",
+    "sdk_repositories": {
+      ".": "c94f5ebdcb3c9d1a460ca48e04f9758448f8d518",
+      "thirdparty/FFmpeg": "0604b464c7cb4ebc94940cf1f324a3b26b87717c",
+      "thirdparty/catch2": "88abf9bf325c798c33f54f6b9220ef885b267f4f",
+      "thirdparty/cli11": "bfffd37e1f804ca4fae1caae106935791696b6a9",
+      "thirdparty/fmt": "407c905e45ad75fc29bf0f9bb7c5c2fd3475976f",
+      "thirdparty/glslang": "f4f1d8a352ca1908943aea2ad8c54b39b4879080",
+      "thirdparty/imgui": "6d910d5487d11ca567b61c7824b0c78c569d62f0",
+      "thirdparty/inja": "7d1b4600b68595085a949743331c2e5673f511ea",
+      "thirdparty/libmspack": "305907723a4e7ab2018e58040059ffb5e77db837",
+      "thirdparty/moltenvk": "db445ff2042d9ce348c439ad8451112f354b8d2a",
+      "thirdparty/o1heap": "388a73fd9007300e5130c5fe352d9ce3288b6dde",
+      "thirdparty/sdl3": "8bf3b7215ad9fc3deb583c6a3a37c6c67f2e24e4",
+      "thirdparty/simde": "71fd833d9666141edcd1d3c109a80e228303d8d7",
+      "thirdparty/simde/test/munit": "da8f73412998e4f1adf1100dc187533a51af77fd",
+      "thirdparty/spdlog": "79524ddd08a4ec981b7fea76afd08ee05f83755d",
+      "thirdparty/spirv-headers": "29981f65241605e08b0ede4cfeb999fe3b723c6a",
+      "thirdparty/spirv-tools": "9a49b0883b9b635689a85b5647dbfcb223268151",
+      "thirdparty/tomlplusplus": "30172438cee64926dc41fdd9c11fb3ba5b2ba9de",
+      "thirdparty/tracy": "05cceee0df3b8d7c6fa87e9638af311dbabc63cb",
+      "thirdparty/utfcpp": "63d64de49fd6b829f7c8694df5ab2ee625cb7134",
+      "thirdparty/vulkan-headers": "e3b1eec08173d6b825cd3ac88c885a63b621504a",
+      "thirdparty/vulkan-loader": "5f157b62e333c63260d05d81bf66faa216ab0fb8",
+      "thirdparty/vulkan-memory-allocator": "1d8f600fd424278486eade7ed3e877c99f0846b1",
+      "thirdparty/xxHash": "e626a72bc2321cd320e953a0ccf1584cad60f363"
+    },
+    "compiler": "Clang 19.1.1",
+    "standard_library_headers": "GCC 13",
+    "language": "C++23",
+    "cpu": "x86-64-v2",
+    "userspace": "Ubuntu 24.04 amd64",
+    "apt_snapshot": "20261108T000000Z",
+    "build_image_sha256": "62812e3a3d76ffe1a3a8680c67de52fb50c4bf6ab05ab97e96cf3190aff732fc",
+    "requires": {
+      "glibc": "2.38",
+      "glibcxx": "3.4.32"
+    },
+    "sdk_replay_digest": "b686fe76ffb86ccefa431bf5d7998c115a9297422eb078f55f51abbc2a75086e",
+    "generated_code_sha256": "0c2d0fbc0231a18dd54f7538f8d18fdea5f14fb34ce2e76f8f6a4b478fa98cb3",
+    "sdk_replay_manifest_sha256": "8d7e1622399986e47e6ada8e03b408a8585c8abdfa20f9e6d0f1960dd7deac33",
+    "baseline_toolkit_sha256": "bd420fec2afab5501fe2f21da3aa10dd41eb147d29363360f727de9df014d373"
+  },
+  "original_payload_core": {
+    "schema": 1,
+    "product": "Rayman 3 HD Recompiled",
+    "version": "1.1.0-linux-experimental",
+    "publishable": false,
+    "platform": "linux-x86_64",
+    "requires": {
+      "release": "x360-xbla-5841123F-v1",
+      "executable_sha256": "77a4df54340aebcc79eb0f0053938c03b8efd2efdd3ffee26c00fdfef3c6e8ca",
+      "manifest_sha256": "dc2d5b87cb3339c4ba5a9f57a0732632f2c7e4f4bf0ae850a5b8f6fe6fefbe4f",
+      "linux": "x86-64, glibc, Vulkan",
+      "glibc": "2.38",
+      "glibcxx": "3.4.32",
+      "python": "python3 3.10+ (system)"
+    },
+    "note": "PRIVATE Linux Experimental payload of a prototype (translated game code, key-bearing runtime). No game data: preparation reads it from the owner's package."
+  },
+  "original_portable_core": {
+    "schema": 1,
+    "data_model": "beside-application",
+    "publishable": false,
+    "development_id": "noble-2b01",
+    "application_version": "1.1.0-linux-experimental",
+    "platform": "linux-x86_64",
+    "prerequisites": {
+      "linux": "x86-64 with Vulkan 1.2+ drivers",
+      "python": "python3 3.10+"
+    },
+    "lgpl": {
+      "replaceable": [
+        "bin/libffmpeg.so",
+        "bin/libmspack.so"
+      ],
+      "corresponding_source": {
+        "archive": "r3hd-lgpl-source-1.1.0-linux-x86_64.zip",
+        "sha256": "ea19e8302f80c75dfcec3ed1649e842c8eb5c74e7f4f4fdb8eea8930a4377f92",
+        "files": 7722,
+        "commits": {
+          "ffmpeg": "0604b464c7cb4ebc94940cf1f324a3b26b87717c",
+          "libmspack": "305907723a4e7ab2018e58040059ffb5e77db837"
+        }
+      }
+    }
+  }
+}

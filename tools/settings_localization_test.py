@@ -147,7 +147,7 @@ def main():
                                       d.get('focus') == catalog['Correctio&ns'][language]
                                       and d.get('setting.lit_uv_scroll') == 'applied enabled=0', d)
                                 check(language + ' ' + tag + ': concise correction copy has no development qualifier',
-                                      catalog['Correct Robo-Pirate statue textures'][language] in visible
+                                      catalog['Correct Texture Orientation'][language] in visible
                                       and not any(s in visible for s in ('provisional', 'deneme aşamasında', 'Part of HD+', 'HD+ kapsamında')), visible)
                             check(language + ' ' + tag + ': mod state tokens stay language-neutral',
                                   d.get('mod_state.active') == catalog['Active'][language]

@@ -70,8 +70,8 @@ inline void Late(uint64_t late_ticks, uint64_t tick_frequency) {
               s[kWindow * 95 / 100], s[kWindow * 99 / 100], s.back(), Precise() ? SpinUs() : 0);
 }
 
-// One call per iteration of the worker loop, in place of its 1 ms sleep. Returns at the deadline, or earlier
-// after at most about 4 ms so the caller's exit flag and interval setting stay live.
+// One call per iteration of the worker loop, in place of its 1 ms sleep. Returns at the deadline, or earlier after at most about 4 ms so the caller's exit flag and interval setting stay live.
+template <typename QueryTicks> inline void WaitForDeadlinePosix(uint64_t, uint64_t, QueryTicks&&);
 template <typename QueryTicks>
 inline void WaitForDeadline(uint64_t deadline_ticks, uint64_t tick_frequency, QueryTicks&& query) {
 #if defined(_WIN32)
@@ -106,9 +106,9 @@ inline void WaitForDeadline(uint64_t deadline_ticks, uint64_t tick_frequency, Qu
     now = query();
   }
 #else
-  (void)deadline_ticks;
-  (void)tick_frequency;
-  (void)query;
+  WaitForDeadlinePosix(deadline_ticks, tick_frequency, query);
+  // POSIX: defined at the end of this header (LM-1).
+
 #endif
 }
 
@@ -147,3 +147,42 @@ inline bool RegisterWait(uint32_t wait, bool is_memory, uint32_t poll_address) {
   return false;
 }
 }  // namespace m16vb
+
+#if !defined(_WIN32)
+// LM-1 (Linux build bring-up): the POSIX deadline wait, with the Windows contract above. Sleep on
+// CLOCK_MONOTONIC until shortly before the deadline (at most about 4 ms per call, so the caller's exit flag and
+// interval stay live), then pause until the deadline, bounded by 3 ms of host time. It changes when the host
+// thread wakes, nothing else.
+#include <cerrno>
+#include <ctime>
+#include <sched.h>
+namespace m16vb {
+template <typename QueryTicks>
+inline void WaitForDeadlinePosix(uint64_t deadline_ticks, uint64_t tick_frequency, QueryTicks&& query) {
+  uint64_t now = query();
+  if (now >= deadline_ticks || !tick_frequency) return;
+  uint64_t remaining_us = (deadline_ticks - now) * 1000000ull / tick_frequency;
+  const uint64_t spin_us = SpinUs();
+  if (remaining_us > spin_us) {
+    const uint64_t sleep_us = std::min<uint64_t>(remaining_us - spin_us, 4000);
+    timespec ts{time_t(sleep_us / 1000000ull), long((sleep_us % 1000000ull) * 1000ull)};
+    while (clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, &ts) == EINTR) {
+    }
+    if (remaining_us - spin_us > 4000) return;  // not the last leg before the deadline
+    now = query();
+  }
+  timespec t0{}, t{};
+  clock_gettime(CLOCK_MONOTONIC, &t0);
+  while (now < deadline_ticks) {
+#if defined(__x86_64__) || defined(__i386__)
+    __builtin_ia32_pause();
+#else
+    sched_yield();
+#endif
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    if ((t.tv_sec - t0.tv_sec) * 1000000000ll + (t.tv_nsec - t0.tv_nsec) > 3000000ll) break;
+    now = query();
+  }
+}
+}  // namespace m16vb
+#endif

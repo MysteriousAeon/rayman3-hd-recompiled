@@ -11,6 +11,7 @@ TaskDesktop=Create a &desktop shortcut (Play)
 TaskSettings=Create a desktop shortcut for &Settings (display, graphics, keyboard)
 PlayComment=Play with your saved settings
 SettingsComment=Display, graphics, keyboard and game profile
+LevelEditorComment=Edit the start floor of level intro_20 and export it as a mod
 RunPlay=Launch Rayman 3 HD Recompiled
 RunSettings=Open Settings
 

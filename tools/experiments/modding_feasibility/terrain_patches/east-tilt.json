@@ -1,0 +1,13 @@
+{
+ "format": "terrain-patch-v1",
+ "level": "intro_15",
+ "lvl_sha256": "474596d68f86de3eba7f3cb19d1595abdc62b37252e2d6d13c6c83483416f4e2",
+ "region": "spawn-ground-v1",
+ "name": "east-tilt",
+ "description": "G6-P17: the spawn ground tilted down towards the east: east edge 0.30, centre 0.175, west edge 0.05.",
+ "groups": [
+  {"name": "west", "vertices": [394, 393, 388], "delta_z": -0.05},
+  {"name": "east", "vertices": [391, 392, 387], "delta_z": -0.30},
+  {"name": "centre", "vertices": [365], "delta_z": -0.175}
+ ]
+}

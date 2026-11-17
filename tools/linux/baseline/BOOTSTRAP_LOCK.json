@@ -1,0 +1,22 @@
+{
+  "format": "R3HD_UBUNTU_CA_BOOTSTRAP_V1",
+  "snapshot": "20261108T000000Z",
+  "base_layer_sha256": "7a48b8f0e5c73d0cc2a85b008978396aa19d253dc1b96fdb0b769ee6dcbeca4a",
+  "archive_keyring_sha256": "80a36b0a6de2f69f49d2df75ef473ccde121e9e190b9ea01d20a4f63778d5c31",
+  "archive_signer": "F6ECB3762474EDA9D21B7022871920D1991BC93C",
+  "ca_package": "ca-certificates",
+  "ca_version": "20260816ubuntu0.24.04.2",
+  "ca_filename": "pool/main/c/ca-certificates/ca-certificates_20260816ubuntu0.24.04.2_all.deb",
+  "ca_sha256": "f9fbacd417b515450b831032cc39d18059e9874e67525679a43c16071dabf9a0",
+  "inrelease_sha256": "4fc50c210fe25d45aeb6d6a3e0d0c03f506dde317af2999761547e47a9b2df8d",
+  "index_path": "main/binary-amd64/Packages.gz",
+  "index_bytes": 1761749,
+  "index_sha256": "5be105a4c1cde9a3fefc639f9c26ac40a53165690c98dcd2730f6409db2525ec",
+  "bundle_sha256": "64e7c24b0536b525fb19b145768bd5e6e12ced0df3db837c34553ea789acd143",
+  "certificate_count": 120,
+  "release_hashes": {
+    "noble": "cdb2f31d809f589719a53c6ad15f255b27569c4059542ada282aaa21b8e164b0",
+    "noble-updates": "4fc50c210fe25d45aeb6d6a3e0d0c03f506dde317af2999761547e47a9b2df8d",
+    "noble-security": "ccdb2434d2725a726fead9e11c1ab0f2ad99c1e72881a68244afab698156d6cc"
+  }
+}

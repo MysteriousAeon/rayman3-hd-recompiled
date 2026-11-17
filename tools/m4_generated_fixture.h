@@ -67,5 +67,6 @@ static int GeneratedTests() {
   mode = 1; ctx = Fresh(); GCHECK(Invoke(sub_826D5BB0, ctx) == 0xC0000017);
   GCHECK(cleanup == 2); GCHECK(cleanup_r12 == 0x10000); GCHECK(cleanup_r31 == 0x10000 - 96);
   std::printf("actual emitter execution: %d checks, %d failures: %s\n", checks, failures, failures ? "FAIL" : "PASS");
+  std::fflush(stdout);  // Preserve the result when this synthetic fixture is run through a pipe.
   return failures ? 1 : 0;
 }

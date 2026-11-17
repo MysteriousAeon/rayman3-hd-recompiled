@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "note": "M29 (D-066): definition of the PRIVATE installer payload that tools/r3hd_stage.py builds. The payload is a prebuilt application for the user-supplied-data model (D-065): the runtime binaries of the current verified build (r3hd.exe, rexruntime.dll, rexgpu-xenos.dll and, since M46, the LGPL DLLs ffmpeg.dll / mspack.dll), the installer engine and launcher, the configs they read, and a private Python runtime; never game data, saves, captures, debug symbols or test executables. It contains translated game code and a runtime with the public XEX keys compiled in: it is NOT publishable until the gates of D-065 / D-066 are met. Text files are copied with LF line endings so the payload does not depend on the checkout's core.autocrlf.",
+  "note": "M29 (D-066): definition of the PRIVATE installer payload that tools/r3hd_stage.py builds. The payload is a prebuilt application for the user-supplied-data model (D-065): the runtime binaries of the current verified build (r3hd.exe, rexruntime.dll, rexgpu-xenos.dll and, since M46, the LGPL DLLs ffmpeg.dll / mspack.dll), the installer engine and launcher, the configs they read, and a private Python runtime; D-203 includes the nine visually accepted native PS3 glyph PNGs plus an own manifest as exact binary resources; the unchanged payload audit and R-01 gates still apply; never full game data, saves, captures, debug symbols or test executables. It contains translated game code and a runtime with the public XEX keys compiled in: it is NOT publishable until the gates of D-065 / D-066 are met. Text files are copied with LF line endings so the payload does not depend on the checkout's core.autocrlf. G6-P31 (D-287): the constrained intro_20 level editor (app/tools/r3hd_level_editor*.py) and the Tk runtime of the same pinned CPython build (config/release/python_tk.json) are part of the payload. G6-P39 (D-295): the 3D Level Remix Editor (app/tools/r3hd_scene_view.py, r3hd_scene_gl.py, r3hd_level_scene.py) and its narrow OpenGL bridge app/python/_r3hd_scene_gl.pyd (\"scene_gl\": this project's own extension, built reproducibly from tools/scene_gl and pinned by hash) are part of the payload; the runtime still has no ctypes / _ctypes / libffi.",
   "product": "Rayman 3 HD Recompiled",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "publishable": false,
   "binaries": {
     "build_dir": "private/work/rex/out/build/win-amd64-release",
@@ -21,12 +21,20 @@
     "file": "r3hd_launcher.exe",
     "dest": "app/r3hd_launcher.exe"
   },
+  "scene_gl": {
+    "note": "G6-P39 (D-295): the 3D editor's narrow OpenGL bridge, built by tools\\scene_gl\\build_scene_gl.bat from tools/scene_gl/r3hd_scene_gl.cpp alone against the pinned CPython 3.11.4 (python311.dll import; static C runtime, no PDB, /Brepro, Control Flow Guard). Its interface has no pointer, DLL name, function name or callback; every buffer is checked and copied. Staged only when it equals sha256.",
+    "build_dir": "private/work/scene_gl",
+    "file": "_r3hd_scene_gl.pyd",
+    "dest": "app/python/_r3hd_scene_gl.pyd",
+    "sha256": "dd32b9a14ef13bdde5996194d24fa8285e8f6ea5b4043401f5e133f1db385226"
+  },
   "app_files": {
     "app/tools/r3hd_installer.py": "tools/r3hd_installer.py",
     "app/tools/r3hd_intake.py": "tools/r3hd_intake.py",
     "app/tools/stfs_extract.py": "tools/stfs_extract.py",
     "app/tools/r3hd_settings.py": "tools/r3hd_settings.py",
     "app/tools/r3hd_mods.py": "tools/r3hd_mods.py",
+    "app/tools/r3hd_button_prompts.py": "tools/r3hd_button_prompts.py",
     "app/tools/r3hd_bundled_mods.py": "tools/r3hd_bundled_mods.py",
     "app/tools/r3hd_modkit.py": "tools/r3hd_modkit.py",
     "app/tools/r3hd_pcmod.py": "tools/r3hd_pcmod.py",
@@ -50,7 +58,12 @@
     "app/licenses/LGPL-SOURCE.txt": "tools/installer/LGPL-SOURCE.txt",
     "app/licenses/Rayman3HDRecompiled-LICENSE.txt": "LICENSE",
     "app/tools/r3hd_ui_locale.py": "tools/r3hd_ui_locale.py",
-    "app/config/settings/ui_strings.json": "config/settings/ui_strings.json"
+    "app/config/settings/ui_strings.json": "config/settings/ui_strings.json",
+    "app/tools/r3hd_level_editor.py": "tools/r3hd_level_editor.py",
+    "app/tools/r3hd_level_editor_core.py": "tools/r3hd_level_editor_core.py",
+    "app/tools/r3hd_level_scene.py": "tools/r3hd_level_scene.py",
+    "app/tools/r3hd_scene_gl.py": "tools/r3hd_scene_gl.py",
+    "app/tools/r3hd_scene_view.py": "tools/r3hd_scene_view.py"
   },
   "licenses": {
     "from": "the pinned SDK checkout (external/rexglue-sdk at config/build/toolchain.json)",
@@ -83,11 +96,10 @@
       "python3.dll": "520169aa6cf49d7ee724d1178de1be0e809e4bdcf671e06f3d422a0dd5fd294a",
       "LICENSE.txt": "616fa565945eca2f0e0a5440b3973fed7d5291622b90849212077fe68e27dcb0"
     },
-    "stdlib_zip_sha256": "689a3c14169585896635c0223e15487fdd0e2b8e952c45e524ce257102a83545",
+    "stdlib_zip_sha256": "769d3c14ba39c042eef8e54bb4c86e2aaa5e2c5e73c33080b5914a40f6b495e4",
     "stdlib_exclude": [
       "test",
       "idlelib",
-      "tkinter",
       "turtledemo",
       "turtle.py",
       "ensurepip",
@@ -123,6 +135,11 @@
       "antigravity.py",
       "webbrowser.py"
     ],
-    "no_extension_modules": "no .pyd is shipped: the runtime has no _socket / _ssl / _ctypes, so the installer engine cannot open a network connection"
+    "no_extension_modules": "the extension modules are _tkinter.pyd (G6-P31, D-287: the level editor's Tk, pinned in config/release/python_tk.json) and _r3hd_scene_gl.pyd (G6-P39, D-295: the 3D editor's narrow OpenGL bridge, pinned in scene_gl; no general native-call interface); the runtime still has no _socket / _ssl / _ctypes / libffi, so neither the installer engine nor the editors can open a network connection or call an arbitrary DLL",
+    "tk": "config/release/python_tk.json"
+  },
+  "controller_prompts": {
+    "record": "config/release/controller_prompts.json",
+    "source_manifest": "private/work/ps3_complete_glyphs_20261111_a/verified_source/glyphs.json"
   }
 }

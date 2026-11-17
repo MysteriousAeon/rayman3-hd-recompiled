@@ -8,7 +8,7 @@ identity against the local target data, and the audit tool's self-test.
                                                    served every listed page it read; any other run must not
 
 The block mirror itself is tested by m26_texture_orient_test.exe (in the build); here an independent Python
-implementation recomputes the table's hashes from `private/extracted/.../fact_55_2.btf` when that file exists
+implementation recomputes each bundle table's hashes from the local private target files when available
 (checks that need it are counted as skipped otherwise, never as passed). The build script also runs the test
 executable against that file (whole-file read through the overlay); this script starts no executable.
 """
@@ -76,9 +76,11 @@ def judge_run(name: str) -> None:
     if name.endswith("_corrected"):
         check(mode and set(mode) == {"corrected"}, f"{name}: correction selected (got {sorted(set(mode))})")
         check(all(s == "corrected" for _, _, s in states), f"{name}: no page refused ({states})")
-        if "fact_55_2.btf" in log.lower() or states:
-            check(sorted(p for _, p, _ in states) == sorted(PAGES), f"{name}: the four pages prepared once each")
-            check(sorted(p for _, p, _ in served) == sorted(PAGES) and all(int(n) == 0x60000 for _, _, n in served),
+        expected = sorted((file, page[0]) for file, (_, pages) in BUNDLES.items()
+                          if file in log.lower() for page in pages)
+        if expected or states:
+            check(sorted((f, p) for f, p, _ in states) == expected, f"{name}: each read bundle's pages prepared once")
+            check(sorted((f, p) for f, p, _ in served) == expected and all(int(n) == 0x60000 for _, _, n in served),
                   f"{name}: every page's line says exactly its 393,216 bytes ({served})")
             # (the counter adds replaced bytes, so a re-read counts twice: exactly one page's size at the first
             # crossing is what one complete delivery gives; the byte-exact proof is the test executable's)
@@ -95,12 +97,14 @@ bat = read(TOOLS / "build_milestone8.bat")
 play = read(TOOLS / "play.ps1")
 hidden = read(TOOLS / "run_milestone6.ps1")
 
-rows = re.findall(r'\{"(fac_sbire0\d\.dds)", \{(0x[0-9A-F]+), (0x[0-9A-F]+)\}, \{(0x[0-9A-F]+), (0x[0-9A-F]+)\},\s*'
-                  r'\{(0x[0-9A-F]+)ull, (0x[0-9A-F]+)ull\}, \{(0x[0-9A-F]+)ull, (0x[0-9A-F]+)ull\}\}', header)
-PAGES = [r[0] for r in rows]
+page_pattern = (r'\{"([a-z0-9_]+\.dds)", \{(0x[0-9A-F]+), (0x[0-9A-F]+)\}, \{(0x[0-9A-F]+), (0x[0-9A-F]+)\},\s*'
+                r'\{(0x[0-9A-F]+)ull, (0x[0-9A-F]+)ull\}, \{(0x[0-9A-F]+)ull, (0x[0-9A-F]+)ull\}\}')
+tables = {name: re.findall(page_pattern, body) for name, body in
+          re.findall(r'constexpr Page (\w+)\[\] = \{(.*?)\n\};', header, re.S)}
+BUNDLES = {file: (int(size), tables[table]) for file, size, table in
+           re.findall(r'\{"([a-z0-9_]+\.btf)", (\d+), (\w+), sizeof\(', header)}
 levels = [tuple(int(v, 0) for v in m) for m in re.findall(
     r"\{(\d), (0x[0-9A-F]+), (\d+), (\d+), (\d+), (\d+)\}", header[header.index("kPage512Dxt5[]"):header.index("kPage512Dxt5Levels")])]
-bundle = re.search(r'\{"(fact_55_2\.btf)", (\d+), kFact55Pages,', header)
 
 if "--run" in sys.argv:
     for run_name in sys.argv[sys.argv.index("--run") + 1:]:
@@ -111,7 +115,10 @@ check(read(SDK / "include/rex/m26_texture_orient.h") == header, "m26_texture_ori
 # Off by default, one variable, one value; fail-closed identity; nothing written anywhere.
 check('Selected(std::getenv("R3HD_TEXTURE_ORIENT"))' in header and header.count("getenv") == 1, "header: one variable")
 check('std::strcmp(value, "corrected") == 0' in header, "header: only 'corrected' selects the correction")
-check(len(rows) == 4 and bundle and len(levels) == 10, "header: one bundle, four pages, ten mip levels parsed")
+check({file: {r[0] for r in rows} for file, (_, rows) in BUNDLES.items()} == {
+    'fact_55_2.btf': {f'fac_sbire0{i}.dds' for i in range(1, 5)}, 'swamp_50_2.btf': {'ugly_body.dds'}}
+      and all(len(rows) == len({r[0] for r in rows}) for _, rows in BUNDLES.values())
+      and len(levels) == 10, "header: exactly four statue pages, one Ugly page, ten mip levels parsed")
 check("file_size(host_path, ec) != bundle.size" in header and "!= page.stored[b]) return PageState::kRefusedStored" in header
       and "!= page.corrected[b]) return PageState::kRefusedResult" in header,
       "header: file size, stored hash and result hash must all match or the read is returned as it is")
@@ -152,6 +159,7 @@ check(bat.index("m20_runtime_patch.py") < bat.index("m26_runtime_patch.py"), "af
 check(bat.index("m23_prepare.py") < bat.index("m26_prepare.py") < bat.index("rexglue.exe"), "prepare order")
 check("m26_texture_orient_test.exe || exit /b 1" in bat and "--target m26_texture_orient_test " in bat, "build runs the mirror test")
 check("python tools\\m26_regression.py" in bat, "build runs this regression")
+check('GAMEDATAbin\\swamp_50\\swamp_50_2.btf' in bat, "build tests the real Ugly bundle")
 check("patch_once" in patch and "from_head" not in patch, "patch is additive (patch_once)")
 
 # The audit tool's own self-test (no game data).
@@ -159,11 +167,15 @@ done = subprocess.run([sys.executable, str(TOOLS / "m26_uv_audit.py"), "selftest
 check(done.returncode == 0 and "M26_UV_AUDIT_SELFTEST PASS" in done.stdout, "m26_uv_audit.py selftest")
 
 # Table identity against the local target data.
-btf, bhf = DATA / "fact_55" / "fact_55_2.btf", DATA / "fact_55" / "fact_55_2.bhf"
-if btf.is_file() and bhf.is_file() and rows and bundle:
-    check(btf.stat().st_size == int(bundle.group(2)), "target: bundle size as listed")
-    same_name = [p for p in DATA.rglob("*") if p.is_file() and p.name.lower() == "fact_55_2.btf"]
-    check(same_name == [btf], "target: no other file of the title has the listed name")
+for file, (size, rows) in BUNDLES.items():
+    btf = DATA / file.removesuffix('_2.btf') / file
+    bhf = btf.with_suffix('.bhf')
+    if not btf.is_file() or not bhf.is_file():
+        skipped += 2 + 4 * len(rows)
+        continue
+    check(btf.stat().st_size == size, f"target: {file} bundle size as listed")
+    same_name = [p for p in DATA.rglob('*') if p.is_file() and p.name.lower() == file]
+    check(same_name == [btf], f"target: no other title bundle has the name {file}")
     head = bhf.read_bytes()
     entries = {}
     for i in range(struct.unpack_from(">I", head, 0)[0]):
@@ -180,8 +192,6 @@ if btf.is_file() and bhf.is_file() and rows and bundle:
         check((fnv(blobs[0]), fnv(blobs[1])) == (c1, c2), f"target: {name} corrected hashes from the independent mirror")
         mirror_page(blobs, levels)
         check(bytes(blobs[0]) == data[o1:o1 + s1] and bytes(blobs[1]) == data[o2:o2 + s2], f"target: {name} mirror twice is the file")
-else:
-    skipped += 18
 
 print(f"M26_REGRESSION {'PASS' if not failures else 'FAIL'} checks={checks} failures={failures} skipped={skipped}")
 sys.exit(1 if failures else 0)

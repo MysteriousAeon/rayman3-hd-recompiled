@@ -19,11 +19,21 @@
 // trigger and sticks a stick (the runtime exchanges them whole). When a page is taller than the screen, only the page
 // scrolls: the header and the Save / Play / Close row stay in view; the window's height can be changed.
 //
+// G6-P31 (D-287): the constrained intro_20 level editor (app\tools\r3hd_level_editor.py) is started by this program
+// only: the Mods page's "Level editor..." button, the Start menu entry and the portable "Level Editor.cmd" all run
+// r3hd_launcher.exe --level-editor, which starts app\python\pythonw.exe -B app\tools\r3hd_level_editor.py --home HOME
+// (no console) and exits; the editor is a separate window of its own. G6-P39 (D-295): the Mods page's "3D Level Remix
+// Editor..." button and --level-editor-3d start app\tools\r3hd_scene_view.py the same way; the existing shortcuts keep
+// the classic editor, shown on the Mods page as "Classic / Advanced Editor...".
+//
 // usage:  r3hd_launcher.exe                 the Settings window
 //         r3hd_launcher.exe --play          start the game with the saved settings, without a window
+//         r3hd_launcher.exe --level-editor  start the level editor
+//         r3hd_launcher.exe --level-editor-3d  start the 3D Level Remix Editor (G6-P39)
 // test only (tools/m30_launcher_regression.py; synthetic homes):
 //         --home H --python P --tools T [--releases F]   paths instead of the installation's own
 //         --play --dry-run --no-ui          play.ps1 -DryRun; the result on stdout, never a message box
+//         --level-editor --dry-run --no-ui  check the editor's files and print its command line; nothing starts
 //         --ui-test SCRIPT --out DIR        the Settings window on a private desktop that no one sees (never the
 //                                           user's desktop); Play is a dry run there, Open folder does nothing
 #define WIN32_LEAN_AND_MEAN
@@ -186,6 +196,41 @@ bool RunCapture(const std::wstring& exe, const std::vector<std::wstring>& args, 
   return true;
 }
 
+// G6-P31 (D-287): the level editor, a separate pythonw.exe process (no console) on this installation's home. A dry run
+// checks that the files exist and returns the command line without starting anything. G6-P39 (D-295): threeD starts
+// the 3D Level Remix Editor (app\tools\r3hd_scene_view.py) instead, which also needs its scene modules and the narrow
+// OpenGL bridge beside the bundled Python (app\python\_r3hd_scene_gl.pyd); the same home lock and the same project
+// and mod formats as the classic editor.
+bool StartLevelEditor(const Paths& p, bool dryRun, std::wstring& detail, bool threeD = false) {
+  std::wstring pyw = Parent(p.python) + L"\\pythonw.exe";
+  std::wstring script = p.tools + (threeD ? L"\\r3hd_scene_view.py" : L"\\r3hd_level_editor.py");
+  std::vector<std::wstring> need{pyw, script, p.tools + L"\\r3hd_level_editor.py",
+                                 p.tools + L"\\r3hd_level_editor_core.py", p.tools + L"\\r3hd_mods.py"};
+  if (threeD)
+    for (const wchar_t* f : {L"\\r3hd_scene_gl.py", L"\\r3hd_level_scene.py"}) need.push_back(p.tools + f);
+  if (threeD) need.push_back(Parent(p.python) + L"\\_r3hd_scene_gl.pyd");
+  for (const std::wstring& f : need) {
+    DWORD at = GetFileAttributesW(f.c_str());
+    if (at == INVALID_FILE_ATTRIBUTES || (at & FILE_ATTRIBUTE_DIRECTORY)) {
+      detail = L"missing " + f;
+      return false;
+    }
+  }
+  std::wstring cmd = Join({pyw}) + L" " + Join({L"-B", script, L"--home", p.home});
+  detail = cmd;
+  if (dryRun) return true;
+  STARTUPINFOW si{sizeof si};
+  PROCESS_INFORMATION pi{};
+  if (!CreateProcessW(pyw.c_str(), &cmd[0], nullptr, nullptr, FALSE, 0, nullptr, p.home.c_str(), &si, &pi)) {
+    detail = L"could not start " + pyw + L" (error " + std::to_wstring(GetLastError()) + L")";
+    return false;
+  }
+  AllowSetForegroundWindow(pi.dwProcessId);
+  CloseHandle(pi.hThread);
+  CloseHandle(pi.hProcess);
+  return true;
+}
+
 std::vector<std::wstring> EngineArgs(const Paths& p, const std::wstring& cmd) {
   std::vector<std::wstring> a{L"-B", p.tools + L"\\r3hd_installer.py", cmd, L"--home", p.home};
   if (!p.releases.empty()) { a.push_back(L"--releases"); a.push_back(p.releases); }
@@ -233,6 +278,8 @@ struct Setting {
   std::wstring requiresKey, requiresValue;  // M31: shown disabled unless that setting has that value
   std::vector<Value> values;
   bool slider = false;  // D-108: model SLIDER row: a trackbar over the values (min ... max), its value beside it
+  bool profileRadios = false;
+  bool Prompts() const { return profileRadios; }
   bool Toggle() const { return !slider && values.size() == 2 && (scope == L"preset" || group == L"corrections" ||
       (values[0].value == L"off" && values[1].value == L"on")); }
   const std::wstring& Column(const std::wstring& preset) const { return preset == L"hdplus" ? hdplus : vanilla; }
@@ -330,6 +377,8 @@ bool LoadModel(const Paths& p, Model& m, std::wstring& error) {
     } else if (k == L"REQUIRES") {
       for (auto& s : m.settings)
         if (s.key == at(1)) { s.requiresKey = at(2); s.requiresValue = at(3); }
+    } else if (k == L"PROFILE_RADIOS") {
+      for (auto& s : m.settings) if (s.key == at(1)) s.profileRadios = true;
     } else if (k == L"SLIDER") {
       for (auto& s : m.settings)
         if (s.key == at(1)) s.slider = true;
@@ -429,6 +478,7 @@ std::wstring ModError(const std::wstring& code) {
 struct ModRow {
   std::wstring id, state, name, version, code, detail, description;
   bool enabled = false;
+  bool gameplay = false;  // D-224: the mod tool reports that it changes game logic (script constants)
   int ranges = 0, shadowed = 0;
 };
 
@@ -465,6 +515,7 @@ bool RunMods(const Paths& p, const std::vector<std::wstring>& args, std::vector<
       ModRow r;
       r.id = at(1); r.enabled = at(2) == L"1"; r.state = at(3); r.name = at(4); r.version = at(5); r.code = at(6);
       r.detail = at(7); r.description = at(8); r.ranges = _wtoi(at(9).c_str()); r.shadowed = _wtoi(at(10).c_str());
+      r.gameplay = at(11) == L"1";  // D-224; an older tool has no column 11
       rows->push_back(r);
     }
   }
@@ -578,8 +629,8 @@ Launch StartGame(const Paths& p, bool dryRun, std::wstring& detail, void (*idle)
 
 enum : int { kIdSave = 10, kIdPlay = 11, kIdFolder = 12, kIdControls = 13, kIdPageSettings = 14, kIdAdvanced = 15,
               kIdLayout = 16, kIdRestoreKeys = 17, kIdLanguage = 18, kIdMods = 19, kIdModList = 20, kIdModZip = 21,
-              kIdModFolder = 22, kIdModToggle = 23, kIdModUp = 24, kIdModDown = 25, kIdModRemove = 26,
-              kIdRestorePad = 27, kIdKeyTab = 28, kIdPadTab = 29, kIdCorrections = 30, kIdRadio = 100, kIdSetting = 200, kIdKey = 400,
+              kIdModFolder = 22, kIdLevelEditor = 90, kIdLevelEditor3D = 91, kIdModToggle = 23, kIdModUp = 24, kIdModDown = 25, kIdModRemove = 26,
+              kIdRestorePad = 27, kIdKeyTab = 28, kIdPadTab = 29, kIdCorrections = 30, kIdPrompt = 31, kIdRadio = 100, kIdSetting = 200, kIdKey = 400,
               kIdPad = 600 };
 enum : UINT_PTR { kTimerPadPoll = 1, kTimerPadStatus = 2 };  // D-116
 enum class Page { Settings, Controls, Advanced, Mods, Corrections };  // D-161: Corrections, its own page
@@ -628,7 +679,7 @@ struct Ui {
   std::vector<HWND> settingsPage, controlsPage, advancedPage, modsPage, correctionsPage;
   // M33 (D-070): the Mods page (rows of r3hd_mods.py list, read when the page is first shown).
   HWND modsButton = nullptr, modsTitle = nullptr, modsText = nullptr, modList = nullptr, modDetail = nullptr,
-       modZip = nullptr, modFolder = nullptr, modToggle = nullptr, modUp = nullptr, modDown = nullptr, modRemove = nullptr,
+       modZip = nullptr, modFolder = nullptr, levelEditor = nullptr, levelEditor3D = nullptr, modToggle = nullptr, modUp = nullptr, modDown = nullptr, modRemove = nullptr,
        modsNote = nullptr;
   std::vector<ModRow> mods;
   bool modsLoaded = false;
@@ -670,6 +721,7 @@ struct Ui {
 };
 
 Ui g;
+std::vector<HWND> promptRadios;  // registry-ordered choices; first is the setting control
 
 int S(int v) { return MulDiv(v, g.dpi, 96); }
 
@@ -759,6 +811,20 @@ void BuildControls() {
   g.settingsPage.push_back(g.groupTitle[L"profile"]);
   for (int i = 0; i < 3; ++i) { g.settingsPage.push_back(g.radios[i]); g.settingsPage.push_back(g.radioText[i]); }
   g.settingsPage.push_back(g.profileHint);
+  // D-203: an independent artwork preference below Game profile in the left column.
+  promptRadios.clear();
+  for (auto& setting : g.model.settings) if (setting.Prompts()) {
+    setting.title = g.groupTitle[L"prompts"] = Make(L"STATIC", setting.label, SS_LEFT | SS_NOPREFIX);
+    setting.helpText = Text(setting.help, true);
+    for (size_t i = 0; i < setting.values.size(); ++i) {
+      HWND h = Make(L"BUTTON", setting.values[i].label,
+                    BS_AUTORADIOBUTTON | WS_TABSTOP | (i == 0 ? WS_GROUP : 0), kIdPrompt + (int)i);
+      promptRadios.push_back(h);
+    }
+    setting.control = promptRadios.front();
+    for (HWND h : {setting.title, setting.helpText}) g.settingsPage.push_back(h);
+    for (HWND h : promptRadios) g.settingsPage.push_back(h);
+  }
   bool firstInGroup = true;
   for (const auto& gr : g.model.groups)
     if (gr.first != L"corrections" && gr.first != L"advanced") {
@@ -770,6 +836,12 @@ void BuildControls() {
   auto groups = g.model.groups;
   std::stable_partition(groups.begin(), groups.end(), [](const auto& gr) { return gr.first == L"corrections"; });
   for (const auto& gr : groups) {
+    // D-220: a Settings-page group none of whose settings is drawn in it (Controller: its button prompts are drawn
+    // under the profile) gets no heading of its own, so no empty title takes room in the right column.
+    if (gr.first != L"corrections" && gr.first != L"advanced" &&
+        std::none_of(g.model.settings.begin(), g.model.settings.end(),
+                     [&](const Setting& s) { return s.Shown() == gr.first && !s.Prompts(); }))
+      continue;
     if (!g.groupTitle.count(gr.first)) g.groupTitle[gr.first] = Make(L"STATIC", gr.second, SS_LEFT | SS_NOPREFIX);
     // M32: the troubleshooting group lives on the Advanced page, out of the everyday settings.
     std::vector<HWND>& pageList = gr.first == L"advanced" ? g.advancedPage
@@ -781,7 +853,7 @@ void BuildControls() {
     }
     for (size_t i = 0; i < g.model.settings.size(); ++i) {
       Setting& s = g.model.settings[i];
-      if (s.Shown() != gr.first) continue;
+      if (s.Shown() != gr.first || s.Prompts()) continue;
       int id = kIdSetting + (int)i;
       if (s.slider) {
         s.title = Make(L"STATIC", SettingLabel(s), SS_LEFT | SS_NOPREFIX);  // before the bar: its accessible name
@@ -887,6 +959,10 @@ void BuildControls() {
   g.modDetail = Make(L"EDIT", L"", ES_MULTILINE | ES_READONLY | ES_AUTOVSCROLL | WS_VSCROLL | WS_BORDER | WS_TABSTOP);
   g.modZip = Make(L"BUTTON", T(L"&Install .zip..."), BS_PUSHBUTTON | WS_TABSTOP | WS_GROUP, kIdModZip);
   g.modFolder = Make(L"BUTTON", T(L"Install &folder..."), BS_PUSHBUTTON | WS_TABSTOP, kIdModFolder);
+  // G6-P31 (D-287): the constrained intro_20 level editor (its own window); its exported mods are installed here.
+  // G6-P39 (D-295): the 3D Level Remix Editor first; the 2D editor stays as the classic / advanced editor.
+  g.levelEditor3D = Make(L"BUTTON", T(L"&3D Level Remix Editor..."), BS_PUSHBUTTON | WS_TABSTOP, kIdLevelEditor3D);
+  g.levelEditor = Make(L"BUTTON", T(L"C&lassic / Advanced Editor..."), BS_PUSHBUTTON | WS_TABSTOP, kIdLevelEditor);
   g.modToggle = Make(L"BUTTON", T(L"&Enable"), BS_PUSHBUTTON | WS_TABSTOP, kIdModToggle);
   g.modUp = Make(L"BUTTON", T(L"&Up"), BS_PUSHBUTTON | WS_TABSTOP, kIdModUp);
   g.modDown = Make(L"BUTTON", T(L"&Down"), BS_PUSHBUTTON | WS_TABSTOP, kIdModDown);
@@ -894,8 +970,8 @@ void BuildControls() {
   g.modsNote = Text(T(L"Turkish and PT-BR translation mods need Game language set to English. Settings language only changes this app.") + L" " +
                     T(L"Changes apply the next time the game starts. A mod that does not fit this game version is not "
                     L"applied and the reason is shown here."), true);
-  g.modsPage = {g.modsTitle, g.modsText, g.modList, g.modDetail, g.modZip, g.modFolder, g.modToggle, g.modUp, g.modDown,
-                g.modRemove, g.modsNote};
+  g.modsPage = {g.modsTitle, g.modsText, g.modList, g.modDetail, g.modZip, g.modFolder, g.levelEditor3D, g.levelEditor, g.modToggle,
+                g.modUp, g.modDown, g.modRemove, g.modsNote};
   g.makeParent = nullptr;  // the button row
   g.rule2 = Make(L"STATIC", L"", SS_ETCHEDHORZ);
   g.status = Text(L"");
@@ -926,6 +1002,22 @@ int Measure(HWND h, HFONT font, int width) {
   SelectObject(dc, old);
   ReleaseDC(g.hwnd, dc);
   return r.bottom;
+}
+
+int ButtonColumnWidth(std::initializer_list<HWND> buttons, int minimum) {
+  HDC dc = GetDC(g.hwnd);
+  HGDIOBJ old = SelectObject(dc, g.body);
+  int width = minimum;
+  for (HWND button : buttons) {
+    wchar_t text[128] = {};
+    GetWindowTextW(button, text, (int)std::size(text));
+    RECT measured{};
+    DrawTextW(dc, text, -1, &measured, DT_CALCRECT | DT_SINGLELINE);
+    width = std::max<int>(width, measured.right + S(20));
+  }
+  SelectObject(dc, old);
+  ReleaseDC(g.hwnd, dc);
+  return width;
 }
 
 int LineHeight(HFONT font) {
@@ -1139,7 +1231,9 @@ int Layout() {
     int mt = Measure(g.modsText, g.body, full);
     put(g.modsText, margin, my, full, mt);
     my += mt + S(12);
-    const int bw2 = S(150), listW = full - bw2 - S(12), listH = S(190);
+    const int bw2 = ButtonColumnWidth({g.modZip, g.modFolder, g.levelEditor3D, g.levelEditor,
+                                       g.modToggle, g.modUp, g.modDown, g.modRemove}, S(150));
+    const int listW = full - bw2 - S(12), listH = S(190);
     put(g.modList, margin, my, listW, listH);
     {  // M43: a list line longer than the list scrolls sideways instead of being cut off (widths at this DPI)
       int widest = 0, n = (int)SendMessageW(g.modList, LB_GETCOUNT, 0, 0);
@@ -1156,11 +1250,13 @@ int Layout() {
       SendMessageW(g.modList, LB_SETHORIZONTALEXTENT, widest + S(8), 0);
     }
     int by = my;
-    for (HWND b : {g.modZip, g.modFolder}) { put(b, margin + listW + S(12), by, bw2, S(30)); by += S(36); }
+    // G6-P36 (D-292): the Level editor button (G6-P31) made this column the page's tallest part; all seven buttons
+    // now share one size and the details box shows five lines, so the page fits 1920 x 1032 at 144 DPI (M43, D-120).
+    for (HWND b : {g.modZip, g.modFolder, g.levelEditor3D, g.levelEditor}) { put(b, margin + listW + S(12), by, bw2, S(28)); by += S(32); }
     by += S(8);
     for (HWND b : {g.modToggle, g.modUp, g.modDown, g.modRemove}) { put(b, margin + listW + S(12), by, bw2, S(28)); by += S(32); }
     my += std::max(listH, by - my) + S(10);
-    const int dh = line * 6 + S(8);  // six lines; more scroll inside the box
+    const int dh = line * 5 + S(8);  // five lines; more scroll inside the box
     put(g.modDetail, margin, my, full, dh);
     my += dh + S(8);
     int nh2 = Measure(g.modsNote, g.body, full);
@@ -1187,7 +1283,7 @@ int Layout() {
         put(s.helpText, margin + S(22), cy, full - S(22), hh2);
         cy += hh2;
       }
-      cy += S(10);
+      cy += S(6);  // D-221: tighter, so the corrections still fit at 150 % on a 1080p screen (D-161)
     }
     bottom = cy;
   } else {
@@ -1205,10 +1301,19 @@ int Layout() {
     int ph = Measure(g.profileHint, g.body, col);
     put(g.profileHint, x, ly, col, ph);
     ly += ph;
+    for (auto& setting : g.model.settings) if (setting.Prompts()) {
+      ly += S(18);
+      int h = Measure(setting.title, g.bold, col);
+      put(setting.title, x, ly, col, h); ly += h + S(8);
+      h = Measure(setting.helpText, g.body, col);
+      put(setting.helpText, x, ly, col, h); ly += h + S(6);
+      for (HWND h : promptRadios) { put(h, x, ly, col, rowH); ly += rowH; }
+    }
     // The other groups fill the right column.
     int rx = margin + col + gap, ry = top;
     for (const auto& gr : g.model.groups) {
       if (gr.first == L"advanced" || gr.first == L"corrections") continue;  // M32, D-161: on their own pages
+      if (!g.groupTitle.count(gr.first)) continue;  // D-220: no row of its own on this page (see the controls)
       bool left = gr.first == L"corrections";
       int& cy = left ? ly : ry;
       int cx = left ? x : rx;
@@ -1219,7 +1324,7 @@ int Layout() {
       put(ht, cx, cy, col, gh);
       cy += gh + S(8);
       for (auto& s : g.model.settings) {
-        if (s.Shown() != gr.first) continue;
+        if (s.Shown() != gr.first || s.Prompts()) continue;
         if (s.Toggle()) {
           // D-156: a check box row is at least rowH - 8 (still taller than its text) and rows are 4 apart, so the five
           // corrections fit at 150 % on a 1080p screen with room to spare.
@@ -1261,21 +1366,9 @@ int Layout() {
   const int bw = S(100), bhgt = S(30), bgap = S(8);
   // D-161: five page buttons of one width, wide enough for the longest caption; when they do not fit beside the
   // action buttons, they take a line of their own above them.
-  const HWND pageButtons[] = {g.settingsButton, g.correctionsButton, g.controlsButton, g.advancedButton, g.modsButton};
-  int pbw = S(84);
-  {
-    HDC dc = GetDC(g.hwnd);
-    HGDIOBJ old = SelectObject(dc, g.body);
-    for (HWND b : pageButtons) {
-      wchar_t text[128] = {};
-      GetWindowTextW(b, text, 128);
-      RECT m{0, 0, 0, 0};
-      DrawTextW(dc, text, -1, &m, DT_CALCRECT | DT_SINGLELINE);
-      pbw = std::max<int>(pbw, m.right + S(20));
-    }
-    SelectObject(dc, old);
-    ReleaseDC(g.hwnd, dc);
-  }
+  const std::initializer_list<HWND> pageButtons = {g.settingsButton, g.correctionsButton, g.controlsButton,
+                                                   g.advancedButton, g.modsButton};
+  const int pbw = ButtonColumnWidth(pageButtons, S(84));
   const int barW = 5 * pbw + 4 * bgap, actionsX = width - margin - 3 * bw - 2 * bgap;
   const bool barLine = margin + barW + S(16) > actionsX;
   const int footH = S(8) + S(12) + sh + S(10) + (barLine ? bhgt + bgap : 0) + bhgt + S(16);
@@ -1288,7 +1381,11 @@ int Layout() {
   y += S(12);
   place(g.status, margin, y, width - 2 * margin, sh);
   y += sh + S(10);
-  for (int i = 0; i < 5; ++i) place(pageButtons[i], margin + i * (pbw + bgap), y, pbw, bhgt);
+  int pageX = margin;
+  for (HWND button : pageButtons) {
+    place(button, pageX, y, pbw, bhgt);
+    pageX += pbw + bgap;
+  }
   if (barLine) y += bhgt + bgap;
   place(g.closeButton, width - margin - bw, y, bw, bhgt);
   place(g.playButton, width - margin - 2 * bw - bgap, y, bw, bhgt);
@@ -1407,7 +1504,12 @@ void Show() {
   for (int i = 0; i < 3; ++i) SendMessageW(g.radios[i], BM_SETCHECK, i == g.profile ? BST_CHECKED : BST_UNCHECKED, 0);
   for (auto& s : g.model.settings) {
     const std::wstring& v = g.chosen[s.key];
-    if (s.slider) {
+    if (s.Prompts()) {
+      for (size_t i = 0; i < promptRadios.size(); ++i) {
+        SendMessageW(promptRadios[i], BM_SETCHECK, v == s.values[i].value ? BST_CHECKED : BST_UNCHECKED, 0);
+        EnableWindow(promptRadios[i], TRUE);
+      }
+    } else if (s.slider) {
       bool applies = s.requiresKey.empty() || g.chosen[s.requiresKey] == s.requiresValue;
       EnableWindow(s.control, (s.scope == L"preference" || g.profile == 2) && applies);
       EnableWindow(s.valueText, IsWindowEnabled(s.control));
@@ -2094,7 +2196,7 @@ bool Playable(std::wstring* why) {
 
 void UpdateBanner() {
   const Model& m = g.model;
-  SetText(g.versionText, F(L"Version {version}", {{L"version", m.version}}));
+  SetText(g.versionText, F(L"Version {version}", {{L"version", m.version}}) + L"  |  " + T(L"PC Settings") + L": F4");
   SetText(g.homeText, F(L"Installed in {folder}", {{L"folder", m.home}}));
   std::wstring why;
   bool ok = Playable(&why);
@@ -2246,6 +2348,13 @@ bool ConfirmClose() {
 
 // ------------------------------------------------------------------------------------------- Mods page --
 
+// D-224: a mod the tool reports as changing game logic is marked in the list and warned about in its details.
+std::wstring GameplayTag() { return T(L"  [changes game logic]"); }
+std::wstring GameplayWarning() {
+  return T(L"Warning: this mod changes game logic. While it is active the game awards no new achievements, and progress "
+           L"saved with it may depend on it. Back up your saves first.");
+}
+
 std::wstring ModState(const ModRow& m) {
   if (m.state == L"active")
     return m.shadowed ? T(L"Active (partly covered by a mod above it)") : T(L"Active");
@@ -2274,6 +2383,7 @@ void ShowModDetail() {
       for (wchar_t c : m.description) { if (c == L'\n') d += L"\r\n"; else if (c != L'\r') d += c; }
       t += L"\r\n" + d;
     }
+    if (m.gameplay) t += L"\r\n" + GameplayWarning();
   }
   SetText(g.modDetail, t);
   SendMessageW(g.modDetail, EM_SETSEL, 0, 0);
@@ -2296,7 +2406,8 @@ void ShowMods(const std::wstring& select) {
   for (size_t i = 0; i < g.mods.size(); ++i) {
     const ModRow& m = g.mods[i];
     std::wstring item = std::to_wstring(i + 1) + L".  " + (m.enabled ? T(L"[on]   ") : T(L"[off]  ")) + m.name + L"  " + m.version +
-                        L"  -  " + (m.state == L"active" ? T(L"active") : m.enabled ? T(L"not applied") : T(L"off"));
+                        L"  -  " + (m.state == L"active" ? T(L"active") : m.enabled ? T(L"not applied") : T(L"off")) +
+                        (m.gameplay ? GameplayTag() : std::wstring());
     SendMessageW(g.modList, LB_ADDSTRING, 0, (LPARAM)item.c_str());
     if (m.id == select) sel = (int)i;
   }
@@ -2384,6 +2495,22 @@ void OnModsCommand(int id, int code) {
       if (g.testMode) { Note(L"mods: the folder dialog is not opened in test mode"); break; }
       ImportMod(PickFolder());
       break;
+    case kIdLevelEditor: {  // G6-P31 (D-287); a dry run in test mode (no window is ever started there)
+      std::wstring detail;
+      bool ok = StartLevelEditor(g.paths, g.testMode, detail);
+      if (g.testMode) Note(std::wstring(L"level editor: ") + (ok ? L"dry run " : L"failed ") + detail);
+      SetStatus(ok ? T(L"The level editor is opening in its own window. Install its exported mod here, then play.")
+                   : T(L"The level editor could not start: ") + detail, !ok);
+      break;
+    }
+    case kIdLevelEditor3D: {  // G6-P39 (D-295); a dry run in test mode
+      std::wstring detail;
+      bool ok = StartLevelEditor(g.paths, g.testMode, detail, true);
+      if (g.testMode) Note(std::wstring(L"3d level editor: ") + (ok ? L"dry run " : L"failed ") + detail);
+      SetStatus(ok ? T(L"The 3D Level Remix Editor is opening in its own window. Install its exported mod here, then play.")
+                   : T(L"The 3D Level Remix Editor could not start: ") + detail, !ok);
+      break;
+    }
     case kIdModToggle:
       if (i < 0) break;
       ModAction({g.mods[i].enabled ? L"disable" : L"enable", sel}, sel,
@@ -2455,7 +2582,12 @@ bool ChangeLanguage(const std::wstring& language) {
 }
 
 void OnCommand(int id, int code) {
-  if (id >= kIdModList && id <= kIdModRemove) { OnModsCommand(id, code); return; }
+  if ((id >= kIdModList && id <= kIdModRemove) || id == kIdLevelEditor || id == kIdLevelEditor3D) { OnModsCommand(id, code); return; }
+  if (id >= kIdPrompt && id < kIdPrompt + (int)promptRadios.size() && code == BN_CLICKED) {
+    for (const auto& setting : g.model.settings) if (setting.Prompts())
+      g.chosen[setting.key] = setting.values[id - kIdPrompt].value;
+    Changed(); return;
+  }
   if (id >= kIdRadio && id < kIdRadio + 3 && code == BN_CLICKED) { ChooseProfile(id - kIdRadio); return; }
   if (Setting* s = Find(id)) {
     if (s->Toggle() && code == BN_CLICKED) {
@@ -2801,6 +2933,14 @@ bool SaveBmp(const std::wstring& path) {
 std::wstring StateDump() {
   std::wstring s = L"profile=" + std::wstring(PresetKey(g.profile)) + L"\n";
   s += L"ui_language=" + uiLanguage + L"\n";
+  for (const auto& setting : g.model.settings) if (setting.Prompts()) {
+    for (size_t i = 0; i < promptRadios.size(); ++i)
+      s += L"prompt_radio." + setting.values[i].value + L"=" +
+           std::to_wstring(SendMessageW(promptRadios[i], BM_GETCHECK, 0, 0)) + L"\n";
+    RECT a{}, b{}, c{};
+    GetWindowRect(setting.title, &a); GetWindowRect(g.profileHint, &b); GetWindowRect(g.radios[0], &c);
+    s += L"prompt_below_profile=" + std::to_wstring(a.top >= b.bottom && a.left == c.left) + L"\n";
+  }
   ModRow sample; sample.state = L"active";
   s += L"mod_state.active=" + ModState(sample) + L"\n";
   sample.shadowed = 1;
@@ -2809,6 +2949,8 @@ std::wstring StateDump() {
   s += L"mod_state.off=" + ModState(sample) + L"\n";
   sample.state = L"invalid"; sample.code = L"BAD_MANIFEST";
   s += L"mod_state.invalid=" + ModState(sample) + L"\n";
+  s += L"mod_gameplay.tag=" + GameplayTag() + L"\n";
+  s += L"mod_gameplay.warning=" + GameplayWarning() + L"\n";
 
   wchar_t windowTitle[512]; GetWindowTextW(g.hwnd, windowTitle, 512);
   s += L"window_title=" + std::wstring(windowTitle) + L"\n";
@@ -3112,7 +3254,10 @@ int RunUiTest(HINSTANCE inst, const std::wstring& script, const std::wstring& ou
         if (s.key != a1) continue;
         found = true;
         if (!IsWindowEnabled(s.control)) { g.log.push_back(L"control disabled: " + a1); break; }
-        if (s.slider) {
+        if (s.Prompts()) {
+          for (size_t j = 0; j < s.values.size(); ++j)
+            if (s.values[j].value == a2) SendMessageW(promptRadios[j], BM_CLICK, 0, 0);
+        } else if (s.slider) {
           for (size_t j = 0; j < s.values.size(); ++j)
             if (s.values[j].value == a2) {
               SendMessageW(s.control, TBM_SETPOS, TRUE, (LPARAM)j);
@@ -3134,7 +3279,9 @@ int RunUiTest(HINSTANCE inst, const std::wstring& script, const std::wstring& ou
              : a1 == L"close" ? g.closeButton : a1 == L"controls" ? g.controlsButton : a1 == L"restore" ? g.restoreKeys
              : a1 == L"restorepad" ? g.padRestore
              : a1 == L"advanced" ? g.advancedButton : a1 == L"settings" ? g.settingsButton : a1 == L"mods" ? g.modsButton
-             : a1 == L"modzip" ? g.modZip : a1 == L"modfolder" ? g.modFolder : nullptr;
+             : a1 == L"modzip" ? g.modZip : a1 == L"modfolder" ? g.modFolder : a1 == L"leveleditor" ? g.levelEditor
+             : a1 == L"leveleditor3d" ? g.levelEditor3D
+             : nullptr;
       if (!b) { g.log.push_back(L"no button " + a1); ++failures; }
       else if (!IsWindowEnabled(b)) g.log.push_back(L"button disabled: " + a1);
       else SendMessageW(b, BM_CLICK, 0, 0);
@@ -3356,7 +3503,7 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE, PWSTR, int) {
   p.home = Parent(appDir);
   p.python = appDir + L"\\python\\python.exe";
   p.tools = appDir + L"\\tools";
-  bool play = false, dryRun = false, noUi = false;
+  bool play = false, dryRun = false, noUi = false, editor = false, editor3d = false;
   std::wstring uiScript, outDir;
   for (int i = 1; i < argc; ++i)  // the test modes never show a message box, whatever else is wrong
     noUi |= wcscmp(argv[i], L"--no-ui") == 0 || wcscmp(argv[i], L"--ui-test") == 0;
@@ -3365,6 +3512,8 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE, PWSTR, int) {
     std::wstring a = argv[i];
     auto next = [&]() { return i + 1 < argc ? FullPath(argv[++i]) : std::wstring(); };
     if (a == L"--play") play = true;
+    else if (a == L"--level-editor") editor = true;
+    else if (a == L"--level-editor-3d") editor = editor3d = true;  // G6-P39 (D-295)
     else if (a == L"--dry-run") dryRun = true;
     else if (a == L"--no-ui") noUi = true;
     else if (a == L"--home") p.home = next();
@@ -3386,6 +3535,21 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE, PWSTR, int) {
   SetCurrentProcessExplicitAppUserModelID(play ? L"Rayman3HDRecompiled.Game" : L"Rayman3HDRecompiled.Settings");
   // Inno Setup's AppMutex: setup and uninstall ask the person to close this program first.
   HANDLE appMutex = CreateMutexW(nullptr, FALSE, kAppMutex);
+
+  if (editor) {  // G6-P31 (D-287): start the level editor and exit; G6-P39 (D-295): --level-editor-3d the 3D one
+    std::wstring detail;
+    bool ok = StartLevelEditor(p, dryRun, detail, editor3d);
+    Report(std::wstring(editor3d ? L"R3HD_LAUNCHER LEVEL_EDITOR_3D " : L"R3HD_LAUNCHER LEVEL_EDITOR ") +
+           (ok ? (dryRun ? L"DRY_RUN " : L"STARTED ") : L"FAILED ") + detail);
+    if (!ok && !quiet) {
+      Model initial; std::wstring error; LoadModel(p, initial, error);
+      MessageBoxW(nullptr, ((editor3d ? T(L"The 3D Level Remix Editor could not start: ")
+                                      : T(L"The level editor could not start: ")) + detail).c_str(),
+                  L"Rayman 3 HD", MB_ICONERROR);
+    }
+    if (appMutex) CloseHandle(appMutex);
+    return ok ? 0 : 2;
+  }
 
   if (play) {
     if (!quiet) { Model initial; std::wstring error; LoadModel(p, initial, error); }

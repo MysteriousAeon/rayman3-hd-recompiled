@@ -32,7 +32,7 @@ usage:
   r3hd_installer.py set-option --home H --set KEY=VALUE      one hidden Custom setting, keeping the rest (M48-P)
   r3hd_installer.py status --home H
   r3hd_installer.py uninstall --home H [--remove-user-data --confirm HOME] [--from-uninstaller] [--check]
-  r3hd_installer.py configure --home H                        interactive preset change (app\settings.cmd)
+  r3hd_installer.py configure --home H                        interactive preset change (app\\settings.cmd)
   r3hd_installer.py describe-options                          the Custom options, from the preset registry
   r3hd_installer.py launcher-model --home H                   what the Settings launcher shows (M30; tab-separated)
   r3hd_installer.py selftest                                  synthetic fixtures only
@@ -115,6 +115,7 @@ ADVICE = {
                     "Nothing was changed.",
     "GAME_RUNNING": "Rayman 3 HD is running. Close the game and try again.",
     "LAUNCHER_RUNNING": "Rayman 3 HD Settings is open. Close it and try again.",
+    "EDITOR_RUNNING": "The Rayman 3 HD Level Editor is open. Save your project, close the editor and try again.",
     "PROCESS_QUERY_FAILED": "Windows could not check running applications. No installation action was allowed. "
                             "Try again after closing the game and Settings.",
     "SETTINGS_REFUSED": "These settings cannot be saved.",
@@ -343,6 +344,22 @@ def _parse_process_snapshot(stdout: bytes, encoding="oem") -> list[tuple[str, in
 
 
 def _process_snapshot() -> list[tuple[str, int]]:
+    if os.name != "nt":
+        # LX-4 (E-375): Linux /proc. Names are the executables' own (r3hd, not r3hd.exe); image_running maps them.
+        rows = []
+        try:
+            entries = [e for e in os.scandir("/proc") if e.name.isdigit()]
+        except OSError as e:
+            raise Refusal("PROCESS_QUERY_FAILED", f"{type(e).__name__}: {e}") from e
+        for e in entries:
+            try:
+                rows.append((Path(e.path, "comm").read_text(encoding="utf-8", errors="replace").strip().lower(),
+                             int(e.name)))
+            except OSError:
+                pass  # the process ended while the list was read
+        if not rows:
+            raise Refusal("PROCESS_QUERY_FAILED", "no readable /proc entries")
+        return rows
     # tasklist writes OEM, not ANSI. Decode on this thread so failures are observable.
     # A full list avoids translated /FI no-match messages, whose meaning is not machine-readable.
     exe = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32" / "tasklist.exe"
@@ -360,6 +377,8 @@ def image_running(image: str, hook: str) -> bool:
     fake = os.environ.get(hook)
     if fake in ("0", "1"):
         return fake == "1"
+    if os.name != "nt":  # LX-4: an ELF has no .exe suffix
+        return any(name == image.lower().removesuffix(".exe") for name, _ in _process_snapshot())
     return any(name == image.lower() for name, _ in _process_snapshot())
 
 
@@ -367,12 +386,46 @@ def game_running() -> bool:
     return image_running("r3hd.exe", "R3HD_INSTALL_FAKE_RUNNING")
 
 
-def check_not_running():
-    """install / repair / uninstall: neither the game nor the Settings launcher may run from this folder (M30)."""
+def check_not_running(home=None):
+    """install / repair / uninstall: neither the game nor the Settings launcher may run from this folder (M30), nor
+    (G6-P36) the level editor of this installation."""
     if game_running():
         raise Refusal("GAME_RUNNING", "r3hd.exe is running")
     if image_running("r3hd_launcher.exe", "R3HD_INSTALL_FAKE_LAUNCHER"):
         raise Refusal("LAUNCHER_RUNNING", "r3hd_launcher.exe is running")
+    if home is not None and editor_running(Path(home)):
+        raise Refusal("EDITOR_RUNNING", f"the level editor holds {EDITOR_LOCK}")
+
+
+# G6-P36 (D-292): the level editor started for HOME (r3hd_level_editor.py --home) holds an OS byte lock on this file
+# for as long as it runs. Only that lock counts: no process is matched by name (other Python processes are not this
+# installation's editor) and nothing is ever terminated. A file left by a crashed editor holds no lock and is removed.
+EDITOR_LOCK = "level_editor.lock"
+
+
+def editor_running(home: Path) -> bool:
+    f = home / EDITOR_LOCK
+    if os.name != "nt" or not f.is_file() or f.is_symlink():
+        return False
+    import msvcrt
+    try:
+        h = open(f, "r+b")
+    except PermissionError:
+        return True
+    except OSError:
+        return False
+    try:
+        msvcrt.locking(h.fileno(), msvcrt.LK_NBLCK, 1)
+    except OSError:
+        h.close()
+        return True
+    msvcrt.locking(h.fileno(), msvcrt.LK_UNLCK, 1)
+    h.close()
+    try:
+        f.unlink()  # stale: no editor holds it
+    except OSError:
+        pass
+    return False
 
 
 def process_alive(pid: int) -> bool:
@@ -1026,7 +1079,7 @@ def preflight(home: Path, payload_dir: Path, source=None, releases=None, need_da
     payload = load_payload(payload_dir)
     releases = releases if releases is not None else load_releases()
     release = required_release(payload, releases)
-    check_not_running()
+    check_not_running(home)
     src = None
     if source is not None:
         src = check_source(Path(source), releases)
@@ -1207,7 +1260,7 @@ def repair(home: Path, payload_dir: Path, source=None, releases=None, log=print)
             raise Refusal("PAYLOAD_MISMATCH", f"installed {st['version']} ({st['payload_id'][:12]}), "
                                               f"installer {payload['version']} ({payload['payload_id'][:12]})")
         check_platform()
-        check_not_running()
+        check_not_running(home)
         rep = verify(home, full_data=True, releases=releases)
         release = required_release(payload, releases)
         restored = []
@@ -1372,7 +1425,7 @@ def uninstall(home: Path, remove_user_data=False, confirm=None, from_uninstaller
         raise Refusal("NOT_INSTALLED", str(home))
     if remove_user_data and (not confirm or os.path.normcase(os.path.abspath(confirm)) != os.path.normcase(str(home))):
         raise Refusal("CONFIRMATION_REQUIRED", f"--remove-user-data needs --confirm {home}")
-    check_not_running()
+    check_not_running(home)
     releases = releases if releases is not None else load_releases()
     with Lock(home):
         recover(home, log)
@@ -1460,7 +1513,7 @@ def describe_options() -> list:
                     "vanilla": s["vanilla"], "hdplus": s["hdplus"], "note": note, "decision": s["decision"],
                     "scope": presets.scope(s), "group": s.get("group", ""), "help": s.get("help", ""),
                     "value_labels": s.get("value_labels") or {v: v for v in s["values"]},
-                    "requires": dict(s.get("requires") or {}), "range": s.get("range")})
+                    "requires": dict(s.get("requires") or {}), "range": s.get("range"), "ui": s.get("ui", "shown")})
     return out
 
 
@@ -1523,7 +1576,12 @@ def launcher_model(home: Path, releases=None) -> str:
     rows.append(("VERSION", st["version"] if st else ""))
     rows.append(("INSTALL", install))
     if st:
-        missing = [r for r in sorted(st["files"]) if not home.joinpath(*r.split("/")).is_file()]
+        # D-203: these exact artwork resources are optional for PLAY only. Verify/repair
+        # and payload audits still check every file; missing artwork retains Xbox.
+        from r3hd_button_prompts import NATIVE_GLYPHS
+        optional_art = {"app/assets/playstation_prompts/" + n + ".png" for n in NATIVE_GLYPHS}
+        optional_art.add("app/assets/playstation_prompts/glyphs.json")
+        missing = [r for r in sorted(st["files"]) if r not in optional_art and not home.joinpath(*r.split("/")).is_file()]
         rows.append(("FILES", "missing" if missing else "ok", len(missing), missing[0] if missing else ""))
         releases = releases if releases is not None else load_releases()
         release = next((r for r in releases if r["id"] == st["data"].get("release")), None)
@@ -1554,6 +1612,8 @@ def launcher_model(home: Path, releases=None) -> str:
     for o in describe_options():
         rows.append(("SETTING", o["key"], o["group"] or "advanced", o["scope"], o["category"], o["label"], o["help"],
                      o["note"], o["vanilla"], o["hdplus"], values[o["key"]]))
+        if o["ui"] == "profile_radios":
+            rows.append(("PROFILE_RADIOS", o["key"]))
         for v in o["values"]:
             rows.append(("VALUE", o["key"], v, o["value_labels"].get(v, v)))
         for other, v in o["requires"].items():
@@ -1850,6 +1910,36 @@ def selftest() -> int:
             set_preset(home, "hdplus")
             check("the launcher itself may still save settings while it runs", read_json(home / "settings.json")["preset"] == "hdplus")
             os.environ["R3HD_INSTALL_FAKE_LAUNCHER"] = "0"
+            if os.name == "nt":
+                # G6-P36: the level editor of this installation (its real lock function, in a separate process).
+                lockf = home / EDITOR_LOCK
+                check("G6-P36: no editor lock file -> uninstall check passes", not editor_running(home)
+                      and uninstall(home, check_only=True, releases=rels, log=quiet)["action"] == "uninstall-check")
+                lockf.write_bytes(b"")
+                check("G6-P36: a stale editor lock (no holder, e.g. after a crash) is not a running editor and is removed",
+                      not editor_running(home) and not lockf.exists())
+                holder = subprocess.Popen(
+                    [sys.executable, "-c", "import sys; sys.path.insert(0, sys.argv[1]); import r3hd_level_editor as e; "
+                     "f = e.hold_home_lock(sys.argv[2]); print('held' if f else 'none', flush=True); sys.stdin.read(); "
+                     "e.release_home_lock(f)", str(Path(__file__).resolve().parent), str(home)],
+                    stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True,
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+                held = holder.stdout.readline().strip()
+                check("G6-P36: a running editor of this installation refuses repair and uninstall (EDITOR_RUNNING); "
+                      "nothing removed, the editor is not stopped",
+                      held == "held" and refused(lambda: repair(home, pl, releases=rels, log=quiet), "EDITOR_RUNNING")
+                      and refused(lambda: uninstall(home, check_only=True, releases=rels, log=quiet), "EDITOR_RUNNING")
+                      and holder.poll() is None and (home / STATE).is_file() and (home / LAUNCHER).is_file())
+                other = t / "other_home"
+                other.mkdir(exist_ok=True)
+                check("G6-P36: another installation's editor does not block this one", not editor_running(other))
+                holder.communicate("", timeout=60)
+                check("G6-P36: after the editor closes, uninstall check passes and the lock file is gone",
+                      holder.returncode == 0 and not lockf.exists()
+                      and uninstall(home, check_only=True, releases=rels, log=quiet)["action"] == "uninstall-check")
+                check("G6-P36: the editor and the engine name the same lock file",
+                      f'\nEDITOR_LOCK_NAME = "{EDITOR_LOCK}"\n' in
+                      (Path(__file__).resolve().parent / "r3hd_level_editor.py").read_text(encoding="utf-8"))
             set_preset(home, "custom", "hdplus", ["cursor=visible"])
             # The registry owns the question list; a new preference must not exhaust this fixture.
             answers = ["3"]
@@ -1862,7 +1952,8 @@ def selftest() -> int:
             check("configure (Custom) writes the chosen options through the resolver", s["preset"] == "custom"
                   and s["overrides"] == {"combo_close": "delayed", "layer_coords": "separate",
                                          "red_correction": "bypass", "texture_orient": "corrected", "sky_clear": "background",
-                                         "lit_uv_scroll": "applied"}  # Enter keeps HD+ values
+                                         "lit_uv_scroll": "applied", "power_swirl": "restored", "beam_color": "restored",
+                                         "lockon_far_color": "restored"}  # Enter keeps HD+ values (D-218, D-219, D-221)
                   and s["preferences"] == {"cursor": "visible", "render_scale": "2", "dualsense_light": "off",
                                            "dualsense_trigger": "off"})  # D-108: a named DualSense option is kept
             configure(home, ask=lambda _: "", say=quiet)
@@ -2068,8 +2159,10 @@ def selftest() -> int:
             check("D-114: a confirmed removal of the user data removes dev_overlay_config\\ with it",
                   not dev_dir.exists() and "dev_overlay_config" in r["user_data_removed"] and not h11.exists())
             check("describe-options lists the shown adjustable settings only (M31: cursor and save clock hidden)",
-                  [o["key"] for o in describe_options()] == ["display", "window_size", "render_scale", "combo_close", "layer_coords",
-                                                             "red_correction", "texture_orient", "sky_clear", "lit_uv_scroll", "gameplay_subtitles", "mouse_camera", "mouse_sensitivity",
+                  [o["key"] for o in describe_options()] == ["display", "window_size", "render_scale", "display_vsync", "combo_close", "layer_coords",
+                                                             "red_correction", "texture_orient", "sky_clear", "lit_uv_scroll",
+                                                             "power_swirl", "beam_color", "lockon_far_color",  # D-218 / D-219 / D-221
+                                                             "gameplay_subtitles", "controller_prompts", "mouse_camera", "mouse_sensitivity",
                                                              "mouse_buttons", "game_language", "discord_presence",
                                                              "dualsense_light", "dualsense_trigger",
                                                              "dualsense_trigger_strength", "dualsense_speaker",

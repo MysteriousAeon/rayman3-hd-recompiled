@@ -1,0 +1,44 @@
+{
+  "version": "1.1.0",
+  "platform": "linux-x86_64",
+  "packaging_commit": "ac573b8a92dbe54d253dcf7ce5053fd356359639",
+  "publication_authorized": true,
+  "notes_finalized": true,
+  "authorization_scope": "Applies only to this exact five-asset set and v1.1.0-linux-rc1, authorized by the maintainer on 2026-11-10 (D-197). The packaging tool still reports publication_authorized/notes_finalized false and config/release/linux-1.1.0.json keeps publication_authorized false: it is hash-bound into BUILDINFO.json and unchanged. Any other asset, tag or release needs its own explicit authorization.",
+  "publication": {
+    "repository": "MysteriousAeon/rayman3-hd-recompiled",
+    "release_id": 439794056,
+    "url": "https://github.com/MysteriousAeon/rayman3-hd-recompiled/releases/tag/v1.1.0-linux-rc1",
+    "tag": "v1.1.0-linux-rc1",
+    "tag_object": "e9caf870d4f32cd8c5a9bb5c1a5afc0d86e14bc7",
+    "public_commit": "fb83b63438ff33defea119e863ad173067f1a5c0",
+    "published_at": "2026-11-10T00:12:54Z",
+    "title": "Rayman 3 HD Recompiled — v1.1.0 Linux (Experimental)",
+    "prerelease": true,
+    "latest": false,
+    "verified": "unauthenticated downloads, sizes, SHA-256, GitHub digests and SHA256SUMS.txt PASS",
+    "record": "reports/LINUX_V1_1_0_PUBLISHED_2026-11.md"
+  },
+  "assets": {
+    "BUILDINFO.json": {
+      "bytes": 4082,
+      "sha256": "f583fa74c344d3da7d5db0a2c5c78ca1a054d15b365812525bacf1d16cf21e67"
+    },
+    "r3hd-lgpl-source-1.1.0-linux-x86_64.zip": {
+      "bytes": 18607303,
+      "sha256": "ea19e8302f80c75dfcec3ed1649e842c8eb5c74e7f4f4fdb8eea8930a4377f92"
+    },
+    "Rayman3HDRecompiled-1.1.0-linux-x86_64-portable.tar.gz": {
+      "bytes": 34427356,
+      "sha256": "dbc1623a8c508c9a270b4eebc6827884c72287ac8e06477a24a8645b8683aa93"
+    },
+    "release-manifest.json": {
+      "bytes": 804,
+      "sha256": "531e38cf0d9b5cbd1493a0bce951389f2dff8ec1462a663a3e11deb44829422c"
+    },
+    "SHA256SUMS.txt": {
+      "bytes": 396,
+      "sha256": "73379cb84a13a135556e44f58edba49c90016b76926f5c317adb0ae266f9ad2c"
+    }
+  }
+}

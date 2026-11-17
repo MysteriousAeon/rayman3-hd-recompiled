@@ -10,6 +10,44 @@ def replace_once(text, before, after):
     assert text.count(before) == 1, before[:80]
     return text.replace(before, after)
 
+PCH_TEMPLATE = 'resources/templates/codegen/pch_h.inja'
+PCH_END = '  } while (0)\n'
+# Appended after the template's last macro so that no Windows line (and no __LINE__ in the pch) moves; the whole
+# block is excluded on Windows, so the Windows preprocessed pch is unchanged.
+PCH_PORTABLE = '''
+// LM-A (A4): portable guest setjmp/longjmp. MSVC's longjmp unwinds through the intervening M4 owners and runs their
+// __finally; glibc's does not. Record the owner registry at setjmp and run that cleanup before the host longjmp.
+#if !defined(_WIN32) || defined(R3HD_M4_PORTABLE)
+#include <rex/m4_seh.h>
+#undef ppc_setjmp
+#define ppc_setjmp(guest_buf_addr) (::M4NoteSetjmp(guest_buf_addr), setjmp(::get_jmp_buf_map()[(guest_buf_addr)]))
+[[noreturn]] inline void m4_portable_longjmp(u32 guest_buf_addr, int val) {
+  ::M4LongjmpPrepare(guest_buf_addr);
+  (ppc_longjmp)(guest_buf_addr, val);
+}
+#define ppc_longjmp(guest_buf_addr, val) ::m4_portable_longjmp(guest_buf_addr, val)
+#endif
+'''
+
+
+def apply_portable_hooks():
+    """LM-A (A4, D4): portable-backend hooks that leave the Windows preprocessed sources and line numbers unchanged."""
+    text = subprocess.check_output(['git', '-C', str(SDK), 'show', 'HEAD:' + PCH_TEMPLATE]).decode()
+    assert text.endswith(PCH_END) and 'M4NoteSetjmp' not in text, 'unexpected pch template'
+    path = SDK / PCH_TEMPLATE
+    if not path.exists() or path.read_text() != text + PCH_PORTABLE:
+        path.write_text(text + PCH_PORTABLE)
+        print('patched', PCH_TEMPLATE)
+    # D4: an SDK host->guest call is a boundary that a guest exception transfer may not cross. The include replaces a
+    # blank line and the macro replaces the call line (Windows: the same call).
+    shutil.copyfile(ROOT / 'tools/m4_dispatch.h', SDK / 'include/rex/m4_dispatch.h')
+    patch('src/system/function_dispatcher.cpp', [
+        ('#include <rex/system/thread_state.h>\n\nnamespace rex::runtime {',
+         '#include <rex/system/thread_state.h>\n#include <rex/m4_dispatch.h>\nnamespace rex::runtime {'),
+        ('  fn(*ctx, memory_->virtual_membase());\n',
+         '  M4_DISPATCH(fn, *ctx, memory_->virtual_membase(), address);\n')])
+
+
 def apply():
     p = SDK / 'src/codegen/function_graph.cpp'
     t = p.read_text()
@@ -35,7 +73,7 @@ def apply():
           instruction = std::regex_replace(instruction, call,
               "M4BeforeCall(m4, ctx); $1 m4.in_call = false;");
           const std::regex ret(R"(\breturn;)");
-          instruction = std::regex_replace(instruction, ret, "{ m4.normal = true; return; }");
+          instruction = std::regex_replace(instruction, ret, "M4_RETURN");
           if (instruction.find("ppc_setjmp(") != std::string::npos)
             instruction += fmt::format("\tm4.in_call = false; m4.pc = 0x{:X};\n", blockBase);
           body.resize(m4InstructionStart);
@@ -48,12 +86,10 @@ def apply():
     end = t.index('  // --- Emit local variable declarations, then body ---', begin)
     t = t[:begin] + '''  // --- Close emitted dispatch region ---
   if (generateSeh) {
-    emit_println(body, "\\t}} __finally {{ if (!m4.normal) M4SehUnwind(m4, ctx, base, m4resolve); }}");
-    emit_println(body, "\\t}} __except (M4SehFilter(GetExceptionInformation(), m4, ctx, base, m4resolve)) {{");
-    emit_println(body, "\\t\\tM4RestoreOwner(m4, ctx);");
-    emit_println(body, "\\t\\tif (m4.unwind) ctx.r3.u64 = m4.return_value;");
-    emit_println(body, "\\t\\tgoto m4_retry;");
-    emit_println(body, "\\t}}\\n}}\\n");
+    // LM-A (D1): project macros (tools/m4_seh.h). On Windows M4_TRY_END expands to the former
+    // __finally/__except text; the portable backend gives them its own expansion. The five blank
+    // lines keep every following line number (and so every __LINE__ and debug line) as before.
+    emit_println(body, "\\tM4_TRY_END\\n\\n\\n\\n\\n\\n}}\\n");
   } else {
     emit_println(body, "}}\\n");
   }
@@ -68,22 +104,24 @@ def apply():
                    s.filter ? s.filter : s.handler, s.filter ? s.handler : 0);
     emit_println(out, "\\t}};");
     emit_println(out, "\\tauto m4resolve = +[](uint32_t a, uint8_t* b) -> PPCFunc* {{ return REX_LOOKUP_FUNC(b, a); }};");
-    emit_println(out, "\\tM4Frame m4; M4Init(m4, m4scopes, {}, ctx);", sehInfo->scopes.size());
+    emit_println(out, "\\tM4_FRAME({})", sehInfo->scopes.size());
     emit_println(out, "m4_retry:");
-    emit_println(out, "\\t__try {{ __try {{");
+    emit_println(out, "\\tM4_TRY_BEGIN");
     emit_println(out, "\\tuint32_t m4resume = m4.resume; m4.resume = 0; m4.resume_index = m4.count; m4.unwind = false;");
     emit_println(out, "\\tswitch (m4resume) {{");
     // All emitted labels are valid same-frame unwind continuations. Inline
     // except bodies are already labels of the owner due to the M3 patch.
     for (size_t label : emittedLabels)
       emit_println(out, "\\tcase 0x{:X}: goto loc_{:X};", label, label);
-    emit_println(out, "\\tcase 0: break; default: __fastfail(7); }}");
+    emit_println(out, "\\tcase 0: break; default: M4_FAIL(7); }}");
   }
   out += body;
 
 ''' + t[end:]
     p.write_text(t)
     shutil.copyfile(ROOT / 'tools/m4_seh.h', SDK / 'include/rex/m4_seh.h')
+    shutil.copyfile(ROOT / 'tools/m4_seh_portable.h', SDK / 'include/rex/m4_seh_portable.h')
+    apply_portable_hooks()
     gpu = (ROOT / 'tools/m3_gpu_trace.h').read_text()
     gpu = replace_once(gpu, '  uint64_t draws_at_swap = 0, copies_at_swap = 0, clears_at_swap = 0;',
                       '  std::atomic<uint64_t> last_shader_hash[2]{};\n  uint64_t draws_at_swap = 0, copies_at_swap = 0, clears_at_swap = 0;')

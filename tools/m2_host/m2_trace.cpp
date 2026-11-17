@@ -9,7 +9,7 @@
 #include <cstring>
 #include <cstdlib>
 // M8: last-chance crash record. Optional so the M2..M6 build scripts keep working unchanged.
-#if __has_include("m8_crash_report.h")
+#if defined(_WIN32) && __has_include("m8_crash_report.h")
 #include "m8_crash_report.h"
 #define R3HD_M8_CRASH_REPORT 1
 #endif
@@ -22,7 +22,7 @@ static thread_local unsigned object_trace_count = 0;
 // M11 (D-036): this runs at the entry of every translated function. The two stores keep the fault and crash
 // records ("last entered function", guest lr / sp) and are all that a normal run needs. The M2 / M3 research
 // probes below (string compares, strtoul and a probe table per call) took about three quarters of the title's
-// main thread; they now run only with R3HD_M2_PROBES set, which m2_summarize.py / m3_summarize.py runs need.
+#if defined(_WIN32)  // main thread; they now run only with R3HD_M2_PROBES set, which m2_summarize.py / m3_summarize.py runs need.
 static const bool m2_probes = std::getenv("R3HD_M2_PROBES") != nullptr;
 void M2Enter(const char* name, PPCContext& ctx) {
   m2_current_function = name;
@@ -125,13 +125,13 @@ static void M2Object(const char* site, PPCRegister& object, PPCRegister& result,
 void M2ObjectCallA(PPCRegister& r31, PPCRegister& r3, PPCRegister& r1) { M2Object("823E4BE8", r31, r3, r1); }
 void M2ObjectCallB(PPCRegister& r31, PPCRegister& r3, PPCRegister& r1) { M2Object("823E4BF0", r31, r3, r1); }
 void M2ObjectRead(PPCRegister& r31, PPCRegister& r3, PPCRegister& r1) { M2Object("823E4BFC", r31, r3, r1); }
-
+#endif
 // M11 (D-037): the title's D3D library waits for the GPU's command-buffer position in a spin loop built from
 // SMT-priority hint no-ops (0x82316B40, called in a loop from 0x8232A0A8). On the console that parks a hardware
 // thread; here it kept one host core fully busy for the whole session. This hook runs at the top of each spin
 // step. A wait that ends within a few hundred steps is left alone; a longer one sleeps the host thread for a
 // fraction of a millisecond per step on a high-resolution timer. The guest loop, its exit condition and its
-// timeout are untouched. R3HD_GPU_WAIT=spin restores the unmodified behaviour for comparison.
+#if defined(_WIN32)  // timeout are untouched. R3HD_GPU_WAIT=spin restores the unmodified behaviour for comparison.
 void M11GpuWaitStep(PPCRegister&) {
   static const bool spin = [] { const char* v = std::getenv("R3HD_GPU_WAIT"); return v && !std::strcmp(v, "spin"); }();
   if (spin) return;
@@ -176,7 +176,7 @@ void M11GpuWaitStep(PPCRegister&) {
   auto n = ++sleeps;
   if ((n & (n - 1)) == 0) REXLOG_INFO("M11 gpu_wait mode=timed sleeps={}", n);
 }
-
+#endif
 // M18 (D-047): guest-title compatibility correction for the end of revisit mode. Rationale, the decision table
 // and the switch are in tools/m18_revisit.h; the hook sites are in config/rexglue/r3hd_compat.toml. This is
 // the only place where the host changes what the title does, and R3HD_REVISIT=original turns it off.
@@ -472,5 +472,51 @@ void SkyClearTest(PPCRegister& r7) {
   if (colour != last) REXLOG_INFO("SkyClearTest colour={:08X}", colour);
   last = colour;
   r7.u64 = colour;
+}
+#endif
+#if !defined(_WIN32)
+// Linux (LM-1): the Windows vectored exception handler, the fatal-log fault record, the M8 crash report and the
+// timer-based GPU wait are Windows-only and unavailable here. Everything the generated code calls stays available.
+// Signal ownership is the SDK's: no signal handler is installed by this file. Bodies mirror the Windows ones above.
+static const bool m2_probes = std::getenv("R3HD_M2_PROBES") != nullptr;
+void M2Enter(const char* name, PPCContext& ctx) {
+  m2_current_function = name;
+  m2_current_context = &ctx;
+  if (!m2_probes) return;
+  if (!std::strcmp(name, "__imp__sub_823E4AC8")) object_trace = true;
+  if (object_trace && object_trace_count++ < 128)
+    REXLOG_INFO("M2 object_call function={} sp={:08X} r31={:08X} lr={:08X}", name, ctx.r1.u32, ctx.r31.u32, unsigned(ctx.lr));
+  if ((!std::strcmp(name, "__imp__xstart") || !std::strcmp(name, "xstart")) && !entered.exchange(true)) {
+    REXLOG_INFO("M2 guest_entry_executed pc=820E13F8 lr={:08X} sp={:08X}", ctx.lr, ctx.r1.u32);
+  }
+  auto length = std::strlen(name);
+  if (length >= 8) {
+    auto address = std::strtoul(name + length - 8, nullptr, 16);
+    if (address >= 0x8280C600 && address < 0x828225E4 && !bink_entered.exchange(true))
+      REXLOG_INFO("M2 bink_code_entered function={:08X}", unsigned(address));
+    static const uint32_t probes[] = {
+        0x822019E0, 0x822065D8, 0x82204830, 0x822308E0, 0x822309F0, 0x82230A58, 0x82230C18, 0x82366910,
+        0x823681C0, 0x823C2D08, 0x82550FF0, 0x826B8650, 0x826B8A30, 0x826BF880, 0x826CAB60, 0x8249E3C0};
+    static std::atomic<unsigned long long> probe_counts[sizeof(probes) / sizeof(probes[0])];
+    for (size_t i = 0; i < sizeof(probes) / sizeof(probes[0]); ++i) {
+      if (address != probes[i]) continue;
+      auto n = ++probe_counts[i];
+      if ((n & (n - 1)) == 0)
+        REXLOG_INFO("M3 probe function={:08X} count={} lr={:08X}", unsigned(address), n, unsigned(ctx.lr));
+    }
+  }
+}
+void M2InstallCrashHandler() {
+  REXLOG_INFO("M2 crash_report unavailable on Linux: the vectored exception handler and the M8 crash report are Windows-only");
+}
+static void M2Object(const char* site, PPCRegister& object, PPCRegister& result, PPCRegister& stack) {
+  REXLOG_INFO("M2 object_site={} object={:08X} r3={:08X} sp={:08X}", site, object.u32, result.u32, stack.u32);
+}
+void M2ObjectCallA(PPCRegister& r31, PPCRegister& r3, PPCRegister& r1) { M2Object("823E4BE8", r31, r3, r1); }
+void M2ObjectCallB(PPCRegister& r31, PPCRegister& r3, PPCRegister& r1) { M2Object("823E4BF0", r31, r3, r1); }
+void M2ObjectRead(PPCRegister& r31, PPCRegister& r3, PPCRegister& r1) { M2Object("823E4BFC", r31, r3, r1); }
+void M11GpuWaitStep(PPCRegister&) {
+  static const bool logged = [] { REXLOG_INFO("M11 gpu_wait timed sleep unavailable on Linux: the guest spin loop runs unmodified"); return true; }();
+  (void)logged;
 }
 #endif

@@ -1,5 +1,5 @@
-Rayman 3 HD Recompiled
-======================
+Rayman 3 HD Recompiled 1.2.0
+============================
 
 Portable edition: use the top-level Play.cmd and Settings.cmd, and follow PORTABLE.txt
 for first launch, requirements, updates, backups and removal. The Start menu, app\play.cmd,
@@ -16,13 +16,25 @@ Settings:          Start menu "Rayman 3 HD Recompiled - Settings" (or app\r3hd_l
                      Display        window or fullscreen; rendering resolution (Auto, 720p, 1440p, 2160p).
                      Controls       keyboard keys (Modern or Original PC keys; any key can be changed). Hold Walk
                                     (Ctrl in Modern, Shift in Original PC) while moving to walk slowly.
-                     Mods           turn installed mods on or off, change their order, install a mod .zip.
+                     Mods           turn installed mods on or off, change their order, install a mod .zip,
+                                    open the Experimental 3D Level Viewer or the Classic / Advanced Editor.
+Level editor:      Start menu "Rayman 3 HD Recompiled - Level Editor" (or app\r3hd_launcher.exe --level-editor;
+                   portable: Level Editor.cmd) opens the Level Remix Editor. It remixes three existing levels
+                   (intro_10, intro_15, intro_20): move existing actors and route waypoints, reshape the intro_20
+                   start floor and add a FairyLight there; the result is exported as a mod. It does not create new
+                   levels or maps; some actors are EXPERIMENTAL or LOCKED. No new achievements while such a mod is
+                   on. See MODDING.md and Help in the editor.
+                   Settings > Mods > Experimental 3D Level Viewer shows the same levels with their original
+                   geometry and textures, with limited editing of supported objects, paths and terrain.
                      Advanced       Game Language (English, French, Spanish, Italian, German),
                                     Settings language, mouse cursor, save times, Discord Rich Presence,
                                     DualSense light bar and R2 resistance (Adaptive Trigger Strength 0-100 %,
                                     0 % = off), diagnostics.
                    Display, controls and advanced settings stay the same when you change the profile. Settings apply
                    the next time the game starts. Nothing here changes your game files or saves.
+Button icons:      under Game profile, choose Auto (default), Xbox or PlayStation. Auto identifies the primary
+                   or sole controller at launch; unknown or ambiguous devices use Xbox. Restart after changing
+                   controllers. This choice does not change controls, profiles, interface language or mods.
 Turkish:           the Turkish translation is a mod. A Turkish setup installs and turns it on; to add it later, use
                    Settings > Mods > Install .zip and choose the file in the installation's extras\ folder. Turn it
                    off there to use a built-in game language. Turkish and current PT-BR translation mods

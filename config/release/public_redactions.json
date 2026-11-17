@@ -1,0 +1,106 @@
+{
+  "schema": 1,
+  "note": "G6-P36 (D-292): declared redactions of the public source export (tools/r3hd_public_export.py). Each exported file listed here goes out as a redacted copy: on exactly the listed lines the account segment of a /home/<account>/ path becomes <user>. The development repository keeps the original bytes (original_sha256), which the records in pinned_by and the private evidence pin; the public copy has redacted_sha256. Any difference refuses the export. This file names no account.",
+  "redactions": [
+    {
+      "path": "tools/experiments/linux_guest_entry/README.md",
+      "lines": [
+        118,
+        119
+      ],
+      "original_sha256": "a5348de795b4d3ead2f35df30b4199e6c77612b393078c9fe34e455ddc6d67dd",
+      "redacted_sha256": "dc93ed8b9773d0bf40a1907d244f9309d73f20aefc933eb43ba6f6c44f7aa25b",
+      "pinned_by": [],
+      "reason": "the maintainer's Linux account path in exported Linux evidence (E-520 / D-287); public copy only"
+    },
+    {
+      "path": "tools/experiments/linux_runtime_bootstrap/README.md",
+      "lines": [
+        103,
+        104,
+        169
+      ],
+      "original_sha256": "00724e6fa80c4167cec5cf39405beb3356e584f785ee6e4735252fbb9da7a999",
+      "redacted_sha256": "2342e180bc1e948569097be693f199379f51e8f51d28e0054c3e2181768fde2b",
+      "pinned_by": [],
+      "reason": "the maintainer's Linux account path in exported Linux evidence (E-520 / D-287); public copy only"
+    },
+    {
+      "path": "tools/experiments/linux_write_watch_restart/fixtures/native_failure1_clang_O2_owner.objdump.txt",
+      "lines": [
+        2
+      ],
+      "original_sha256": "a548f95cd2cd6373b8fdb67e1029727d0d936ec4a1bedf954c652d2387817175",
+      "redacted_sha256": "3be880a6f6f7a6102df71c338bd4e219de3feb8cae940d7d00ff0328f1f97766",
+      "pinned_by": [
+        "tools/experiments/linux_write_watch_restart/test_lwr_gate.py (FAILURE1)"
+      ],
+      "reason": "the maintainer's Linux account path in exported Linux evidence (E-520 / D-287); public copy only"
+    },
+    {
+      "path": "tools/experiments/linux_write_watch_restart/fixtures/native_failure1_clang_O2_restart.objdump.txt",
+      "lines": [
+        2
+      ],
+      "original_sha256": "131dab2a42d9b1fa395bfba9309bcf64896325b338123038b4bee3dd0ccafff0",
+      "redacted_sha256": "176e81a7910b071d3af581ed7a7a32e96717bc77357831997a9bfe34d223718c",
+      "pinned_by": [
+        "tools/experiments/linux_write_watch_restart/test_lwr_gate.py (FAILURE1)"
+      ],
+      "reason": "the maintainer's Linux account path in exported Linux evidence (E-520 / D-287); public copy only"
+    },
+    {
+      "path": "tools/linux/baseline/audio_diag/forensic.py",
+      "lines": [
+        27
+      ],
+      "original_sha256": "1b3f64b8fe5d171a21aa8743a7cb8c1024294a44af72879edf6387694e4ca93d",
+      "redacted_sha256": "ae8f2611ce802de5a2688e842b018d9a1c898b799433e598eb67a0d755f2378b",
+      "pinned_by": [
+        "tools/linux/baseline/stage2d/executor_update/EXECUTOR_LOCK.json",
+        "tools/linux/baseline/stage2d/guard_update/UPDATE_LOCK.json",
+        "tools/linux/baseline/stage2d/scoped_update/SCOPED_LOCK.json"
+      ],
+      "reason": "the maintainer's Linux account path in exported Linux evidence (E-520 / D-287); public copy only"
+    },
+    {
+      "path": "tools/linux/baseline/audio_diag/pulse_review.py",
+      "lines": [
+        57,
+        67
+      ],
+      "original_sha256": "7715e5ea14a986ed907efcac925312beb4bfe6b3830463300ec1597a0759142f",
+      "redacted_sha256": "e74a0030d9a3a0e837a04c8ee2aaaeaf759c4581a490d652f0da9a0705db0025",
+      "pinned_by": [
+        "tools/linux/baseline/stage2d/executor_update/EXECUTOR_LOCK.json",
+        "tools/linux/baseline/stage2d/guard_update/UPDATE_LOCK.json",
+        "tools/linux/baseline/stage2d/scoped_update/SCOPED_LOCK.json"
+      ],
+      "reason": "the maintainer's Linux account path in exported Linux evidence (E-520 / D-287); public copy only"
+    },
+    {
+      "path": "tools/linux/baseline/stage2d/executor_update/test_executor.py",
+      "lines": [
+        51
+      ],
+      "original_sha256": "3feddedd94b1f07194c027b270def79d5740abce78bd0fab18bf10eb68baa145",
+      "redacted_sha256": "cd3ee24fd2505d697f338e6bfdec22b46cfe1c3febd4c80f1b21e13121facd55",
+      "pinned_by": [],
+      "reason": "the maintainer's Linux account path in exported Linux evidence (E-520 / D-287); public copy only"
+    },
+    {
+      "path": "tools/linux/baseline/visible/review.py",
+      "lines": [
+        30
+      ],
+      "original_sha256": "8673c703d404f8e9c055d417dabab5812e9c46e005f2b343ef0ba9ac9a1a4ae3",
+      "redacted_sha256": "891f857c9384c008dbe13a56fe042b568a34033132b3e1fd3ad411c7401e26af",
+      "pinned_by": [
+        "tools/linux/baseline/stage2d/executor_update/EXECUTOR_LOCK.json",
+        "tools/linux/baseline/stage2d/guard_update/UPDATE_LOCK.json",
+        "tools/linux/baseline/stage2d/scoped_update/SCOPED_LOCK.json"
+      ],
+      "reason": "the maintainer's Linux account path in exported Linux evidence (E-520 / D-287); public copy only"
+    }
+  ]
+}

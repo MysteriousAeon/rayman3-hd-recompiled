@@ -33,6 +33,7 @@ def install_overlay(name):
 
 
 FFMPEG_DLL = '''
+if(WIN32)  # M46 (D-084): the DLL arrangement uses a .def export list and LINKER:/DEF.
 #=============================================================================
 # M46 (D-084): FFmpeg as its own DLL, replaceable by the user (LGPL-2.1 s.6b).
 # ffmpeg.dll holds the static libavutil and libavcodec archives above; its
@@ -59,12 +60,55 @@ target_include_directories(ffmpeg INTERFACE
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 set_target_properties(ffmpeg ffmpeg_def PROPERTIES FOLDER "FFmpeg")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
+#=============================================================================
+# LX-5 (E-375, B3): the same arrangement on Linux x86-64: libffmpeg.so, which
+# the user can replace (LGPL-2.1 s.6b). Its code comes from the unchanged
+# static archives above; the exported set is the same "av*" list as the
+# Windows .def (m46_ffmpeg_so.cmake: EXTERN pulls exactly those members,
+# the version script keeps only av* global, as upstream's libav*.v).
+# The archives get default visibility here so that their av* symbols can
+# be exported at all; every other symbol is local through the version
+# script. (Hidden is kept elsewhere: aarch64 NEON needs it, see above.)
+#=============================================================================
+set_target_properties(libavutil libavcodec PROPERTIES C_VISIBILITY_PRESET default)
+set(FFMPEG_SO_LD "${CMAKE_CURRENT_BINARY_DIR}/ffmpeg-so/ffmpeg_exports.ld")
+set(FFMPEG_SO_VER "${CMAKE_CURRENT_BINARY_DIR}/ffmpeg-so/ffmpeg.ver")
+file(WRITE "${FFMPEG_SO_VER}" "{\n  global: av*;\n  local: *;\n};\n")
+add_custom_command(
+    OUTPUT "${FFMPEG_SO_LD}"
+    COMMAND "${CMAKE_COMMAND}" "-DNM=${CMAKE_NM}" "-DAVUTIL=$<TARGET_FILE:libavutil>"
+            "-DAVCODEC=$<TARGET_FILE:libavcodec>" "-DOUT=${FFMPEG_SO_LD}"
+            -P "${FFMPEG_OVERLAY_SRC_DIR}/m46_ffmpeg_so.cmake"
+    DEPENDS libavutil libavcodec "${FFMPEG_OVERLAY_SRC_DIR}/m46_ffmpeg_so.cmake"
+    COMMENT "Listing the av* exports of libffmpeg.so"
+    VERBATIM
+)
+add_custom_target(ffmpeg_ld DEPENDS "${FFMPEG_SO_LD}")
+add_library(ffmpeg SHARED "${FFMPEG_OVERLAY_SRC_DIR}/m46_ffmpeg_dll.c")
+add_dependencies(ffmpeg ffmpeg_ld)
+target_link_libraries(ffmpeg PRIVATE libavcodec libavutil m)
+target_link_options(ffmpeg PRIVATE "${FFMPEG_SO_LD}" "LINKER:--version-script=${FFMPEG_SO_VER}"
+                    "LINKER:-Bsymbolic" "LINKER:--no-undefined")
+set_property(TARGET ffmpeg APPEND PROPERTY LINK_DEPENDS "${FFMPEG_SO_LD}" "${FFMPEG_SO_VER}")
+target_include_directories(ffmpeg INTERFACE
+    $<BUILD_INTERFACE:${FFMPEG_DIR}>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+set_target_properties(ffmpeg ffmpeg_ld PROPERTIES FOLDER "FFmpeg")
+else()
+# LM-1 (Linux build bring-up): no .def/LINKER:/DEF outside Windows. `ffmpeg` forwards to the unchanged
+# static archives exactly as the pinned SDK links them; the Linux LGPL arrangement is a packaging question.
+add_library(ffmpeg INTERFACE)
+target_link_libraries(ffmpeg INTERFACE libavcodec libavutil)
+endif()
 '''
 
 
 if __name__ == '__main__':
     install_overlay('m46_ffmpeg_def.cmake')
     install_overlay('m46_ffmpeg_dll.c')
+    install_overlay('m46_ffmpeg_so.cmake')  # LX-5: the Linux libffmpeg.so export list (unused on Windows)
     # Two edits below keep their anchor text, so patch_bytes alone would repeat them: skip patched files.
     if b'M46 (D-084)' in (SDK / 'thirdparty/CMakeLists.txt').read_bytes():
         print('thirdparty/CMakeLists.txt already patched')

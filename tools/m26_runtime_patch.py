@@ -1,10 +1,10 @@
 """Replay after the M24 patch at the same pin: optional texture orientation correction (M26, D-058).
 
 `tools/m26_texture_orient.h`: with R3HD_TEXTURE_ORIENT=corrected, a host read of a listed bundle file
-(`fact_55_2.btf`) returns the four listed atlas pages (`fac_sbire01..04`, the Robo-Pirate statues of `fact_55`)
+(`fact_55_2.btf`, `swamp_50_2.btf`) returns only the listed statue and Ugly pages
 mirrored top to bottom, base level and mip chain, exactly (block rows and the rows inside each DXT5 block; no
-decode). The title's bundles store pages bottom row first and its meshes count on that; these four are stored
-top row first in the Xbox 360 HD release, so every statue part samples the mirror cell (RE_NOTES "M26").
+decode). The title's bundles store pages bottom row first and its meshes count on that; these listed pages
+are stored the other way up, so the mesh samples the mirror cell (RE_NOTES "M26", E-433).
 Without the variable nothing changes: the read returns the file's bytes, and the cost is one flag test per read.
 
 One site: HostPathFile::ReadSync, after a successful host read. A page is corrected only when the file has the

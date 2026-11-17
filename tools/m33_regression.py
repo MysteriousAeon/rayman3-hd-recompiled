@@ -69,11 +69,23 @@ def runtime_checks():
     check("runtime: the overlay reads only R3HD_MODS_PLAN, writes no file and refuses a plan as a whole",
           'getenv("R3HD_MODS_PLAN")' in h and "ofstream" not in h and "state=refused reason=" in h
           and "kMaxTotalBytes" in h and "ranges_overlap" in h and "game_bytes_hash" in h)
+    ks = read(SDK / "src" / "system" / "kernel_state.cpp")
+    body = ks[ks.find("void KernelState::UnlockAchievement(uint32_t id) {"):]
+    body = body[:body.find("\n}\n")]
+    check("runtime (D-224): the title's unlock path awards nothing new while gameplay mods are active, else as before",
+          ks.count("m33mods::GameplayModsActive()") == 1 and "#include <rex/m33_mod_overlay.h>" in ks
+          and body.find("m33mods::GameplayModsActive()") < body.find("return;")
+          < body.find("achievement_manager_.UnlockAchievement(id, AchievementNotification::kShow)")
+          and "not_awarded reason=gameplay_mods" in body)
+    check("runtime (D-224): the `gameplay` record names a known mod once; only a verified active plan reports it",
+          '"gameplay_mod"' in h and '"duplicate_gameplay"' in h and "return s.active && !s.plan.gameplay.empty();" in h)
     dll = BUILD / "rexruntime.dll"
     if dll.is_file():
         b = dll.read_bytes()
         check("runtime: the built runtime carries the M33 overlay (the variable read as UTF-16)",
               b"M33 mods state=" in b and "R3HD_MODS_PLAN".encode("utf-16-le") in b)
+        check("runtime (D-224): the built runtime carries the gameplay record and the unlock gate",
+              b"M33 mods gameplay mod=" in b and b"not_awarded reason=gameplay_mods" in b)
     else:
         skip("runtime: the built runtime carries the M33 overlay", "not built")
     bat = read(TOOLS / "build_milestone8.bat")

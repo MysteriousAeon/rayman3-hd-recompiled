@@ -1,0 +1,2650 @@
+{
+ "head": "89e836d",
+ "head_note": "frozen with the compiler of 89e836d (compiler_sha256 = its working-tree CRLF form); the freeze ran at the unpublished commit 623913c, amended to df888c7 only to strip local paths from this record",
+ "compiler_sha256": "111ce89622fca4243309239728dd7452ac2313fca1a86f6bc48c4ff5a7eed1cd",
+ "valid": {
+  "lum.beside_source": {
+   "version": 2,
+   "level": "intro_10",
+   "same_size": [
+    "transit"
+   ],
+   "files": {
+    "lvl": [
+     "intro_10.lvl",
+     7661836,
+     "a37638bf1370357db21f33df5c4d37ae806b3c4b9f81b331503ba62d1b19e2ee"
+    ],
+    "ptr": [
+     "intro_10.ptr",
+     209068,
+     "6c9dd70c488a1cac95efc0a55a6086255dae2d851bacd93f5abefdcc8200e940"
+    ],
+    "transit": [
+     "transit.lvl",
+     41508,
+     "d300ba3a4a3c03cec6a73eb9da8a8d820fcc3a669591e976b357e804315bf275"
+    ]
+   },
+   "images": {
+    "lvl": {
+     "size": 7663280,
+     "sha256": "f0655209507d60d384f48ee5f4083d8d68778ed5511768761421a7a94868af93"
+    },
+    "ptr": {
+     "size": 209388,
+     "sha256": "09d81158842462166a202b29ec07f159b792b6b8945ae1ed60d9a202a2907ce5"
+    },
+    "transit": {
+     "size": 41508,
+     "sha256": "321de2e4be2077720e8a6cc6660ff373bcabaed6c5089989a1ed594aa370c34e"
+    }
+   },
+   "relocations": {
+    "original": 25143,
+    "added_count": 40,
+    "added_sha256": "8f75e2f90a98b2e920a744b2d19b37b82ca46def6ec726eaf953afd993e924f6"
+   },
+   "ranges": [
+    [
+     "intro_10.lvl",
+     7288,
+     4,
+     "4ff4a9495af2bf7eddf1fffc0a812e7e3147eae79c8c69865ee5c5ee5c523733",
+     "intro_10:insert-passive-lum.personal.last",
+     "0074edc4"
+    ],
+    [
+     "intro_10.lvl",
+     7292,
+     4,
+     "514970ce425bbbe11b969e5cd683f4c1b7722f7f026b45006c53a8031b2fc32e",
+     "intro_10:insert-passive-lum.personal.count",
+     "00000046"
+    ],
+    [
+     "intro_10.lvl",
+     7408,
+     4,
+     "3be4ea87d0e6d2f5bfb9a701071d30292912c17700b1bcc5e0353d2d075e5a9c",
+     "intro_10:insert-passive-lum.backups.last",
+     "0074ee3c"
+    ],
+    [
+     "intro_10.lvl",
+     5477152,
+     4,
+     "4ff4a9495af2bf7eddf1fffc0a812e7e3147eae79c8c69865ee5c5ee5c523733",
+     "intro_10:insert-passive-lum.personal.old_last.next",
+     "0074edc4"
+    ],
+    [
+     "intro_10.lvl",
+     5544516,
+     4,
+     "4531a8449e27ede22ad9ad0775ba421ef0f110d315a8133bf8f34ef94f4f9375",
+     "intro_10:insert-passive-lum.source.next",
+     "0074e90c"
+    ],
+    [
+     "intro_10.lvl",
+     5545728,
+     4,
+     "4531a8449e27ede22ad9ad0775ba421ef0f110d315a8133bf8f34ef94f4f9375",
+     "intro_10:insert-passive-lum.next.previous",
+     "0074e90c"
+    ],
+    [
+     "intro_10.lvl",
+     5921236,
+     4,
+     "3be4ea87d0e6d2f5bfb9a701071d30292912c17700b1bcc5e0353d2d075e5a9c",
+     "intro_10:insert-passive-lum.backups.old_last.next",
+     "0074ee3c"
+    ],
+    [
+     "intro_10.lvl",
+     5927992,
+     4,
+     "40ad53722ba9538a4cb793c21351618b68b62ac59833733ceed12b3bdcb1da37",
+     "intro_10:insert-passive-lum.records.last",
+     "0074edf0"
+    ],
+    [
+     "intro_10.lvl",
+     5927996,
+     4,
+     "ac8380b8f84e1a3864129c0e26c6bdb8f4ea579e00993c13a5b5fce2ba3d13e0",
+     "intro_10:insert-passive-lum.records.count",
+     "0000007b"
+    ],
+    [
+     "intro_10.lvl",
+     5936712,
+     4,
+     "40ad53722ba9538a4cb793c21351618b68b62ac59833733ceed12b3bdcb1da37",
+     "intro_10:insert-passive-lum.records.old_last.next",
+     "0074edf0"
+    ],
+    [
+     "intro_10.lvl",
+     7661836,
+     1444,
+     "e78965f9c977d2a3fb7309684918b6a52f8cb8923e10aaf34d37ac19f30b0d73",
+     "intro_10:insert-passive-lum.appended",
+     null
+    ],
+    [
+     "intro_10.ptr",
+     0,
+     209388,
+     "09d81158842462166a202b29ec07f159b792b6b8945ae1ed60d9a202a2907ce5",
+     "intro_10:insert-passive-lum.pointer_table",
+     null
+    ],
+    [
+     "transit.lvl",
+     2500,
+     4,
+     "15b165510f75144be8633336a97ac62c664d5c436db297fc13fb4d3ac147d7fd",
+     "intro_10:insert-passive-lum.transit.world_count",
+     "0000003d"
+    ]
+   ],
+   "info": null,
+   "info_sha256": "a425435a63e40828436d0ea3735d874fc76df8b5b33cf4765fc3b94a514096f7",
+   "manifest_sha256": "2ece7028b3762b4e9a20ee7d7b57060b5a01245c1073178851aecaa255c69af1"
+  },
+  "lum.flight_path": {
+   "version": 2,
+   "level": "intro_10",
+   "same_size": [
+    "transit"
+   ],
+   "files": {
+    "lvl": [
+     "intro_10.lvl",
+     7661836,
+     "a37638bf1370357db21f33df5c4d37ae806b3c4b9f81b331503ba62d1b19e2ee"
+    ],
+    "ptr": [
+     "intro_10.ptr",
+     209068,
+     "6c9dd70c488a1cac95efc0a55a6086255dae2d851bacd93f5abefdcc8200e940"
+    ],
+    "transit": [
+     "transit.lvl",
+     41508,
+     "d300ba3a4a3c03cec6a73eb9da8a8d820fcc3a669591e976b357e804315bf275"
+    ]
+   },
+   "images": {
+    "lvl": {
+     "size": 7663280,
+     "sha256": "cbf9fce38e8735c39f4190f0bf833dfa87785f2b9ab0c95a0c9902e0217eaf2c"
+    },
+    "ptr": {
+     "size": 209388,
+     "sha256": "09d81158842462166a202b29ec07f159b792b6b8945ae1ed60d9a202a2907ce5"
+    },
+    "transit": {
+     "size": 41508,
+     "sha256": "321de2e4be2077720e8a6cc6660ff373bcabaed6c5089989a1ed594aa370c34e"
+    }
+   },
+   "relocations": {
+    "original": 25143,
+    "added_count": 40,
+    "added_sha256": "8f75e2f90a98b2e920a744b2d19b37b82ca46def6ec726eaf953afd993e924f6"
+   },
+   "ranges": [
+    [
+     "intro_10.lvl",
+     7288,
+     4,
+     "4ff4a9495af2bf7eddf1fffc0a812e7e3147eae79c8c69865ee5c5ee5c523733",
+     "intro_10:insert-passive-lum.personal.last",
+     "0074edc4"
+    ],
+    [
+     "intro_10.lvl",
+     7292,
+     4,
+     "514970ce425bbbe11b969e5cd683f4c1b7722f7f026b45006c53a8031b2fc32e",
+     "intro_10:insert-passive-lum.personal.count",
+     "00000046"
+    ],
+    [
+     "intro_10.lvl",
+     7408,
+     4,
+     "3be4ea87d0e6d2f5bfb9a701071d30292912c17700b1bcc5e0353d2d075e5a9c",
+     "intro_10:insert-passive-lum.backups.last",
+     "0074ee3c"
+    ],
+    [
+     "intro_10.lvl",
+     5477152,
+     4,
+     "4ff4a9495af2bf7eddf1fffc0a812e7e3147eae79c8c69865ee5c5ee5c523733",
+     "intro_10:insert-passive-lum.personal.old_last.next",
+     "0074edc4"
+    ],
+    [
+     "intro_10.lvl",
+     5544516,
+     4,
+     "4531a8449e27ede22ad9ad0775ba421ef0f110d315a8133bf8f34ef94f4f9375",
+     "intro_10:insert-passive-lum.source.next",
+     "0074e90c"
+    ],
+    [
+     "intro_10.lvl",
+     5545728,
+     4,
+     "4531a8449e27ede22ad9ad0775ba421ef0f110d315a8133bf8f34ef94f4f9375",
+     "intro_10:insert-passive-lum.next.previous",
+     "0074e90c"
+    ],
+    [
+     "intro_10.lvl",
+     5921236,
+     4,
+     "3be4ea87d0e6d2f5bfb9a701071d30292912c17700b1bcc5e0353d2d075e5a9c",
+     "intro_10:insert-passive-lum.backups.old_last.next",
+     "0074ee3c"
+    ],
+    [
+     "intro_10.lvl",
+     5927992,
+     4,
+     "40ad53722ba9538a4cb793c21351618b68b62ac59833733ceed12b3bdcb1da37",
+     "intro_10:insert-passive-lum.records.last",
+     "0074edf0"
+    ],
+    [
+     "intro_10.lvl",
+     5927996,
+     4,
+     "ac8380b8f84e1a3864129c0e26c6bdb8f4ea579e00993c13a5b5fce2ba3d13e0",
+     "intro_10:insert-passive-lum.records.count",
+     "0000007b"
+    ],
+    [
+     "intro_10.lvl",
+     5936712,
+     4,
+     "40ad53722ba9538a4cb793c21351618b68b62ac59833733ceed12b3bdcb1da37",
+     "intro_10:insert-passive-lum.records.old_last.next",
+     "0074edf0"
+    ],
+    [
+     "intro_10.lvl",
+     7661836,
+     1444,
+     "03b7b800da205254d0eb3f62370089e133d557f666dedaf607e20c9fe1fc3898",
+     "intro_10:insert-passive-lum.appended",
+     null
+    ],
+    [
+     "intro_10.ptr",
+     0,
+     209388,
+     "09d81158842462166a202b29ec07f159b792b6b8945ae1ed60d9a202a2907ce5",
+     "intro_10:insert-passive-lum.pointer_table",
+     null
+    ],
+    [
+     "transit.lvl",
+     2500,
+     4,
+     "15b165510f75144be8633336a97ac62c664d5c436db297fc13fb4d3ac147d7fd",
+     "intro_10:insert-passive-lum.transit.world_count",
+     "0000003d"
+    ]
+   ],
+   "info": null,
+   "info_sha256": "4ded57e7ead22a9e1fe32d7b41cc4bcbba95423dce960bc837fabccfb7232c04",
+   "manifest_sha256": "5322d59d9670505ff126b24b2631563a0b2aa7d246d1714392819c51d18ad2e7"
+  },
+  "frog.500": {
+   "version": 2,
+   "level": "intro_10",
+   "same_size": [
+    "transit"
+   ],
+   "files": {
+    "lvl": [
+     "intro_10.lvl",
+     7661836,
+     "a37638bf1370357db21f33df5c4d37ae806b3c4b9f81b331503ba62d1b19e2ee"
+    ],
+    "ptr": [
+     "intro_10.ptr",
+     209068,
+     "6c9dd70c488a1cac95efc0a55a6086255dae2d851bacd93f5abefdcc8200e940"
+    ],
+    "transit": [
+     "transit.lvl",
+     41508,
+     "d300ba3a4a3c03cec6a73eb9da8a8d820fcc3a669591e976b357e804315bf275"
+    ]
+   },
+   "images": {
+    "lvl": {
+     "size": 7664864,
+     "sha256": "12e5f919d632c433c70aaed8c565542efc3859b81d8f20433f906e8561e89641"
+    },
+    "ptr": {
+     "size": 209500,
+     "sha256": "134e861c641cf8d24e175e56d5092f08b860ca8791374213f913d4e16a4a1e77"
+    },
+    "transit": {
+     "size": 41508,
+     "sha256": "321de2e4be2077720e8a6cc6660ff373bcabaed6c5089989a1ed594aa370c34e"
+    }
+   },
+   "relocations": {
+    "original": 25143,
+    "added_count": 54,
+    "added_sha256": "fa81626eabab1d7974b394d080c9abdc565e4dcc2e498497afc03f665346cce4"
+   },
+   "ranges": [
+    [
+     "intro_10.lvl",
+     7288,
+     4,
+     "cab664c00c5dcae7650f1ba5953d7a3b800606afcce7fec0cda29ddcc027a796",
+     "intro_10:insert-scripted-frog.personal.last",
+     "0074ee2c"
+    ],
+    [
+     "intro_10.lvl",
+     7292,
+     4,
+     "514970ce425bbbe11b969e5cd683f4c1b7722f7f026b45006c53a8031b2fc32e",
+     "intro_10:insert-scripted-frog.personal.count",
+     "00000046"
+    ],
+    [
+     "intro_10.lvl",
+     7340,
+     4,
+     "c2a00ee3296444d37f0c8c00498f3e1070846979d85c35dd03ddb99af5a88860",
+     "intro_10:insert-scripted-frog.always.last",
+     "0074ef54"
+    ],
+    [
+     "intro_10.lvl",
+     7344,
+     4,
+     "e9f3440e5518839aa600db07b5400f8ec287ce0321fad602afd103ce447a1c98",
+     "intro_10:insert-scripted-frog.always.count",
+     "00000012"
+    ],
+    [
+     "intro_10.lvl",
+     7392,
+     4,
+     "80b698214ee7fa08692e340baae2bfeae6711d6f7aadd001e85736cbdc221803",
+     "intro_10:insert-scripted-frog.resolve.count",
+     "0000015a"
+    ],
+    [
+     "intro_10.lvl",
+     7400,
+     4,
+     "4cf1f6fde7928a9b07c71acdd3e1c2f84878fd418730b8a035ab3c7b859600af",
+     "intro_10:insert-scripted-frog.resolve.table",
+     "0074ef68"
+    ],
+    [
+     "intro_10.lvl",
+     7408,
+     4,
+     "28f2ddf8f833934c7df732d5368ba4b5ad2616369729551b5c66f81a68c2db94",
+     "intro_10:insert-scripted-frog.backups.last",
+     "0074eeec"
+    ],
+    [
+     "intro_10.lvl",
+     5477152,
+     4,
+     "cab664c00c5dcae7650f1ba5953d7a3b800606afcce7fec0cda29ddcc027a796",
+     "intro_10:insert-scripted-frog.personal.old_last.next",
+     "0074ee2c"
+    ],
+    [
+     "intro_10.lvl",
+     5480572,
+     4,
+     "c2a00ee3296444d37f0c8c00498f3e1070846979d85c35dd03ddb99af5a88860",
+     "intro_10:insert-scripted-frog.always.old_last.next",
+     "0074ef54"
+    ],
+    [
+     "intro_10.lvl",
+     5480596,
+     4,
+     "c2a00ee3296444d37f0c8c00498f3e1070846979d85c35dd03ddb99af5a88860",
+     "intro_10:insert-scripted-frog.always_owner.last",
+     "0074ef54"
+    ],
+    [
+     "intro_10.lvl",
+     5480600,
+     4,
+     "e9f3440e5518839aa600db07b5400f8ec287ce0321fad602afd103ce447a1c98",
+     "intro_10:insert-scripted-frog.always_owner.count",
+     "00000012"
+    ],
+    [
+     "intro_10.lvl",
+     5487048,
+     4,
+     "4531a8449e27ede22ad9ad0775ba421ef0f110d315a8133bf8f34ef94f4f9375",
+     "intro_10:insert-scripted-frog.next.previous",
+     "0074e90c"
+    ],
+    [
+     "intro_10.lvl",
+     5488356,
+     4,
+     "4531a8449e27ede22ad9ad0775ba421ef0f110d315a8133bf8f34ef94f4f9375",
+     "intro_10:insert-scripted-frog.source.next",
+     "0074e90c"
+    ],
+    [
+     "intro_10.lvl",
+     5921236,
+     4,
+     "2646ac2b10821d6a0a9cd67cc0c8b025ab1c232382e8d988697597d39d229633",
+     "intro_10:insert-scripted-frog.backups.old_last.next",
+     "0074eea4"
+    ],
+    [
+     "intro_10.lvl",
+     5927992,
+     4,
+     "80199ccb90a69f4e7ff851e8a7cbf70a29dabda4138b2cbea43c2598f17c8e85",
+     "intro_10:insert-scripted-frog.records.last",
+     "0074ee58"
+    ],
+    [
+     "intro_10.lvl",
+     5927996,
+     4,
+     "ac8380b8f84e1a3864129c0e26c6bdb8f4ea579e00993c13a5b5fce2ba3d13e0",
+     "intro_10:insert-scripted-frog.records.count",
+     "0000007b"
+    ],
+    [
+     "intro_10.lvl",
+     5936712,
+     4,
+     "80199ccb90a69f4e7ff851e8a7cbf70a29dabda4138b2cbea43c2598f17c8e85",
+     "intro_10:insert-scripted-frog.records.old_last.next",
+     "0074ee58"
+    ],
+    [
+     "intro_10.lvl",
+     7661836,
+     3028,
+     "a62c768b3f7341d5c4628bc873a3859933191b7dda0e5465905eb382de41b465",
+     "intro_10:insert-scripted-frog.appended",
+     null
+    ],
+    [
+     "intro_10.ptr",
+     0,
+     209500,
+     "134e861c641cf8d24e175e56d5092f08b860ca8791374213f913d4e16a4a1e77",
+     "intro_10:insert-scripted-frog.pointer_table",
+     null
+    ],
+    [
+     "transit.lvl",
+     2500,
+     4,
+     "15b165510f75144be8633336a97ac62c664d5c436db297fc13fb4d3ac147d7fd",
+     "intro_10:insert-scripted-frog.transit.world_count",
+     "0000003d"
+    ]
+   ],
+   "info": null,
+   "info_sha256": "4378a99bee7db27097c63bd88ab569dea08bc4230684848ba91fd2a6135a34e1",
+   "manifest_sha256": "1e41ceed84d4cb5297a216230463486c763f0ea46fa9db873a04ea994f2f1741"
+  },
+  "frog.2000": {
+   "version": 2,
+   "level": "intro_10",
+   "same_size": [
+    "transit"
+   ],
+   "files": {
+    "lvl": [
+     "intro_10.lvl",
+     7661836,
+     "a37638bf1370357db21f33df5c4d37ae806b3c4b9f81b331503ba62d1b19e2ee"
+    ],
+    "ptr": [
+     "intro_10.ptr",
+     209068,
+     "6c9dd70c488a1cac95efc0a55a6086255dae2d851bacd93f5abefdcc8200e940"
+    ],
+    "transit": [
+     "transit.lvl",
+     41508,
+     "d300ba3a4a3c03cec6a73eb9da8a8d820fcc3a669591e976b357e804315bf275"
+    ]
+   },
+   "images": {
+    "lvl": {
+     "size": 7664864,
+     "sha256": "bf36156c9eb4087bdee3fe572e02e189f0b48973895da3a3edba68e4b14182f4"
+    },
+    "ptr": {
+     "size": 209500,
+     "sha256": "134e861c641cf8d24e175e56d5092f08b860ca8791374213f913d4e16a4a1e77"
+    },
+    "transit": {
+     "size": 41508,
+     "sha256": "321de2e4be2077720e8a6cc6660ff373bcabaed6c5089989a1ed594aa370c34e"
+    }
+   },
+   "relocations": {
+    "original": 25143,
+    "added_count": 54,
+    "added_sha256": "fa81626eabab1d7974b394d080c9abdc565e4dcc2e498497afc03f665346cce4"
+   },
+   "ranges": [
+    [
+     "intro_10.lvl",
+     7288,
+     4,
+     "cab664c00c5dcae7650f1ba5953d7a3b800606afcce7fec0cda29ddcc027a796",
+     "intro_10:insert-scripted-frog.personal.last",
+     "0074ee2c"
+    ],
+    [
+     "intro_10.lvl",
+     7292,
+     4,
+     "514970ce425bbbe11b969e5cd683f4c1b7722f7f026b45006c53a8031b2fc32e",
+     "intro_10:insert-scripted-frog.personal.count",
+     "00000046"
+    ],
+    [
+     "intro_10.lvl",
+     7340,
+     4,
+     "c2a00ee3296444d37f0c8c00498f3e1070846979d85c35dd03ddb99af5a88860",
+     "intro_10:insert-scripted-frog.always.last",
+     "0074ef54"
+    ],
+    [
+     "intro_10.lvl",
+     7344,
+     4,
+     "e9f3440e5518839aa600db07b5400f8ec287ce0321fad602afd103ce447a1c98",
+     "intro_10:insert-scripted-frog.always.count",
+     "00000012"
+    ],
+    [
+     "intro_10.lvl",
+     7392,
+     4,
+     "80b698214ee7fa08692e340baae2bfeae6711d6f7aadd001e85736cbdc221803",
+     "intro_10:insert-scripted-frog.resolve.count",
+     "0000015a"
+    ],
+    [
+     "intro_10.lvl",
+     7400,
+     4,
+     "4cf1f6fde7928a9b07c71acdd3e1c2f84878fd418730b8a035ab3c7b859600af",
+     "intro_10:insert-scripted-frog.resolve.table",
+     "0074ef68"
+    ],
+    [
+     "intro_10.lvl",
+     7408,
+     4,
+     "28f2ddf8f833934c7df732d5368ba4b5ad2616369729551b5c66f81a68c2db94",
+     "intro_10:insert-scripted-frog.backups.last",
+     "0074eeec"
+    ],
+    [
+     "intro_10.lvl",
+     5477152,
+     4,
+     "cab664c00c5dcae7650f1ba5953d7a3b800606afcce7fec0cda29ddcc027a796",
+     "intro_10:insert-scripted-frog.personal.old_last.next",
+     "0074ee2c"
+    ],
+    [
+     "intro_10.lvl",
+     5480572,
+     4,
+     "c2a00ee3296444d37f0c8c00498f3e1070846979d85c35dd03ddb99af5a88860",
+     "intro_10:insert-scripted-frog.always.old_last.next",
+     "0074ef54"
+    ],
+    [
+     "intro_10.lvl",
+     5480596,
+     4,
+     "c2a00ee3296444d37f0c8c00498f3e1070846979d85c35dd03ddb99af5a88860",
+     "intro_10:insert-scripted-frog.always_owner.last",
+     "0074ef54"
+    ],
+    [
+     "intro_10.lvl",
+     5480600,
+     4,
+     "e9f3440e5518839aa600db07b5400f8ec287ce0321fad602afd103ce447a1c98",
+     "intro_10:insert-scripted-frog.always_owner.count",
+     "00000012"
+    ],
+    [
+     "intro_10.lvl",
+     5487048,
+     4,
+     "4531a8449e27ede22ad9ad0775ba421ef0f110d315a8133bf8f34ef94f4f9375",
+     "intro_10:insert-scripted-frog.next.previous",
+     "0074e90c"
+    ],
+    [
+     "intro_10.lvl",
+     5488356,
+     4,
+     "4531a8449e27ede22ad9ad0775ba421ef0f110d315a8133bf8f34ef94f4f9375",
+     "intro_10:insert-scripted-frog.source.next",
+     "0074e90c"
+    ],
+    [
+     "intro_10.lvl",
+     5921236,
+     4,
+     "2646ac2b10821d6a0a9cd67cc0c8b025ab1c232382e8d988697597d39d229633",
+     "intro_10:insert-scripted-frog.backups.old_last.next",
+     "0074eea4"
+    ],
+    [
+     "intro_10.lvl",
+     5927992,
+     4,
+     "80199ccb90a69f4e7ff851e8a7cbf70a29dabda4138b2cbea43c2598f17c8e85",
+     "intro_10:insert-scripted-frog.records.last",
+     "0074ee58"
+    ],
+    [
+     "intro_10.lvl",
+     5927996,
+     4,
+     "ac8380b8f84e1a3864129c0e26c6bdb8f4ea579e00993c13a5b5fce2ba3d13e0",
+     "intro_10:insert-scripted-frog.records.count",
+     "0000007b"
+    ],
+    [
+     "intro_10.lvl",
+     5936712,
+     4,
+     "80199ccb90a69f4e7ff851e8a7cbf70a29dabda4138b2cbea43c2598f17c8e85",
+     "intro_10:insert-scripted-frog.records.old_last.next",
+     "0074ee58"
+    ],
+    [
+     "intro_10.lvl",
+     7661836,
+     3028,
+     "9523d25230a592c13b090ba079926b117b1d412ff828d380a18bd0a1f53fc6e6",
+     "intro_10:insert-scripted-frog.appended",
+     null
+    ],
+    [
+     "intro_10.ptr",
+     0,
+     209500,
+     "134e861c641cf8d24e175e56d5092f08b860ca8791374213f913d4e16a4a1e77",
+     "intro_10:insert-scripted-frog.pointer_table",
+     null
+    ],
+    [
+     "transit.lvl",
+     2500,
+     4,
+     "15b165510f75144be8633336a97ac62c664d5c436db297fc13fb4d3ac147d7fd",
+     "intro_10:insert-scripted-frog.transit.world_count",
+     "0000003d"
+    ]
+   ],
+   "info": null,
+   "info_sha256": "e23259f18321eeb283feb79e6a95b3f125ef4ca8c85569998bf27f4de84da4f9",
+   "manifest_sha256": "3cb258b259a4da02debcc3fd296e4753286206d0d52879c8ea65238c1bccc2ec"
+  },
+  "fairy.0": {
+   "version": 2,
+   "level": "intro_20",
+   "same_size": [
+    "transit"
+   ],
+   "files": {
+    "lvl": [
+     "intro_20.lvl",
+     6135684,
+     "a21aa7691db4cedb3892e685e5395fd23b530b0bde4d64a09035dfb5f2d0b11f"
+    ],
+    "ptr": [
+     "intro_20.ptr",
+     273540,
+     "be90b58a3bfa78d19f3335489edcc79214442d52cbde04c6ad5a465f9fb17cb1"
+    ],
+    "transit": [
+     "transit.lvl",
+     26140,
+     "51c0fbf1239acd6188316a6d64507761903d5a087df1ea717426d5cb810e6aa8"
+    ]
+   },
+   "images": {
+    "lvl": {
+     "size": 6138576,
+     "sha256": "bda217f96f41107f4c53e326a9449937867614981dcf82858b57f1e7e57b8a51"
+    },
+    "ptr": {
+     "size": 273948,
+     "sha256": "40934d08eeed74d87eb0dd385d82a7382cce6e2c53166083741be16d5ee8979c"
+    },
+    "transit": {
+     "size": 26140,
+     "sha256": "2be9a434eed49c9625efe0462a67510216813aff7edc3e75e4e083bff3a0a7e4"
+    }
+   },
+   "relocations": {
+    "original": 33424,
+    "added_count": 51,
+    "added_sha256": "ab9cc773d7437916a94c53f1eb1057e94a627fa1d79b0bdc27afacade529e716"
+   },
+   "ranges": [
+    [
+     "intro_20.lvl",
+     7288,
+     4,
+     "db4df10d5d81ec744ad6c2c85865265501eca85a747bb5fc9a6bc981544126ea",
+     "intro_20:insert-fairy-on-graph.personal.last",
+     "005da9d8"
+    ],
+    [
+     "intro_20.lvl",
+     7292,
+     4,
+     "514dbe30be13c58300858acaab2a7c900d0ff0c385b175ea1c9a0a7eb8991db9",
+     "intro_20:insert-fairy-on-graph.personal.count",
+     "00000090"
+    ],
+    [
+     "intro_20.lvl",
+     7408,
+     4,
+     "d030b0641fc8057cca9b8e63b53727f78575e6c43f1d1c23d09f9d36ec592588",
+     "intro_20:insert-fairy-on-graph.backups.last",
+     "005daa5c"
+    ],
+    [
+     "intro_20.lvl",
+     2968640,
+     4,
+     "db4df10d5d81ec744ad6c2c85865265501eca85a747bb5fc9a6bc981544126ea",
+     "intro_20:insert-fairy-on-graph.personal.old_last.next",
+     "005da9d8"
+    ],
+    [
+     "intro_20.lvl",
+     3365044,
+     4,
+     "2a4e0cc7dc615a7b784b03813b11ca660ac91c91e73829d7d499939b47682c2d",
+     "intro_20:insert-fairy-on-graph.source.next",
+     "005d9f8c"
+    ],
+    [
+     "intro_20.lvl",
+     3367684,
+     4,
+     "2a4e0cc7dc615a7b784b03813b11ca660ac91c91e73829d7d499939b47682c2d",
+     "intro_20:insert-fairy-on-graph.next.previous",
+     "005d9f8c"
+    ],
+    [
+     "intro_20.lvl",
+     3421948,
+     4,
+     "d030b0641fc8057cca9b8e63b53727f78575e6c43f1d1c23d09f9d36ec592588",
+     "intro_20:insert-fairy-on-graph.backups.old_last.next",
+     "005daa5c"
+    ],
+    [
+     "intro_20.lvl",
+     3434852,
+     4,
+     "1583f0c3894ef7122edeca39cbbebe54cb5c2fc9b7dfb65c700c7b8a797c89dd",
+     "intro_20:insert-fairy-on-graph.records.last",
+     "005daa10"
+    ],
+    [
+     "intro_20.lvl",
+     3434856,
+     4,
+     "ceabc12a7d3fb2521390646d57a3afb50872a6a0c7900329bbd5840a649c3727",
+     "intro_20:insert-fairy-on-graph.records.count",
+     "000000d6"
+    ],
+    [
+     "intro_20.lvl",
+     3450124,
+     4,
+     "1583f0c3894ef7122edeca39cbbebe54cb5c2fc9b7dfb65c700c7b8a797c89dd",
+     "intro_20:insert-fairy-on-graph.records.old_last.next",
+     "005daa10"
+    ],
+    [
+     "intro_20.lvl",
+     6135684,
+     2892,
+     "4d3ba233e71700784eaa80a13934ac6ef0caa45cbb91bcad7c9a9f0a4b3d69df",
+     "intro_20:insert-fairy-on-graph.appended",
+     null
+    ],
+    [
+     "intro_20.ptr",
+     0,
+     273948,
+     "40934d08eeed74d87eb0dd385d82a7382cce6e2c53166083741be16d5ee8979c",
+     "intro_20:insert-fairy-on-graph.pointer_table",
+     null
+    ],
+    [
+     "transit.lvl",
+     2500,
+     4,
+     "6d58692645c9d1cfaf13541cbd258f86193ef63c2f1d38f6bbca9617372d7bd6",
+     "intro_20:insert-fairy-on-graph.transit.world_count",
+     "00000080"
+    ]
+   ],
+   "info": null,
+   "info_sha256": "b72545d8f6d09b9b9ccb5a78d47c79afce5b456601401e57990248b2d5678c22",
+   "manifest_sha256": "51e23f86b01615ea4cf0afa9d336e77cee28349ebb776e4d6db9c6bf0e9f282f"
+  },
+  "fairy.1": {
+   "version": 2,
+   "level": "intro_20",
+   "same_size": [
+    "transit"
+   ],
+   "files": {
+    "lvl": [
+     "intro_20.lvl",
+     6135684,
+     "a21aa7691db4cedb3892e685e5395fd23b530b0bde4d64a09035dfb5f2d0b11f"
+    ],
+    "ptr": [
+     "intro_20.ptr",
+     273540,
+     "be90b58a3bfa78d19f3335489edcc79214442d52cbde04c6ad5a465f9fb17cb1"
+    ],
+    "transit": [
+     "transit.lvl",
+     26140,
+     "51c0fbf1239acd6188316a6d64507761903d5a087df1ea717426d5cb810e6aa8"
+    ]
+   },
+   "images": {
+    "lvl": {
+     "size": 6138576,
+     "sha256": "2fa5d6a77e3764eed08270011adec9f756ad86156e53df70c8b31ba93016d05c"
+    },
+    "ptr": {
+     "size": 273948,
+     "sha256": "40934d08eeed74d87eb0dd385d82a7382cce6e2c53166083741be16d5ee8979c"
+    },
+    "transit": {
+     "size": 26140,
+     "sha256": "2be9a434eed49c9625efe0462a67510216813aff7edc3e75e4e083bff3a0a7e4"
+    }
+   },
+   "relocations": {
+    "original": 33424,
+    "added_count": 51,
+    "added_sha256": "ab9cc773d7437916a94c53f1eb1057e94a627fa1d79b0bdc27afacade529e716"
+   },
+   "ranges": [
+    [
+     "intro_20.lvl",
+     7288,
+     4,
+     "db4df10d5d81ec744ad6c2c85865265501eca85a747bb5fc9a6bc981544126ea",
+     "intro_20:insert-fairy-on-graph.personal.last",
+     "005da9d8"
+    ],
+    [
+     "intro_20.lvl",
+     7292,
+     4,
+     "514dbe30be13c58300858acaab2a7c900d0ff0c385b175ea1c9a0a7eb8991db9",
+     "intro_20:insert-fairy-on-graph.personal.count",
+     "00000090"
+    ],
+    [
+     "intro_20.lvl",
+     7408,
+     4,
+     "d030b0641fc8057cca9b8e63b53727f78575e6c43f1d1c23d09f9d36ec592588",
+     "intro_20:insert-fairy-on-graph.backups.last",
+     "005daa5c"
+    ],
+    [
+     "intro_20.lvl",
+     2968640,
+     4,
+     "db4df10d5d81ec744ad6c2c85865265501eca85a747bb5fc9a6bc981544126ea",
+     "intro_20:insert-fairy-on-graph.personal.old_last.next",
+     "005da9d8"
+    ],
+    [
+     "intro_20.lvl",
+     3365044,
+     4,
+     "2a4e0cc7dc615a7b784b03813b11ca660ac91c91e73829d7d499939b47682c2d",
+     "intro_20:insert-fairy-on-graph.source.next",
+     "005d9f8c"
+    ],
+    [
+     "intro_20.lvl",
+     3367684,
+     4,
+     "2a4e0cc7dc615a7b784b03813b11ca660ac91c91e73829d7d499939b47682c2d",
+     "intro_20:insert-fairy-on-graph.next.previous",
+     "005d9f8c"
+    ],
+    [
+     "intro_20.lvl",
+     3421948,
+     4,
+     "d030b0641fc8057cca9b8e63b53727f78575e6c43f1d1c23d09f9d36ec592588",
+     "intro_20:insert-fairy-on-graph.backups.old_last.next",
+     "005daa5c"
+    ],
+    [
+     "intro_20.lvl",
+     3434852,
+     4,
+     "1583f0c3894ef7122edeca39cbbebe54cb5c2fc9b7dfb65c700c7b8a797c89dd",
+     "intro_20:insert-fairy-on-graph.records.last",
+     "005daa10"
+    ],
+    [
+     "intro_20.lvl",
+     3434856,
+     4,
+     "ceabc12a7d3fb2521390646d57a3afb50872a6a0c7900329bbd5840a649c3727",
+     "intro_20:insert-fairy-on-graph.records.count",
+     "000000d6"
+    ],
+    [
+     "intro_20.lvl",
+     3450124,
+     4,
+     "1583f0c3894ef7122edeca39cbbebe54cb5c2fc9b7dfb65c700c7b8a797c89dd",
+     "intro_20:insert-fairy-on-graph.records.old_last.next",
+     "005daa10"
+    ],
+    [
+     "intro_20.lvl",
+     6135684,
+     2892,
+     "245382de0a8c3480f07cf0ec0d097c8e9a668d6907f34a8cfa2fdd61eeacb5fb",
+     "intro_20:insert-fairy-on-graph.appended",
+     null
+    ],
+    [
+     "intro_20.ptr",
+     0,
+     273948,
+     "40934d08eeed74d87eb0dd385d82a7382cce6e2c53166083741be16d5ee8979c",
+     "intro_20:insert-fairy-on-graph.pointer_table",
+     null
+    ],
+    [
+     "transit.lvl",
+     2500,
+     4,
+     "6d58692645c9d1cfaf13541cbd258f86193ef63c2f1d38f6bbca9617372d7bd6",
+     "intro_20:insert-fairy-on-graph.transit.world_count",
+     "00000080"
+    ]
+   ],
+   "info": null,
+   "info_sha256": "c6e44551dbad2b38f28df457d871f05f1068c07d4a927929a0997093768c90dc",
+   "manifest_sha256": "bd1e1362542a5094e89bd5f7ee47ff1e271858f47a4236bdc949868b7ce6aa17"
+  },
+  "manager.forest": {
+   "version": 2,
+   "level": "intro_10",
+   "same_size": [
+    "transit"
+   ],
+   "files": {
+    "lvl": [
+     "intro_10.lvl",
+     7661836,
+     "a37638bf1370357db21f33df5c4d37ae806b3c4b9f81b331503ba62d1b19e2ee"
+    ],
+    "ptr": [
+     "intro_10.ptr",
+     209068,
+     "6c9dd70c488a1cac95efc0a55a6086255dae2d851bacd93f5abefdcc8200e940"
+    ],
+    "transit": [
+     "transit.lvl",
+     41508,
+     "d300ba3a4a3c03cec6a73eb9da8a8d820fcc3a669591e976b357e804315bf275"
+    ]
+   },
+   "images": {
+    "lvl": {
+     "size": 7663632,
+     "sha256": "60502987f643ec486f5d42d994674e89d6e66ef1bfe9a5f5e26d8d2cd803c31d"
+    },
+    "ptr": {
+     "size": 209596,
+     "sha256": "556dc0865e2cd4645855c09cb34b927d23bf894e9f840f2b2561183b40b2dc3d"
+    },
+    "transit": {
+     "size": 41508,
+     "sha256": "321de2e4be2077720e8a6cc6660ff373bcabaed6c5089989a1ed594aa370c34e"
+    }
+   },
+   "relocations": {
+    "original": 25143,
+    "added_count": 66,
+    "added_sha256": "d92e39958e9b9749d0da75e9633e89a8d3c781e81f506cd815f760cc21e908a0"
+   },
+   "ranges": [
+    [
+     "intro_10.lvl",
+     7288,
+     4,
+     "b0e5ffdab8628d908aed7ee8879c26d723771e9e71bb450cb035fe56e7a3a586",
+     "intro_10:insert-gensound-manager.personal.last",
+     "0074eee0"
+    ],
+    [
+     "intro_10.lvl",
+     7292,
+     4,
+     "514970ce425bbbe11b969e5cd683f4c1b7722f7f026b45006c53a8031b2fc32e",
+     "intro_10:insert-gensound-manager.personal.count",
+     "00000046"
+    ],
+    [
+     "intro_10.lvl",
+     7340,
+     4,
+     "4664b0a4e7981ca8f66ca11fc997244b0913882d2d76c5d36187b7fe0602fe0c",
+     "intro_10:insert-gensound-manager.always.last",
+     "0074eff4"
+    ],
+    [
+     "intro_10.lvl",
+     7344,
+     4,
+     "e9f3440e5518839aa600db07b5400f8ec287ce0321fad602afd103ce447a1c98",
+     "intro_10:insert-gensound-manager.always.count",
+     "00000012"
+    ],
+    [
+     "intro_10.lvl",
+     7408,
+     4,
+     "a22f4c781a9de4f96e6e1e49b12d880ae9ef8dfcd18e2f756dff17bdc7418eec",
+     "intro_10:insert-gensound-manager.backups.last",
+     "0074ef8c"
+    ],
+    [
+     "intro_10.lvl",
+     5477152,
+     4,
+     "b0e5ffdab8628d908aed7ee8879c26d723771e9e71bb450cb035fe56e7a3a586",
+     "intro_10:insert-gensound-manager.personal.old_last.next",
+     "0074eee0"
+    ],
+    [
+     "intro_10.lvl",
+     5480572,
+     4,
+     "4664b0a4e7981ca8f66ca11fc997244b0913882d2d76c5d36187b7fe0602fe0c",
+     "intro_10:insert-gensound-manager.always.old_last.next",
+     "0074eff4"
+    ],
+    [
+     "intro_10.lvl",
+     5480596,
+     4,
+     "4664b0a4e7981ca8f66ca11fc997244b0913882d2d76c5d36187b7fe0602fe0c",
+     "intro_10:insert-gensound-manager.always_owner.last",
+     "0074eff4"
+    ],
+    [
+     "intro_10.lvl",
+     5480600,
+     4,
+     "e9f3440e5518839aa600db07b5400f8ec287ce0321fad602afd103ce447a1c98",
+     "intro_10:insert-gensound-manager.always_owner.count",
+     "00000012"
+    ],
+    [
+     "intro_10.lvl",
+     5488360,
+     4,
+     "4531a8449e27ede22ad9ad0775ba421ef0f110d315a8133bf8f34ef94f4f9375",
+     "intro_10:insert-gensound-manager.next.previous",
+     "0074e90c"
+    ],
+    [
+     "intro_10.lvl",
+     5489668,
+     4,
+     "4531a8449e27ede22ad9ad0775ba421ef0f110d315a8133bf8f34ef94f4f9375",
+     "intro_10:insert-gensound-manager.source.next",
+     "0074e90c"
+    ],
+    [
+     "intro_10.lvl",
+     5921236,
+     4,
+     "b751033ae9b182274f515836c66795b3b742dbbd1c1f32139189d03cb281ecb3",
+     "intro_10:insert-gensound-manager.backups.old_last.next",
+     "0074ef5c"
+    ],
+    [
+     "intro_10.lvl",
+     5927992,
+     4,
+     "3c9d7080cbf7907c4b5279352ba06990b6cdedd481adf59c6ef72ded26f1f6e9",
+     "intro_10:insert-gensound-manager.records.last",
+     "0074ef10"
+    ],
+    [
+     "intro_10.lvl",
+     5927996,
+     4,
+     "ac8380b8f84e1a3864129c0e26c6bdb8f4ea579e00993c13a5b5fce2ba3d13e0",
+     "intro_10:insert-gensound-manager.records.count",
+     "0000007b"
+    ],
+    [
+     "intro_10.lvl",
+     5936712,
+     4,
+     "3c9d7080cbf7907c4b5279352ba06990b6cdedd481adf59c6ef72ded26f1f6e9",
+     "intro_10:insert-gensound-manager.records.old_last.next",
+     "0074ef10"
+    ],
+    [
+     "intro_10.lvl",
+     7661836,
+     1796,
+     "ed150d1932821693d41008bca2ef970027111e9ab84e9915783b364cfa6ce8c5",
+     "intro_10:insert-gensound-manager.appended",
+     null
+    ],
+    [
+     "intro_10.ptr",
+     0,
+     209596,
+     "556dc0865e2cd4645855c09cb34b927d23bf894e9f840f2b2561183b40b2dc3d",
+     "intro_10:insert-gensound-manager.pointer_table",
+     null
+    ],
+    [
+     "transit.lvl",
+     2500,
+     4,
+     "15b165510f75144be8633336a97ac62c664d5c436db297fc13fb4d3ac147d7fd",
+     "intro_10:insert-gensound-manager.transit.world_count",
+     "0000003d"
+    ]
+   ],
+   "info": null,
+   "info_sha256": "a1f8e133d3523c181fe83065e2f5316e15aaf0aee828299e63007973f085e612",
+   "manifest_sha256": "8fd995da66eb4c6d6103750c574b4144c4177da4fd79c3e2b0e9ba6e1feeb187"
+  },
+  "manager.smallriver": {
+   "version": 2,
+   "level": "intro_10",
+   "same_size": [
+    "transit"
+   ],
+   "files": {
+    "lvl": [
+     "intro_10.lvl",
+     7661836,
+     "a37638bf1370357db21f33df5c4d37ae806b3c4b9f81b331503ba62d1b19e2ee"
+    ],
+    "ptr": [
+     "intro_10.ptr",
+     209068,
+     "6c9dd70c488a1cac95efc0a55a6086255dae2d851bacd93f5abefdcc8200e940"
+    ],
+    "transit": [
+     "transit.lvl",
+     41508,
+     "d300ba3a4a3c03cec6a73eb9da8a8d820fcc3a669591e976b357e804315bf275"
+    ]
+   },
+   "images": {
+    "lvl": {
+     "size": 7663632,
+     "sha256": "7f6402c6a43f4f5241625c24b1430a059398a73604978020fe6062b4e292e83c"
+    },
+    "ptr": {
+     "size": 209596,
+     "sha256": "556dc0865e2cd4645855c09cb34b927d23bf894e9f840f2b2561183b40b2dc3d"
+    },
+    "transit": {
+     "size": 41508,
+     "sha256": "321de2e4be2077720e8a6cc6660ff373bcabaed6c5089989a1ed594aa370c34e"
+    }
+   },
+   "relocations": {
+    "original": 25143,
+    "added_count": 66,
+    "added_sha256": "d92e39958e9b9749d0da75e9633e89a8d3c781e81f506cd815f760cc21e908a0"
+   },
+   "ranges": [
+    [
+     "intro_10.lvl",
+     7288,
+     4,
+     "b0e5ffdab8628d908aed7ee8879c26d723771e9e71bb450cb035fe56e7a3a586",
+     "intro_10:insert-gensound-manager.personal.last",
+     "0074eee0"
+    ],
+    [
+     "intro_10.lvl",
+     7292,
+     4,
+     "514970ce425bbbe11b969e5cd683f4c1b7722f7f026b45006c53a8031b2fc32e",
+     "intro_10:insert-gensound-manager.personal.count",
+     "00000046"
+    ],
+    [
+     "intro_10.lvl",
+     7340,
+     4,
+     "4664b0a4e7981ca8f66ca11fc997244b0913882d2d76c5d36187b7fe0602fe0c",
+     "intro_10:insert-gensound-manager.always.last",
+     "0074eff4"
+    ],
+    [
+     "intro_10.lvl",
+     7344,
+     4,
+     "e9f3440e5518839aa600db07b5400f8ec287ce0321fad602afd103ce447a1c98",
+     "intro_10:insert-gensound-manager.always.count",
+     "00000012"
+    ],
+    [
+     "intro_10.lvl",
+     7408,
+     4,
+     "a22f4c781a9de4f96e6e1e49b12d880ae9ef8dfcd18e2f756dff17bdc7418eec",
+     "intro_10:insert-gensound-manager.backups.last",
+     "0074ef8c"
+    ],
+    [
+     "intro_10.lvl",
+     5477152,
+     4,
+     "b0e5ffdab8628d908aed7ee8879c26d723771e9e71bb450cb035fe56e7a3a586",
+     "intro_10:insert-gensound-manager.personal.old_last.next",
+     "0074eee0"
+    ],
+    [
+     "intro_10.lvl",
+     5480572,
+     4,
+     "4664b0a4e7981ca8f66ca11fc997244b0913882d2d76c5d36187b7fe0602fe0c",
+     "intro_10:insert-gensound-manager.always.old_last.next",
+     "0074eff4"
+    ],
+    [
+     "intro_10.lvl",
+     5480596,
+     4,
+     "4664b0a4e7981ca8f66ca11fc997244b0913882d2d76c5d36187b7fe0602fe0c",
+     "intro_10:insert-gensound-manager.always_owner.last",
+     "0074eff4"
+    ],
+    [
+     "intro_10.lvl",
+     5480600,
+     4,
+     "e9f3440e5518839aa600db07b5400f8ec287ce0321fad602afd103ce447a1c98",
+     "intro_10:insert-gensound-manager.always_owner.count",
+     "00000012"
+    ],
+    [
+     "intro_10.lvl",
+     5488360,
+     4,
+     "4531a8449e27ede22ad9ad0775ba421ef0f110d315a8133bf8f34ef94f4f9375",
+     "intro_10:insert-gensound-manager.next.previous",
+     "0074e90c"
+    ],
+    [
+     "intro_10.lvl",
+     5489668,
+     4,
+     "4531a8449e27ede22ad9ad0775ba421ef0f110d315a8133bf8f34ef94f4f9375",
+     "intro_10:insert-gensound-manager.source.next",
+     "0074e90c"
+    ],
+    [
+     "intro_10.lvl",
+     5921236,
+     4,
+     "b751033ae9b182274f515836c66795b3b742dbbd1c1f32139189d03cb281ecb3",
+     "intro_10:insert-gensound-manager.backups.old_last.next",
+     "0074ef5c"
+    ],
+    [
+     "intro_10.lvl",
+     5927992,
+     4,
+     "3c9d7080cbf7907c4b5279352ba06990b6cdedd481adf59c6ef72ded26f1f6e9",
+     "intro_10:insert-gensound-manager.records.last",
+     "0074ef10"
+    ],
+    [
+     "intro_10.lvl",
+     5927996,
+     4,
+     "ac8380b8f84e1a3864129c0e26c6bdb8f4ea579e00993c13a5b5fce2ba3d13e0",
+     "intro_10:insert-gensound-manager.records.count",
+     "0000007b"
+    ],
+    [
+     "intro_10.lvl",
+     5936712,
+     4,
+     "3c9d7080cbf7907c4b5279352ba06990b6cdedd481adf59c6ef72ded26f1f6e9",
+     "intro_10:insert-gensound-manager.records.old_last.next",
+     "0074ef10"
+    ],
+    [
+     "intro_10.lvl",
+     7661836,
+     1796,
+     "b188caccbf45fa05c637736027992aa6b26e56c34566511e0113a9bdcdb7f178",
+     "intro_10:insert-gensound-manager.appended",
+     null
+    ],
+    [
+     "intro_10.ptr",
+     0,
+     209596,
+     "556dc0865e2cd4645855c09cb34b927d23bf894e9f840f2b2561183b40b2dc3d",
+     "intro_10:insert-gensound-manager.pointer_table",
+     null
+    ],
+    [
+     "transit.lvl",
+     2500,
+     4,
+     "15b165510f75144be8633336a97ac62c664d5c436db297fc13fb4d3ac147d7fd",
+     "intro_10:insert-gensound-manager.transit.world_count",
+     "0000003d"
+    ]
+   ],
+   "info": null,
+   "info_sha256": "a4e547777fc14eef35dd21b1d64928fffcac2439cc99e6e2f080534fe31f3f14",
+   "manifest_sha256": "94560a927e7721bf73b0cd1ec387c6bd7dafe11c46021f102cca42b3ba0d07b3"
+  }
+ },
+ "plans": {
+  "lum.beside_source": {
+   "active": [
+    "g6p1.lum"
+   ],
+   "codes": [
+    null
+   ],
+   "plan_sha256_normalized": "be508dd38a2c0824b12df068eedc1893c48573ec1398e538933ebccc3f8ea421",
+   "plan_terminated": true,
+   "txs": [
+    "level-tx 2 intro_10 g6p1.lum 9d5be7c629f3c722"
+   ],
+   "mods": [
+    "mod g6p1.lum 1.0.0"
+   ],
+   "gameplay": [
+    "gameplay g6p1.lum"
+   ],
+   "tx_id_recomputed": "9d5be7c629f3c722",
+   "ranges": [
+    "range 0 7288 4 7cc01b7e055bb5ab 8a70d87e9e714350 g6p1.lum blob:4ff4a9495af2bf7eddf1fffc0a812e7e3147eae79c8c69865ee5c5ee5c523733",
+    "range 0 7292 4 4d25b17f9dce7836 4d25b07f9dce7683 g6p1.lum blob:514970ce425bbbe11b969e5cd683f4c1b7722f7f026b45006c53a8031b2fc32e",
+    "range 0 7408 4 4062727de33ebda6 8a7b727e9e7a9d83 g6p1.lum blob:3be4ea87d0e6d2f5bfb9a701071d30292912c17700b1bcc5e0353d2d075e5a9c",
+    "range 0 5477152 4 4d25767f9dce13f5 8a70d87e9e714350 g6p1.lum blob:4ff4a9495af2bf7eddf1fffc0a812e7e3147eae79c8c69865ee5c5ee5c523733",
+    "range 0 5544516 4 7735aa7e031aee5b 8a63807e9e66236c g6p1.lum blob:4531a8449e27ede22ad9ad0775ba421ef0f110d315a8133bf8f34ef94f4f9375",
+    "range 0 5545728 4 7727e27e030f1027 8a63807e9e66236c g6p1.lum blob:4531a8449e27ede22ad9ad0775ba421ef0f110d315a8133bf8f34ef94f4f9375",
+    "range 0 5921236 4 4d25767f9dce13f5 8a7b727e9e7a9d83 g6p1.lum blob:3be4ea87d0e6d2f5bfb9a701071d30292912c17700b1bcc5e0353d2d075e5a9c",
+    "range 0 5927992 4 3f92387de28d0bdd 8a70ac7e9e70f88c g6p1.lum blob:40ad53722ba9538a4cb793c21351618b68b62ac59833733ceed12b3bdcb1da37",
+    "range 0 5927996 4 4d258c7f9dce3957 4d258b7f9dce37a4 g6p1.lum blob:ac8380b8f84e1a3864129c0e26c6bdb8f4ea579e00993c13a5b5fce2ba3d13e0",
+    "range 0 5936712 4 4d25767f9dce13f5 8a70ac7e9e70f88c g6p1.lum blob:40ad53722ba9538a4cb793c21351618b68b62ac59833733ceed12b3bdcb1da37",
+    "range 0 7661836 1444 cbf29ce484222325 1fa196660066b153 g6p1.lum blob:e78965f9c977d2a3fb7309684918b6a52f8cb8923e10aaf34d37ac19f30b0d73",
+    "range 1 0 209388 744dddc6c7d81e7b e728b3f2447b944d g6p1.lum blob:09d81158842462166a202b29ec07f159b792b6b8945ae1ed60d9a202a2907ce5",
+    "range 2 2500 4 4d254a7f9dcdc931 4d25497f9dcdc77e g6p1.lum blob:15b165510f75144be8633336a97ac62c664d5c436db297fc13fb4d3ac147d7fd"
+   ],
+   "files": [
+    "file 7661836 <GAME>\\GAMEDATAbin\\intro_10\\intro_10.lvl",
+    "tx-file 0 lvl a37638bf1370357db21f33df5c4d37ae806b3c4b9f81b331503ba62d1b19e2ee 7663280 f0655209507d60d384f48ee5f4083d8d68778ed5511768761421a7a94868af93",
+    "file 209068 <GAME>\\GAMEDATAbin\\intro_10\\intro_10.ptr",
+    "tx-file 1 ptr 6c9dd70c488a1cac95efc0a55a6086255dae2d851bacd93f5abefdcc8200e940 209388 09d81158842462166a202b29ec07f159b792b6b8945ae1ed60d9a202a2907ce5",
+    "file 41508 <GAME>\\GAMEDATAbin\\intro_10\\transit.lvl",
+    "tx-file 2 transit d300ba3a4a3c03cec6a73eb9da8a8d820fcc3a669591e976b357e804315bf275 41508 321de2e4be2077720e8a6cc6660ff373bcabaed6c5089989a1ed594aa370c34e",
+    "end 3 13"
+   ]
+  },
+  "lum.flight_path": {
+   "active": [
+    "g6p1.lum"
+   ],
+   "codes": [
+    null
+   ],
+   "plan_sha256_normalized": "8a5378ea945a53a396247d9f56d4958f1f0fe0b531754d24f4c581a57ebf322c",
+   "plan_terminated": true,
+   "txs": [
+    "level-tx 2 intro_10 g6p1.lum ccb07d2f770147cb"
+   ],
+   "mods": [
+    "mod g6p1.lum 1.0.0"
+   ],
+   "gameplay": [
+    "gameplay g6p1.lum"
+   ],
+   "tx_id_recomputed": "ccb07d2f770147cb",
+   "ranges": [
+    "range 0 7288 4 7cc01b7e055bb5ab 8a70d87e9e714350 g6p1.lum blob:4ff4a9495af2bf7eddf1fffc0a812e7e3147eae79c8c69865ee5c5ee5c523733",
+    "range 0 7292 4 4d25b17f9dce7836 4d25b07f9dce7683 g6p1.lum blob:514970ce425bbbe11b969e5cd683f4c1b7722f7f026b45006c53a8031b2fc32e",
+    "range 0 7408 4 4062727de33ebda6 8a7b727e9e7a9d83 g6p1.lum blob:3be4ea87d0e6d2f5bfb9a701071d30292912c17700b1bcc5e0353d2d075e5a9c",
+    "range 0 5477152 4 4d25767f9dce13f5 8a70d87e9e714350 g6p1.lum blob:4ff4a9495af2bf7eddf1fffc0a812e7e3147eae79c8c69865ee5c5ee5c523733",
+    "range 0 5544516 4 7735aa7e031aee5b 8a63807e9e66236c g6p1.lum blob:4531a8449e27ede22ad9ad0775ba421ef0f110d315a8133bf8f34ef94f4f9375",
+    "range 0 5545728 4 7727e27e030f1027 8a63807e9e66236c g6p1.lum blob:4531a8449e27ede22ad9ad0775ba421ef0f110d315a8133bf8f34ef94f4f9375",
+    "range 0 5921236 4 4d25767f9dce13f5 8a7b727e9e7a9d83 g6p1.lum blob:3be4ea87d0e6d2f5bfb9a701071d30292912c17700b1bcc5e0353d2d075e5a9c",
+    "range 0 5927992 4 3f92387de28d0bdd 8a70ac7e9e70f88c g6p1.lum blob:40ad53722ba9538a4cb793c21351618b68b62ac59833733ceed12b3bdcb1da37",
+    "range 0 5927996 4 4d258c7f9dce3957 4d258b7f9dce37a4 g6p1.lum blob:ac8380b8f84e1a3864129c0e26c6bdb8f4ea579e00993c13a5b5fce2ba3d13e0",
+    "range 0 5936712 4 4d25767f9dce13f5 8a70ac7e9e70f88c g6p1.lum blob:40ad53722ba9538a4cb793c21351618b68b62ac59833733ceed12b3bdcb1da37",
+    "range 0 7661836 1444 cbf29ce484222325 7383bc7848c57045 g6p1.lum blob:03b7b800da205254d0eb3f62370089e133d557f666dedaf607e20c9fe1fc3898",
+    "range 1 0 209388 744dddc6c7d81e7b e728b3f2447b944d g6p1.lum blob:09d81158842462166a202b29ec07f159b792b6b8945ae1ed60d9a202a2907ce5",
+    "range 2 2500 4 4d254a7f9dcdc931 4d25497f9dcdc77e g6p1.lum blob:15b165510f75144be8633336a97ac62c664d5c436db297fc13fb4d3ac147d7fd"
+   ],
+   "files": [
+    "file 7661836 <GAME>\\GAMEDATAbin\\intro_10\\intro_10.lvl",
+    "tx-file 0 lvl a37638bf1370357db21f33df5c4d37ae806b3c4b9f81b331503ba62d1b19e2ee 7663280 cbf9fce38e8735c39f4190f0bf833dfa87785f2b9ab0c95a0c9902e0217eaf2c",
+    "file 209068 <GAME>\\GAMEDATAbin\\intro_10\\intro_10.ptr",
+    "tx-file 1 ptr 6c9dd70c488a1cac95efc0a55a6086255dae2d851bacd93f5abefdcc8200e940 209388 09d81158842462166a202b29ec07f159b792b6b8945ae1ed60d9a202a2907ce5",
+    "file 41508 <GAME>\\GAMEDATAbin\\intro_10\\transit.lvl",
+    "tx-file 2 transit d300ba3a4a3c03cec6a73eb9da8a8d820fcc3a669591e976b357e804315bf275 41508 321de2e4be2077720e8a6cc6660ff373bcabaed6c5089989a1ed594aa370c34e",
+    "end 3 13"
+   ]
+  },
+  "lum.exit": {
+   "active": [
+    "g6p1.lum",
+    "g6p1.gen5"
+   ],
+   "codes": [
+    null,
+    null
+   ],
+   "plan_sha256_normalized": "db9baeadfc69a897b32b54f7668f33add48d23cd9bab3be957cb946e81e82da3",
+   "plan_terminated": true,
+   "txs": [
+    "level-tx 2 intro_10 g6p1.lum ccb07d2f770147cb"
+   ],
+   "mods": [
+    "mod g6p1.lum 1.0.0",
+    "mod g6p1.gen5 1.0.0"
+   ],
+   "gameplay": [
+    "gameplay g6p1.lum",
+    "gameplay g6p1.gen5"
+   ],
+   "tx_id_recomputed": "ccb07d2f770147cb",
+   "ranges": [
+    "range 0 7288 4 7cc01b7e055bb5ab 8a70d87e9e714350 g6p1.lum blob:4ff4a9495af2bf7eddf1fffc0a812e7e3147eae79c8c69865ee5c5ee5c523733",
+    "range 0 7292 4 4d25b17f9dce7836 4d25b07f9dce7683 g6p1.lum blob:514970ce425bbbe11b969e5cd683f4c1b7722f7f026b45006c53a8031b2fc32e",
+    "range 0 7408 4 4062727de33ebda6 8a7b727e9e7a9d83 g6p1.lum blob:3be4ea87d0e6d2f5bfb9a701071d30292912c17700b1bcc5e0353d2d075e5a9c",
+    "range 0 5477152 4 4d25767f9dce13f5 8a70d87e9e714350 g6p1.lum blob:4ff4a9495af2bf7eddf1fffc0a812e7e3147eae79c8c69865ee5c5ee5c523733",
+    "range 0 5544516 4 7735aa7e031aee5b 8a63807e9e66236c g6p1.lum blob:4531a8449e27ede22ad9ad0775ba421ef0f110d315a8133bf8f34ef94f4f9375",
+    "range 0 5545728 4 7727e27e030f1027 8a63807e9e66236c g6p1.lum blob:4531a8449e27ede22ad9ad0775ba421ef0f110d315a8133bf8f34ef94f4f9375",
+    "range 0 5921236 4 4d25767f9dce13f5 8a7b727e9e7a9d83 g6p1.lum blob:3be4ea87d0e6d2f5bfb9a701071d30292912c17700b1bcc5e0353d2d075e5a9c",
+    "range 0 5927992 4 3f92387de28d0bdd 8a70ac7e9e70f88c g6p1.lum blob:40ad53722ba9538a4cb793c21351618b68b62ac59833733ceed12b3bdcb1da37",
+    "range 0 5927996 4 4d258c7f9dce3957 4d258b7f9dce37a4 g6p1.lum blob:ac8380b8f84e1a3864129c0e26c6bdb8f4ea579e00993c13a5b5fce2ba3d13e0",
+    "range 0 5936712 4 4d25767f9dce13f5 8a70ac7e9e70f88c g6p1.lum blob:40ad53722ba9538a4cb793c21351618b68b62ac59833733ceed12b3bdcb1da37",
+    "range 0 7661836 1444 cbf29ce484222325 7383bc7848c57045 g6p1.lum blob:03b7b800da205254d0eb3f62370089e133d557f666dedaf607e20c9fe1fc3898",
+    "range 1 0 209388 744dddc6c7d81e7b e728b3f2447b944d g6p1.lum blob:09d81158842462166a202b29ec07f159b792b6b8945ae1ed60d9a202a2907ce5",
+    "range 2 2500 4 4d254a7f9dcdc931 4d25497f9dcdc77e g6p1.lum blob:15b165510f75144be8633336a97ac62c664d5c436db297fc13fb4d3ac147d7fd",
+    "range 0 5514388 1 af63bd4c8601b7df af63b84c8601af60 g6p1.gen5 blob:e77b9a9ae9e30b0dbdb6f510a264ef9de781501d7b6b92ae89eb059c5ab743db",
+    "range 0 5527816 1 af63bd4c8601b7df af63b84c8601af60 g6p1.gen5 blob:e77b9a9ae9e30b0dbdb6f510a264ef9de781501d7b6b92ae89eb059c5ab743db"
+   ],
+   "files": [
+    "file 7661836 <GAME>\\GAMEDATAbin\\intro_10\\intro_10.lvl",
+    "tx-file 0 lvl a37638bf1370357db21f33df5c4d37ae806b3c4b9f81b331503ba62d1b19e2ee 7663280 cbf9fce38e8735c39f4190f0bf833dfa87785f2b9ab0c95a0c9902e0217eaf2c",
+    "file 209068 <GAME>\\GAMEDATAbin\\intro_10\\intro_10.ptr",
+    "tx-file 1 ptr 6c9dd70c488a1cac95efc0a55a6086255dae2d851bacd93f5abefdcc8200e940 209388 09d81158842462166a202b29ec07f159b792b6b8945ae1ed60d9a202a2907ce5",
+    "file 41508 <GAME>\\GAMEDATAbin\\intro_10\\transit.lvl",
+    "tx-file 2 transit d300ba3a4a3c03cec6a73eb9da8a8d820fcc3a669591e976b357e804315bf275 41508 321de2e4be2077720e8a6cc6660ff373bcabaed6c5089989a1ed594aa370c34e",
+    "end 3 15"
+   ]
+  },
+  "frog.500": {
+   "active": [
+    "g6p2.frog"
+   ],
+   "codes": [
+    null
+   ],
+   "plan_sha256_normalized": "6b7ddb2d6d363cfb14e7ca76a86165ea760a7781dbac0d2167d2feabbf488744",
+   "plan_terminated": true,
+   "txs": [
+    "level-tx 2 intro_10 g6p2.frog e3ae1bf9c342f6a4"
+   ],
+   "mods": [
+    "mod g6p2.frog 1.0.0"
+   ],
+   "gameplay": [
+    "gameplay g6p2.frog"
+   ],
+   "tx_id_recomputed": "e3ae1bf9c342f6a4",
+   "ranges": [
+    "range 0 7288 4 7cc01b7e055bb5ab 8a7b627e9e7a8253 g6p2.frog blob:cab664c00c5dcae7650f1ba5953d7a3b800606afcce7fec0cda29ddcc027a796",
+    "range 0 7292 4 4d25b17f9dce7836 4d25b07f9dce7683 g6p2.frog blob:514970ce425bbbe11b969e5cd683f4c1b7722f7f026b45006c53a8031b2fc32e",
+    "range 0 7340 4 7c133d7e04c9399c 8a781c7e9e77d58a g6p2.frog blob:c2a00ee3296444d37f0c8c00498f3e1070846979d85c35dd03ddb99af5a88860",
+    "range 0 7344 4 4d25657f9dcdf712 4d25647f9dcdf55f g6p2.frog blob:e9f3440e5518839aa600db07b5400f8ec287ce0321fad602afd103ce447a1c98",
+    "range 0 7392 4 4d22627f9dcbbc22 4d226a7f9dcbc9ba g6p2.frog blob:80b698214ee7fa08692e340baae2bfeae6711d6f7aadd001e85736cbdc221803",
+    "range 0 7400 4 40ace67de37dbb3c 8a78407e9e7812b6 g6p2.frog blob:4cf1f6fde7928a9b07c71acdd3e1c2f84878fd418730b8a035ab3c7b859600af",
+    "range 0 7408 4 4062727de33ebda6 8a7aa27e9e793c13 g6p2.frog blob:28f2ddf8f833934c7df732d5368ba4b5ad2616369729551b5c66f81a68c2db94",
+    "range 0 5477152 4 4d25767f9dce13f5 8a7b627e9e7a8253 g6p2.frog blob:cab664c00c5dcae7650f1ba5953d7a3b800606afcce7fec0cda29ddcc027a796",
+    "range 0 5480572 4 4d25767f9dce13f5 8a781c7e9e77d58a g6p2.frog blob:c2a00ee3296444d37f0c8c00498f3e1070846979d85c35dd03ddb99af5a88860",
+    "range 0 5480596 4 7c133d7e04c9399c 8a781c7e9e77d58a g6p2.frog blob:c2a00ee3296444d37f0c8c00498f3e1070846979d85c35dd03ddb99af5a88860",
+    "range 0 5480600 4 4d25657f9dcdf712 4d25647f9dcdf55f g6p2.frog blob:e9f3440e5518839aa600db07b5400f8ec287ce0321fad602afd103ce447a1c98",
+    "range 0 5487048 4 7c5ccd7e0506b3c6 8a63807e9e66236c g6p2.frog blob:4531a8449e27ede22ad9ad0775ba421ef0f110d315a8133bf8f34ef94f4f9375",
+    "range 0 5488356 4 7c686f7e0511ce91 8a63807e9e66236c g6p2.frog blob:4531a8449e27ede22ad9ad0775ba421ef0f110d315a8133bf8f34ef94f4f9375",
+    "range 0 5921236 4 4d25767f9dce13f5 8a7aea7e9e79b66b g6p2.frog blob:2646ac2b10821d6a0a9cd67cc0c8b025ab1c232382e8d988697597d39d229633",
+    "range 0 5927992 4 3f92387de28d0bdd 8a7b167e9e7a012f g6p2.frog blob:80199ccb90a69f4e7ff851e8a7cbf70a29dabda4138b2cbea43c2598f17c8e85",
+    "range 0 5927996 4 4d258c7f9dce3957 4d258b7f9dce37a4 g6p2.frog blob:ac8380b8f84e1a3864129c0e26c6bdb8f4ea579e00993c13a5b5fce2ba3d13e0",
+    "range 0 5936712 4 4d25767f9dce13f5 8a7b167e9e7a012f g6p2.frog blob:80199ccb90a69f4e7ff851e8a7cbf70a29dabda4138b2cbea43c2598f17c8e85",
+    "range 0 7661836 3028 cbf29ce484222325 51a545d195d1301d g6p2.frog blob:a62c768b3f7341d5c4628bc873a3859933191b7dda0e5465905eb382de41b465",
+    "range 1 0 209500 744dddc6c7d81e7b 01895d5207ac3b80 g6p2.frog blob:134e861c641cf8d24e175e56d5092f08b860ca8791374213f913d4e16a4a1e77",
+    "range 2 2500 4 4d254a7f9dcdc931 4d25497f9dcdc77e g6p2.frog blob:15b165510f75144be8633336a97ac62c664d5c436db297fc13fb4d3ac147d7fd"
+   ],
+   "files": [
+    "file 7661836 <GAME>\\GAMEDATAbin\\intro_10\\intro_10.lvl",
+    "tx-file 0 lvl a37638bf1370357db21f33df5c4d37ae806b3c4b9f81b331503ba62d1b19e2ee 7664864 12e5f919d632c433c70aaed8c565542efc3859b81d8f20433f906e8561e89641",
+    "file 209068 <GAME>\\GAMEDATAbin\\intro_10\\intro_10.ptr",
+    "tx-file 1 ptr 6c9dd70c488a1cac95efc0a55a6086255dae2d851bacd93f5abefdcc8200e940 209500 134e861c641cf8d24e175e56d5092f08b860ca8791374213f913d4e16a4a1e77",
+    "file 41508 <GAME>\\GAMEDATAbin\\intro_10\\transit.lvl",
+    "tx-file 2 transit d300ba3a4a3c03cec6a73eb9da8a8d820fcc3a669591e976b357e804315bf275 41508 321de2e4be2077720e8a6cc6660ff373bcabaed6c5089989a1ed594aa370c34e",
+    "end 3 20"
+   ]
+  },
+  "frog.2000": {
+   "active": [
+    "g6p2.frog"
+   ],
+   "codes": [
+    null
+   ],
+   "plan_sha256_normalized": "e0750661878c4dcd668d8859fa5728132ef655cb1dc2c6ae3e52044c87fe6d82",
+   "plan_terminated": true,
+   "txs": [
+    "level-tx 2 intro_10 g6p2.frog 722eeed199233842"
+   ],
+   "mods": [
+    "mod g6p2.frog 1.0.0"
+   ],
+   "gameplay": [
+    "gameplay g6p2.frog"
+   ],
+   "tx_id_recomputed": "722eeed199233842",
+   "ranges": [
+    "range 0 7288 4 7cc01b7e055bb5ab 8a7b627e9e7a8253 g6p2.frog blob:cab664c00c5dcae7650f1ba5953d7a3b800606afcce7fec0cda29ddcc027a796",
+    "range 0 7292 4 4d25b17f9dce7836 4d25b07f9dce7683 g6p2.frog blob:514970ce425bbbe11b969e5cd683f4c1b7722f7f026b45006c53a8031b2fc32e",
+    "range 0 7340 4 7c133d7e04c9399c 8a781c7e9e77d58a g6p2.frog blob:c2a00ee3296444d37f0c8c00498f3e1070846979d85c35dd03ddb99af5a88860",
+    "range 0 7344 4 4d25657f9dcdf712 4d25647f9dcdf55f g6p2.frog blob:e9f3440e5518839aa600db07b5400f8ec287ce0321fad602afd103ce447a1c98",
+    "range 0 7392 4 4d22627f9dcbbc22 4d226a7f9dcbc9ba g6p2.frog blob:80b698214ee7fa08692e340baae2bfeae6711d6f7aadd001e85736cbdc221803",
+    "range 0 7400 4 40ace67de37dbb3c 8a78407e9e7812b6 g6p2.frog blob:4cf1f6fde7928a9b07c71acdd3e1c2f84878fd418730b8a035ab3c7b859600af",
+    "range 0 7408 4 4062727de33ebda6 8a7aa27e9e793c13 g6p2.frog blob:28f2ddf8f833934c7df732d5368ba4b5ad2616369729551b5c66f81a68c2db94",
+    "range 0 5477152 4 4d25767f9dce13f5 8a7b627e9e7a8253 g6p2.frog blob:cab664c00c5dcae7650f1ba5953d7a3b800606afcce7fec0cda29ddcc027a796",
+    "range 0 5480572 4 4d25767f9dce13f5 8a781c7e9e77d58a g6p2.frog blob:c2a00ee3296444d37f0c8c00498f3e1070846979d85c35dd03ddb99af5a88860",
+    "range 0 5480596 4 7c133d7e04c9399c 8a781c7e9e77d58a g6p2.frog blob:c2a00ee3296444d37f0c8c00498f3e1070846979d85c35dd03ddb99af5a88860",
+    "range 0 5480600 4 4d25657f9dcdf712 4d25647f9dcdf55f g6p2.frog blob:e9f3440e5518839aa600db07b5400f8ec287ce0321fad602afd103ce447a1c98",
+    "range 0 5487048 4 7c5ccd7e0506b3c6 8a63807e9e66236c g6p2.frog blob:4531a8449e27ede22ad9ad0775ba421ef0f110d315a8133bf8f34ef94f4f9375",
+    "range 0 5488356 4 7c686f7e0511ce91 8a63807e9e66236c g6p2.frog blob:4531a8449e27ede22ad9ad0775ba421ef0f110d315a8133bf8f34ef94f4f9375",
+    "range 0 5921236 4 4d25767f9dce13f5 8a7aea7e9e79b66b g6p2.frog blob:2646ac2b10821d6a0a9cd67cc0c8b025ab1c232382e8d988697597d39d229633",
+    "range 0 5927992 4 3f92387de28d0bdd 8a7b167e9e7a012f g6p2.frog blob:80199ccb90a69f4e7ff851e8a7cbf70a29dabda4138b2cbea43c2598f17c8e85",
+    "range 0 5927996 4 4d258c7f9dce3957 4d258b7f9dce37a4 g6p2.frog blob:ac8380b8f84e1a3864129c0e26c6bdb8f4ea579e00993c13a5b5fce2ba3d13e0",
+    "range 0 5936712 4 4d25767f9dce13f5 8a7b167e9e7a012f g6p2.frog blob:80199ccb90a69f4e7ff851e8a7cbf70a29dabda4138b2cbea43c2598f17c8e85",
+    "range 0 7661836 3028 cbf29ce484222325 2ff0164b5e389cf9 g6p2.frog blob:9523d25230a592c13b090ba079926b117b1d412ff828d380a18bd0a1f53fc6e6",
+    "range 1 0 209500 744dddc6c7d81e7b 01895d5207ac3b80 g6p2.frog blob:134e861c641cf8d24e175e56d5092f08b860ca8791374213f913d4e16a4a1e77",
+    "range 2 2500 4 4d254a7f9dcdc931 4d25497f9dcdc77e g6p2.frog blob:15b165510f75144be8633336a97ac62c664d5c436db297fc13fb4d3ac147d7fd"
+   ],
+   "files": [
+    "file 7661836 <GAME>\\GAMEDATAbin\\intro_10\\intro_10.lvl",
+    "tx-file 0 lvl a37638bf1370357db21f33df5c4d37ae806b3c4b9f81b331503ba62d1b19e2ee 7664864 bf36156c9eb4087bdee3fe572e02e189f0b48973895da3a3edba68e4b14182f4",
+    "file 209068 <GAME>\\GAMEDATAbin\\intro_10\\intro_10.ptr",
+    "tx-file 1 ptr 6c9dd70c488a1cac95efc0a55a6086255dae2d851bacd93f5abefdcc8200e940 209500 134e861c641cf8d24e175e56d5092f08b860ca8791374213f913d4e16a4a1e77",
+    "file 41508 <GAME>\\GAMEDATAbin\\intro_10\\transit.lvl",
+    "tx-file 2 transit d300ba3a4a3c03cec6a73eb9da8a8d820fcc3a669591e976b357e804315bf275 41508 321de2e4be2077720e8a6cc6660ff373bcabaed6c5089989a1ed594aa370c34e",
+    "end 3 20"
+   ]
+  },
+  "frog.exit": {
+   "active": [
+    "g6p2.frog",
+    "e478.lums-6"
+   ],
+   "codes": [
+    null,
+    null
+   ],
+   "plan_sha256_normalized": "a14e886432135f24e49c81493f034529177dab32ebcd8fcfdc3127dc6cd55244",
+   "plan_terminated": true,
+   "txs": [
+    "level-tx 2 intro_10 g6p2.frog 722eeed199233842"
+   ],
+   "mods": [
+    "mod g6p2.frog 1.0.0",
+    "mod e478.lums-6 1.0.0"
+   ],
+   "gameplay": [
+    "gameplay g6p2.frog",
+    "gameplay e478.lums-6"
+   ],
+   "tx_id_recomputed": "722eeed199233842",
+   "ranges": [
+    "range 0 7288 4 7cc01b7e055bb5ab 8a7b627e9e7a8253 g6p2.frog blob:cab664c00c5dcae7650f1ba5953d7a3b800606afcce7fec0cda29ddcc027a796",
+    "range 0 7292 4 4d25b17f9dce7836 4d25b07f9dce7683 g6p2.frog blob:514970ce425bbbe11b969e5cd683f4c1b7722f7f026b45006c53a8031b2fc32e",
+    "range 0 7340 4 7c133d7e04c9399c 8a781c7e9e77d58a g6p2.frog blob:c2a00ee3296444d37f0c8c00498f3e1070846979d85c35dd03ddb99af5a88860",
+    "range 0 7344 4 4d25657f9dcdf712 4d25647f9dcdf55f g6p2.frog blob:e9f3440e5518839aa600db07b5400f8ec287ce0321fad602afd103ce447a1c98",
+    "range 0 7392 4 4d22627f9dcbbc22 4d226a7f9dcbc9ba g6p2.frog blob:80b698214ee7fa08692e340baae2bfeae6711d6f7aadd001e85736cbdc221803",
+    "range 0 7400 4 40ace67de37dbb3c 8a78407e9e7812b6 g6p2.frog blob:4cf1f6fde7928a9b07c71acdd3e1c2f84878fd418730b8a035ab3c7b859600af",
+    "range 0 7408 4 4062727de33ebda6 8a7aa27e9e793c13 g6p2.frog blob:28f2ddf8f833934c7df732d5368ba4b5ad2616369729551b5c66f81a68c2db94",
+    "range 0 5477152 4 4d25767f9dce13f5 8a7b627e9e7a8253 g6p2.frog blob:cab664c00c5dcae7650f1ba5953d7a3b800606afcce7fec0cda29ddcc027a796",
+    "range 0 5480572 4 4d25767f9dce13f5 8a781c7e9e77d58a g6p2.frog blob:c2a00ee3296444d37f0c8c00498f3e1070846979d85c35dd03ddb99af5a88860",
+    "range 0 5480596 4 7c133d7e04c9399c 8a781c7e9e77d58a g6p2.frog blob:c2a00ee3296444d37f0c8c00498f3e1070846979d85c35dd03ddb99af5a88860",
+    "range 0 5480600 4 4d25657f9dcdf712 4d25647f9dcdf55f g6p2.frog blob:e9f3440e5518839aa600db07b5400f8ec287ce0321fad602afd103ce447a1c98",
+    "range 0 5487048 4 7c5ccd7e0506b3c6 8a63807e9e66236c g6p2.frog blob:4531a8449e27ede22ad9ad0775ba421ef0f110d315a8133bf8f34ef94f4f9375",
+    "range 0 5488356 4 7c686f7e0511ce91 8a63807e9e66236c g6p2.frog blob:4531a8449e27ede22ad9ad0775ba421ef0f110d315a8133bf8f34ef94f4f9375",
+    "range 0 5921236 4 4d25767f9dce13f5 8a7aea7e9e79b66b g6p2.frog blob:2646ac2b10821d6a0a9cd67cc0c8b025ab1c232382e8d988697597d39d229633",
+    "range 0 5927992 4 3f92387de28d0bdd 8a7b167e9e7a012f g6p2.frog blob:80199ccb90a69f4e7ff851e8a7cbf70a29dabda4138b2cbea43c2598f17c8e85",
+    "range 0 5927996 4 4d258c7f9dce3957 4d258b7f9dce37a4 g6p2.frog blob:ac8380b8f84e1a3864129c0e26c6bdb8f4ea579e00993c13a5b5fce2ba3d13e0",
+    "range 0 5936712 4 4d25767f9dce13f5 8a7b167e9e7a012f g6p2.frog blob:80199ccb90a69f4e7ff851e8a7cbf70a29dabda4138b2cbea43c2598f17c8e85",
+    "range 0 7661836 3028 cbf29ce484222325 2ff0164b5e389cf9 g6p2.frog blob:9523d25230a592c13b090ba079926b117b1d412ff828d380a18bd0a1f53fc6e6",
+    "range 1 0 209500 744dddc6c7d81e7b 01895d5207ac3b80 g6p2.frog blob:134e861c641cf8d24e175e56d5092f08b860ca8791374213f913d4e16a4a1e77",
+    "range 2 2500 4 4d254a7f9dcdc931 4d25497f9dcdc77e g6p2.frog blob:15b165510f75144be8633336a97ac62c664d5c436db297fc13fb4d3ac147d7fd",
+    "range 0 5514388 1 af63bd4c8601b7df af63bb4c8601b479 e478.lums-6 blob:67586e98fad27da0b9968bc039a1ef34c939b9b8e523a8bef89d478608c5ecf6",
+    "range 0 5527816 1 af63bd4c8601b7df af63bb4c8601b479 e478.lums-6 blob:67586e98fad27da0b9968bc039a1ef34c939b9b8e523a8bef89d478608c5ecf6"
+   ],
+   "files": [
+    "file 7661836 <GAME>\\GAMEDATAbin\\intro_10\\intro_10.lvl",
+    "tx-file 0 lvl a37638bf1370357db21f33df5c4d37ae806b3c4b9f81b331503ba62d1b19e2ee 7664864 bf36156c9eb4087bdee3fe572e02e189f0b48973895da3a3edba68e4b14182f4",
+    "file 209068 <GAME>\\GAMEDATAbin\\intro_10\\intro_10.ptr",
+    "tx-file 1 ptr 6c9dd70c488a1cac95efc0a55a6086255dae2d851bacd93f5abefdcc8200e940 209500 134e861c641cf8d24e175e56d5092f08b860ca8791374213f913d4e16a4a1e77",
+    "file 41508 <GAME>\\GAMEDATAbin\\intro_10\\transit.lvl",
+    "tx-file 2 transit d300ba3a4a3c03cec6a73eb9da8a8d820fcc3a669591e976b357e804315bf275 41508 321de2e4be2077720e8a6cc6660ff373bcabaed6c5089989a1ed594aa370c34e",
+    "end 3 22"
+   ]
+  },
+  "fairy.0": {
+   "active": [
+    "g6p3.fairy-a"
+   ],
+   "codes": [
+    null
+   ],
+   "plan_sha256_normalized": "daebb1eb9b695011ec25f5a29b4c03e9b2f163ca88bd628c75ceda7a827fa386",
+   "plan_terminated": true,
+   "txs": [
+    "level-tx 2 intro_20 g6p3.fairy-a 61d2856da8784deb"
+   ],
+   "mods": [
+    "mod g6p3.fairy-a 1.0.0"
+   ],
+   "gameplay": [
+    "gameplay g6p3.fairy-a"
+   ],
+   "tx_id_recomputed": "61d2856da8784deb",
+   "ranges": [
+    "range 0 7288 4 f2a0d37ffbca8eb6 2593457dd3d3b01f g6p3.fairy-a blob:db4df10d5d81ec744ad6c2c85865265501eca85a747bb5fc9a6bc981544126ea",
+    "range 0 7292 4 4d24f77f9dcd3c28 4d24e67f9dcd1f45 g6p3.fairy-a blob:514dbe30be13c58300858acaab2a7c900d0ff0c385b175ea1c9a0a7eb8991db9",
+    "range 0 7408 4 b562f67fd8ef2ee7 2588bf7dd3ca77e8 g6p3.fairy-a blob:d030b0641fc8057cca9b8e63b53727f78575e6c43f1d1c23d09f9d36ec592588",
+    "range 0 2968640 4 4d25767f9dce13f5 2593457dd3d3b01f g6p3.fairy-a blob:db4df10d5d81ec744ad6c2c85865265501eca85a747bb5fc9a6bc981544126ea",
+    "range 0 3365044 4 bf0e297fdeb1a90e 2620d57dd44af715 g6p3.fairy-a blob:2a4e0cc7dc615a7b784b03813b11ca660ac91c91e73829d7d499939b47682c2d",
+    "range 0 3367684 4 beec397fde94ddd8 2620d57dd44af715 g6p3.fairy-a blob:2a4e0cc7dc615a7b784b03813b11ca660ac91c91e73829d7d499939b47682c2d",
+    "range 0 3421948 4 4d25767f9dce13f5 2588bf7dd3ca77e8 g6p3.fairy-a blob:d030b0641fc8057cca9b8e63b53727f78575e6c43f1d1c23d09f9d36ec592588",
+    "range 0 3434852 4 b741247fda84997c 25887b7dd3ca045c g6p3.fairy-a blob:1583f0c3894ef7122edeca39cbbebe54cb5c2fc9b7dfb65c700c7b8a797c89dd",
+    "range 0 3434856 4 4d25217f9dcd8386 4d25207f9dcd81d3 g6p3.fairy-a blob:ceabc12a7d3fb2521390646d57a3afb50872a6a0c7900329bbd5840a649c3727",
+    "range 0 3450124 4 4d25767f9dce13f5 25887b7dd3ca045c g6p3.fairy-a blob:1583f0c3894ef7122edeca39cbbebe54cb5c2fc9b7dfb65c700c7b8a797c89dd",
+    "range 0 6135684 2892 cbf29ce484222325 fea4bd3de33b1812 g6p3.fairy-a blob:4d3ba233e71700784eaa80a13934ac6ef0caa45cbb91bcad7c9a9f0a4b3d69df",
+    "range 1 0 273948 d45b0a026e3d8cf9 b6c6180ccc57c429 g6p3.fairy-a blob:40934d08eeed74d87eb0dd385d82a7382cce6e2c53166083741be16d5ee8979c",
+    "range 2 2500 4 4d25877f9dce30d8 4d24f67f9dcd3a75 g6p3.fairy-a blob:6d58692645c9d1cfaf13541cbd258f86193ef63c2f1d38f6bbca9617372d7bd6"
+   ],
+   "files": [
+    "file 6135684 <GAME>\\GAMEDATAbin\\intro_20\\intro_20.lvl",
+    "tx-file 0 lvl a21aa7691db4cedb3892e685e5395fd23b530b0bde4d64a09035dfb5f2d0b11f 6138576 bda217f96f41107f4c53e326a9449937867614981dcf82858b57f1e7e57b8a51",
+    "file 273540 <GAME>\\GAMEDATAbin\\intro_20\\intro_20.ptr",
+    "tx-file 1 ptr be90b58a3bfa78d19f3335489edcc79214442d52cbde04c6ad5a465f9fb17cb1 273948 40934d08eeed74d87eb0dd385d82a7382cce6e2c53166083741be16d5ee8979c",
+    "file 26140 <GAME>\\GAMEDATAbin\\intro_20\\transit.lvl",
+    "tx-file 2 transit 51c0fbf1239acd6188316a6d64507761903d5a087df1ea717426d5cb810e6aa8 26140 2be9a434eed49c9625efe0462a67510216813aff7edc3e75e4e083bff3a0a7e4",
+    "end 3 13"
+   ]
+  },
+  "fairy.1": {
+   "active": [
+    "g6p3.fairy-b"
+   ],
+   "codes": [
+    null
+   ],
+   "plan_sha256_normalized": "ac7cef83931f45bffe97afcdcedfcfbe0c62eb5dcad6bde491a684edb67fd4da",
+   "plan_terminated": true,
+   "txs": [
+    "level-tx 2 intro_20 g6p3.fairy-b 2b183f7c52151706"
+   ],
+   "mods": [
+    "mod g6p3.fairy-b 1.0.0"
+   ],
+   "gameplay": [
+    "gameplay g6p3.fairy-b"
+   ],
+   "tx_id_recomputed": "2b183f7c52151706",
+   "ranges": [
+    "range 0 7288 4 f2a0d37ffbca8eb6 2593457dd3d3b01f g6p3.fairy-b blob:db4df10d5d81ec744ad6c2c85865265501eca85a747bb5fc9a6bc981544126ea",
+    "range 0 7292 4 4d24f77f9dcd3c28 4d24e67f9dcd1f45 g6p3.fairy-b blob:514dbe30be13c58300858acaab2a7c900d0ff0c385b175ea1c9a0a7eb8991db9",
+    "range 0 7408 4 b562f67fd8ef2ee7 2588bf7dd3ca77e8 g6p3.fairy-b blob:d030b0641fc8057cca9b8e63b53727f78575e6c43f1d1c23d09f9d36ec592588",
+    "range 0 2968640 4 4d25767f9dce13f5 2593457dd3d3b01f g6p3.fairy-b blob:db4df10d5d81ec744ad6c2c85865265501eca85a747bb5fc9a6bc981544126ea",
+    "range 0 3365044 4 bf0e297fdeb1a90e 2620d57dd44af715 g6p3.fairy-b blob:2a4e0cc7dc615a7b784b03813b11ca660ac91c91e73829d7d499939b47682c2d",
+    "range 0 3367684 4 beec397fde94ddd8 2620d57dd44af715 g6p3.fairy-b blob:2a4e0cc7dc615a7b784b03813b11ca660ac91c91e73829d7d499939b47682c2d",
+    "range 0 3421948 4 4d25767f9dce13f5 2588bf7dd3ca77e8 g6p3.fairy-b blob:d030b0641fc8057cca9b8e63b53727f78575e6c43f1d1c23d09f9d36ec592588",
+    "range 0 3434852 4 b741247fda84997c 25887b7dd3ca045c g6p3.fairy-b blob:1583f0c3894ef7122edeca39cbbebe54cb5c2fc9b7dfb65c700c7b8a797c89dd",
+    "range 0 3434856 4 4d25217f9dcd8386 4d25207f9dcd81d3 g6p3.fairy-b blob:ceabc12a7d3fb2521390646d57a3afb50872a6a0c7900329bbd5840a649c3727",
+    "range 0 3450124 4 4d25767f9dce13f5 25887b7dd3ca045c g6p3.fairy-b blob:1583f0c3894ef7122edeca39cbbebe54cb5c2fc9b7dfb65c700c7b8a797c89dd",
+    "range 0 6135684 2892 cbf29ce484222325 ba30a3f5b6503a66 g6p3.fairy-b blob:245382de0a8c3480f07cf0ec0d097c8e9a668d6907f34a8cfa2fdd61eeacb5fb",
+    "range 1 0 273948 d45b0a026e3d8cf9 b6c6180ccc57c429 g6p3.fairy-b blob:40934d08eeed74d87eb0dd385d82a7382cce6e2c53166083741be16d5ee8979c",
+    "range 2 2500 4 4d25877f9dce30d8 4d24f67f9dcd3a75 g6p3.fairy-b blob:6d58692645c9d1cfaf13541cbd258f86193ef63c2f1d38f6bbca9617372d7bd6"
+   ],
+   "files": [
+    "file 6135684 <GAME>\\GAMEDATAbin\\intro_20\\intro_20.lvl",
+    "tx-file 0 lvl a21aa7691db4cedb3892e685e5395fd23b530b0bde4d64a09035dfb5f2d0b11f 6138576 2fa5d6a77e3764eed08270011adec9f756ad86156e53df70c8b31ba93016d05c",
+    "file 273540 <GAME>\\GAMEDATAbin\\intro_20\\intro_20.ptr",
+    "tx-file 1 ptr be90b58a3bfa78d19f3335489edcc79214442d52cbde04c6ad5a465f9fb17cb1 273948 40934d08eeed74d87eb0dd385d82a7382cce6e2c53166083741be16d5ee8979c",
+    "file 26140 <GAME>\\GAMEDATAbin\\intro_20\\transit.lvl",
+    "tx-file 2 transit 51c0fbf1239acd6188316a6d64507761903d5a087df1ea717426d5cb810e6aa8 26140 2be9a434eed49c9625efe0462a67510216813aff7edc3e75e4e083bff3a0a7e4",
+    "end 3 13"
+   ]
+  },
+  "manager.forest": {
+   "active": [
+    "g6p4.manager-forest"
+   ],
+   "codes": [
+    null
+   ],
+   "plan_sha256_normalized": "652f54c3acd67caa2f58fcf4a4cef4905b488bbb4d7cd0d3aeb15c838c368b49",
+   "plan_terminated": true,
+   "txs": [
+    "level-tx 2 intro_10 g6p4.manager-forest dc5d9dc0cc1906b8"
+   ],
+   "mods": [
+    "mod g6p4.manager-forest 1.0.0"
+   ],
+   "gameplay": [
+    "gameplay g6p4.manager-forest"
+   ],
+   "tx_id_recomputed": "dc5d9dc0cc1906b8",
+   "ranges": [
+    "range 0 7288 4 7cc01b7e055bb5ab 8a7aae7e9e795077 g6p4.manager-forest blob:b0e5ffdab8628d908aed7ee8879c26d723771e9e71bb450cb035fe56e7a3a586",
+    "range 0 7292 4 4d25b17f9dce7836 4d25b07f9dce7683 g6p4.manager-forest blob:514970ce425bbbe11b969e5cd683f4c1b7722f7f026b45006c53a8031b2fc32e",
+    "range 0 7340 4 7c133d7e04c9399c 8a78bc7e9e78e56a g6p4.manager-forest blob:4664b0a4e7981ca8f66ca11fc997244b0913882d2d76c5d36187b7fe0602fe0c",
+    "range 0 7344 4 4d25657f9dcdf712 4d25647f9dcdf55f g6p4.manager-forest blob:e9f3440e5518839aa600db07b5400f8ec287ce0321fad602afd103ce447a1c98",
+    "range 0 7408 4 4062727de33ebda6 8a78647e9e784fe2 g6p4.manager-forest blob:a22f4c781a9de4f96e6e1e49b12d880ae9ef8dfcd18e2f756dff17bdc7418eec",
+    "range 0 5477152 4 4d25767f9dce13f5 8a7aae7e9e795077 g6p4.manager-forest blob:b0e5ffdab8628d908aed7ee8879c26d723771e9e71bb450cb035fe56e7a3a586",
+    "range 0 5480572 4 4d25767f9dce13f5 8a78bc7e9e78e56a g6p4.manager-forest blob:4664b0a4e7981ca8f66ca11fc997244b0913882d2d76c5d36187b7fe0602fe0c",
+    "range 0 5480596 4 7c133d7e04c9399c 8a78bc7e9e78e56a g6p4.manager-forest blob:4664b0a4e7981ca8f66ca11fc997244b0913882d2d76c5d36187b7fe0602fe0c",
+    "range 0 5480600 4 4d25657f9dcdf712 4d25647f9dcdf55f g6p4.manager-forest blob:e9f3440e5518839aa600db07b5400f8ec287ce0321fad602afd103ce447a1c98",
+    "range 0 5488360 4 7bb0ab7e0475772b 8a63807e9e66236c g6p4.manager-forest blob:4531a8449e27ede22ad9ad0775ba421ef0f110d315a8133bf8f34ef94f4f9375",
+    "range 0 5489668 4 7c5ccd7e0506b3c6 8a63807e9e66236c g6p4.manager-forest blob:4531a8449e27ede22ad9ad0775ba421ef0f110d315a8133bf8f34ef94f4f9375",
+    "range 0 5921236 4 4d25767f9dce13f5 8a78147e9e77c7f2 g6p4.manager-forest blob:b751033ae9b182274f515836c66795b3b742dbbd1c1f32139189d03cb281ecb3",
+    "range 0 5927992 4 3f92387de28d0bdd 8a77d87e9e7761fe g6p4.manager-forest blob:3c9d7080cbf7907c4b5279352ba06990b6cdedd481adf59c6ef72ded26f1f6e9",
+    "range 0 5927996 4 4d258c7f9dce3957 4d258b7f9dce37a4 g6p4.manager-forest blob:ac8380b8f84e1a3864129c0e26c6bdb8f4ea579e00993c13a5b5fce2ba3d13e0",
+    "range 0 5936712 4 4d25767f9dce13f5 8a77d87e9e7761fe g6p4.manager-forest blob:3c9d7080cbf7907c4b5279352ba06990b6cdedd481adf59c6ef72ded26f1f6e9",
+    "range 0 7661836 1796 cbf29ce484222325 6e5b9b671cebf3ff g6p4.manager-forest blob:ed150d1932821693d41008bca2ef970027111e9ab84e9915783b364cfa6ce8c5",
+    "range 1 0 209596 744dddc6c7d81e7b b4e773c2cad4cf6a g6p4.manager-forest blob:556dc0865e2cd4645855c09cb34b927d23bf894e9f840f2b2561183b40b2dc3d",
+    "range 2 2500 4 4d254a7f9dcdc931 4d25497f9dcdc77e g6p4.manager-forest blob:15b165510f75144be8633336a97ac62c664d5c436db297fc13fb4d3ac147d7fd"
+   ],
+   "files": [
+    "file 7661836 <GAME>\\GAMEDATAbin\\intro_10\\intro_10.lvl",
+    "tx-file 0 lvl a37638bf1370357db21f33df5c4d37ae806b3c4b9f81b331503ba62d1b19e2ee 7663632 60502987f643ec486f5d42d994674e89d6e66ef1bfe9a5f5e26d8d2cd803c31d",
+    "file 209068 <GAME>\\GAMEDATAbin\\intro_10\\intro_10.ptr",
+    "tx-file 1 ptr 6c9dd70c488a1cac95efc0a55a6086255dae2d851bacd93f5abefdcc8200e940 209596 556dc0865e2cd4645855c09cb34b927d23bf894e9f840f2b2561183b40b2dc3d",
+    "file 41508 <GAME>\\GAMEDATAbin\\intro_10\\transit.lvl",
+    "tx-file 2 transit d300ba3a4a3c03cec6a73eb9da8a8d820fcc3a669591e976b357e804315bf275 41508 321de2e4be2077720e8a6cc6660ff373bcabaed6c5089989a1ed594aa370c34e",
+    "end 3 18"
+   ]
+  },
+  "manager.smallriver": {
+   "active": [
+    "g6p4.manager-smallriver"
+   ],
+   "codes": [
+    null
+   ],
+   "plan_sha256_normalized": "875a4485c45d9cbcff515c2f3719990dd33c5874a149dc286ddc38d6fd46794f",
+   "plan_terminated": true,
+   "txs": [
+    "level-tx 2 intro_10 g6p4.manager-smallriver 3dc2857e8437c117"
+   ],
+   "mods": [
+    "mod g6p4.manager-smallriver 1.0.0"
+   ],
+   "gameplay": [
+    "gameplay g6p4.manager-smallriver"
+   ],
+   "tx_id_recomputed": "3dc2857e8437c117",
+   "ranges": [
+    "range 0 7288 4 7cc01b7e055bb5ab 8a7aae7e9e795077 g6p4.manager-smallriver blob:b0e5ffdab8628d908aed7ee8879c26d723771e9e71bb450cb035fe56e7a3a586",
+    "range 0 7292 4 4d25b17f9dce7836 4d25b07f9dce7683 g6p4.manager-smallriver blob:514970ce425bbbe11b969e5cd683f4c1b7722f7f026b45006c53a8031b2fc32e",
+    "range 0 7340 4 7c133d7e04c9399c 8a78bc7e9e78e56a g6p4.manager-smallriver blob:4664b0a4e7981ca8f66ca11fc997244b0913882d2d76c5d36187b7fe0602fe0c",
+    "range 0 7344 4 4d25657f9dcdf712 4d25647f9dcdf55f g6p4.manager-smallriver blob:e9f3440e5518839aa600db07b5400f8ec287ce0321fad602afd103ce447a1c98",
+    "range 0 7408 4 4062727de33ebda6 8a78647e9e784fe2 g6p4.manager-smallriver blob:a22f4c781a9de4f96e6e1e49b12d880ae9ef8dfcd18e2f756dff17bdc7418eec",
+    "range 0 5477152 4 4d25767f9dce13f5 8a7aae7e9e795077 g6p4.manager-smallriver blob:b0e5ffdab8628d908aed7ee8879c26d723771e9e71bb450cb035fe56e7a3a586",
+    "range 0 5480572 4 4d25767f9dce13f5 8a78bc7e9e78e56a g6p4.manager-smallriver blob:4664b0a4e7981ca8f66ca11fc997244b0913882d2d76c5d36187b7fe0602fe0c",
+    "range 0 5480596 4 7c133d7e04c9399c 8a78bc7e9e78e56a g6p4.manager-smallriver blob:4664b0a4e7981ca8f66ca11fc997244b0913882d2d76c5d36187b7fe0602fe0c",
+    "range 0 5480600 4 4d25657f9dcdf712 4d25647f9dcdf55f g6p4.manager-smallriver blob:e9f3440e5518839aa600db07b5400f8ec287ce0321fad602afd103ce447a1c98",
+    "range 0 5488360 4 7bb0ab7e0475772b 8a63807e9e66236c g6p4.manager-smallriver blob:4531a8449e27ede22ad9ad0775ba421ef0f110d315a8133bf8f34ef94f4f9375",
+    "range 0 5489668 4 7c5ccd7e0506b3c6 8a63807e9e66236c g6p4.manager-smallriver blob:4531a8449e27ede22ad9ad0775ba421ef0f110d315a8133bf8f34ef94f4f9375",
+    "range 0 5921236 4 4d25767f9dce13f5 8a78147e9e77c7f2 g6p4.manager-smallriver blob:b751033ae9b182274f515836c66795b3b742dbbd1c1f32139189d03cb281ecb3",
+    "range 0 5927992 4 3f92387de28d0bdd 8a77d87e9e7761fe g6p4.manager-smallriver blob:3c9d7080cbf7907c4b5279352ba06990b6cdedd481adf59c6ef72ded26f1f6e9",
+    "range 0 5927996 4 4d258c7f9dce3957 4d258b7f9dce37a4 g6p4.manager-smallriver blob:ac8380b8f84e1a3864129c0e26c6bdb8f4ea579e00993c13a5b5fce2ba3d13e0",
+    "range 0 5936712 4 4d25767f9dce13f5 8a77d87e9e7761fe g6p4.manager-smallriver blob:3c9d7080cbf7907c4b5279352ba06990b6cdedd481adf59c6ef72ded26f1f6e9",
+    "range 0 7661836 1796 cbf29ce484222325 adca35efdb6a5c57 g6p4.manager-smallriver blob:b188caccbf45fa05c637736027992aa6b26e56c34566511e0113a9bdcdb7f178",
+    "range 1 0 209596 744dddc6c7d81e7b b4e773c2cad4cf6a g6p4.manager-smallriver blob:556dc0865e2cd4645855c09cb34b927d23bf894e9f840f2b2561183b40b2dc3d",
+    "range 2 2500 4 4d254a7f9dcdc931 4d25497f9dcdc77e g6p4.manager-smallriver blob:15b165510f75144be8633336a97ac62c664d5c436db297fc13fb4d3ac147d7fd"
+   ],
+   "files": [
+    "file 7661836 <GAME>\\GAMEDATAbin\\intro_10\\intro_10.lvl",
+    "tx-file 0 lvl a37638bf1370357db21f33df5c4d37ae806b3c4b9f81b331503ba62d1b19e2ee 7663632 7f6402c6a43f4f5241625c24b1430a059398a73604978020fe6062b4e292e83c",
+    "file 209068 <GAME>\\GAMEDATAbin\\intro_10\\intro_10.ptr",
+    "tx-file 1 ptr 6c9dd70c488a1cac95efc0a55a6086255dae2d851bacd93f5abefdcc8200e940 209596 556dc0865e2cd4645855c09cb34b927d23bf894e9f840f2b2561183b40b2dc3d",
+    "file 41508 <GAME>\\GAMEDATAbin\\intro_10\\transit.lvl",
+    "tx-file 2 transit d300ba3a4a3c03cec6a73eb9da8a8d820fcc3a669591e976b357e804315bf275 41508 321de2e4be2077720e8a6cc6660ff373bcabaed6c5089989a1ed594aa370c34e",
+    "end 3 18"
+   ]
+  }
+ },
+ "negative": {
+  "lum.parse.missing_key": {
+   "code": "BAD_MANIFEST",
+   "detail": "o: an insert-passive-lum needs exactly ['instance', 'level', 'lvl_sha256', 'model', 'position', 'ptr_sha256', 'transit_sha256', 'type']"
+  },
+  "lum.parse.extra_key": {
+   "code": "BAD_MANIFEST",
+   "detail": "o: an insert-passive-lum needs exactly ['instance', 'level', 'lvl_sha256', 'model', 'position', 'ptr_sha256', 'transit_sha256', 'type']"
+  },
+  "lum.parse.bad_level": {
+   "code": "BAD_MANIFEST",
+   "detail": "o: 'level' must be a level folder name such as intro_10"
+  },
+  "lum.parse.unsupported_level": {
+   "code": "UNSUPPORTED",
+   "detail": "o: level intro_15 (the development pilot supports intro_10)"
+  },
+  "lum.parse.bad_hash": {
+   "code": "BAD_MANIFEST",
+   "detail": "o: 'ptr_sha256' must be the 64-digit SHA-256 of the level's original file"
+  },
+  "lum.parse.bad_instance": {
+   "code": "BAD_MANIFEST",
+   "detail": "o: 'instance' must be an index from script-info --model"
+  },
+  "lum.parse.bad_target": {
+   "accepted": true,
+   "type": "NoneType"
+  },
+  "lum.parse.bool_target": {
+   "code": "BAD_MANIFEST",
+   "detail": "o: 'position' must be [x, y, z]"
+  },
+  "lum.compile.wrong_model": {
+   "code": "UNSUPPORTED",
+   "detail": "insert-passive-lum intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 6: the development pilot supports only the verified source lum (instance 6 of 'lum\\\\NIN_m_Lums_Int10\\\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init')"
+  },
+  "lum.compile.wrong_instance": {
+   "code": "UNSUPPORTED",
+   "detail": "insert-passive-lum intro_10 'lum\\\\NIN_m_Lums_Int10\\\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init' instance 7: the development pilot supports only the verified source lum (instance 6 of 'lum\\\\NIN_m_Lums_Int10\\\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init')"
+  },
+  "lum.compile.wrong_lvl_hash": {
+   "code": "TARGET_CHANGED",
+   "detail": "insert-passive-lum intro_10 'lum\\\\NIN_m_Lums_Int10\\\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init' instance 6: lvl file is not the version this mod was made for"
+  },
+  "lum.compile.wrong_ptr_hash": {
+   "code": "TARGET_CHANGED",
+   "detail": "insert-passive-lum intro_10 'lum\\\\NIN_m_Lums_Int10\\\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init' instance 6: ptr file is not the version this mod was made for"
+  },
+  "lum.compile.wrong_transit_hash": {
+   "code": "TARGET_CHANGED",
+   "detail": "insert-passive-lum intro_10 'lum\\\\NIN_m_Lums_Int10\\\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init' instance 6: transit file is not the version this mod was made for"
+  },
+  "lum.compile.bad_target": {
+   "code": "UNSUPPORTED",
+   "detail": "insert-passive-lum intro_10 'lum\\\\NIN_m_Lums_Int10\\\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init' instance 6: the position is not within 1 unit(s) of an approved position (beside_source, flight_path)"
+  },
+  "lum.compile.lvl_budget": {
+   "code": "BUDGET",
+   "detail": "insert-passive-lum intro_10 'lum\\\\NIN_m_Lums_Int10\\\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init' instance 6: the lvl file would grow by 1444 bytes"
+  },
+  "lum.compile.memory_budget": {
+   "code": "BUDGET",
+   "detail": "insert-passive-lum intro_10 'lum\\\\NIN_m_Lums_Int10\\\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init' instance 6: block-8 budget: 13087084 bytes free after load, 859168 needed for the loader's temporary buffers plus a 1073741824-byte margin"
+  },
+  "lum.parse.gate_off": {
+   "code": "UNSUPPORTED",
+   "detail": "o: insert-passive-lum is a development-only structural operation (D-251) that this installation does not enable"
+  },
+  "lum.compile.gate_off": {
+   "code": "UNSUPPORTED",
+   "detail": "insert-passive-lum intro_10 'lum\\\\NIN_m_Lums_Int10\\\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init' instance 6: development-only, not enabled for this level"
+  },
+  "lum.compile.gate_other_level": {
+   "code": "UNSUPPORTED",
+   "detail": "insert-passive-lum intro_10 'lum\\\\NIN_m_Lums_Int10\\\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init' instance 6: development-only, not enabled for this level"
+  },
+  "lum.compile.missing_transit": {
+   "code": "TARGET_MISSING",
+   "detail": "insert-passive-lum intro_10 'lum\\\\NIN_m_Lums_Int10\\\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init' instance 6: transit.lvl not found"
+  },
+  "lum.build.file.census_slot_removed": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-passive-lum intro_10 'lum\\\\NIN_m_Lums_Int10\\\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init' instance 6: the source block's pointers are 13 / 16 / 1, not the verified (14, 16, 1)"
+  },
+  "lum.build.file.duplicate_slot": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-passive-lum intro_10 'lum\\\\NIN_m_Lums_Int10\\\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init' instance 6: the original pointer table names one slot twice"
+  },
+  "lum.build.file.truncated_ptr": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-passive-lum intro_10 'lum\\\\NIN_m_Lums_Int10\\\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init' instance 6: the pointer table's layout (count, own entries, cross-file table) is not the one this operation knows"
+  },
+  "lum.build.file.personal_count": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-passive-lum intro_10 'lum\\\\NIN_m_Lums_Int10\\\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init' instance 6: the personal object-type list"
+  },
+  "lum.build.file.records_count": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-passive-lum intro_10 'lum\\\\NIN_m_Lums_Int10\\\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init' instance 6: the SO-record list"
+  },
+  "lum.build.file.backups_last": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-passive-lum intro_10 'lum\\\\NIN_m_Lums_Int10\\\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init' instance 6: the backup list"
+  },
+  "lum.build.file.world_count": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-passive-lum intro_10 'lum\\\\NIN_m_Lums_Int10\\\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init' instance 6: the dynamic world's children"
+  },
+  "lum.build.file.sibling_prev": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-passive-lum intro_10 'lum\\\\NIN_m_Lums_Int10\\\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init' instance 6: the source is not linked between two siblings"
+  },
+  "lum.build.file.not_superobject": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-passive-lum intro_10 'lum\\\\NIN_m_Lums_Int10\\\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init' instance 6: the source is not an actor SuperObject"
+  },
+  "lum.build.spec.census": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-passive-lum intro_10 'lum\\\\NIN_m_Lums_Int10\\\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init' instance 6: the source block's pointers are 14 / 16 / 1, not the verified (15, 17, 2)"
+  },
+  "lum.build.spec.new_name_foreign": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-passive-lum intro_10 'lum\\\\NIN_m_Lums_Int10\\\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init' instance 6: the new personal-type name is not unique or not of the source's family"
+  },
+  "lum.build.spec.matrix_offset": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-passive-lum intro_10 'lum\\\\NIN_m_Lums_Int10\\\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init' instance 6: the source's matrix is not in its block"
+  },
+  "lum.build.spec.world_offset": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-passive-lum intro_10 'lum\\\\NIN_m_Lums_Int10\\\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init' instance 6: the source's only other-file pointer is not its parent, the transit dynamic world"
+  },
+  "lum.build.spec.translations": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-passive-lum intro_10 'lum\\\\NIN_m_Lums_Int10\\\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init' instance 6: the source's translation copies differ"
+  },
+  "lum.build.spec.buffer_word": {
+   "accepted": true,
+   "type": "tuple"
+  },
+  "lum.build.peers_empty": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-passive-lum intro_10 'lum\\\\NIN_m_Lums_Int10\\\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init' instance 6: the source block's pointer at +0x34 is not model data shared with another instance"
+  },
+  "frog.parse.missing_key": {
+   "code": "BAD_MANIFEST",
+   "detail": "o: an insert-scripted-frog needs exactly ['instance', 'level', 'lvl_sha256', 'model', 'period_ms', 'placement', 'ptr_sha256', 'transit_sha256', 'type']"
+  },
+  "frog.parse.extra_key": {
+   "code": "BAD_MANIFEST",
+   "detail": "o: an insert-scripted-frog needs exactly ['instance', 'level', 'lvl_sha256', 'model', 'period_ms', 'placement', 'ptr_sha256', 'transit_sha256', 'type']"
+  },
+  "frog.parse.bad_level": {
+   "code": "BAD_MANIFEST",
+   "detail": "o: 'level' must be a level folder name such as intro_10"
+  },
+  "frog.parse.unsupported_level": {
+   "code": "UNSUPPORTED",
+   "detail": "o: level intro_15 (the development pilot supports intro_10)"
+  },
+  "frog.parse.bad_hash": {
+   "code": "BAD_MANIFEST",
+   "detail": "o: 'ptr_sha256' must be the 64-digit SHA-256 of the level's original file"
+  },
+  "frog.parse.bad_instance": {
+   "code": "BAD_MANIFEST",
+   "detail": "o: 'instance' must be an index from script-info --model"
+  },
+  "frog.parse.bad_target": {
+   "code": "UNSUPPORTED",
+   "detail": "o: 'period_ms' must be one of the verified values 500, 2000"
+  },
+  "frog.parse.bool_target": {
+   "code": "UNSUPPORTED",
+   "detail": "o: 'period_ms' must be one of the verified values 500, 2000"
+  },
+  "frog.compile.wrong_model": {
+   "code": "UNSUPPORTED",
+   "detail": "insert-scripted-frog intro_10 'lum\\\\NIN_m_Lums_Int10\\\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init' instance 2: the development pilot supports only the verified source Frog (instance 2 of 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init')"
+  },
+  "frog.compile.wrong_instance": {
+   "code": "UNSUPPORTED",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 3: the development pilot supports only the verified source Frog (instance 2 of 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init')"
+  },
+  "frog.compile.wrong_lvl_hash": {
+   "code": "TARGET_CHANGED",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: lvl file is not the version this mod was made for"
+  },
+  "frog.compile.wrong_ptr_hash": {
+   "code": "TARGET_CHANGED",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: ptr file is not the version this mod was made for"
+  },
+  "frog.compile.wrong_transit_hash": {
+   "code": "TARGET_CHANGED",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: transit file is not the version this mod was made for"
+  },
+  "frog.compile.bad_target": {
+   "code": "UNSUPPORTED",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: placement or period is not a verified preset"
+  },
+  "frog.compile.lvl_budget": {
+   "code": "BUDGET",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: the lvl file would grow by 3028 bytes"
+  },
+  "frog.compile.memory_budget": {
+   "code": "BUDGET",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: block-8 budget: 13085500 bytes free after load, 865952 needed for the loader's temporary buffers plus a 1073741824-byte margin"
+  },
+  "frog.parse.gate_off": {
+   "code": "UNSUPPORTED",
+   "detail": "o: insert-scripted-frog is a development-only structural operation (D-254) that this installation does not enable"
+  },
+  "frog.compile.gate_off": {
+   "code": "UNSUPPORTED",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: development-only, not enabled for this level"
+  },
+  "frog.compile.gate_other_level": {
+   "code": "UNSUPPORTED",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: development-only, not enabled for this level"
+  },
+  "frog.compile.missing_transit": {
+   "code": "TARGET_MISSING",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: transit.lvl not found"
+  },
+  "frog.build.file.census_slot_removed": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: the source block's pointers are 18 / 15 / 1, not the verified (19, 15, 1)"
+  },
+  "frog.build.file.duplicate_slot": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: the original pointer table names one slot twice"
+  },
+  "frog.build.file.truncated_ptr": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: the pointer table's layout (count, own entries, cross-file table) is not the one this operation knows"
+  },
+  "frog.build.file.personal_count": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: the personal object-type list"
+  },
+  "frog.build.file.records_count": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: the SO-record list"
+  },
+  "frog.build.file.backups_last": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: the backup list"
+  },
+  "frog.build.file.world_count": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: the dynamic world's children"
+  },
+  "frog.build.file.sibling_prev": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: the source is not linked between two siblings"
+  },
+  "frog.build.file.not_superobject": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: the source is not an actor SuperObject"
+  },
+  "frog.build.file.always_count": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: the always-active list"
+  },
+  "frog.build.file.always_owner_count": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: the always-active list"
+  },
+  "frog.build.file.resolve_unsorted": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: the sound-event resolve table's entries"
+  },
+  "frog.build.file.designer_buffers_differ": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: the source's designer buffers hold relocated words or differ in the file"
+  },
+  "frog.build.spec.census": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: the source block's pointers are 19 / 15 / 1, not the verified (20, 16, 2)"
+  },
+  "frog.build.spec.new_name_foreign": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: the new personal-type name is not unique or not derived from the source's type"
+  },
+  "frog.build.spec.matrix_offset": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: the source's matrix is not in its block"
+  },
+  "frog.build.spec.world_offset": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: the source's only other-file pointer is not its parent, the transit dynamic world"
+  },
+  "frog.build.spec.owned_extra": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: the source does not own its Brain / Mind / Intelligence / DsgMem / designer buffers in its block"
+  },
+  "frog.build.spec.backup_targets": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: the source's backup records are not the verified four"
+  },
+  "frog.build.spec.foreign_refs": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: the known references from another actor's designer buffers"
+  },
+  "frog.build.spec.events": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: the sound-event resolve table's entries"
+  },
+  "frog.build.spec.resolve_count": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: the sound-event resolve table"
+  },
+  "frog.build.period": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: the period is not a verified value"
+  },
+  "frog.build.foreign_empty": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-scripted-frog intro_10 'Gen_Sound\\\\NIK_mGenSound\\\\NIK_mGenSound.rul^CreateIntelligence^CreateComport:NIK_C_mGenSound_Init' instance 2: the known references from another actor's designer buffers"
+  },
+  "fairy.parse.missing_key": {
+   "code": "BAD_MANIFEST",
+   "detail": "o: an insert-fairy-on-graph needs exactly ['follow_graph_of', 'instance', 'level', 'lvl_sha256', 'model', 'ptr_sha256', 'transit_sha256', 'type']"
+  },
+  "fairy.parse.extra_key": {
+   "code": "BAD_MANIFEST",
+   "detail": "o: an insert-fairy-on-graph needs exactly ['follow_graph_of', 'instance', 'level', 'lvl_sha256', 'model', 'ptr_sha256', 'transit_sha256', 'type']"
+  },
+  "fairy.parse.bad_level": {
+   "code": "BAD_MANIFEST",
+   "detail": "o: 'level' must be a level folder name such as intro_20"
+  },
+  "fairy.parse.unsupported_level": {
+   "code": "UNSUPPORTED",
+   "detail": "o: level intro_15 (the development pilot supports intro_20)"
+  },
+  "fairy.parse.bad_hash": {
+   "code": "BAD_MANIFEST",
+   "detail": "o: 'ptr_sha256' must be the 64-digit SHA-256 of the level's original file"
+  },
+  "fairy.parse.bad_instance": {
+   "code": "BAD_MANIFEST",
+   "detail": "o: 'instance' must be an index from script-info --model"
+  },
+  "fairy.parse.bad_target": {
+   "code": "UNSUPPORTED",
+   "detail": "o: 'follow_graph_of' must name a fairy instance whose graph is a verified reference target (0, 1)"
+  },
+  "fairy.parse.bool_target": {
+   "code": "UNSUPPORTED",
+   "detail": "o: 'follow_graph_of' must name a fairy instance whose graph is a verified reference target (0, 1)"
+  },
+  "fairy.compile.wrong_model": {
+   "code": "UNSUPPORTED",
+   "detail": "insert-fairy-on-graph intro_20 'lum\\\\NIN_m_Lums_Int10\\\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init' instance 2: the development pilot supports only the verified source fairy (instance 2 of 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight')"
+  },
+  "fairy.compile.wrong_instance": {
+   "code": "UNSUPPORTED",
+   "detail": "insert-fairy-on-graph intro_20 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight' instance 3: the development pilot supports only the verified source fairy (instance 2 of 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight')"
+  },
+  "fairy.compile.wrong_lvl_hash": {
+   "code": "TARGET_CHANGED",
+   "detail": "insert-fairy-on-graph intro_20 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight' instance 2: lvl file is not the version this mod was made for"
+  },
+  "fairy.compile.wrong_ptr_hash": {
+   "code": "TARGET_CHANGED",
+   "detail": "insert-fairy-on-graph intro_20 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight' instance 2: ptr file is not the version this mod was made for"
+  },
+  "fairy.compile.wrong_transit_hash": {
+   "code": "TARGET_CHANGED",
+   "detail": "insert-fairy-on-graph intro_20 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight' instance 2: transit file is not the version this mod was made for"
+  },
+  "fairy.compile.bad_target": {
+   "code": "UNSUPPORTED",
+   "detail": "insert-fairy-on-graph intro_20 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight' instance 2: follow_graph_of 2 is not a verified reference target"
+  },
+  "fairy.compile.lvl_budget": {
+   "code": "BUDGET",
+   "detail": "insert-fairy-on-graph intro_20 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight' instance 2: the lvl file would grow by 2892 bytes"
+  },
+  "fairy.compile.memory_budget": {
+   "code": "BUDGET",
+   "detail": "insert-fairy-on-graph intro_20 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight' instance 2: block-8 budget: 14628044 bytes free after load, 1119648 needed for the loader's temporary buffers plus a 1073741824-byte margin"
+  },
+  "fairy.parse.gate_off": {
+   "code": "UNSUPPORTED",
+   "detail": "o: insert-fairy-on-graph is a development-only structural operation (D-256) that this installation does not enable"
+  },
+  "fairy.compile.gate_off": {
+   "code": "UNSUPPORTED",
+   "detail": "insert-fairy-on-graph intro_20 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight' instance 2: development-only, not enabled for this level"
+  },
+  "fairy.compile.gate_other_level": {
+   "code": "UNSUPPORTED",
+   "detail": "insert-fairy-on-graph intro_20 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight' instance 2: development-only, not enabled for this level"
+  },
+  "fairy.compile.missing_transit": {
+   "code": "TARGET_MISSING",
+   "detail": "insert-fairy-on-graph intro_20 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight' instance 2: transit.lvl not found"
+  },
+  "fairy.build.file.census_slot_removed": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-fairy-on-graph intro_20 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight' instance 2: the source block's pointers are 77 / 17 / 1, not the verified (78, 17, 1)"
+  },
+  "fairy.build.file.duplicate_slot": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-fairy-on-graph intro_20 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight' instance 2: the original pointer table names one slot twice"
+  },
+  "fairy.build.file.truncated_ptr": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-fairy-on-graph intro_20 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight' instance 2: the pointer table's layout (count, own entries, cross-file table) is not the one this operation knows"
+  },
+  "fairy.build.file.personal_count": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-fairy-on-graph intro_20 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight' instance 2: the personal object-type list"
+  },
+  "fairy.build.file.records_count": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-fairy-on-graph intro_20 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight' instance 2: the SO-record list"
+  },
+  "fairy.build.file.backups_last": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-fairy-on-graph intro_20 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight' instance 2: the backup list"
+  },
+  "fairy.build.file.world_count": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-fairy-on-graph intro_20 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight' instance 2: the dynamic world's children"
+  },
+  "fairy.build.file.sibling_prev": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-fairy-on-graph intro_20 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight' instance 2: the source is not linked between two siblings"
+  },
+  "fairy.build.file.not_superobject": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-fairy-on-graph intro_20 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight' instance 2: the source is not an actor SuperObject"
+  },
+  "fairy.build.file.designer_buffers_differ": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-fairy-on-graph intro_20 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight' instance 2: the source's initial and current designer buffers differ in the file"
+  },
+  "fairy.build.spec.census": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-fairy-on-graph intro_20 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight' instance 2: the source block's pointers are 78 / 17 / 1, not the verified (79, 18, 2)"
+  },
+  "fairy.build.spec.new_name_foreign": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-fairy-on-graph intro_20 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight' instance 2: the new personal-type name is not unique or not of the source's family"
+  },
+  "fairy.build.spec.matrix_offset": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-fairy-on-graph intro_20 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight' instance 2: the source's matrix is not in its block"
+  },
+  "fairy.build.spec.world_offset": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-fairy-on-graph intro_20 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight' instance 2: the source's only other-file pointer is not its parent, the transit dynamic world"
+  },
+  "fairy.build.spec.owned_extra": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-fairy-on-graph intro_20 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight' instance 2: the source does not own its Perso / 3dData / StdGame / Dynam / Brain / Mind / Intelligence / designer memory and buffers in its block"
+  },
+  "fairy.build.spec.graph_region": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-fairy-on-graph intro_20 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight' instance 2: the source's own graph does not exactly fill the region the copy leaves out"
+  },
+  "fairy.build.spec.target_named_by": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-fairy-on-graph intro_20 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight' instance 2: the target graph is referenced by more (or other) data than the verified fairies' variable 2"
+  },
+  "fairy.build.spec.target_nodes": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-fairy-on-graph intro_20 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight' instance 2: the target graph does not decode with the verified node count"
+  },
+  "fairy.build.spec.own_graph": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-fairy-on-graph intro_20 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight' instance 2: the source's designer buffers do not hold exactly one relocated word, its graph reference"
+  },
+  "fairy.build.sel_unknown": {
+   "exception": "KeyError",
+   "detail": "5"
+  },
+  "fairy.build.named_empty": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-fairy-on-graph intro_20 'Fairylum\\\\NIN_m_FairyLight\\\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight' instance 2: fairy instance 0's variable 2 does not name the verified graph"
+  },
+  "manager.parse.missing_key": {
+   "code": "BAD_MANIFEST",
+   "detail": "o: an insert-gensound-manager needs exactly ['instance', 'level', 'lvl_sha256', 'model', 'moves_gensound_instance', 'ptr_sha256', 'transit_sha256', 'type']"
+  },
+  "manager.parse.extra_key": {
+   "code": "BAD_MANIFEST",
+   "detail": "o: an insert-gensound-manager needs exactly ['instance', 'level', 'lvl_sha256', 'model', 'moves_gensound_instance', 'ptr_sha256', 'transit_sha256', 'type']"
+  },
+  "manager.parse.bad_level": {
+   "code": "BAD_MANIFEST",
+   "detail": "o: 'level' must be a level folder name such as intro_10"
+  },
+  "manager.parse.unsupported_level": {
+   "code": "UNSUPPORTED",
+   "detail": "o: level intro_15 (the development pilot supports intro_10)"
+  },
+  "manager.parse.bad_hash": {
+   "code": "BAD_MANIFEST",
+   "detail": "o: 'ptr_sha256' must be the 64-digit SHA-256 of the level's original file"
+  },
+  "manager.parse.bad_instance": {
+   "code": "BAD_MANIFEST",
+   "detail": "o: 'instance' must be an index from script-info --model"
+  },
+  "manager.parse.bad_target": {
+   "code": "UNSUPPORTED",
+   "detail": "o: 'moves_gensound_instance' must name a verified target actor (0, 1)"
+  },
+  "manager.parse.bool_target": {
+   "code": "UNSUPPORTED",
+   "detail": "o: 'moves_gensound_instance' must name a verified target actor (0, 1)"
+  },
+  "manager.compile.wrong_model": {
+   "code": "UNSUPPORTED",
+   "detail": "insert-gensound-manager intro_10 'lum\\\\NIN_m_Lums_Int10\\\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init' instance 0: the development pilot supports only the verified source manager (instance 0 of 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init')"
+  },
+  "manager.compile.wrong_instance": {
+   "code": "UNSUPPORTED",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 1: the development pilot supports only the verified source manager (instance 0 of 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init')"
+  },
+  "manager.compile.wrong_lvl_hash": {
+   "code": "TARGET_CHANGED",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: lvl file is not the version this mod was made for"
+  },
+  "manager.compile.wrong_ptr_hash": {
+   "code": "TARGET_CHANGED",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: ptr file is not the version this mod was made for"
+  },
+  "manager.compile.wrong_transit_hash": {
+   "code": "TARGET_CHANGED",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: transit file is not the version this mod was made for"
+  },
+  "manager.compile.bad_target": {
+   "code": "UNSUPPORTED",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: moves_gensound_instance 2 is not a verified target"
+  },
+  "manager.compile.lvl_budget": {
+   "code": "BUDGET",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: the lvl file would grow by 1796 bytes"
+  },
+  "manager.compile.memory_budget": {
+   "code": "BUDGET",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: block-8 budget: 13086732 bytes free after load, 861408 needed for the loader's temporary buffers plus a 1073741824-byte margin"
+  },
+  "manager.parse.gate_off": {
+   "code": "UNSUPPORTED",
+   "detail": "o: insert-gensound-manager is a development-only structural operation (D-257) that this installation does not enable"
+  },
+  "manager.compile.gate_off": {
+   "code": "UNSUPPORTED",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: development-only, not enabled for this level"
+  },
+  "manager.compile.gate_other_level": {
+   "code": "UNSUPPORTED",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: development-only, not enabled for this level"
+  },
+  "manager.compile.missing_transit": {
+   "code": "TARGET_MISSING",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: transit.lvl not found"
+  },
+  "manager.build.file.census_slot_removed": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: the source block's pointers are 95 / 11 / 2, not the verified (96, 11, 2)"
+  },
+  "manager.build.file.duplicate_slot": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: the original pointer table names one slot twice"
+  },
+  "manager.build.file.truncated_ptr": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: the pointer table's layout (count, own entries, cross-file table) is not the one this operation knows"
+  },
+  "manager.build.file.personal_count": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: the personal object-type list"
+  },
+  "manager.build.file.records_count": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: the SO-record list"
+  },
+  "manager.build.file.backups_last": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: the backup list"
+  },
+  "manager.build.file.world_count": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: the dynamic world's children"
+  },
+  "manager.build.file.sibling_prev": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: the source is not linked between two siblings"
+  },
+  "manager.build.file.not_superobject": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: the source is not an actor SuperObject"
+  },
+  "manager.build.file.always_count": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: the always-active list"
+  },
+  "manager.build.file.always_owner_count": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: the always-active list"
+  },
+  "manager.build.file.designer_buffers_differ": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: the source's designer buffers differ or do not name its graph"
+  },
+  "manager.build.spec.census": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: the source block's pointers are 96 / 11 / 2, not the verified (97, 12, 3)"
+  },
+  "manager.build.spec.new_name_foreign": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: the new personal-type name is not unique or not derived from the source's type"
+  },
+  "manager.build.spec.matrix_offset": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: an inline backup record does not hold its block word"
+  },
+  "manager.build.spec.world_offset": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: the source's other-file pointers are not its transit parent and the verified fix word of its model"
+  },
+  "manager.build.spec.owned_extra": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: the source does not own its Perso / Brain / Mind / Intelligence / designer memory and buffers"
+  },
+  "manager.build.spec.backup_targets": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: the source's backup records are not the verified three"
+  },
+  "manager.build.spec.kept_missing": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: the source's shared regions are referenced by other words than the verified ones"
+  },
+  "manager.build.spec.regions_model": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: the source's shared regions are referenced by other words than the verified ones"
+  },
+  "manager.build.spec.own_target": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: the source's actor reference does not name the verified actor"
+  },
+  "manager.build.spec.target_is_own": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: the selected target is not a verified actor of the dynamic world"
+  },
+  "manager.build.spec.target_not_actor": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: the selected target is not a verified actor of the dynamic world"
+  },
+  "manager.build.spec.graph_nodes": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: the source's graph does not exactly fill its graph region"
+  },
+  "manager.build.spec.other_words": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: the source's other-file pointers are not its transit parent and the verified fix word of its model"
+  },
+  "manager.build.sel_unknown": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: the selected target is not a verified actor of the dynamic world"
+  },
+  "manager.build.foreign_names_target": {
+   "code": "STRUCTURE_CHECK",
+   "detail": "insert-gensound-manager intro_10 'Gen_Sound\\\\NIK_mGenManager\\\\NIK_mGenManager.rul^CreateIntelligence^CreateComport:NIK_C_mGenManager_Init' instance 0: the selected target is already named by an actor's designer variable"
+  },
+  "conflict.two_lums_one_mod": {
+   "code": "BAD_MANIFEST",
+   "detail": "a mod may carry one insert-passive-lum, and not together with insert-graph-node"
+  },
+  "conflict.lum_and_graph_one_mod": {
+   "code": "BAD_MANIFEST",
+   "detail": "a mod may carry one insert-passive-lum, and not together with insert-graph-node"
+  },
+  "conflict.frog_and_lum_one_mod": {
+   "code": "BAD_MANIFEST",
+   "detail": "a mod may carry one insert-scripted-frog, and no other structural operation"
+  },
+  "conflict.two_managers_one_mod": {
+   "code": "BAD_MANIFEST",
+   "detail": "a mod may carry one insert-gensound-manager, and no other structural operation"
+  },
+  "conflict.manager_and_frog_one_mod": {
+   "code": "BAD_MANIFEST",
+   "detail": "a mod may carry one insert-gensound-manager, and no other structural operation"
+  },
+  "conflict.manager_and_graph_one_mod": {
+   "code": "BAD_MANIFEST",
+   "detail": "a mod may carry one insert-gensound-manager, and no other structural operation"
+  },
+  "conflict.two_fairies_one_mod": {
+   "code": "BAD_MANIFEST",
+   "detail": "a mod may carry one insert-fairy-on-graph, and no other structural operation"
+  },
+  "conflict.two_structural_mods_intro_10": {
+   "active": [],
+   "plan": false,
+   "mods": [
+    {
+     "id": "x.m0",
+     "code": "STRUCTURAL_CONFLICT",
+     "detail": "one structural mod per level: x.f0 also changes the structure of intro_10"
+    },
+    {
+     "id": "x.f0",
+     "code": "STRUCTURAL_CONFLICT",
+     "detail": "one structural mod per level: x.m0 also changes the structure of intro_10"
+    }
+   ]
+  },
+  "conflict.lum_and_manager_mods": {
+   "active": [],
+   "plan": false,
+   "mods": [
+    {
+     "id": "x.l0",
+     "code": "STRUCTURAL_CONFLICT",
+     "detail": "one structural mod per level: x.m1 also changes the structure of intro_10"
+    },
+    {
+     "id": "x.m1",
+     "code": "STRUCTURAL_CONFLICT",
+     "detail": "one structural mod per level: x.l0 also changes the structure of intro_10"
+    }
+   ]
+  },
+  "conflict.two_fairy_mods": {
+   "active": [],
+   "plan": false,
+   "mods": [
+    {
+     "id": "x.fa",
+     "code": "STRUCTURAL_CONFLICT",
+     "detail": "one structural mod per level: x.fb also changes the structure of intro_20"
+    },
+    {
+     "id": "x.fb",
+     "code": "STRUCTURAL_CONFLICT",
+     "detail": "one structural mod per level: x.fa also changes the structure of intro_20"
+    }
+   ]
+  }
+ }
+}

@@ -3,7 +3,9 @@ from pathlib import Path
 import hashlib, json, re, shutil, subprocess, os
 
 ROOT = Path(__file__).resolve().parents[1]
-W = ROOT / 'private/work/rex'
+# LM-2: R3HD_REX_WORK redirects the work tree (tools/linux/r3hd_diag_tree.py instruments the diagnostic tree with
+# the unchanged instrument steps). Unset, it is the production tree exactly as before.
+W = Path(os.environ['R3HD_REX_WORK']).resolve() if os.environ.get('R3HD_REX_WORK') else ROOT / 'private/work/rex'
 G = W / 'generated/default'
 
 def write_text_if_changed(path, text):
@@ -62,16 +64,18 @@ includes = ["../../../config/rexglue/r3hd_functions.toml", "../../../config/rexg
 generate_exception_handlers = true
 ''')
         for name in ('main.cpp', 'r3hd_app.h', 'r3hd_window_icon.h', 'r3hd_discord.h', 'r3hd_pc_settings.h', 'm2_trace.h',
-                     'm2_trace.cpp'):
+                     'm2_trace.cpp', 'r3hd_swirl.cpp', 'r3hd_swirl_policy.h'):
             source, target = ROOT/'tools/m2_host'/name, W/'src'/name
             if not target.exists() or source.read_bytes() != target.read_bytes():
                 shutil.copyfile(source, target)
         cmake = (W/'CMakeLists.txt').read_text()
         if 'src/m2_trace.cpp' not in cmake:
             cmake = cmake.replace('src/main.cpp', 'src/main.cpp\n    src/m2_trace.cpp')
+        if 'src/r3hd_swirl.cpp' not in cmake:
+            cmake = cmake.replace('src/main.cpp', 'src/main.cpp\n    src/r3hd_swirl.cpp')
         cmake = cmake.replace('rexglue_setup_target(r3hd)', 'rexglue_setup_target(r3hd GPU_PLUGINS xenos)')
         discord_include = '\ntarget_include_directories(r3hd PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/../../../external/rexglue-sdk/thirdparty/inja/third_party/include")\n'
-        cmake += '\nfind_package(Python3 REQUIRED COMPONENTS Interpreter)\nadd_custom_target(m2_instrument\n COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/../../../tools/m2_prepare.py" instrument\n DEPENDS r3hd_codegen)\nadd_dependencies(r3hd_recomp m2_instrument)\ntarget_link_options(r3hd PRIVATE "LINKER:/DEBUG" "LINKER:/MAP:${CMAKE_CURRENT_BINARY_DIR}/r3hd.map")\nadd_executable(m2_nonlocal_test "${CMAKE_CURRENT_SOURCE_DIR}/../../../tools/m2_tests/nonlocal.cpp")\ntarget_include_directories(m2_nonlocal_test PRIVATE src generated/default)\ntarget_link_libraries(m2_nonlocal_test PRIVATE rex::runtime)\nrexglue_apply_target_settings(m2_nonlocal_test)\ntarget_compile_options(m2_nonlocal_test PRIVATE -fasync-exceptions)\nadd_dependencies(m2_nonlocal_test m2_instrument)\n'
+        cmake += '\nfind_package(Python3 REQUIRED COMPONENTS Interpreter)\nadd_custom_target(m2_instrument\n COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/../../../tools/m2_prepare.py" instrument\n DEPENDS r3hd_codegen)\nadd_dependencies(r3hd_recomp m2_instrument)\nif(WIN32)\ntarget_link_options(r3hd PRIVATE "LINKER:/DEBUG" "LINKER:/MAP:${CMAKE_CURRENT_BINARY_DIR}/r3hd.map")\nendif()\nadd_executable(m2_nonlocal_test "${CMAKE_CURRENT_SOURCE_DIR}/../../../tools/m2_tests/nonlocal.cpp")\ntarget_include_directories(m2_nonlocal_test PRIVATE src generated/default)\ntarget_link_libraries(m2_nonlocal_test PRIVATE rex::runtime)\nrexglue_apply_target_settings(m2_nonlocal_test)\ntarget_compile_options(m2_nonlocal_test PRIVATE -fasync-exceptions)\nadd_dependencies(m2_nonlocal_test m2_instrument)\n'
         # Re-running preparation should not duplicate the custom target.
         cmake = cmake[:cmake.find('\nfind_package(Python3')] + cmake[cmake.rfind('\nfind_package(Python3'):]
         if discord_include not in cmake:

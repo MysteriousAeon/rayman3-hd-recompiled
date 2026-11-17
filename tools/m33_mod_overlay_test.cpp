@@ -264,7 +264,14 @@ int main() {
     std::copy(game_bytes.begin() + off_b, game_bytes.begin() + off_b + 17, b.begin());
     fs::path upper = dir / "game.btf";
     m33mods::AfterRead(upper, off_b, b.data(), b.size(), &plan);
-    Check(b == new_b, "the file is matched without case, by identity");
+    std::error_code ec;
+    const bool same = fs::equivalent(game, upper, ec) && !ec;
+#ifdef _WIN32
+    Check(same && b == new_b, "the file is matched without case, by identity");
+#else
+    Check(same ? b == new_b : b == std::vector<uint8_t>(game_bytes.begin() + off_b, game_bytes.begin() + off_b + 17),
+          "case variant matches only when the filesystem confirms identity");
+#endif
   }
 
   // Every refusal leaves every read unchanged.
@@ -327,6 +334,41 @@ int main() {
     Check(ReadThrough(game, plan, 4096) == game_bytes && !g_log.empty() &&
               g_log.back().rfind("M33 mods state=refused reason=blob_size", 0) == 0,
           "a replacement file of the wrong size is refused");
+  }
+  {
+    // D-224: `gameplay <id>` marks a plan whose mods change game logic; only a verified, active plan reports it.
+    Write(blob_b, new_b);
+    const std::string with = replace(good, "end 1 2", "gameplay test.b\nend 1 2");
+    WriteText(plan, good);
+    m33mods::ResetForTest();
+    Check(!m33mods::GameplayModsActive(&plan), "gameplay: a plan without the record changes no achievement");
+    WriteText(plan, with);
+    m33mods::ResetForTest();
+    g_log.clear();
+    const bool on = m33mods::GameplayModsActive(&plan);
+    bool line = false;
+    for (const auto& l : g_log) line |= l == "M33 mods gameplay mod=test.b achievements=not_awarded";
+    Check(on && line && ReadThrough(game, plan, 4096) == expected,
+          "gameplay: the record is reported (one line) and the ranges are served as before");
+    m33mods::ResetForTest();
+    if (!m33mods::Enabled()) Check(!m33mods::GameplayModsActive(nullptr), "gameplay: no plan variable, no record");
+    struct Case { const char* what; std::string text; const char* reason; };
+    for (const Case& c : {Case{"unknown mod", replace(with, "gameplay test.b", "gameplay test.z"), "gameplay_mod"},
+                          Case{"twice", replace(with, "gameplay test.b", "gameplay test.b\ngameplay test.b"),
+                               "duplicate_gameplay"},
+                          Case{"extra field", replace(with, "gameplay test.b", "gameplay test.b x"), "bad_gameplay"},
+                          Case{"refused plan", replace(with, Hex(base(off_a, 3000)), Hex(base(off_a, 3000) ^ 1)),
+                               "game_bytes_hash"}}) {
+      WriteText(plan, c.text);
+      m33mods::ResetForTest();
+      g_log.clear();
+      const bool reported = m33mods::GameplayModsActive(&plan);
+      bool refused = false;
+      for (const auto& l : g_log) refused |= l.rfind(std::string("M33 mods state=refused reason=") + c.reason, 0) == 0;
+      if (reported || !refused) std::printf("  gameplay case: %s\n", c.what);
+      Check(!reported && refused && ReadThrough(game, plan, 4096) == game_bytes,
+            "gameplay: a bad record or a refused plan reports nothing and serves nothing");
+    }
   }
   GrowTests(dir);
   std::error_code ec;

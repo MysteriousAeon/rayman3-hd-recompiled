@@ -19,7 +19,13 @@ rem M45 replaces AMD's DXBC checksum by the DXC-derived container hash (m45_runt
 rem M36 adds the grown-VS.sub patch (m36_runtime_patch.py; tests in m33_mod_overlay_test) and the M36 regression (D-073).
 rem D-101 / D-102 add r3hd_dualsense_patch.py (last: DualSense light bar / R2, achievement display text and glyphs)
 rem and build_r3hd_release_tests.bat (mock-pad policy and display-text tests).
-rem D-139 adds r3hd_pcset_patch.py (last: the in-game PC Settings input gate and pointer hook) and r3hd_pcset_regression.py.
+rem D-139 adds r3hd_pcset_patch.py (the in-game PC Settings input gate and pointer hook) and r3hd_pcset_regression.py.
+rem LX-1 (E-374) adds r3hd_thread_teardown_patch.py (POSIX-only threading_posix.cpp; a never-resumed suspended thread no
+rem longer blocks its destruction at Exit Game) and its WSL/Linux test tools\linux\thread_teardown_test.py (skips without WSL).
+rem LX-3 (E-374) adds r3hd_vulkan_parity_patch.py (last: the D3D12 UVS / M23 IssueDraw block copied into the Vulkan backend,
+rem which Windows does not compile) and r3hd_vulkan_parity_regression.py; LX-2 adds the Linux launcher test test_r3hd_play.py.
+rem LX-6 (E-377) adds r3hd_xex_case_patch.py (last: the entrypoint pre-check accepts Default.xex on POSIX like the guest
+rem VFS; Windows tokens and lines unchanged) and r3hd_xex_case_regression.py.
 rem D-115 adds r3hd_padmap_patch.py (after it: the controller button map), its host test and r3hd_padmap_regression.py.
 rem D-150 adds hdl_runtime_patch.py (after M23: the optional HD+ red-correction bypass, off by default) and hdl_regression.py.
 rem D-158 adds uvs_runtime_patch.py (after hdl: the optional lit UV scroll, off by default) and uvs_regression.py.
@@ -80,6 +86,15 @@ python tools\r3hd_dualsense_patch.py || exit /b 1
 python tools\r3hd_padmap_patch.py || exit /b 1
 python tools\r3hd_mouse_patch.py || exit /b 1
 python tools\r3hd_pcset_patch.py || exit /b 1
+python tools\r3hd_thread_teardown_patch.py || exit /b 1
+python tools\r3hd_vulkan_parity_patch.py || exit /b 1
+python tools\r3hd_xex_case_patch.py || exit /b 1
+python tools\r3hd_button_prompts_patch.py || exit /b 1
+python tools\r3hd_beam_runtime_patch.py || exit /b 1
+rem D-220: host display V-Sync for the D3D12 presenter (last; launch-time preference, off by default).
+python tools\r3hd_display_vsync_patch.py || exit /b 1
+rem D-221: HD+ out-of-range lock-on colour (last; read overlay before M33, off by default).
+python tools\r3hd_lockon_runtime_patch.py || exit /b 1
 rem M29 (D-066): the binaries carry no absolute path of the build machine. Source paths (__FILE__, debug info) are
 rem written relative to the repository and the PDB reference is the file name only. A repository path with a space
 rem cannot be one compiler argument inside CMAKE_*_FLAGS, so there the map is left out (the binaries then keep it).
@@ -136,6 +151,7 @@ private\work\rex\out\build\win-amd64-release\m23_haptics_test.exe || exit /b 1
 private\work\rex\out\build\win-amd64-release\m26_texture_orient_test.exe || exit /b 1
 private\work\rex\out\build\win-amd64-release\m33_mod_overlay_test.exe || exit /b 1
 if exist "%R3HD_GAME_DIR%\GAMEDATAbin\fact_55\fact_55_2.btf" private\work\rex\out\build\win-amd64-release\m26_texture_orient_test.exe "%R3HD_GAME_DIR%\GAMEDATAbin\fact_55\fact_55_2.btf" || exit /b 1
+if exist "%R3HD_GAME_DIR%\GAMEDATAbin\swamp_50\swamp_50_2.btf" private\work\rex\out\build\win-amd64-release\m26_texture_orient_test.exe "%R3HD_GAME_DIR%\GAMEDATAbin\swamp_50\swamp_50_2.btf" || exit /b 1
 rem M30 (D-067): the Settings launcher (tools\launcher; static runtime, no PDB), staged into the installer payload.
 call tools\launcher\build_launcher.bat || exit /b 1
 python tools\m6_capture_regression.py || exit /b 1
@@ -156,7 +172,16 @@ python tools\m21_regression.py || exit /b 1
 python tools\m22_regression.py || exit /b 1
 python tools\m23_regression.py || exit /b 1
 python tools\hdl_regression.py || exit /b 1
+python tools\linux\test_red_correction_upload.py || exit /b 1
 python tools\uvs_regression.py || exit /b 1
+python tools\m5_vb_residency_regression.py || exit /b 1
+rem LM-A (D1-D4): both M4 backends on the synthetic suite and on real extracted owners (incl. the setjmp owners).
+python tools\m4_portable_test.py || exit /b 1
+python tools\m4_real_owner_test.py || exit /b 1
+python tools\linux\thread_teardown_test.py || exit /b 1
+python tools\r3hd_vulkan_parity_regression.py || exit /b 1
+python tools\r3hd_xex_case_regression.py || exit /b 1
+python tools\linux\test_r3hd_play.py || exit /b 1
 python tools\m23_haptics_regression.py --binaries || exit /b 1
 python tools\m24_regression.py || exit /b 1
 python tools\m26_regression.py || exit /b 1
@@ -199,5 +224,12 @@ python tools\release_dualsense_settings_test.py || exit /b 1
 python tools\r3hd_padmap_regression.py || exit /b 1
 python tools\r3hd_mouse_feature_regression.py || exit /b 1
 python tools\r3hd_pcset_regression.py || exit /b 1
+call tools\build_button_prompt_test.bat || exit /b 1
+python tools\button_prompt_module_test.py --bin private\work\rex\out\build\win-amd64-release || exit /b 1
+python tools\button_prompt_settings_test.py || exit /b 1
+call tools\build_swirl_test.bat || exit /b 1
+call tools\build_beam_test.bat || exit /b 1
+call tools\build_display_vsync_test.bat || exit /b 1
+call tools\build_lockon_test.bat || exit /b 1
 echo M8_BUILD_OK
 exit /b 0

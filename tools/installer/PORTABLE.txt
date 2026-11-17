@@ -1,6 +1,8 @@
-Rayman 3 HD Recompiled - Portable Edition 1.1.0
+Rayman 3 HD Recompiled - Portable Edition 1.2.0
 
 Extract the whole ZIP into a new writable folder. Start Play.cmd or Settings.cmd.
+Level Editor.cmd opens the Level Remix Editor: it remixes the existing levels intro_10,
+intro_15 and intro_20 and exports the result as a mod (no new levels; see Help in the editor).
 No administrator access, registry entry or shortcut is needed. First startup asks
 for your legally obtained Xbox 360 Rayman 3 HD package (title ID 5841123F,
 without a title update) or its verified extracted data. No game files are included.

@@ -12,9 +12,29 @@
 // While the panel is open the app sets SetHostUiInputBlocked: every input driver gives the guest neutral input and
 // withholds what is still held when it closes (tools/r3hd_hostui_gate.h). The game keeps running underneath, as
 // with Alt+Tab; the panel never pauses or resumes the title.
+// LX-4 (E-375): one panel on both platforms. Only the engine process, its result file, the environment and the
+// UTF-8/UTF-16 conversion differ; the POSIX branches (posix_spawn, a poll()ed pipe, mkstemp) sit beside the Windows
+// code, which is unchanged token for token. The `#line` directives keep every Windows line number (and so every
+// REXLOG source location in the Windows binary) exactly as before; tools/linux/test_pcset_windows_identity.py checks.
 #pragma once
+#if defined(_WIN32)
+#line 16
 #include <windows.h>
+#else
+#include <fcntl.h>
+#include <poll.h>
+#include <signal.h>
+#include <spawn.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <cerrno>
+#include <chrono>
+#include <cstdint>
+extern char** environ;
+#endif
+#line 17
 #include <imgui.h>
+#include <imgui_internal.h>  // BeginTooltipEx retains SetTooltip's replace-previous semantics
 #include <rex/cvar.h>
 #include <rex/logging.h>
 #include <rex/ui/imgui_dialog.h>
@@ -31,7 +51,11 @@
 #include <vector>
 
 namespace r3hd_pcset {
+#if !defined(_WIN32)
+using DWORD = uint32_t;
+#endif
 
+#line 35
 constexpr double kConfirmSeconds = 15.0;
 constexpr float kFontSize = 18.0f;  // logical pixels; the drawer scales logical to physical (DPI)
 constexpr DWORD kEngineTimeoutMs = 60000;
@@ -122,6 +146,48 @@ inline int SensitivityPercent(double scale) {
 }
 
 // ------------------------------------------------------------------------------------------------ engine --
+#if !defined(_WIN32)
+// POSIX: wchar_t holds one code point (UTF-32); the engine's text is UTF-8. Invalid input becomes U+FFFD.
+inline std::wstring Widen(const std::string& s) {
+  std::wstring w;
+  for (size_t i = 0; i < s.size();) {
+    const unsigned char c = static_cast<unsigned char>(s[i]);
+    const int extra = c < 0x80 ? 0 : (c >> 5) == 0x6 ? 1 : (c >> 4) == 0xE ? 2 : (c >> 3) == 0x1E ? 3 : -1;
+    uint32_t cp = extra == 0 ? c : extra == 1 ? (c & 0x1F) : extra == 2 ? (c & 0x0F) : (c & 0x07);
+    bool ok = extra >= 0;
+    for (int k = 1; ok && k <= extra; ++k) {
+      if (i + k >= s.size() || (static_cast<unsigned char>(s[i + k]) & 0xC0) != 0x80) ok = false;
+      else cp = (cp << 6) | (static_cast<unsigned char>(s[i + k]) & 0x3F);
+    }
+    if (!ok) { w.push_back(wchar_t(0xFFFD)); ++i; continue; }
+    w.push_back(wchar_t(cp));
+    i += size_t(extra) + 1;
+  }
+  return w;
+}
+inline std::string Narrow(const std::wstring& w) {
+  std::string s;
+  for (wchar_t wc : w) {
+    uint32_t cp = uint32_t(wc);
+    if (cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF)) cp = 0xFFFD;
+    if (cp < 0x80) s.push_back(char(cp));
+    else if (cp < 0x800) { s.push_back(char(0xC0 | (cp >> 6))); s.push_back(char(0x80 | (cp & 0x3F))); }
+    else if (cp < 0x10000) {
+      s.push_back(char(0xE0 | (cp >> 12))); s.push_back(char(0x80 | ((cp >> 6) & 0x3F)));
+      s.push_back(char(0x80 | (cp & 0x3F)));
+    } else {
+      s.push_back(char(0xF0 | (cp >> 18))); s.push_back(char(0x80 | ((cp >> 12) & 0x3F)));
+      s.push_back(char(0x80 | ((cp >> 6) & 0x3F))); s.push_back(char(0x80 | (cp & 0x3F)));
+    }
+  }
+  return s;
+}
+inline std::wstring Env(const wchar_t* name) {
+  const char* v = std::getenv(Narrow(name).c_str());
+  return v ? Widen(v) : L"";
+}
+#else
+#line 125
 inline std::wstring Widen(const std::string& s) {
   if (s.empty()) return {};
   int n = MultiByteToWideChar(CP_UTF8, 0, s.data(), int(s.size()), nullptr, 0);
@@ -152,8 +218,10 @@ inline std::wstring Quote(const std::wstring& a) {
   q.append(slashes, L'\\');
   return q + L"\"";
 }
+#endif
 
 // Where the engine is. Empty home: this launch did not start from an installation's settings (no persistence).
+#line 157
 struct Engine {
   std::wstring home, python, tools, settings_app;
   bool usable() const { return !home.empty() && !python.empty() && !tools.empty(); }
@@ -169,6 +237,71 @@ struct Engine {
 };
 
 // Runs python -B tools\r3hd_installer.py ARGS --home HOME without a window; stdout+stderr and the exit code.
+#if !defined(_WIN32)
+// POSIX: the same contract. stdin is /dev/null, stdout and stderr share one pipe that is poll()ed (never a blocking
+// read), and a hung engine is killed at the deadline. No shell: the arguments go to posix_spawn as they are.
+inline bool RunEngine(const Engine& e, const std::vector<std::wstring>& args, std::string& out, DWORD& code) {
+  std::vector<std::string> items{Narrow(e.python), "-B", Narrow(e.tools) + "/r3hd_installer.py"};
+  for (const auto& a : args) items.push_back(Narrow(a));
+  items.push_back("--home");
+  items.push_back(Narrow(e.home));
+  std::vector<char*> argv;
+  for (auto& item : items) argv.push_back(item.data());
+  argv.push_back(nullptr);
+  int fds[2];
+  if (pipe(fds) != 0) return false;
+  fcntl(fds[0], F_SETFD, FD_CLOEXEC);
+  fcntl(fds[1], F_SETFD, FD_CLOEXEC);  // dup2 below gives the child its own inheritable copies
+  posix_spawn_file_actions_t actions;
+  posix_spawn_file_actions_init(&actions);
+  posix_spawn_file_actions_addopen(&actions, 0, "/dev/null", O_RDONLY, 0);
+  posix_spawn_file_actions_adddup2(&actions, fds[1], 1);
+  posix_spawn_file_actions_adddup2(&actions, fds[1], 2);
+  pid_t pid = -1;
+  const int spawned = posix_spawn(&pid, argv[0], &actions, nullptr, argv.data(), environ);
+  posix_spawn_file_actions_destroy(&actions);
+  close(fds[1]);
+  if (spawned != 0) {
+    close(fds[0]);
+    return false;
+  }
+  using Clock = std::chrono::steady_clock;
+  const auto deadline = Clock::now() + std::chrono::milliseconds(kEngineTimeoutMs);
+  char buf[8192];
+  for (;;) {
+    const auto left = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - Clock::now()).count();
+    if (left <= 0) break;
+    pollfd p{fds[0], POLLIN, 0};
+    const int ready = poll(&p, 1, int(std::min<long long>(left, 20)));
+    if (ready < 0 && errno != EINTR) break;
+    if (ready <= 0) continue;
+    const ssize_t got = read(fds[0], buf, sizeof buf);
+    if (got > 0) {
+      out.append(buf, size_t(got));
+      continue;
+    }
+    if (got < 0 && errno == EINTR) continue;
+    break;  // end of file: the engine closed its output
+  }
+  close(fds[0]);
+  int status = 0;
+  bool finished = false;
+  for (;;) {
+    const pid_t r = waitpid(pid, &status, WNOHANG);
+    if (r == pid) { finished = true; break; }
+    if (r < 0 && errno != EINTR) break;
+    if (Clock::now() >= deadline) break;
+    usleep(20000);
+  }
+  if (!finished) {
+    kill(pid, SIGKILL);
+    while (waitpid(pid, &status, 0) < 0 && errno == EINTR) {}
+  }
+  code = finished && WIFEXITED(status) ? DWORD(WEXITSTATUS(status)) : 1;
+  return finished;
+}
+#else
+#line 172
 inline bool RunEngine(const Engine& e, const std::vector<std::wstring>& args, std::string& out, DWORD& code) {
   SECURITY_ATTRIBUTES sa{sizeof sa, nullptr, TRUE};
   HANDLE rd = nullptr, wr = nullptr;
@@ -222,8 +355,10 @@ inline bool RunEngine(const Engine& e, const std::vector<std::wstring>& args, st
   CloseHandle(pi.hThread);
   return finished;
 }
+#endif
 
 // One engine request on a worker thread; the panel polls it from the UI thread.
+#line 227
 struct Job {
   std::mutex mutex;
   bool done = false, ran = false;
@@ -235,6 +370,18 @@ inline std::shared_ptr<Job> Start(const Engine& e, std::vector<std::wstring> arg
   std::thread([job, e, args = std::move(args), result_file]() mutable {
     std::wstring file;
     if (result_file) {
+#if !defined(_WIN32)
+      const char* tmp = std::getenv("TMPDIR");
+      std::string name = std::string(tmp && *tmp ? tmp : "/tmp") + "/r3pXXXXXX";
+      const int fd = mkstemp(name.data());
+      if (fd >= 0) {
+        close(fd);
+        file = Widen(name);
+        args.push_back(L"--result-file");
+        args.push_back(file);
+      }
+#else
+#line 238
       wchar_t dir[MAX_PATH], name[MAX_PATH];
       GetTempPathW(MAX_PATH, dir);
       if (GetTempFileNameW(dir, L"r3p", 0, name)) {
@@ -242,11 +389,24 @@ inline std::shared_ptr<Job> Start(const Engine& e, std::vector<std::wstring> arg
         args.push_back(L"--result-file");
         args.push_back(file);
       }
+#endif
+#line 245
     }
     std::string out, result;
     DWORD code = 1;
     bool ran = RunEngine(e, args, out, code);
     if (!file.empty()) {
+#if !defined(_WIN32)
+      FILE* f = std::fopen(Narrow(file).c_str(), "rb");
+      if (f) {
+        char buf[4096];
+        size_t n;
+        while ((n = std::fread(buf, 1, sizeof buf, f)) > 0) result.append(buf, n);
+        std::fclose(f);
+      }
+      unlink(Narrow(file).c_str());
+#else
+#line 250
       FILE* f = nullptr;
       if (_wfopen_s(&f, file.c_str(), L"rb") == 0 && f) {
         char buf[4096];
@@ -255,6 +415,8 @@ inline std::shared_ptr<Job> Start(const Engine& e, std::vector<std::wstring> arg
         std::fclose(f);
       }
       DeleteFileW(file.c_str());
+#endif
+#line 258
       if (result.rfind("\xEF\xBB\xBF", 0) == 0) result.erase(0, 3);
     }
     std::lock_guard lock(job->mutex);
@@ -320,6 +482,39 @@ inline void EndSettingRows() {
   ImGui::PopStyleVar();
 }
 
+inline void HelpTooltip(const std::string& help) {
+  const ImGuiViewport* viewport = ImGui::GetMainViewport();
+  const ImGuiStyle& style = ImGui::GetStyle();
+  const ImVec2 margin(std::max(4.0f, style.DisplaySafeAreaPadding.x),
+                      std::max(4.0f, style.DisplaySafeAreaPadding.y));
+  const ImVec2 available(viewport->WorkSize.x - 2 * margin.x, viewport->WorkSize.y - 2 * margin.y);
+  const float max_text_width = std::max(1.0f, available.x - 2 * style.WindowPadding.x);
+  float wrap = std::min(35.0f * ImGui::GetFontSize(), max_text_width);
+  ImVec2 text = ImGui::CalcTextSize(help.c_str(), nullptr, false, wrap);
+  // Use more horizontal space if a narrow wrap would make a description too tall.
+  if (text.y + 2 * style.WindowPadding.y > available.y) {
+    wrap = max_text_width;
+    text = ImGui::CalcTextSize(help.c_str(), nullptr, false, wrap);
+  }
+  const ImVec2 size(std::ceil(text.x) + 2 * style.WindowPadding.x,
+                    std::ceil(text.y) + 2 * style.WindowPadding.y);
+  ImGui::SetNextWindowSize(size);
+  if (ImGui::BeginTooltipEx(ImGuiTooltipFlags_OverridePrevious, ImGuiWindowFlags_None)) {
+    // Keep ImGui's mouse/controller anchor and preferred side. Its tooltip fallback
+    // may leave the viewport when no side avoids the anchor: clamp that fallback.
+    const ImVec2 pos = ImGui::GetWindowPos();
+    ImGui::SetWindowPos(ImVec2(
+        std::clamp(pos.x, viewport->WorkPos.x + margin.x,
+                   viewport->WorkPos.x + std::max(margin.x, viewport->WorkSize.x - margin.x - size.x)),
+        std::clamp(pos.y, viewport->WorkPos.y + margin.y,
+                   viewport->WorkPos.y + std::max(margin.y, viewport->WorkSize.y - margin.y - size.y))));
+    ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + wrap);
+    ImGui::TextUnformatted(help.c_str());
+    ImGui::PopTextWrapPos();
+    ImGui::EndTooltip();
+  }
+}
+
 // One setting: `control` submits a single frame-high widget (its width is set to the column). The help text is the
 // tooltip of the label and the note.
 template <class Control>
@@ -338,12 +533,13 @@ RowBoxes DrawSettingRow(const std::string& label, const std::string& note, const
   r.control = {at, ImVec2(at.x + ImGui::GetContentRegionAvail().x, at.y + ImGui::GetFrameHeight())};
   ImGui::SetNextItemWidth(-FLT_MIN);
   control();
+  hovered |= ImGui::IsItemFocused();  // keyboard/controller users can read the same help as mouse users
   ImGui::PushTextWrapPos(0.0f);
   ImGui::TextDisabled("%s", note.c_str());
   ImGui::PopTextWrapPos();
   r.note = LastItemBox();
   hovered |= ImGui::IsItemHovered();
-  if (!help.empty() && hovered) ImGui::SetTooltip("%s", help.c_str());
+  if (!help.empty() && hovered) HelpTooltip(help);
   return r;
 }
 
@@ -395,8 +591,9 @@ class Panel final : public rex::ui::ImGuiDialog {
     REXLOG_INFO("R3HD pcset open persistence={}", engine_.usable() ? "home" : "none");
   }
   void RequestClose() { close_requested_ = true; }
-  // Only a running display confirmation needs paints of its own (its countdown must end even without guest frames).
-  bool NeedsContinuousRepaint() const override { return confirm_; }
+  // Raw pad input has no keyboard/mouse window event to wake the drawer. Keep this
+  // open panel responsive even when loading stalls guest paints; closed panels do no work.
+  bool NeedsContinuousRepaint() const override { return true; }
 
  protected:
   void OnClose() override {
@@ -407,7 +604,8 @@ class Panel final : public rex::ui::ImGuiDialog {
 
   void OnDraw(ImGuiIO& io) override {
     Poll();
-    if (close_requested_ && !confirm_) {
+    if (close_requested_) {
+      if (confirm_) RevertDisplay("close");
       Close();
       return;
     }
@@ -427,6 +625,9 @@ class Panel final : public rex::ui::ImGuiDialog {
     }
     ImGui::End();
     if (confirm_) DrawConfirm(view);
+    // Cancel belongs to the previously active control/popup first. ImGui may already
+    // have dismissed it in NewFrame; do not let that same press also close Settings.
+    back_at_root_ = !ImGui::IsAnyItemActive() && !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId);
     if (host_.font) ImGui::PopFont();
   }
 
@@ -587,6 +788,7 @@ class Panel final : public rex::ui::ImGuiDialog {
       confirm_previous_ = live_["display"];
       SetLive("display", pending_["display"]);
       confirm_ = true;
+      confirm_focus_ = true;
       confirm_deadline_ = ImGui::GetTime() + kConfirmSeconds;
       REXLOG_INFO("R3HD pcset display={} confirm=pending", live_["display"]);
       return;  // saved after Keep
@@ -639,7 +841,7 @@ class Panel final : public rex::ui::ImGuiDialog {
         status_.empty() ? T("F4 or Esc closes this panel. Changes that are not applied are discarded.") : status_;
     const std::vector<std::string> buttons{T("Apply"), T("Discard changes"), T("Close")};
     const float footer = FooterHeight(footer_text, buttons, ImGui::GetContentRegionAvail().x);
-    ImGui::BeginChild("##settings", ImVec2(0.0f, -footer), ImGuiChildFlags_None);
+    ImGui::BeginChild("##settings", ImVec2(0.0f, -footer), ImGuiChildFlags_NavFlattened);
     ImGui::PushTextWrapPos(0.0f);
     ImGui::TextDisabled("%s", T("The game keeps running while this panel is open. Pause first during gameplay.").c_str());
     if (!model_.preset_label.empty())
@@ -670,7 +872,9 @@ class Panel final : public rex::ui::ImGuiDialog {
       ImGui::TextUnformatted(
           T("Keyboard and controller controls, and the profile's corrections, are changed in the Settings app.").c_str());
       ImGui::PopTextWrapPos();
+      ImGui::BeginDisabled(loading_ || saving_ || confirm_);
       if (!engine_.settings_app.empty() && ImGui::Button(T("Open Settings app").c_str())) OpenSettingsApp();
+      ImGui::EndDisabled();
     }
     ImGui::EndChild();
 
@@ -698,8 +902,9 @@ class Panel final : public rex::ui::ImGuiDialog {
     ImGui::BeginDisabled(confirm_);
     if (ImGui::Button(buttons[2].c_str())) close_requested_ = true;
     ImGui::EndDisabled();
-    if (!confirm_ && !ImGui::IsAnyItemActive() && !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId) &&
-        ImGui::IsKeyPressed(ImGuiKey_Escape, false))
+    if (!confirm_ && back_at_root_ && !ImGui::IsAnyItemActive() &&
+        !ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId) &&
+        (ImGui::IsKeyPressed(ImGuiKey_Escape, false) || ImGui::IsKeyPressed(ImGuiKey_GamepadFaceRight, false)))
       close_requested_ = true;
   }
 
@@ -750,12 +955,33 @@ class Panel final : public rex::ui::ImGuiDialog {
       ImGui::PopTextWrapPos();
       if (ImGui::Button(T("Keep").c_str())) KeepDisplay();
       ImGui::SameLine();
-      if (ImGui::Button(T("Revert").c_str()) || ImGui::IsKeyPressed(ImGuiKey_Escape, false)) RevertDisplay("person");
+      if (confirm_focus_) { ImGui::SetKeyboardFocusHere(); confirm_focus_ = false; }
+      if (ImGui::Button(T("Revert").c_str()) || ImGui::IsKeyPressed(ImGuiKey_Escape, false) ||
+          ImGui::IsKeyPressed(ImGuiKey_GamepadFaceRight, false)) RevertDisplay("person");
     }
     ImGui::End();
   }
 
   void OpenSettingsApp() {
+#if !defined(_WIN32)
+    // POSIX: only when a launcher names a Settings application (the Linux launcher has none yet, so the button is
+    // hidden). The child is reaped on its own thread; the game never waits for it.
+    std::string app = Narrow(engine_.settings_app);
+    char* argv[] = {app.data(), nullptr};
+    pid_t pid = -1;
+    if (posix_spawn(&pid, app.c_str(), nullptr, nullptr, argv, environ) == 0) {
+      std::thread([pid] { int status = 0; while (waitpid(pid, &status, 0) < 0 && errno == EINTR) {} }).detach();
+      status_ = T("Settings is open. Its changes apply the next time the game starts.");
+      error_ = false;
+      REXLOG_INFO("R3HD pcset settings_app=started");
+    } else {
+      status_ = T("The Settings app could not be started.");
+      error_ = true;
+    }
+    return;
+#endif
+#if defined(_WIN32)
+#line 759
     STARTUPINFOW si{sizeof si};
     PROCESS_INFORMATION pi{};
     std::wstring cmd = Quote(engine_.settings_app);
@@ -769,6 +995,8 @@ class Panel final : public rex::ui::ImGuiDialog {
       status_ = T("The Settings app could not be started.");
       error_ = true;
     }
+#endif
+#line 772
   }
 
   Host host_;
@@ -778,8 +1006,41 @@ class Panel final : public rex::ui::ImGuiDialog {
   std::shared_ptr<Job> load_, save_;
   bool loading_ = false, saving_ = false, stale_ = false, opened_ = false, close_requested_ = false, error_ = false;
   bool confirm_ = false;
+  bool confirm_focus_ = false, back_at_root_ = true;
   double confirm_deadline_ = 0.0;
   std::string confirm_previous_, status_;
 };
 
 }  // namespace r3hd_pcset
+
+// LX-4: the panel's font on POSIX. r3hd_app.h's OnConfigureFonts begins with R3HD_PCSET_POSIX_FONTS on its first line
+// (so no Windows line moves); on Windows the macro is empty, so the Windows tokens and lines are unchanged. On Linux
+// it loads the first common distribution font that has Latin Extended-A (Turkish), else the Windows search below it
+// finds nothing and the panel keeps ImGui's default font.
+#if !defined(_WIN32)
+#include <filesystem>
+namespace r3hd_pcset {
+inline bool PosixFont(ImFontAtlas* atlas, ImFont*& font) {
+  for (const char* path : {"/usr/share/fonts/TTF/DejaVuSans.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+                           "/usr/share/fonts/dejavu-sans-fonts/DejaVuSans.ttf", "/usr/share/fonts/dejavu/DejaVuSans.ttf",
+                           "/usr/share/fonts/noto/NotoSans-Regular.ttf", "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
+                           "/usr/share/fonts/google-noto/NotoSans-Regular.ttf",
+                           "/usr/share/fonts/liberation/LiberationSans-Regular.ttf",
+                           "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf"}) {
+    std::error_code error;
+    if (!std::filesystem::is_regular_file(path, error)) continue;
+    ImFontConfig config;
+    config.OversampleH = 2;
+    config.OversampleV = 1;
+    font = atlas->AddFontFromFileTTF(path, kFontSize, &config, kFontRanges);
+    if (!font) continue;
+    REXLOG_INFO("R3HD pcset font={}", path);
+    return true;
+  }
+  return false;
+}
+}  // namespace r3hd_pcset
+#define R3HD_PCSET_POSIX_FONTS(atlas, font) if (r3hd_pcset::PosixFont(atlas, font)) return;
+#else
+#define R3HD_PCSET_POSIX_FONTS(atlas, font)
+#endif

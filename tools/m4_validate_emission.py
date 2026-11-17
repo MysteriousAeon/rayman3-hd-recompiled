@@ -15,7 +15,8 @@ def validate():
     scopes = bodies = 0
     for owner in eh['seh']:
         src = functions[table[int(owner['function'], 16)]]
-        for token in ('M4SehFilter(', 'M4SehUnwind(', 'M4RestoreOwner(', 'M4BeforeCall(', 'm4.pc =', 'm4_retry:'):
+        # LM-A (D1): the owner template is written with the project macros of tools/m4_seh.h.
+        for token in ('M4_FRAME(', 'M4_TRY_BEGIN', 'M4_TRY_END', 'M4BeforeCall(', 'm4.pc =', 'm4_retry:'):
             assert token in src, (owner['function'], token)
         for s in owner['scopes']:
             begin, end, filt, target = [(int(s[k], 16) if isinstance(s[k], str) else s[k]) for k in ('begin', 'end', 'filter', 'target')]

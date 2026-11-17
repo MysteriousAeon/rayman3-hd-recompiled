@@ -1,5 +1,5 @@
 #pragma once
-// D-096: documented Discord RPC v1, Windows local IPC only. No Discord SDK binary.
+#if defined(_WIN32)  // D-096: documented Discord RPC v1, Windows local IPC only. No Discord SDK binary.
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
@@ -165,3 +165,18 @@ class DiscordPresence {
   }
 };
 }  // namespace r3hd
+#else
+// Linux (LM-1): Discord IPC (a Windows named pipe) is unavailable. Same API, no effect.
+#include <cstdlib>
+namespace r3hd {
+class DiscordPresence {
+ public:
+  DiscordPresence() = default;
+  DiscordPresence(const DiscordPresence&) = delete;
+  DiscordPresence& operator=(const DiscordPresence&) = delete;
+  static bool Enabled() noexcept { return false; }
+  void Start() noexcept {}
+  void Stop() noexcept {}
+};
+}  // namespace r3hd
+#endif

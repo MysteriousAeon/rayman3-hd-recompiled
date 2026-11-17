@@ -1,0 +1,45 @@
+{
+  "members": {
+    "OWNER.txt": "2ff983a9169e40dd0a0590969fa26de4b66f27652a67a6c57fca028d2a5a112b",
+    "prepared.json": "8eff1dafd6fae77797aebc316ebec4534f99fb858d670052246848662335e158",
+    "reject/attempt.json": "adf71c638a568f6153c718dab1d0855f1f2c7087208b4e7a5298e6b61d572b8f",
+    "reject/exit.json": "5e12cb7f7c105477ea6b3ff291fbd826d9b49411ea43b9bdde7fd9136135b84f",
+    "reject/libffmpeg.so.loader.txt": "bf84f797cacf4d0a2be87f698f37ecc9d27c766be744def266982b999e59f335",
+    "reject/libmspack.so.loader.txt": "eb883636923e200ca85305ce37e1abebd87df7a50e636eb133311038889dd153",
+    "reject/librexgpu-xenos.so.loader.txt": "aa9fbb2fb4f7ef12261f2c462e1f2b2364652fdec2dfb8033be6fea40842522a",
+    "reject/librexruntime.so.loader.txt": "6759c2125a225a629f6d23a9a2bcea8ef3b2dab1da2e09890ad9334bf2e9506f",
+    "reject/process.json": "f675ad6e74658667828ac33663153efb32b454af8998ff52035bf81160e797f4",
+    "reject/process.log": "4a12af60bcbd506811df42329ac1224b1ec11598a2a5446f1ed120614ec0a4cb",
+    "reject/r3hd.loader.txt": "84fcedbc58a1f267c67e8d73e6e4327a9e085af86383a0d808e40952343acd03",
+    "reject/result.json": "e07380be9ebcda76b4cd5ff8e20983769a1687143c67c3c318352e7de707fe20",
+    "wayland/attempt.json": "e101ee1691333796e14d93a60a2aaf073c9886fdddc0430cdf8144d4d392c96d",
+    "wayland/exit.json": "5e12cb7f7c105477ea6b3ff291fbd826d9b49411ea43b9bdde7fd9136135b84f",
+    "wayland/libffmpeg.so.loader.txt": "c6e7e7dbe164e1d55886089322fb9cfa79e65d520855944c48ae2c45700616fd",
+    "wayland/libmspack.so.loader.txt": "73a3e0967a890dab09a68d82ecf416d78ce2b62b239fce28a0f8f7dc88ddfeb3",
+    "wayland/librexgpu-xenos.so.loader.txt": "d3b3ff4fd563240b4111cceff96f1bf36fa675d072fcb1b40895767a13d4077b",
+    "wayland/librexruntime.so.loader.txt": "31802d6e3f835e3aa66e350a6ac3280330450df6e67d43af090592544da394c2",
+    "wayland/process.json": "bbcec79c9d9c486e8258fc2303afeaa82b440eda1d755d29483cd692fb51a043",
+    "wayland/process.log": "36628c9129b70184de7011058cc83e567c3e39625075f2e9fda87e671679a93b",
+    "wayland/r3hd.loader.txt": "d0dfd7c86dfc444cd000e8fb8345c8b1ed872458abb7b8e52aa83cef6b2cca9b",
+    "wayland/result.json": "5ff29d52af91b70b2b85c9b752631301f1a1a6de7b0efeb32a67024b4fe1ee9e",
+    "wayland/runtime.log": "01d591a2753f3df7165e986176c8992e3bc07e08f7e2283807b2a2fc6b87781d"
+  },
+  "raw_package_sha256": "18bccaff1ca8298147b21f21142c756c3da328face135a519327180c96d07517",
+  "raw_package_size": 2095038464,
+  "sidecar_sha256": "3208df21b6cfcaf77fa75e4b0deb0be86c28036cd4578537252a7dfa05780e14",
+  "source_facts": {
+    "external/rexglue-sdk/src/core/system_posix.cpp": {
+      "commit": "c94f5ebdcb3c9d1a460ca48e04f9758448f8d518",
+      "sha256": "c66d427002cca52eb056e51b404f8f9091876cba2b2e1fca830d1a49cbf2f559"
+    },
+    "external/rexglue-sdk/src/ui/windowed_app_main_sdl.cpp": {
+      "commit": "c94f5ebdcb3c9d1a460ca48e04f9758448f8d518",
+      "sha256": "49c1fe205eb4802967896791fe8883c10daad0a7bc0efa5f8e60ec4ecc4aabf7"
+    },
+    "external/rexglue-sdk/thirdparty/sdl3/src/video/wayland/SDL_waylandwindow.c": {
+      "commit": "8bf3b7215ad9fc3deb583c6a3a37c6c67f2e24e4",
+      "sha256": "935f6eeff10ca97a723278e645809fd3f18146c41287baae249d7cdaad25aa0b"
+    }
+  },
+  "zip_sha256": "a36d178b4032893ea1a6314f9f5e68336befb6fe099e5e6b49df4f15cd2a3f36"
+}

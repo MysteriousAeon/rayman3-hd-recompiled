@@ -1,0 +1,39 @@
+# Only this small directory is the context. Never use the source/game tree as context.
+ARG BASE=docker.io/library/ubuntu@sha256:78d4744ead1f5b19b04d0df558ab182a5300903900755e515b2ca4d10eb2044d
+FROM ${BASE}
+ENV DEBIAN_FRONTEND=noninteractive
+COPY ubuntu.sources /etc/apt/sources.list.d/ubuntu.sources
+COPY validate_apt_sources.sh /opt/r3hd-validate-apt-sources.sh
+COPY bootstrap_apt.sh /opt/r3hd-bootstrap-apt.sh
+COPY validate_snapshot_lists.sh /opt/r3hd-validate-snapshot-lists.sh
+COPY bootstrap/ /opt/r3hd-bootstrap/
+RUN test "$(dpkg --print-architecture)" = amd64 \
+ && sh /opt/r3hd-validate-apt-sources.sh \
+ && sh /opt/r3hd-bootstrap-apt.sh \
+ && apt-get -o Dir::Etc::sourcelist=/etc/apt/sources.list \
+    -o Dir::Etc::sourceparts=/etc/apt/sources.list.d \
+    -o Acquire::https::CaInfo=/opt/r3hd-bootstrap/ca-bundle.crt \
+    -o Acquire::https::Verify-Peer=true -o Acquire::https::Verify-Host=true update --error-on=any \
+ && sh /opt/r3hd-validate-snapshot-lists.sh \
+ && apt-get -o Dir::Etc::sourcelist=/etc/apt/sources.list \
+    -o Dir::Etc::sourceparts=/etc/apt/sources.list.d \
+    -o Acquire::https::CaInfo=/opt/r3hd-bootstrap/ca-bundle.crt \
+    -o Acquire::https::Verify-Peer=true -o Acquire::https::Verify-Host=true \
+    install -y --no-install-recommends ca-certificates=20260816ubuntu0.24.04.2 \
+ && test -s /etc/ssl/certs/ca-certificates.crt \
+ && apt-get -o Dir::Etc::sourcelist=/etc/apt/sources.list \
+    -o Dir::Etc::sourceparts=/etc/apt/sources.list.d \
+    -o Acquire::https::Verify-Peer=true -o Acquire::https::Verify-Host=true update --error-on=any \
+ && sh /opt/r3hd-validate-snapshot-lists.sh \
+ && apt-get -o Dir::Etc::sourcelist=/etc/apt/sources.list \
+    -o Dir::Etc::sourceparts=/etc/apt/sources.list.d install -y --no-install-recommends \
+    ca-certificates clang-18 lld-18 llvm-18 g++-13 build-essential cmake ninja-build \
+    git python3 python3-tk pkg-config binutils file unzip zip \
+    libx11-dev libx11-xcb-dev libxcb1-dev libxext-dev libxrandr-dev libxcursor-dev \
+    libxi-dev libxfixes-dev libxss-dev libxtst-dev libwayland-dev wayland-protocols \
+    libxkbcommon-dev libasound2-dev libpulse-dev libpipewire-0.3-dev libudev-dev libdbus-1-dev \
+ && ln -s /usr/bin/clang-18 /usr/local/bin/clang \
+ && ln -s /usr/bin/clang++-18 /usr/local/bin/clang++ \
+ && dpkg-query -W -f='${binary:Package}\t${Version}\t${Architecture}\n' > /opt/r3hd-packages.tsv
+ENV CC=clang CXX=clang++
+WORKDIR /work

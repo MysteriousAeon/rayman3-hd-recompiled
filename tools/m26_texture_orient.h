@@ -6,6 +6,8 @@
 // coordinates count on that. The four atlases of the Robo-Pirate statues in `fact_55` (`fac_sbire01..04`) are
 // stored top row first, so every statue part samples the mirror cell of its page. That is the HD release's own
 // data (class B: inherited content defect), so the default leaves it alone.
+// E-433: swamp_50's ugly_body has the same defect: blue fur on the head and eye artwork on the legs.
+// The single-page mirror restores the atlas islands in the target mesh; no UV or shader change is needed.
 //
 // With R3HD_TEXTURE_ORIENT=corrected a read of a listed bundle file returns the listed pages mirrored top to
 // bottom: block rows reversed and the four texel rows inside each DXT5 block reversed, for the base level and for
@@ -66,8 +68,13 @@ constexpr Page kFact55Pages[] = {
     {"fac_sbire04.dds", {0x594000, 0x5D4000}, {0x40000, 0x20000},
      {0x99DDC6F65C1A3480ull, 0x2988D42582897DAEull}, {0xB3384346D815F514ull, 0x7E2F5DF1E310F3C5ull}},
 };
+constexpr Page kSwamp50Pages[] = {
+    {"ugly_body.dds", {0x892000, 0x8D2000}, {0x40000, 0x20000},
+     {0xFB00F286D41EC137ull, 0xAFE2DF43E826AA6Aull}, {0x1AEAEC4D0A21C892ull, 0x9A2B0A205CF8BAD3ull}},
+};
 constexpr Bundle kBundles[] = {
     {"fact_55_2.btf", 12722176, kFact55Pages, sizeof(kFact55Pages) / sizeof(Page)},
+    {"swamp_50_2.btf", 10174464, kSwamp50Pages, sizeof(kSwamp50Pages) / sizeof(Page)},
 };
 constexpr size_t kBundleCount = sizeof(kBundles) / sizeof(Bundle);
 

@@ -142,7 +142,7 @@ with tempfile.TemporaryDirectory() as tmp:
 MOUSE = {"mouse_camera": "off", "mouse_sensitivity": "50", "mouse_buttons": "off"}
 check(all(S[k]["vanilla"] == S[k]["hdplus"] == d and rs.scope(S[k]) == "preference" and S[k]["group"] == "mouse"
           and S[k]["decision"] == "D-138" and "install_default" not in S[k] for k, d in MOUSE.items())
-      and list(reg["groups"]) == ["display", "corrections", "mouse", "advanced"], "mouse: three preferences, off / 50 / off everywhere")
+      and list(reg["groups"]) == ["display", "corrections", "controller", "mouse", "advanced"], "mouse: three preferences, off / 50 / off everywhere")
 check(S["mouse_sensitivity"]["range"] == {"min": 1, "max": 100, "unit": "percent"}
       and S["mouse_sensitivity"]["requires"] == {"mouse_camera": "on"} and S["mouse_buttons"].get("requires") is None
       and S["mouse_camera"]["values"] == ["off", "on"] and S["mouse_buttons"]["values"] == ["off", "on"],

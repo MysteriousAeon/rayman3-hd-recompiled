@@ -1,4 +1,4 @@
-// M8 last-chance crash record for human playtests. Self-contained Win32: no runtime or guest
+#if defined(_WIN32)  // M8 last-chance crash record for human playtests. Self-contained Win32: no runtime or guest
 // dependency, no guest state is read or changed. Writes r3hd_crash.txt and a small minidump
 // (thread stacks only) to the process working directory, which the launchers keep under private/.
 #pragma once
@@ -71,3 +71,13 @@ inline void Install(DescribeFn describe) {
   SetUnhandledExceptionFilter(Unhandled);
 }
 }  // namespace m8crash
+#else
+#pragma once
+// Linux (LM-1): the Win32 crash report (unhandled-exception filter, minidump) is unavailable; Install records the
+// describe hook only and installs no signal handler (signal ownership is the SDK's).
+namespace m8crash {
+using DescribeFn = int (*)(char* out, int size);
+inline DescribeFn& Describe() { static DescribeFn fn = nullptr; return fn; }
+inline void Install(DescribeFn describe) { Describe() = describe; }
+}  // namespace m8crash
+#endif

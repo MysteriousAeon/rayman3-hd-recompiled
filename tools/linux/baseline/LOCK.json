@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "source_commit": "0414e72",
+  "ubuntu": "docker.io/library/ubuntu@sha256:78d4744ead1f5b19b04d0df558ab182a5300903900755e515b2ca4d10eb2044d",
+  "index_digest": "sha256:fe81560990fae86dc4743202b2cb4d3df98d0bcf949173cecef15ce1127ef852",
+  "platform": "linux/amd64",
+  "snapshot": "20261108T000000Z",
+  "minimum_free_bytes": 50000000000,
+  "preferred_free_bytes": 70000000000,
+  "minimum_available_ram_bytes": 16000000000,
+  "jobs_later": 4,
+  "glibc_ceiling": "2.39",
+  "glibcxx_ceiling": "3.4.33"
+}

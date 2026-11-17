@@ -14,6 +14,7 @@
   "groups": {
     "display": "Display",
     "corrections": "Corrections",
+    "controller": "Controller",
     "mouse": "Mouse",
     "advanced": "Troubleshooting"
   },
@@ -84,6 +85,20 @@
       "decision": "D-042",
       "why": "the same 1280x720 frame drawn at a larger internal size; 1 is the original resolution"
     },
+    "display_vsync": {
+      "label": "V-Sync",
+      "help": "Prevents screen tearing; can add slight input delay. Graphics driver settings may override it. Windows only.",
+      "group": "display",
+      "category": "platform",
+      "scope": "preference",
+      "values": ["off", "on"],
+      "value_labels": {"off": "Off", "on": "On"},
+      "vanilla": "off",
+      "hdplus": "off",
+      "launcher": "VSync",
+      "decision": "D-220",
+      "why": "Windows only: host presentation of the D3D12 presenter (Present sync interval 1 with a bounded frame queue); the 60 Hz guest vblank and simulation step (D-046) are unchanged; never the SDK's guest-vblank `vsync` cvar (E-265); the Linux Vulkan presenter does not read it"
+    },
     "combo_close": {
       "label": "Combo Meter Animation",
       "help": "Adds a smooth exit animation to the Combo Meter during the final second of a combo.",
@@ -127,8 +142,8 @@
       "why": "the HD release's final red-correction pass turns deep red lava pink in five levels (E-345)"
     },
     "texture_orient": {
-      "label": "Correct Robo-Pirate statue textures",
-      "help": "Fixes four upside-down statue textures in Hoodlum Headquarters.",
+      "label": "Correct Texture Orientation",
+      "help": "Fixes upside-down Robo-Pirate statue textures in Hoodlum Headquarters and Ugly textures in the Bog of Murk.",
       "group": "corrections",
       "category": "hd_correction",
       "values": ["original", "corrected"],
@@ -137,9 +152,9 @@
       "hdplus": "corrected",
       "provisional": true,
       "launcher": "TextureOrient",
-      "decision": "D-058, D-080",
-      "validation": "provisional (M43, D-080: in HD+ at the person's request before gate G-HDP-2): transformation VERIFIED offline and delivery byte-exact, the room not yet seen in the renderer with the option on",
-      "why": "four Robo-Pirate statue pages stored the other way up from their meshes"
+      "decision": "D-058, D-080, D-163, D-206",
+      "validation": "Robo-Pirate statues human accepted (D-163); Ugly mechanism, mips and hidden delivery verified (E-433), human close-view acceptance pending; provisional flag retained",
+      "why": "four Robo-Pirate statue pages and swamp_50's Ugly body page stored the other way up from their meshes; E-433 verifies the Ugly mechanism, human acceptance pending"
     },
     "sky_clear": {
       "label": "Correct Sky Colors",
@@ -169,6 +184,48 @@
       "validation": "passed (D-159): the trail's vertex shader 1t_d_lighting drops the UV offset c10 the title writes with the charge (E-353); one-instruction copy, c10 delivery and the shader's other users (offset zero) VERIFIED in hidden runs (E-354); human visual pass against the 2003 PC footage, 2026-10-31 (E-355)",
       "why": "the HD release's shader for the fist-charge trail ignores the scroll of its fire gradient, so the trail stays a faint grey wisp instead of turning red, then orange, as the charge grows"
     },
+    "power_swirl": {
+      "label": "Restore Power-Up Spiral",
+      "help": "Restores the colored spiral around Rayman when a power-up is acquired or expires.",
+      "group": "corrections",
+      "category": "hd_correction",
+      "values": ["original", "restored"],
+      "value_labels": {"original": "Off (as on Xbox 360)", "restored": "On"},
+      "vanilla": "original",
+      "hdplus": "restored",
+      "launcher": "PowerSwirl",
+      "decision": "D-209, D-217, D-218",
+      "validation": "Windows human visual PASS: enabled blue LockJaw swirl matches original-PC intent (E-446); automated Shock Rocket pickup/expiry checked (E-445). Other colors/transitions/scenes and full GPU-state/replay qualification remain limited.",
+      "why": "The original PC power-transition spiral retains its geometry and materials in HD, but its quad submission is empty."
+    },
+    "beam_color": {
+      "label": "Restore Power-Up Canister Colors",
+      "help": "Restores the purple beam and rings of power-up cans from the original PC release instead of orange.",
+      "group": "corrections",
+      "category": "hd_correction",
+      "values": ["original", "restored"],
+      "value_labels": {"original": "Off (as on Xbox 360)", "restored": "On"},
+      "vanilla": "original",
+      "hdplus": "restored",
+      "launcher": "BeamColor",
+      "decision": "D-209, D-210, D-217, D-219",
+      "validation": "Windows human visual PASS: restored purple canister beam and upper/lower rings (E-448). Beam pages verified per pixel and hash-gated in all 39 bundles; ring page ago_blueripple (HD redraw) gets the same rotation; hidden off/on runs verify screen ownership (E-447). Other scenes and ring-page users, Linux runtime and full replay qualification remain limited.",
+      "why": "The HD release's two power-up beam pages are the original purple PC pages with their color channels rotated, so the beams turn orange; the HD redraw of the purple PC ring page uses the same orange palette."
+    },
+    "lockon_far_color": {
+      "label": "Restore Out-of-Range Lock-On Color",
+      "help": "Shows the lock-on indicator for a target beyond your fist's reach in blue, as in the original PC release, instead of orange.",
+      "group": "corrections",
+      "category": "hd_correction",
+      "values": ["original", "restored"],
+      "value_labels": {"original": "Off (as on Xbox 360)", "restored": "On"},
+      "vanilla": "original",
+      "hdplus": "restored",
+      "launcher": "LockonColor",
+      "decision": "D-209, D-210, D-217, D-221",
+      "validation": "Windows human visual PASS: restored blue out-of-range indicator (E-453). Page ago_targetfar identified by draw trace in knaar_69 (E-451/E-452); hash-gated endpoint recolor keeps the HD eight-dash art; hidden off/on run verifies screen ownership. Other levels, Linux runtime and full replay qualification remain limited.",
+      "why": "The HD release redrew the original blue PC out-of-range indicator as an orange eight-dash ring; the normal lock-on ring and arrows are separate pages and stay as they are."
+    },
     "gameplay_subtitles": {
       "label": "Gameplay subtitles",
       "help": "Also outside cutscenes. The game's Subtitles option still applies.",
@@ -183,6 +240,29 @@
       "decision": "D-081, D-090",
       "validation": "M44 (D-081): the title's rule VERIFIED from its code and hidden traces; D-090: a per-installation preference (Settings > Corrections), on for a fresh HD+ installation",
       "why": "the Xbox 360 HD release shows gameplay voice subtitles only in cinematic mode or for a fixed list of lines (title design, not a port defect)"
+    },
+    "controller_prompts": {
+      "label": "Controller button prompts",
+      "help": "Choose which controller button icons appear in-game. Auto identifies the primary or sole controller at launch; unknown or ambiguous controllers use Xbox. Restart after changing controllers.",
+      "group": "controller",
+      "ui": "profile_radios",
+      "category": "enhancement",
+      "scope": "preference",
+      "values": [
+        "auto",
+        "xbox",
+        "playstation"
+      ],
+      "value_labels": {
+        "auto": "Auto",
+        "xbox": "Xbox",
+        "playstation": "PlayStation"
+      },
+      "vanilla": "auto",
+      "hdplus": "auto",
+      "launcher": "ButtonPrompts",
+      "decision": "D-204",
+      "why": "launch-time Auto or manual artwork override, independent of profiles and gameplay bindings"
     },
     "mouse_camera": {
       "label": "Mouse Camera",

@@ -1,5 +1,5 @@
 // Host-only presentation. The installer creates this ICO from the owner's package.
-// No artwork is linked into the executable. Call Attach/Reset on the window's UI thread.
+#if defined(_WIN32)  // No artwork is linked into the executable. Call Attach/Reset on the window's UI thread.
 #pragma once
 #include <windows.h>
 #include <shobjidl.h>
@@ -119,3 +119,26 @@ class WindowIcon {
   bool taskbar_local_ = false;
 };
 }  // namespace r3hd
+#else
+#pragma once
+// Linux (LM-1): window and taskbar icons are Windows-only and unavailable. Same API, no effect.
+#include <filesystem>
+#include <rex/logging.h>
+using HWND = void*;
+using HRESULT = long;
+#define SUCCEEDED(hr) ((hr) >= 0)
+inline HRESULT SetCurrentProcessExplicitAppUserModelID(const wchar_t*) { return -1; }
+namespace r3hd {
+inline constexpr wchar_t kGameAppId[] = L"Rayman3HDRecompiled.Game";
+class WindowIcon {
+ public:
+  bool Attach(HWND, const std::filesystem::path&) {
+    static const bool logged = [] { REXLOG_INFO("R3HD window_icon unavailable on Linux"); return true; }();
+    (void)logged;
+    return false;
+  }
+  bool taskbar_local() const { return false; }
+  void Reset() {}
+};
+}  // namespace r3hd
+#endif

@@ -2,7 +2,7 @@
 
 A native Windows and Linux port of **Rayman 3 HD** for Xbox 360. The game's code has been statically recompiled to run directly on a PC, without an emulator.
 
-Setup uses your own Xbox 360 game package. Windows offers an installer and a portable ZIP; Linux uses a portable archive, initially available as a pre-release. Downloads are on the project's [Releases page](https://github.com/MysteriousAeon/rayman3-hd-recompiled/releases).
+Setup uses your own Xbox 360 game package. Windows v1.2.0 offers an installer and a portable ZIP; Linux uses a portable archive, currently available as an experimental pre-release (v1.1.0). Downloads are on the project's [Releases page](https://github.com/MysteriousAeon/rayman3-hd-recompiled/releases).
 
 **No game files are included.** You need your own, legally obtained copy of Rayman 3 HD for Xbox 360.
 
@@ -19,16 +19,17 @@ Rayman 3 was one of my favorite games growing up, and I wanted my wife to experi
 ## Features
 
 - **Native Windows and Linux support:** Play the Xbox 360 HD version without running an emulator.
-- **HD+ enhancements:** Optional fixes for lighting, sky colors, charge effects, texture rendering, and Combo Meter animation, alongside Vanilla and Custom profiles.
+- **HD+ enhancements:** Optional fixes for lighting, sky colors, charge effects, power-up effects, lock-on colors, texture rendering, and Combo Meter animation, alongside Vanilla and Custom profiles.
 - **Mouse and keyboard support:** Optional mouse camera and button controls, mouse-controlled Look Mode, two keyboard layouts, and customizable bindings.
 - **In-game PC Settings:** Press F4 to adjust common settings without leaving the game.
-- **Controller support:** Customizable controller button mapping, including support for Xbox-compatible controllers and native DualSense controllers.
+- **Controller support:** Customizable controller button mapping, including support for Xbox-compatible controllers and native DualSense controllers, with Xbox or PlayStation button prompts.
 - **DualSense enhancements:** Dynamic lightbar colors, adjustable adaptive trigger resistance, and optional controller-speaker effects.
 - **Built-in game languages:** English, French, Spanish, Italian, and German, using the original Xbox 360 HD game data.
 - **Turkish translation:** An optional localization covering game text, menus, subtitles, and achievement descriptions.
 - **Achievements:** In-game achievement tracking and notifications, with Turkish text when the translation mod is enabled.
 - **Discord Rich Presence (Windows):** Optional Discord activity integration.
 - **Mod support:** Install and manage compatible texture, text, font, and subtitle mods through Settings.
+- **Level remix tools (Windows, experimental):** Explore selected levels in the Experimental 3D Level Viewer and make limited changes to supported objects, paths, and terrain, or use the Classic 2D editor.
 - **Portable editions and Windows installer:** Set up the game using your own Xbox 360 package, with persistent settings and saves.
 
 ## Requirements
@@ -131,6 +132,17 @@ You can rebind Walk or leave it unassigned.
 
 On Windows, in Settings → Controls → Controller, capture a button to reassign it. Digital buttons swap with digital buttons, triggers with triggers, and sticks with sticks. One map applies to physical controllers; keyboard bindings remain independent. Xbox-compatible controllers and native DualSense are supported, with physical DualSense Bluetooth acceptance recorded; other device configurations have limited testing. Guide / PS and the touchpad cannot be assigned. Existing saved keyboard choices take precedence over updated defaults.
 
+### Button prompts
+
+On Windows, **Controller button prompts**, below **Game profile** in Settings, chooses the button icons shown in the game:
+
+- **Auto** (default): Identifies the primary or only controller when the game starts. Unknown or ambiguous controllers use Xbox icons.
+- **Xbox** or **PlayStation:** Always uses that set.
+
+Restart the game after changing controllers or this setting.
+
+The in-game PC Settings panel (F4) can also be navigated with a controller.
+
 ### Mouse controls
 
 Mouse controls are optional and disabled by default.
@@ -167,15 +179,22 @@ HD+ includes the following corrections:
 | Combo Meter Animation | Adds a smooth closing animation instead of the original abrupt disappearance. |
 | Separate texture coordinates for two-layer effects | Corrects texture coordinate handling for supported layered effects. |
 | Correct HD Lighting Colors | Removes the unnatural pink tint in Hoodlum Headquarters and the Tower of the Leptys. |
-| Correct Robo-Pirate statue textures | Fixes upside-down textures on four statues in Hoodlum Headquarters. |
+| Correct Texture Orientation | Fixes upside-down textures on four Robo-Pirate statues in Hoodlum Headquarters and the incorrectly oriented body texture of the Ugly creatures in the Bog of Murk. |
 | Correct Sky Colors | Restores the intended sky colors in Clearleaf Forest and the Bog of Murk. |
 | Correct Charge Trail Colors | Restores the changing colors of Rayman's fist charge trail. |
+| Restore Power-Up Spiral | Restores the original PC swirl around Rayman when a power-up starts. |
+| Restore Power-Up Canister Colors | Restores the purple beam and the colored rings of power-up canisters. |
+| Restore Out-of-Range Lock-On Color | Restores the blue color of the lock-on indicator for distant targets. |
 
 Individual corrections can be configured under **Settings → Corrections** when using Custom.
 
 Existing Custom choices are preserved during updates. New corrections without a saved preference follow the base profile selected for Custom.
 
 Changing the game profile does not reset display, control, or advanced settings. Changes take effect the next time the game starts.
+
+### V-Sync
+
+On Windows, **Settings → Display → V-Sync** synchronizes frame presentation with your display. It is off by default and takes effect the next time the game starts. Results depend on your graphics driver and display; the game continues to run at 60 FPS.
 
 ### Subtitles
 
@@ -243,12 +262,50 @@ Supported data modifications include:
 - Textures
 - Text and font glyphs
 - Subtitles
+- Level remixes made with the included level tools (Windows), which make limited changes to selected levels
 
-Mods cannot currently replace game models, levels, audio, scripts, or executable code.
+Mods cannot currently replace game models, add new levels, or replace audio, scripts, or executable code.
 
 Mods are checked against the supported game files to reduce the risk of applying incompatible data.
 
+Mods that change gameplay, such as level remixes, are marked and explained in Settings → Mods. While one is enabled, **new achievements are not earned**. Enabling gameplay-changing mods does not automatically convert or delete your saves. As with other experimental mods, backing up important saves before use is recommended. Disable the mod to earn achievements again.
+
 To create a compatible mod, see [MODDING.md](tools/installer/MODDING.md), also included in the installed application's `app\` folder.
+
+## Experimental 3D Level Viewer and Level Remix Editor
+
+The Windows release includes experimental tools for exploring and remixing a few existing levels. Open them from **Settings → Mods**:
+
+- **Experimental 3D Level Viewer:** Explore selected Rayman 3 HD levels using their original visual geometry and textures. Limited remix editing tools are available for supported objects, paths, and terrain.
+- **Classic / Advanced Editor:** The top-down 2D Level Remix Editor. The Start menu's **Level Editor** shortcut and the portable edition's `Level Editor.cmd` open this editor.
+
+Both tools read the game data of your own installation. A finished remix is exported as a mod; install and enable it in Settings → Mods, then play.
+
+Please keep in mind:
+
+- This is **not** a complete custom-map creator. You cannot build new levels, add new geometry, or place objects freely.
+- Editing is currently limited to three early-game level segments (`intro_10`, `intro_15`, and `intro_20`), with different capabilities available in each.
+- Many objects cannot be moved, for example those positioned by the game's scripts. The editor marks them as locked.
+- Edits labeled **experimental** have not been tested in the game. Their in-game behavior, including some route (waypoint) changes, may differ from what you expect.
+- Terrain editing is limited to a small area of one level.
+- The 3D viewer's editing interface is still rough. The Classic editor remains available for the same levels.
+- Gameplay-changing mods prevent new achievements while enabled.
+
+## Original PC saves (experimental converter)
+
+Save files from the original Rayman 3: Hoodlum Havoc PC release (2003) cannot be copied into Rayman 3 HD Recompiled directly; the two games store their saves differently. The optional `Rayman3HDRecompiled-1.2.0-pc-save-converter.zip` on the release page converts a PC save (`.sav`) into an existing save slot of this port on Windows.
+
+The converter is experimental and has only been validated with a limited number of PC saves.
+
+1. Back up your `profiles` folder (installed edition: `%LOCALAPPDATA%\Rayman3HDRecomp\profiles`; portable edition: `profiles` in the extracted folder).
+2. Start the game, choose **New Game**, confirm a player name, then quit. The converter requires an existing save slot created by the game.
+3. Extract the converter ZIP. If using the portable edition, place `R3SaveConverter.exe` in the extracted portable folder (the one containing `profiles`).
+4. With the game closed, launch `R3SaveConverter.exe`, select your original PC `.sav` file, review the detected progress, and confirm the destination slot. The selected HD save slot will be replaced, but the converter creates a backup in `save_converter_backups` first. The original PC save is not modified.
+5. Start the game, choose **Load**, and select the converted slot.
+
+PC key bindings and option settings are not transferred, and progress towards some achievements starts again.
+
+See the `README.md` included in the converter ZIP for command-line usage (Python 3.8 or newer), additional details, and known limitations.
 
 ## Troubleshooting
 
@@ -262,6 +319,12 @@ To create a compatible mod, see [MODDING.md](tools/installer/MODDING.md), also i
 
 **The game closes unexpectedly.** Diagnostic files are stored under `sessions\<date-time>\` in the installation folder. Include the relevant session logs when reporting a bug, after checking them for information you do not wish to share.
 
+**Achievements are not unlocking.** A mod that changes gameplay, such as a level remix, is enabled. Disable it in Settings → Mods.
+
+**The 3D Level Viewer does not open.** Check the message shown in Settings. The viewer uses OpenGL through your graphics driver. The Classic / Advanced Editor remains available.
+
+**Reporting bugs:** Open an issue on the project's [Issues page](https://github.com/MysteriousAeon/rayman3-hd-recompiled/issues). Include the release version, Windows or Linux, installer or portable edition, graphics card, controller, and the steps that lead to the problem.
+
 ## Known limitations
 
 - The game was completed from beginning to end during Windows human playtesting of v1.0.1. Automated regression and installation testing is also performed for subsequent releases, but a separate full playthrough of every release has not been completed.
@@ -271,6 +334,10 @@ To create a compatible mod, see [MODDING.md](tools/installer/MODDING.md), also i
 - Holding Walk while swimming may prevent forward movement. Release Walk to continue swimming.
 - On Linux, animations may slow down while navigating the in-game pause menu.
 - Changing Windows display scaling while Settings is open can leave a minor visual artifact. Reopening Settings resolves it.
+- Button prompts are chosen when the game starts and do not switch while it is running.
+- The level remix tools are experimental, Windows-only, and limited to three levels; see the section above.
+- The PC save converter is experimental and optional. It has been tested with a small number of PC saves; compatibility with every PC save is not established.
+- The Linux pre-release remains at v1.1.0 and does not include the v1.2.0 changes.
 
 The HD+ Robo-Pirate statue texture correction has been checked in gameplay.
 

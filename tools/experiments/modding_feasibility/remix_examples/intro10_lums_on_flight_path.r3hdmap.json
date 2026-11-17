@@ -1,0 +1,37 @@
+{
+ "format": "r3hd-level-editor-project-v2",
+ "level": "intro_10",
+ "target": {
+  "lvl_sha256": "a37638bf1370357db21f33df5c4d37ae806b3c4b9f81b331503ba62d1b19e2ee",
+  "ptr_sha256": "6c9dd70c488a1cac95efc0a55a6086255dae2d851bacd93f5abefdcc8200e940",
+  "transit_sha256": "d300ba3a4a3c03cec6a73eb9da8a8d820fcc3a669591e976b357e804315bf275"
+ },
+ "actors": [
+  {
+   "model": "lum\\NIN_m_Lums_Int10\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init",
+   "instance": 1,
+   "matrix_sha256": "949af1de09985dc51a39383261715474c4488c4bc2eea7a3de2132b727f66e67",
+   "position": [
+    16.822999954223633,
+    -3.3450000286102295,
+    -31.034000396728516
+   ]
+  },
+  {
+   "model": "lum\\NIN_m_Lums_Int10\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init",
+   "instance": 3,
+   "matrix_sha256": "3982ccc90a9d36e2a44b0a5726077cb8eced6f46384aa753ef91797b8473537a",
+   "position": [
+    11.138999938964844,
+    -73.22699737548828,
+    -45.1879997253418
+   ]
+  }
+ ],
+ "waypoints": [],
+ "meta": {
+  "id": "example.intro10-lums",
+  "name": "intro_10 lums on the flight path",
+  "description": "Runtime-VERIFIED example (E-523): lums #1 and #3 moved onto the flight path, collected there."
+ }
+}

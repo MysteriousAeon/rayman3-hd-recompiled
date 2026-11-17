@@ -397,6 +397,88 @@ int main() {
       check("layout: the status line and every footer button stay inside the panel", footer_ok);
       check("layout: no horizontal scrolling", scroll_ok);
       check("layout: a long label wraps inside its column (not shortened)", wrapped_any);
+
+      // E-425: exercise the production row's focus AND hover triggers, with the real
+      // EN/TR Rendering resolution description, at every viewport edge and scaling.
+      std::string resolution_help;
+      for (const auto& s : m.settings) if (s.key == "render_scale") resolution_help = T(s.help);
+      check("tooltip: real localized rendering-resolution help exists", !resolution_help.empty());
+      // D-220: the real localized V-Sync label and help, through the same row, triggers and viewports.
+      std::string vsync_label, vsync_help;
+      for (const auto& s : m.settings)
+        if (s.key == "display_vsync") vsync_label = T(s.label), vsync_help = T(s.help);
+      check("tooltip: real localized V-Sync label and help exist",
+            !vsync_help.empty() && vsync_label == (std::string(lang) == "tr" ? "V-Sync (Dikey E\xC5\x9Fitleme)" : "V-Sync") &&
+                vsync_help.find(std::string(lang) == "tr" ? "Yaln\xC4\xB1zca Windows'ta" : "Windows only") != std::string::npos);
+      bool inside = true, text_fits = true, wrapped = true, short_unchanged = true, triggers = true;
+      io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad;
+      io.BackendFlags |= ImGuiBackendFlags_HasGamepad;
+      for (float scale : {1.0f, 1.25f, 1.5f}) for (const auto& p : physical) {
+        const ImVec2 view(std::floor(p[0] / scale), std::floor(p[1] / scale));
+        const ImVec2 host_size(std::min(340.0f, view.x - 16), 100);
+        for (int corner = 0; corner < 5; ++corner) for (bool focus : {false, true}) for (int kind : {0, 1, 2}) {
+          const ImVec2 origin(corner == 4 ? (view.x - host_size.x) / 2 : (corner & 1 ? view.x - host_size.x - 8 : 8),
+                              corner == 4 ? (view.y - host_size.y) / 2 : (corner & 2 ? view.y - host_size.y - 8 : 8));
+          // kind 0: short help; 1: long rendering-resolution help; 2: the V-Sync row (D-220).
+          const bool long_help = kind == 1;
+          const std::string help = kind == 0 ? T("Off") : kind == 1 ? resolution_help : vsync_help;
+          const std::string row_label = kind == 2 ? vsync_label : T("Rendering resolution");
+          ImVec2 mouse(-FLT_MAX, -FLT_MAX);
+          ImVec2 plain;
+          bool hovered = false, focused = false;
+          for (int frame = 0; frame < 5; ++frame) {
+            io.DisplaySize = view;
+            io.AddMousePosEvent(focus ? -FLT_MAX : mouse.x, focus ? -FLT_MAX : mouse.y);
+            io.AddKeyEvent(ImGuiKey_GamepadDpadDown, focus && frame == 0);
+            ImGui::NewFrame();
+            ImGui::PushFont(font, r3hd_pcset::kFontSize);
+            ImGui::SetNextWindowPos(origin);
+            ImGui::SetNextWindowSize(host_size);
+            ImGui::Begin("###tooltip_probe", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoSavedSettings);
+            plain = ImGui::CalcTextSize(help.c_str());
+            if (!focus) ImGui::SetFocusID(0, ctx->CurrentWindow);  // isolate hover from retained nav focus
+            if (r3hd_pcset::BeginSettingRows("tooltip", 120)) {
+              const auto row = r3hd_pcset::DrawSettingRow(
+                  row_label, kind == 2 ? T("Applies the next time the game starts.") : T("Applies now."), help, [&] {
+                ImGui::Button("##resolution");
+                if (focus) ImGui::SetItemDefaultFocus();
+                focused = ImGui::IsItemFocused();
+              });
+              mouse = ImVec2((row.label.min.x + row.label.max.x) / 2, (row.label.min.y + row.label.max.y) / 2);
+              hovered = ImGui::IsMouseHoveringRect(row.label.min, row.label.max, false);  // label is in column 0
+              r3hd_pcset::EndSettingRows();
+            }
+            ImGui::End();
+            ImGui::PopFont();
+            ImGui::Render();
+          }
+          ImGuiWindow* tip = nullptr;
+          for (ImGuiWindow* w : ctx->Windows)
+            if ((w->Flags & ImGuiWindowFlags_Tooltip) && w->Active && !w->Hidden) tip = w;
+          const bool triggered = tip && (focus ? focused && ctx->NavInputSource == ImGuiInputSource_Gamepad : hovered && !focused);
+          if (!triggered) std::printf("tooltip trigger %s corner=%d focus=%d hovered=%d focused=%d source=%d tip=%d\n",
+              lang, corner, focus, hovered, focused, int(ctx->NavInputSource), tip != nullptr);
+          triggers &= triggered;
+          if (!tip) { inside = text_fits = false; continue; }
+          const bool bounds = tip->Pos.x >= 0 && tip->Pos.y >= 0 && tip->Pos.x + tip->Size.x <= view.x &&
+                              tip->Pos.y + tip->Size.y <= view.y;
+          inside &= bounds;
+          text_fits &= tip->ContentSize.x <= tip->Size.x - 2 * tip->WindowPadding.x + 1 &&
+                       tip->ContentSize.y <= tip->Size.y - 2 * tip->WindowPadding.y + 1;
+          if (long_help) wrapped &= tip->ContentSize.y > r3hd_pcset::kFontSize * 1.5f;
+          else if (kind == 0) {
+            short_unchanged &= std::abs(tip->ContentSize.x - plain.x) <= 1 &&
+                               std::abs(tip->ContentSize.y - plain.y) <= 1;
+          }
+          if (!bounds) std::printf("tooltip %s %.0fx%.0f corner=%d focus=%d kind=%d box=%.0f,%.0f %.0fx%.0f\n",
+              lang, view.x, view.y, corner, focus, kind, tip->Pos.x, tip->Pos.y, tip->Size.x, tip->Size.y);
+        }
+      }
+      check("tooltip: both real controller-focus and mouse-hover paths show help", triggers);
+      check("tooltip: all edges and center stay entirely inside every EN/TR viewport (incl. V-Sync help)", inside);
+      check("tooltip: full description fits without horizontal or vertical clipping", text_fits);
+      check("tooltip: long rendering-resolution help wraps across lines", wrapped);
+      check("tooltip: short help keeps its natural single-line text size", short_unchanged);
     }
     std::printf("layout: widest label exceeds the former fixed 260 px column by %.0f px\n", old_overflow);
     check("layout: the models do contain labels the former fixed column could not hold", old_overflow > 0.0f);

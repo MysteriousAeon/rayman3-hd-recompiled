@@ -39,8 +39,18 @@ def command(action):
 
 def defined_members():
     d = json.loads((ROOT / "config/release/payload.json").read_bytes())
-    return (set(d["app_files"]) | set(d["licenses"]["files"]) |
+    # G6-P31 (D-287): the level editor's Tk runtime, exactly the files config/release/python_tk.json pins
+    tk = json.loads((ROOT / d["python"]["tk"]).read_bytes())["files"] if d["python"].get("tk") else {}
+    # G6-P31: the D-203 controller-prompt resources the stage carries since 2026-11-11 (exactly the closed set the
+    # payload audit derives from config/release/controller_prompts.json); this list had not been updated for them
+    prompts = set()
+    if d.get("controller_prompts"):
+        _, binaries, _ = audit.load_payload_rules(audit.DEFAULT_PAYLOAD_ALLOWLIST, audit.DEFAULT_PAYLOAD_DEF)
+        prompts = {r for r, role in binaries.items() if role.startswith("controller_prompt_")}
+    return (set(d["app_files"]) | set(d["licenses"]["files"]) | set(tk) | prompts |
             {"bin/" + n for n in d["binaries"]["files"]} | {d["launcher"]["dest"]} |
+            # G6-P39 (D-295): the 3D editor's pinned OpenGL bridge
+            ({d["scene_gl"]["dest"]} if d.get("scene_gl") else set()) |
             {"app/python/" + n for n in d["python"]["files"]} |
             {"app/python/python311.zip", "app/python/python311._pth"})
 
@@ -98,7 +108,9 @@ def build(stage, out, development_id, crt_dir, public_release=False):
     files["app/python/vcruntime140.dll"] = files["bin/vcruntime140.dll"]
     files["app/licenses/PORTABLE-CRT.txt"] = (ROOT / "tools/installer/PORTABLE-CRT.txt").read_bytes().replace(b"\r\n", b"\n")
     files["app/licenses/portable_crt.json"] = encoded(crt)
+    # G6-P31 (D-287): the level editor entry, the same launcher entry as the installed Start menu item
     files.update({"Play.cmd": command("play"), "Settings.cmd": command("settings"),
+                  "Level Editor.cmd": command("level-editor"),
                   "PORTABLE.txt": (ROOT / "tools/installer/PORTABLE.txt").read_bytes().replace(b"\r\n", b"\n"),
                   lgpl.name: lgpl.read_bytes()})
     files["portable.json"] = encoded({"schema": 1, "data_model": "beside-application", "publishable": public_release,
@@ -144,7 +156,7 @@ def check(path):
                 raise ValueError("Public portable metadata differs from the approved payload")
         if set(payload["files"]) != defined_members() - {"app/play.cmd", "app/settings.cmd"}:
             raise ValueError("Archive payload differs from the exact release definition")
-        additions = {"Play.cmd", "Settings.cmd", "PORTABLE.txt", "payload.json", "app/tools/r3hd_portable.py",
+        additions = {"Play.cmd", "Settings.cmd", "Level Editor.cmd", "PORTABLE.txt", "payload.json", "app/tools/r3hd_portable.py",
                      "app/python/vcruntime140.dll", "app/licenses/PORTABLE-CRT.txt", "app/licenses/portable_crt.json",
                      f"r3hd-lgpl-source-{payload['version']}.zip"}
         crt = json.loads((ROOT / "config/release/portable_crt.json").read_bytes())

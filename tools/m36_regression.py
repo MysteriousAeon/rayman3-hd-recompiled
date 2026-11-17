@@ -56,9 +56,18 @@ check(all(s in h for s in ('fail("grow_not_allowed")', 'fail("grow_order")', 'fa
       "runtime: a grow record is refused for another file, out of order, out of bounds or with an uncovered tail; "
       "nothing is written")
 ext = h[h.index("inline bool ExtendRead("):h.index("// Test only: forget the loaded plan.")]
-check("std::memset(buffer + inside, 0, size_t(want - inside));" in ext
-      and "std::min<uint64_t>(length, t->guest_size - offset)" in ext and ext.count("memcpy") == 0,
-      "runtime: ExtendRead writes only buffer[inside, want), want <= the read's length and the grown size")
+# G6-P30 (D-286): the production header also serves level-transaction members from their verified image (G5-P3
+# block under R3HD_LEVEL_TX): exactly one copy, of n = min(length, image size - offset) bytes from offset into the
+# read's buffer; the grow path outside that block keeps the original rule (no copy at all).
+tx_block = re.search(r"#if defined\(R3HD_LEVEL_TX\)\n(.*?)#endif\n", ext, re.S)
+grow_path = ext.replace(tx_block.group(0), "") if tx_block else ext
+check("std::memset(buffer + inside, 0, size_t(want - inside));" in grow_path
+      and "std::min<uint64_t>(length, t->guest_size - offset)" in grow_path and grow_path.count("memcpy") == 0
+      and (tx_block is None or (tx_block.group(1).count("memcpy") == 1
+           and "size_t(std::min<uint64_t>(length, img.size() - offset))" in tx_block.group(1)
+           and "if (n) std::memcpy(buffer, img.data() + size_t(offset), n);" in tx_block.group(1))),
+      "runtime: ExtendRead writes only buffer[inside, want), want <= the read's length and the grown size "
+      "(a transaction member: one copy of min(length, image size - offset) bytes from its verified image)")
 hpf = read(SDK / "src" / "filesystem" / "devices" / "host_path_file.cpp")
 site = hpf[hpf.index("X_STATUS HostPathFile::ReadSync"):hpf.index("X_STATUS HostPathFile::WriteSync")] if hpf else ""
 order = [site.find(s) for s in ("file_handle_->Read(", "if (m33mods::Enabled()) {\n    host_read = m33mods::ExtendRead(",
@@ -90,7 +99,7 @@ check("patch_once" in patch and "generated" not in patch.split('"""')[2], "patch
 
 # tools
 pay = json.loads((ROOT / "config" / "release" / "payload.json").read_text(encoding="utf-8"))
-check(rm.version_key(pay["version"]) >= rm.version_key(rm.SUB_GROW_PORT) and pay["version"].startswith(("0.36.0", "0.49.0", "0.50.0", "1.0.0", "1.0.1", "1.0.2", "1.0.3", "1.1.0")),
+check(rm.version_key(pay["version"]) >= rm.version_key(rm.SUB_GROW_PORT) and pay["version"].startswith(("0.36.0", "0.49.0", "0.50.0", "1.0.0", "1.0.1", "1.0.2", "1.0.3", "1.1.0", "1.2.0")),
       f"payload: version {pay['version']} serves grown subtitles (gate {rm.SUB_GROW_PORT})")
 check('#define AppVersion "' + pay["version"] + '"' in read(TOOLS / "installer" / "r3hd_setup.iss"),
       "setup: the same version as the payload")

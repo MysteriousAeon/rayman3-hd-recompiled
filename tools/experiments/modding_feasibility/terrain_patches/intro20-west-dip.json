@@ -1,0 +1,31 @@
+{
+ "format": "terrain-patch-v1",
+ "level": "intro_20",
+ "lvl_sha256": "a21aa7691db4cedb3892e685e5395fd23b530b0bde4d64a09035dfb5f2d0b11f",
+ "region": "start-floor-v1",
+ "name": "west-dip",
+ "description": "G6-P22 authored: spawn corner 0 lowered only 0.10, west floor 2 lowered 0.25 and 4 lowered 0.20 (ground dips away from the start).",
+ "groups": [
+  {
+   "name": "spawn-corner",
+   "vertices": [
+    0
+   ],
+   "delta_z": -0.1
+  },
+  {
+   "name": "west-a",
+   "vertices": [
+    2
+   ],
+   "delta_z": -0.25
+  },
+  {
+   "name": "west-b",
+   "vertices": [
+    4
+   ],
+   "delta_z": -0.2
+  }
+ ]
+}

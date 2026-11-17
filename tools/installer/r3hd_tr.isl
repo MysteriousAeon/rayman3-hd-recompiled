@@ -12,6 +12,7 @@ TaskDesktop=&Masaüstü kısayolu oluştur (Oyna)
 TaskSettings=&Ayarlar için masaüstü kısayolu oluştur (ekran, grafik, klavye)
 PlayComment=Kayıtlı ayarlarınızla oynayın
 SettingsComment=Ekran, grafik, klavye ve oyun profili
+LevelEditorComment=intro_20 bölümünün başlangıç zeminini düzenleyin ve mod olarak dışa aktarın
 RunPlay=Rayman 3 HD Recompiled'ı başlat
 RunSettings=Ayarları aç
 

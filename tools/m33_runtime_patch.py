@@ -37,6 +37,23 @@ if __name__ == '__main__':
          '    return X_STATUS_SUCCESS;\n'),
     ])
 
+    # D-224: while the verified plan names a mod that changes game logic (`gameplay` record, script constants), the
+    # title's unlock call (XGIUserWriteAchievements -> here) awards nothing new: no store entry, no unlock file write,
+    # no toast. Achievements already earned, the enumerator and every other path are unchanged; without such a plan
+    # this is one flag test.
+    patch_once('src/system/kernel_state.cpp', [
+        ('#include <rex/system/kernel_state.h>\n',
+         '#include <rex/system/kernel_state.h>\n#include <rex/m33_mod_overlay.h>\n'),
+        ('void KernelState::UnlockAchievement(uint32_t id) {\n'
+         '  (void)achievement_manager_.UnlockAchievement(id, AchievementNotification::kShow);\n',
+         'void KernelState::UnlockAchievement(uint32_t id) {\n'
+         '  if (m33mods::GameplayModsActive()) {  // D-224: gameplay-affecting mods award no new achievement\n'
+         '    REXLOG_INFO("M33 achievement id={} not_awarded reason=gameplay_mods", id);\n'
+         '    return;\n'
+         '  }\n'
+         '  (void)achievement_manager_.UnlockAchievement(id, AchievementNotification::kShow);\n'),
+    ])
+
     patch_once('src/graphics/d3d12/command_processor.cpp', [
         ('#include <rex/m26_texture_orient.h>\n', '#include <rex/m26_texture_orient.h>\n#include <rex/m33_mod_overlay.h>\n'),
         # In front of the M26 line: the M26 and M23 patches still find their own lines together on a replay.

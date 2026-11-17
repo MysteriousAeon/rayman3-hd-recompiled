@@ -46,6 +46,26 @@ def unpatch(rel, old, new):
 def main():
     install('r3hd_hostui_gate.h')
     install('m21_cursor.h')  # D-139 adds HostUi to the M21 rule
+    install('r3hd_pcset_nav.h')
+    # Settings alone enables raw navigation on the existing drawer, before NewFrame.
+    patch_once('include/rex/ui/imgui_drawer.h', [
+        ('#include <rex/ui/immediate_drawer.h>\n',
+         '#include <rex/ui/immediate_drawer.h>\n#include <rex/r3hd_pcset_nav.h>\n'),
+        ('  ImGuiIO& GetIO();\n',
+         '  ImGuiIO& GetIO();\n'
+         '  void SetHostUiGamepadNavigation(bool enabled) {\n'
+         '    host_ui_gamepad_enabled_ = enabled;\n'
+         '    host_ui_gamepad_.Update(GetIO(), enabled, false);\n'
+         '  }\n'),
+        ('  Window* window_;\n',
+         '  r3hd_pcset::GamepadNavigation host_ui_gamepad_;\n'
+         '  bool host_ui_gamepad_enabled_ = false;\n  Window* window_;\n'),
+    ])
+    patch_once('src/ui/imgui_drawer.cpp', [
+        ('  ImGui::NewFrame();\n',
+         '  host_ui_gamepad_.Update(io, host_ui_gamepad_enabled_, window_->HasFocus());\n'
+         '  ImGui::NewFrame();\n'),
+    ])
 
     # --- the app's ownership hook -------------------------------------------------------------------------------
     patch_once('include/rex/rex_app.h', [

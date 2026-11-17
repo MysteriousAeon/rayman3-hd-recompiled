@@ -80,6 +80,7 @@ param(
     # line); the session count limit of an installed home still applies.
     [ValidateSet('standard', 'detailed')][string]$Diagnostics = 'standard',
     [ValidateSet('off', 'on')][string]$DiscordPresence = 'on',
+    [ValidateSet('auto', 'xbox', 'playstation')][string]$ButtonPrompts = 'auto',
     # D-102 / D-105: DualSense light bar by world and power-up, and a gentle R2 resistance armed in gameplay;
     # both off by default, independent of each other and of the presets; a non-DualSense pad is never written.
     # D-108: the resistance force in percent of the D-105 force (0 = no resistance, the trigger cleared); read once at
@@ -136,6 +137,14 @@ param(
     # HD release does (the fist-charge trail stays a faint wisp); 'applied' adds the UV offset the engine writes, as
     # the title's other vertex shaders do. Off by default here (the vanilla column); HD+ selects applied.
     [ValidateSet('original', 'applied')][string]$LitUvScroll = 'original',
+    [ValidateSet('original', 'restored')][string]$PowerSwirl = 'original',
+    # D-219: HD+ power-up canister colours (beam and ring pages, exact read overlay). Off here (the vanilla column).
+    [ValidateSet('original', 'restored')][string]$BeamColor = 'original',
+    # D-221: HD+ out-of-range lock-on indicator colour (one fix page, exact read overlay). Off here (the vanilla column).
+    [ValidateSet('original', 'restored')][string]$LockonColor = 'original',
+    # D-220: host display V-Sync (D3D12 Present sync interval 1, launch-time preference). Not the SDK's `vsync`
+    # cvar (guest vblank scheduling, E-265). Off keeps the pinned Present(0) with tearing allowed.
+    [ValidateSet('off', 'on')][string]$VSync = 'off',
     [ValidateSet('original', 'delayed')][string]$ComboClose = 'original',
     # M44 (D-081, experimental): 'original' shows a voiced line's subtitle during gameplay only as the Xbox 360 HD
     # release does (in cinematic mode, or for the title's own short list of lines); 'all' lets the title's own
@@ -188,6 +197,58 @@ $homeRoot = if ($UserHome) { $UserHome } elseif ($env:R3HD_HOME) { $env:R3HD_HOM
 # A relative path given by a parameter, a variable or the home is taken from the current directory and made absolute
 # (tools\r3hd_paths.py does the same); the repository default is left exactly as it always was.
 function ConvertTo-FullPath([string]$Path) { return $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($Path) }
+# G5-P4b (D-248): the launcher's mod-plan call and structural-session end. The hidden recovery test
+# (tools\experiments\modding_feasibility\g5p4b_recovery.py) loads these three function definitions from this file
+# (PowerShell parser) and calls them unchanged. Nothing in them starts a game.
+#
+# A development structural session (G5-P2b, D-245) arms MODS\structural_session.json when `plan` activates a
+# structural transaction, before the game starts. After the game process ends, the marker is cleared only when the
+# session ended in an orderly way: exit code 0, no crash record, AND the runtime's own orderly-shutdown line in the
+# session's log (the window-close path logs 'Title terminated; hard-exiting process.', a guest-initiated exit logs
+# 'Execution complete'; a process terminated from outside writes neither). An exit code of 0 alone is not trusted.
+# Anything else keeps the marker; the next launch then refuses structural mods until `structural-recovery clear`.
+
+function Invoke-R3hdModsPlan([string]$Python, [string]$Tools, [string]$ModsRoot, [string]$Cache, [string]$Game,
+                             [string]$HomeRoot, [string]$Stamp, [bool]$DryRun) {
+    # The mod tool exactly as a launch uses it: `list` for a dry run, otherwise `plan` with the session id.
+    $modsArgs = @((Join-Path $Tools 'r3hd_mods.py'), $(if ($DryRun) { 'list' } else { 'plan' }), '--json',
+        '--mods-root', $ModsRoot, '--cache', $Cache, '--game-dir', $Game)
+    if ($HomeRoot) { $modsArgs += @('--home', $HomeRoot) }
+    if (-not $DryRun) { $modsArgs += @('--session', $Stamp) }   # G5-P2b: names a development structural session
+    try { return (& $Python @modsArgs | Out-String) | ConvertFrom-Json } catch { return $null }
+}
+
+function Test-R3hdOrderlyExit([string]$Session, $ExitCode) {
+    # Whether the game process of a session ended in an orderly way (see above). Read-only.
+    $crash = Test-Path -LiteralPath (Join-Path $Session 'r3hd_crash.txt')
+    $line = $null
+    foreach ($file in @(Get-ChildItem -LiteralPath $Session -Filter 'runtime*.log' -File -ErrorAction SilentlyContinue)) {
+        foreach ($needle in @('Title terminated; hard-exiting process.', 'Execution complete')) {
+            if (-not $line -and (Select-String -LiteralPath $file.FullName -SimpleMatch -Pattern "] $needle" -Quiet)) {
+                $line = $needle
+            }
+        }
+    }
+    return [ordered]@{
+        controlled = (($null -ne $ExitCode) -and ($ExitCode -eq 0) -and (-not $crash) -and [bool]$line)
+        exit_code = $ExitCode
+        crash_report = $crash
+        orderly_line = $line
+    }
+}
+
+function Complete-R3hdStructuralSession([string]$Python, [string]$Tools, [string]$ModsRoot, [string]$Stamp, $Marker,
+                                        [string]$Session, $ExitCode) {
+    # Ends the session's structural marker: cleared only for this session and plan after an orderly exit.
+    $exit = Test-R3hdOrderlyExit $Session $ExitCode
+    $end = $null
+    try {
+        $end = (& $Python (Join-Path $Tools 'r3hd_mods.py') structural-end --json --mods-root $ModsRoot `
+            --session $Stamp --plan-sha ([string]$Marker.plan_sha256) `
+            --controlled $(if ($exit.controlled) { 'yes' } else { 'no' }) | Out-String) | ConvertFrom-Json
+    } catch { $end = $null }
+    return [ordered]@{ exit = $exit; end = $end }
+}
 if ($homeRoot) { $homeRoot = ConvertTo-FullPath $homeRoot }
 function Resolve-R3hdPath([string]$Explicit, [string]$EnvName, [string]$HomeRelative, [string]$Legacy) {
     if ($Explicit) { return (ConvertTo-FullPath $Explicit) }
@@ -463,9 +524,9 @@ $controller = $null
 # -SettingsFile its preset values are the parameter defaults above (m27_settings_regression.py keeps them equal).
 if ($true) {
     $settingParams = [ordered]@{ Revisit = 'revisit'; Pacing = 'pacing'; Display = 'display'; Cursor = 'cursor'; SaveClock = 'save_clock'; GameLanguage = 'game_language';
-        RenderScale = 'render_scale'; LayerCoords = 'layer_coords'; TextureOrient = 'texture_orient'; RedCorrection = 'red_correction'; SkyClear = 'sky_clear'; LitUvScroll = 'lit_uv_scroll'; WindowSize = 'window_size'; ComboClose = 'combo_close';
+        RenderScale = 'render_scale'; LayerCoords = 'layer_coords'; TextureOrient = 'texture_orient'; RedCorrection = 'red_correction'; SkyClear = 'sky_clear'; LitUvScroll = 'lit_uv_scroll'; PowerSwirl = 'power_swirl'; BeamColor = 'beam_color'; LockonColor = 'lockon_far_color'; VSync = 'display_vsync'; WindowSize = 'window_size'; ComboClose = 'combo_close';
         Diagnostics = 'diagnostics'; GameplaySubtitles = 'gameplay_subtitles'; DiscordPresence = 'discord_presence'; DualSenseLight = 'dualsense_light'; DualSenseTrigger = 'dualsense_trigger';
-        DualSenseTriggerStrength = 'dualsense_trigger_strength'; DualSenseSpeaker = 'dualsense_speaker'; DualSenseSpeakerVolume = 'dualsense_speaker_volume'; MouseCamera = 'mouse_camera'; MouseSensitivity = 'mouse_sensitivity'; MouseButtons = 'mouse_buttons' }
+        DualSenseTriggerStrength = 'dualsense_trigger_strength'; DualSenseSpeaker = 'dualsense_speaker'; DualSenseSpeakerVolume = 'dualsense_speaker_volume'; MouseCamera = 'mouse_camera'; MouseSensitivity = 'mouse_sensitivity'; MouseButtons = 'mouse_buttons'; ButtonPrompts = 'controller_prompts' }
     $resolverArgs = @((Join-Path $PSScriptRoot 'r3hd_settings.py'), 'resolve')
     if ($Preset) { $resolverArgs += @('--preset', $Preset) }
     if ($SettingsFile) { $resolverArgs += @('--settings', $SettingsFile) }
@@ -594,13 +655,11 @@ $modsText = 'none installed'
 $modsPlan = ''
 $achText = ''
 $modsNotes = @()
+$structuralMarker = $null
 if ($Mods -eq 'off') { $modsText = 'off (-Mods off)' }
 elseif (Test-Path -LiteralPath (Join-Path $modsRoot 'state.json') -PathType Leaf) {
-    $modsArgs = @((Join-Path $PSScriptRoot 'r3hd_mods.py'), $(if ($DryRun) { 'list' } else { 'plan' }), '--json',
-        '--mods-root', $modsRoot, '--cache', (Join-Path $cache 'mods'), '--game-dir', $game)
-    if ($homeRoot) { $modsArgs += @('--home', $homeRoot) }
-    $modsOut = $null
-    try { $modsOut = (& $python @modsArgs | Out-String) | ConvertFrom-Json } catch { $modsOut = $null }
+    # G5-P4b (D-248): the same call the hidden recovery test makes (Invoke-R3hdModsPlan above)
+    $modsOut = Invoke-R3hdModsPlan $python $PSScriptRoot $modsRoot (Join-Path $cache 'mods') $game $homeRoot $stamp $DryRun.IsPresent
     if (-not $modsOut -or $modsOut.result -ne 'ok') {
         $modsText = 'none applied'
         $modsNotes += "the mod list could not be used ($(if ($modsOut) { "$($modsOut.code): $($modsOut.detail)" } else { 'no result' })); the game's own data is used"
@@ -612,6 +671,14 @@ elseif (Test-Path -LiteralPath (Join-Path $modsRoot 'state.json') -PathType Leaf
         $active = @($modsOut.active)
         $modsText = if ($active.Count) { "$($active -join ', ') ($($modsOut.ranges) ranges)" } else { 'none enabled' }
         if (-not $DryRun -and $active.Count -and $modsOut.plan) { $modsPlan = [string]$modsOut.plan }
+        # G5-P2b (D-245): development-only structural transactions arm a recovery marker before the game starts
+        if (-not $DryRun -and $modsPlan -and $modsOut.structural_marker) {
+            $structuralMarker = $modsOut.structural_marker
+            $modsNotes += "development structural session armed ($(@($structuralMarker.levels) -join ', '))"
+        }
+        if ($modsOut.structural_recovery -and $modsOut.structural_recovery -ne 'none') {
+            $modsNotes += "structural mods are off: an earlier structural session did not end normally"
+        }
         # D-101: display text for the Achievements overlay from the active mods (English where none or stale).
         if (-not $DryRun -and $active.Count -and $modsOut.achievement_text) { $achText = [string]$modsOut.achievement_text }
     }
@@ -654,11 +721,16 @@ if ($DryRun) {
     Write-Host "red correct: $RedCorrection"
     Write-Host "sky clear  : $SkyClear"
     Write-Host "lit uv scrl: $LitUvScroll"
+    Write-Host "power swirl: $PowerSwirl"
+    Write-Host "beam color : $BeamColor"
+    Write-Host "lockon far : $LockonColor"
+    Write-Host "v-sync     : $VSync"
     Write-Host "gameplay sub: $GameplaySubtitles"
     Write-Host "dualsense  : light=$DualSenseLight trigger=$DualSenseTrigger strength=$DualSenseTriggerStrength speaker=$DualSenseSpeaker speaker_volume=$DualSenseSpeakerVolume"
     Write-Host "mouse      : camera=$MouseCamera sensitivity=$MouseSensitivity buttons=$MouseButtons"
     Write-Host "keyboard   : $keyText"
     Write-Host "controller : $padText"
+    Write-Host "button prompts: $ButtonPrompts (artwork preference; applies on next launch)"
     Write-Host "mods       : $modsText"
     Write-Host "pc settings: $pcsetText"
     $modsNotes | ForEach-Object { Write-Host "mods note  : $_" }
@@ -678,18 +750,32 @@ foreach ($old in $prune) { try { Remove-Item -LiteralPath $old.FullName -Recurse
 Move-DevConfig $devConfig
 New-Item -ItemType Directory -Path $session, $user, $cache -Force | Out-Null
 # Written before the launch so the selected licence mode is on record even if this script is interrupted.
-[ordered]@{ session = $stamp; profile = $Profile; preset = $presetLabel; settings_file = $SettingsFile; license_mode = $License; license_mask = $licenseMask; display = $Display; window = $window; render_scale = $scale; render_scale_option = $RenderScale; pacing = $Pacing; revisit = $Revisit; cursor = $Cursor; save_clock = $SaveClock; game_language = $GameLanguage; layer_coords = $LayerCoords; texture_orient = $TextureOrient; red_correction = $RedCorrection; sky_clear = $SkyClear; lit_uv_scroll = $LitUvScroll; combo_close = $ComboClose; gameplay_subtitles = $GameplaySubtitles; diagnostics = $Diagnostics; dualsense_light = $DualSenseLight; dualsense_trigger = $DualSenseTrigger; dualsense_trigger_strength = $DualSenseTriggerStrength; dualsense_speaker = $DualSenseSpeaker; dualsense_speaker_volume = $DualSenseSpeakerVolume; mouse_camera = $MouseCamera; mouse_sensitivity = $MouseSensitivity; mouse_buttons = $MouseButtons; keyboard = $keyText; controller = $padText; mods = $modsText; mods_notes = $modsNotes; dev_overlay = $devText; sessions_removed = $pruned; render_target = $target; arguments = $arguments } |
+[ordered]@{ session = $stamp; profile = $Profile; preset = $presetLabel; settings_file = $SettingsFile; license_mode = $License; license_mask = $licenseMask; display = $Display; window = $window; render_scale = $scale; render_scale_option = $RenderScale; pacing = $Pacing; revisit = $Revisit; cursor = $Cursor; save_clock = $SaveClock; game_language = $GameLanguage; layer_coords = $LayerCoords; texture_orient = $TextureOrient; red_correction = $RedCorrection; sky_clear = $SkyClear; lit_uv_scroll = $LitUvScroll; power_swirl = $PowerSwirl; beam_color = $BeamColor; lockon_far_color = $LockonColor; display_vsync = $VSync; combo_close = $ComboClose; gameplay_subtitles = $GameplaySubtitles; diagnostics = $Diagnostics; dualsense_light = $DualSenseLight; dualsense_trigger = $DualSenseTrigger; dualsense_trigger_strength = $DualSenseTriggerStrength; dualsense_speaker = $DualSenseSpeaker; dualsense_speaker_volume = $DualSenseSpeakerVolume; mouse_camera = $MouseCamera; mouse_sensitivity = $MouseSensitivity; mouse_buttons = $MouseButtons; keyboard = $keyText; controller = $padText; controller_prompts = $ButtonPrompts; mods = $modsText; mods_notes = $modsNotes; dev_overlay = $devText; sessions_removed = $pruned; render_target = $target; arguments = $arguments } |
     ConvertTo-Json -Depth 3 | Set-Content -LiteralPath (Join-Path $session 'launch.json') -Encoding UTF8
 $testOnly = 'R3HD_NONINTRUSIVE', 'R3HD_TEST_SECONDS', 'R3HD_INPUT_SCHEDULE', 'R3HD_INPUT_FOLLOW', 'R3HD_M5_CAPTURE',
     'R3HD_FRAME_REQUEST', 'R3HD_AUDIO_CAPTURE', 'R3HD_AUDIO_AFTER', 'R3HD_M5_VB_RESIDENCY_CACHE', 'R3HD_PLAY', 'R3HD_TRIAL',
     'R3HD_FRAME_TRACE', 'R3HD_VBLANK_SPIN_US', 'R3HD_TEST_WORLD_END', 'R3HD_TEST_COMBO_CLOSE', 'R3HD_TEST_COMBO_PLAYTEST', 'R3HD_TEST_COMBO_CAPTURE', 'R3HD_TEST_SKY_CLEAR',
     'R3HD_SAVE_FAULT', 'R3HD_SAVE_COMMIT', 'R3HD_CURSOR', 'R3HD_TIMEZONE',
     'R3HD_M22_DRAW_TRACE', 'R3HD_M22_AUDIO', 'R3HD_AUDIO_AUDIBLE', 'R3HD_M24_EVENTS', 'R3HD_DIAGNOSTICS', 'R3HD_KEYMAP_TEST', 'R3HD_PADMAP_TEST', 'R3HD_PAD_MAP', 'R3HD_DISCORD', 'R3HD_DS_LIGHT', 'R3HD_DS_TRIGGER', 'R3HD_DS_TRIGGER_STRENGTH', 'R3HD_DS_SPEAKER', 'R3HD_DS_SPEAKER_VOLUME', 'R3HD_ACH_TEXT',
-    'R3HD_PCSET_TEST', 'R3HD_PCSET_HOME', 'R3HD_PCSET_PYTHON', 'R3HD_PCSET_TOOLS', 'R3HD_PCSET_SESSION', 'R3HD_PCSET_SETTINGS_APP'
+    'R3HD_PCSET_TEST', 'R3HD_PCSET_HOME', 'R3HD_PCSET_PYTHON', 'R3HD_PCSET_TOOLS', 'R3HD_PCSET_SESSION', 'R3HD_PCSET_SETTINGS_APP', 'R3HD_BUTTON_PROMPTS', 'R3HD_BUTTON_PROMPTS_PLAN', 'R3HD_BUTTON_PROMPTS_TEST', 'R3HD_BUTTON_PROMPTS_EFFECTIVE'
 $saved = @{}
 foreach ($name in $testOnly) { $saved[$name] = [Environment]::GetEnvironmentVariable($name); [Environment]::SetEnvironmentVariable($name, $null) }
 $env:R3HD_PLAY = '1'
 $env:R3HD_DISCORD = $DiscordPresence
+$env:R3HD_BUTTON_PROMPTS = $ButtonPrompts
+$buttonPromptsPlan = ''
+if ($ButtonPrompts -ne 'xbox') {
+    $promptArgs = @((Join-Path $PSScriptRoot 'r3hd_button_prompts.py'), '--game-dir', $game, '--cache', (Join-Path $cache 'button_prompts'))
+    if ($modsPlan) { $promptArgs += @('--mods-plan', $modsPlan) }
+    $promptOut = $null
+    try { $promptOut = (& $python @promptArgs | Out-String) | ConvertFrom-Json } catch { $promptOut = $null }
+    if ($LASTEXITCODE -eq 0 -and $promptOut -and $promptOut.result -eq 'ok' -and $promptOut.plan) {
+        $buttonPromptsPlan = [string]$promptOut.plan
+    } else {
+        Write-Warning "Button prompts: existing artwork retained ($(if ($promptOut) { $promptOut.reason } else { 'artwork plan unavailable' }))."
+    }
+}
+$env:R3HD_BUTTON_PROMPTS_PLAN = $(if ($buttonPromptsPlan) { $buttonPromptsPlan } else { $null })
 $env:R3HD_DS_LIGHT = $DualSenseLight
 $env:R3HD_DS_TRIGGER = $DualSenseTrigger
 $env:R3HD_DS_TRIGGER_STRENGTH = [string]$DualSenseTriggerStrength
@@ -720,6 +806,14 @@ $savedSkyClear = $env:R3HD_SKY_CLEAR
 $env:R3HD_SKY_CLEAR = $SkyClear
 $savedLitUvScroll = $env:R3HD_LIT_UV_SCROLL
 $env:R3HD_LIT_UV_SCROLL = $LitUvScroll
+$savedPowerSwirl = $env:R3HD_POWER_SWIRL
+$env:R3HD_POWER_SWIRL = $PowerSwirl
+$savedBeamColor = $env:R3HD_BEAM_COLOR
+$env:R3HD_BEAM_COLOR = $BeamColor
+$savedLockonColor = $env:R3HD_LOCKON_COLOR
+$env:R3HD_LOCKON_COLOR = $LockonColor
+$savedDisplayVSync = $env:R3HD_DISPLAY_VSYNC
+$env:R3HD_DISPLAY_VSYNC = $VSync
 $savedComboClose = $env:R3HD_COMBO_CLOSE
 $env:R3HD_COMBO_CLOSE = $ComboClose
 $savedGameplaySubs = $env:R3HD_GAMEPLAY_SUBTITLES
@@ -764,6 +858,12 @@ try {
     }
     $process.WaitForExit()
     $exitCode = $process.ExitCode
+    # G5-P2b (D-245), G5-P4b (D-248): the marker of a development structural session is cleared only after an orderly
+    # exit (exit code 0, no crash report and the runtime's orderly-shutdown line) for this session and plan; otherwise
+    # it stays and the next launch refuses structural mods. Nothing here names a cause.
+    if ($structuralMarker) {
+        try { [void](Complete-R3hdStructuralSession $python $PSScriptRoot $modsRoot $stamp $structuralMarker $session $exitCode) } catch { }
+    }
     if ($keeper) { try { [void](Update-SaveKeeper $keeper 'after the session' -Final) } catch { } }
     # M18 (D-047): a save that resumes in the end-of-game hub with the campaign unfinished cannot reach the Tower
     # of the Leptys. Read-only check; the profile is not changed.
@@ -783,6 +883,10 @@ try {
     $env:R3HD_RED_CORRECTION = $savedRedCorrection
     $env:R3HD_SKY_CLEAR = $savedSkyClear
     $env:R3HD_LIT_UV_SCROLL = $savedLitUvScroll
+    $env:R3HD_POWER_SWIRL = $savedPowerSwirl
+    $env:R3HD_BEAM_COLOR = $savedBeamColor
+    $env:R3HD_LOCKON_COLOR = $savedLockonColor
+    $env:R3HD_DISPLAY_VSYNC = $savedDisplayVSync
     $env:R3HD_COMBO_CLOSE = $savedComboClose
     $env:R3HD_GAMEPLAY_SUBTITLES = $savedGameplaySubs
     $env:R3HD_MODS_PLAN = $savedModsPlan
@@ -806,6 +910,7 @@ $result = [ordered]@{
     diagnostics = $Diagnostics
     keyboard = $keyText
     controller = $padText
+    controller_prompts = $ButtonPrompts
     pacing = $Pacing
     cursor = $Cursor
     save_clock = $SaveClock
@@ -815,6 +920,10 @@ $result = [ordered]@{
     red_correction = $RedCorrection
     sky_clear = $SkyClear
     lit_uv_scroll = $LitUvScroll
+    power_swirl = $PowerSwirl
+    beam_color = $BeamColor
+    lockon_far_color = $LockonColor
+    display_vsync = $VSync
     combo_close = $ComboClose
     gameplay_subtitles = $GameplaySubtitles
     mods = $modsText

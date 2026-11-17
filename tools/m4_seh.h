@@ -10,9 +10,9 @@
 //   pass 2  host __finally -> M4SehUnwind calls guest __finally funclets of
 //           every scope being left (also runs for longjmp unwinds).
 //   resume  host __except block restores the owner's non-volatile registers
-//           and re-enters the try at the inline __except body *label*; the
-//           body is never a callable function.
+//           and re-enters the try at the inline __except body *label*; the body is never a callable function.
 #pragma once
+#if defined(_WIN32) && !defined(R3HD_M4_PORTABLE)
 #include <windows.h>
 #include <cstdint>
 #include <cstring>
@@ -157,3 +157,17 @@ inline void M4SehUnwind(M4Frame& f, PPCContext& ctx, uint8_t* base, M4Resolve re
     ctx = saved; ctx.fpscr.restoreGuestBits(saved.fpscr.csr); f.in_call = was_in_call;
   }
 }
+
+// LM-A (D1): the emitter writes these project macros. On Windows they expand to exactly the tokens the M4 emitter
+// wrote before, so the Windows owners compile to the same constructs (verified by preprocessed-token identity).
+// They refer to the emitted names m4, m4scopes, m4resolve, ctx and base.
+#define M4_FRAME(count) M4Frame m4; M4Init(m4, m4scopes, count, ctx);
+#define M4_TRY_BEGIN __try { __try {
+#define M4_FAIL(code) __fastfail(code)
+#define M4_RETURN { m4.normal = true; return; }
+#define M4_TRY_END } __finally { if (!m4.normal) M4SehUnwind(m4, ctx, base, m4resolve); } \
+  } __except (M4SehFilter(GetExceptionInformation(), m4, ctx, base, m4resolve)) { \
+    M4RestoreOwner(m4, ctx); if (m4.unwind) ctx.r3.u64 = m4.return_value; goto m4_retry; }
+#else  // portable backend (Linux; or Windows with R3HD_M4_PORTABLE for differential tests)
+#include "m4_seh_portable.h"
+#endif  // _WIN32 && !R3HD_M4_PORTABLE

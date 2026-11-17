@@ -84,6 +84,18 @@ gate = code_only(read(TOOLS / "r3hd_hostui_gate.h"))
 for needle in ("PPCContext", "virtual_membase", "SDL_", "windows.h", "REX_KERNEL_MEMORY"):
     check(needle not in gate, f"gate header is host- and SDK-free ({needle})")
 panel = read(TOOLS / "m2_host/r3hd_pc_settings.h")
+nav = read(TOOLS / "r3hd_pcset_nav.h")
+check((SDK / "include/rex/r3hd_pcset_nav.h").read_bytes() == (TOOLS / "r3hd_pcset_nav.h").read_bytes(),
+      "installed Settings navigation matches source")
+drawer = read(SDK / "src/ui/imgui_drawer.cpp")
+check(drawer.index("host_ui_gamepad_.Update(io,") < drawer.index("ImGui::NewFrame();"),
+      "controller events reach ImGui before NewFrame")
+check('if (!enabled) return;' in nav and 'if (focused && !std::getenv("R3HD_NONINTRUSIVE")' in nav,
+      "no controller polling while closed, unfocused or hidden")
+check('SDL_GetGamepadFromID' in nav and not re.search(r'SDL_(?:Open|Init|Rumble|SetGamepad|Warp)', code_only(nav)),
+      "navigation borrows existing handles without initialising/opening/output")
+check('ImGuiChildFlags_NavFlattened' in panel and 'back_at_root_' in panel,
+      "content and footer share navigation; Cancel has a control-first boundary")
 panel_code = code_only(panel)
 host = read(TOOLS / "m2_host/r3hd_app.h")
 for needle in ("virtual_membase", "PPCContext", "TranslateVirtual", "REX_KERNEL_MEMORY", "resolution_scale",
@@ -159,6 +171,10 @@ if "--skip-native" not in sys.argv:
     check(r.returncode == 0 and m is not None and m[1] == "PASS", f"native gate / driver test ({log})")
     if m:
         print(f"native: {m[0]}")
+    n = re.search(r"R3HD_PCSET_NAV_TEST (PASS|FAIL) (\d+)/(\d+)", r.stdout)
+    check(n is not None and n[1] == "PASS", "native real-ImGui controller navigation / source switching")
+    if n:
+        print(f"native: {n[0]}")
 
 # --- 3. engine on synthetic homes ------------------------------------------------------------------------------
 ENGINE = [sys.executable, "-B", str(TOOLS / "r3hd_installer.py")]

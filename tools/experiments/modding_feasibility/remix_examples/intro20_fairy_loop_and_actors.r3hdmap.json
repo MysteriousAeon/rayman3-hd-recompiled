@@ -1,0 +1,84 @@
+{
+ "format": "r3hd-level-editor-project-v2",
+ "level": "intro_20",
+ "target": {
+  "lvl_sha256": "a21aa7691db4cedb3892e685e5395fd23b530b0bde4d64a09035dfb5f2d0b11f",
+  "ptr_sha256": "be90b58a3bfa78d19f3335489edcc79214442d52cbde04c6ad5a465f9fb17cb1",
+  "transit_sha256": "51c0fbf1239acd6188316a6d64507761903d5a087df1ea717426d5cb810e6aa8"
+ },
+ "actors": [
+  {
+   "model": "Chameleon\\NIK_mChameleon\\NIK_mChameleon.rul^CreateIntelligence^CreateComport:NIK_C_mChameleon_Init",
+   "instance": 0,
+   "matrix_sha256": "b92a2590c255ad1db7fdff224f660ce900500424a5b896b06f3a9bd650085575",
+   "position": [
+    -39.993995666503906,
+    -39.077880859375,
+    -4.04426908493042
+   ]
+  },
+  {
+   "model": "Gen_MIC\\Mic_mBoing2\\Mic_mBoing2.rul^CreateIntelligence^CreateComport:Mic_C_b2__init",
+   "instance": 11,
+   "matrix_sha256": "a72a64c14ac62e1ec20558fd068a9dd37fb9b0e3ebceb4bc972df6503a20fe61",
+   "position": [
+    -2.329927921295166,
+    -52.25985336303711,
+    -13.756359100341797
+   ]
+  },
+  {
+   "model": "lum\\YAM_mPowerz\\YAM_mPowerz.rul^CreateIntelligence^CreateComport:YAM_cPowerz_00Init",
+   "instance": 1,
+   "matrix_sha256": "6d81f9b01618d13e147e8d04d818c756235fd3dec528e01f295f320dd9a37d08",
+   "position": [
+    -16.5594539642334,
+    -55.85842514038086,
+    -33.69614791870117
+   ]
+  }
+ ],
+ "waypoints": [
+  {
+   "model": "Fairylum\\NIN_m_FairyLight\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight",
+   "instance": 2,
+   "variable": 2,
+   "node": 0,
+   "waypoint_sha256": "ad8bb6773b17d153dc8e7458c8765603fedf20eff7227137fd2242f252c5654a",
+   "position": [
+    -59.972007751464844,
+    -57.092960357666016,
+    -18.541196823120117
+   ]
+  },
+  {
+   "model": "Fairylum\\NIN_m_FairyLight\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight",
+   "instance": 2,
+   "variable": 2,
+   "node": 3,
+   "waypoint_sha256": "f33634a0ebdccb3f6f885611c9559b0c2502b485fec654380724fb1950e8d19e",
+   "position": [
+    -15.4029541015625,
+    -60.111656188964844,
+    -25.28896713256836
+   ]
+  },
+  {
+   "model": "Fairylum\\NIN_m_FairyLight\\NIN_m_FairyLight.rul^CreateIntelligence^CreateComport:NIN_C_InitLight",
+   "instance": 2,
+   "variable": 2,
+   "node": 5,
+   "waypoint_sha256": "d4c10bbd7dae047e5bb8b2d86c326a3a02192098a8c51f76a61aca79df444341",
+   "position": [
+    -42.22550964355469,
+    -36.89945602416992,
+    -23.361482620239258
+   ]
+  }
+ ],
+ "meta": {
+  "id": "example.intro20-loop-actors",
+  "name": "intro_20 FairyLight loop + moved actors",
+  "description": "Multi-edit example (E-523): FairyLight 2 loop reshaped (ROUTE SUPPORTED) and three actors moved (PLACEMENT VERIFIED, behaviour unknown)."
+ }
+}

@@ -1,6 +1,25 @@
 {
   "schema": 1,
   "strings": {
+    "&3D Level Remix Editor...": {"en": "Experimental &3D Level Viewer...", "tr": "Deneysel &3B Bölüm Görüntüleyici..."},
+    "C&lassic / Advanced Editor...": {"en": "C&lassic / Advanced Editor...", "tr": "K&lasik / Gelişmiş Düzenleyici..."},
+    "The 3D Level Remix Editor is opening in its own window. Install its exported mod here, then play.": {"en": "The Experimental 3D Level Viewer is opening in its own window. Install its exported mod here, then play.", "tr": "Deneysel 3B Bölüm Görüntüleyici kendi penceresinde açılıyor. Dışa aktardığı modu buradan yükleyin, sonra oynayın."},
+    "The 3D Level Remix Editor could not start: ": {"en": "The Experimental 3D Level Viewer could not start: ", "tr": "Deneysel 3B Bölüm Görüntüleyici başlatılamadı: "},
+    "The level editor could not start: ": {"en": "The level editor could not start: ", "tr": "Bölüm düzenleyici başlatılamadı: "},
+    "The level editor is opening in its own window. Install its exported mod here, then play.": {"en": "The level editor is opening in its own window. Install its exported mod here, then play.", "tr": "Bölüm düzenleyici kendi penceresinde açılıyor. Dışa aktardığı modu buradan yükleyin, sonra oynayın."},
+    "Xbox": {"en": "Xbox", "tr": "Xbox"},
+    "Restore Power-Up Spiral": {"en": "Restore Power-Up Spiral", "tr": "Güç Sarmalını Geri Getir"},
+    "Restores the colored spiral around Rayman when a power-up is acquired or expires.": {"en": "Restores the colored spiral around Rayman when a power-up is acquired or expires.", "tr": "Rayman bir güç kazandığında veya gücü sona erdiğinde etrafında beliren renkli sarmalı geri getirir."},
+    "Restore Power-Up Canister Colors": {"en": "Restore Power-Up Canister Colors", "tr": "Güç Kutusu Renklerini Geri Getir"},
+    "Restores the purple beam and rings of power-up cans from the original PC release instead of orange.": {"en": "Restores the purple beam and rings of power-up cans from the original PC release instead of orange.", "tr": "Güç kutularının ışın ve halkalarını, özgün PC sürümündeki gibi turuncu yerine mor renkte gösterir."},
+    "Restore Out-of-Range Lock-On Color": {"en": "Restore Out-of-Range Lock-On Color", "tr": "Menzil Dışı Kilitlenme Rengini Geri Getir"},
+    "Shows the lock-on indicator for a target beyond your fist's reach in blue, as in the original PC release, instead of orange.": {"en": "Shows the lock-on indicator for a target beyond your fist's reach in blue, as in the original PC release, instead of orange.", "tr": "Yumruğun ulaşamayacağı uzaklıktaki hedef göstergesinin rengini, özgün PC sürümündeki gibi maviye çevirir."},
+    "V-Sync": {"en": "V-Sync", "tr": "V-Sync (Dikey Eşitleme)"},
+    "Prevents screen tearing; can add slight input delay. Graphics driver settings may override it. Windows only.": {"en": "Prevents screen tearing; can add slight input delay. Graphics driver settings may override it. Windows only.", "tr": "Ekran yırtılmasını önler ancak giriş gecikmesini biraz artırabilir. Ekran kartı sürücüsü ayarları bu seçeneği geçersiz kılabilir. Yalnızca Windows'ta kullanılabilir."},
+    "Choose which controller button icons appear in-game. Auto identifies the primary or sole controller at launch; unknown or ambiguous controllers use Xbox. Restart after changing controllers.": {"en": "Choose which controller button icons appear in-game. Auto identifies the primary or sole controller at launch; unknown or ambiguous controllers use Xbox. Restart after changing controllers.", "tr": "Oyun içinde hangi kumanda düğme simgelerinin gösterileceğini seçin. Otomatik, başlangıçta birincil veya tek kumandayı tanır; bilinmeyen veya belirsiz kumandalarda Xbox kullanılır. Kumanda değiştirdikten sonra oyunu yeniden başlatın."},
+    "Controller button prompts": {"en": "Controller button prompts", "tr": "Oyun kumandası düğme simgeleri"},
+    "Controller": {"en": "Controller", "tr": "Oyun kumandası"},
+    "PlayStation": {"en": "PlayStation", "tr": "PlayStation"},
     "Share the game identity and elapsed session time with Discord.": {
       "en": "Share the game identity and elapsed session time with Discord.",
       "tr": "Oyunun adını ve oturum süresini Discord ile paylaş."
@@ -185,13 +204,13 @@
       "en": "Restores the sky color in Clearleaf Forest and the Bog of Murk.",
       "tr": "Berrakyaprak Ormanı ve Kasvet Bataklığı'nda gök rengini düzeltir."
     },
-    "Correct Robo-Pirate statue textures": {
-      "en": "Correct Robo-Pirate statue textures",
-      "tr": "Robo-Pirate heykellerinin doku yönünü düzelt"
+    "Correct Texture Orientation": {
+      "en": "Correct Texture Orientation",
+      "tr": "Doku yönünü düzelt"
     },
-    "Fixes four upside-down statue textures in Hoodlum Headquarters.": {
-      "en": "Fixes four upside-down statue textures in Hoodlum Headquarters.",
-      "tr": "Hoodlum Karargâhı'ndaki dört heykelin ters dokusunu düzeltir."
+    "Fixes upside-down Robo-Pirate statue textures in Hoodlum Headquarters and Ugly textures in the Bog of Murk.": {
+      "en": "Fixes upside-down Robo-Pirate statue textures in Hoodlum Headquarters and Ugly textures in the Bog of Murk.",
+      "tr": "Hoodlum Karargâhı'ndaki Robo-Pirate heykellerinin ve Kasvet Bataklığı'ndaki Ugly yaratıklarının ters dokularını düzeltir."
     },
     "Gameplay subtitles": {
       "en": "Gameplay subtitles",
@@ -940,6 +959,14 @@
     "Active (partly covered by a mod above it)": {
       "en": "Active (partly covered by a mod above it)",
       "tr": "Etkin (üstteki mod bazı değişiklikleri geçersiz kılıyor)"
+    },
+    "  [changes game logic]": {
+      "en": "  [changes game logic]",
+      "tr": "  [oyun mantığını değiştirir]"
+    },
+    "Warning: this mod changes game logic. While it is active the game awards no new achievements, and progress saved with it may depend on it. Back up your saves first.": {
+      "en": "Warning: this mod changes game logic. While it is active the game awards no new achievements, and progress saved with it may depend on it. Back up your saves first.",
+      "tr": "Uyarı: bu mod oyun mantığını değiştirir. Etkinken oyun yeni başarım vermez ve bu sırada kaydedilen ilerleme moda bağlı olabilir. Önce kayıtlarınızı yedekleyin."
     },
     "Advanced": {
       "en": "Advanced",

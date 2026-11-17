@@ -1,0 +1,17 @@
+ARG BASE
+FROM ${BASE}
+COPY EGL_LOCK.json image_guard.py /opt/r3hd-egl/
+RUN cp /opt/r3hd-packages.tsv /opt/r3hd-egl/parent-packages.tsv \
+ && sh /opt/r3hd-validate-apt-sources.sh \
+ && apt-get -o Dir::Etc::sourcelist=/etc/apt/sources.list \
+    -o Dir::Etc::sourceparts=/etc/apt/sources.list.d \
+    -o Acquire::https::Verify-Peer=true -o Acquire::https::Verify-Host=true update --error-on=any \
+ && sh /opt/r3hd-validate-snapshot-lists.sh \
+ && apt-get -o Dir::Etc::sourcelist=/etc/apt/sources.list \
+    -o Dir::Etc::sourceparts=/etc/apt/sources.list.d \
+    -o Acquire::https::Verify-Peer=true -o Acquire::https::Verify-Host=true \
+    install -y --no-install-recommends --no-upgrade libegl-dev=1.7.0-1build1 \
+ && dpkg-query -W -f='${binary:Package}\t${Version}\t${Architecture}\n' > /opt/r3hd-packages.tsv \
+ && python3 -B /opt/r3hd-egl/image_guard.py /opt/r3hd-egl \
+ && dpkg-query -L libegl-dev | grep -Fx /usr/lib/x86_64-linux-gnu/pkgconfig/egl.pc \
+ && pkg-config --print-errors --exists 'wayland-client >= 1.18' wayland-egl wayland-cursor egl 'xkbcommon >= 0.5.0'

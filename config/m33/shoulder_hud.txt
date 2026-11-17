@@ -1,0 +1,15 @@
+# D-200: isolated Knaar_69 visual probe, never played progression. Three private
+# captures; scoped XAM input only. Run through m9_license_run --play --test-level.
+log knaar_69\knaar_69.lvl result=00000000 60
+wait 6
+frame gameplay_hud
+press 40 0.2
+wait 1
+frame pause_menu
+press 40 0.2
+wait 1
+press 20 0.3
+wait 1
+frame photo_hud
+press 52
+wait 1

@@ -1,0 +1,25 @@
+{
+ "format": "terrain-patch-v1",
+ "level": "intro_20",
+ "lvl_sha256": "a21aa7691db4cedb3892e685e5395fd23b530b0bde4d64a09035dfb5f2d0b11f",
+ "region": "start-floor-v1",
+ "name": "start-two-step-v1",
+ "description": "G6-P19 start-two-step-v1 expressed as data: spawn corner 0 lowered 0.30, west floor 2 / 4 lowered 0.15.",
+ "groups": [
+  {
+   "name": "spawn-corner",
+   "vertices": [
+    0
+   ],
+   "delta_z": -0.3
+  },
+  {
+   "name": "west-floor",
+   "vertices": [
+    2,
+    4
+   ],
+   "delta_z": -0.15
+  }
+ ]
+}

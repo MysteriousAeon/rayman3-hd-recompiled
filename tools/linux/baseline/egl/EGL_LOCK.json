@@ -1,0 +1,266 @@
+{
+  "snapshot": "20261108T000000Z",
+  "requested_package": "libegl-dev=1.7.0-1build1",
+  "allowed_transaction": {
+    "libdrm-common": {
+      "Version": "2.4.125-1ubuntu0.1~24.04.2",
+      "Architecture": "all",
+      "SHA256": "0b60996bc18fa1545e60a47bb0fe1a7f360ec06fe62ba35fb8d8ba2a54e62166",
+      "Size": "9250",
+      "Filename": "pool/main/libd/libdrm/libdrm-common_2.4.125-1ubuntu0.1~24.04.2_all.deb",
+      "index": "noble-updates-main.Packages"
+    },
+    "libdrm2": {
+      "Version": "2.4.125-1ubuntu0.1~24.04.2",
+      "Architecture": "amd64",
+      "SHA256": "4d3e858dd57be617c49d87c5ddcdb35df744a4f0a559981256ae2ba174718584",
+      "Size": "41388",
+      "Filename": "pool/main/libd/libdrm/libdrm2_2.4.125-1ubuntu0.1~24.04.2_amd64.deb",
+      "index": "noble-updates-main.Packages"
+    },
+    "libsensors-config": {
+      "Version": "1:3.6.0-9build1",
+      "Architecture": "all",
+      "SHA256": "148103a436fd273dabfe0fe41dc54873df46227b59b2c7ac7339d7e2ddfd033b",
+      "Size": "5546",
+      "Filename": "pool/main/l/lm-sensors/libsensors-config_3.6.0-9build1_all.deb",
+      "index": "noble-main.Packages"
+    },
+    "libsensors5": {
+      "Version": "1:3.6.0-9build1",
+      "Architecture": "amd64",
+      "SHA256": "515ed1fbe2bc99926c44fe10b1beb9c3510068c344adda334303098d669ba1e5",
+      "Size": "26600",
+      "Filename": "pool/main/l/lm-sensors/libsensors5_3.6.0-9build1_amd64.deb",
+      "index": "noble-main.Packages"
+    },
+    "libxcb1": {
+      "Version": "1.15-1ubuntu2",
+      "Architecture": "amd64",
+      "SHA256": "e1c6611d11ad7398326f1bf028afc34c3b14c51d917a3426b966ed4b9687fa58",
+      "Size": "47730",
+      "Filename": "pool/main/libx/libxcb/libxcb1_1.15-1ubuntu2_amd64.deb",
+      "index": "noble-main.Packages"
+    },
+    "libdrm-amdgpu1": {
+      "Version": "2.4.125-1ubuntu0.1~24.04.2",
+      "Architecture": "amd64",
+      "SHA256": "aa29b7898bae596bf07e55ba178cf8d5ea698fe83688e1b34520d86010251a7a",
+      "Size": "21374",
+      "Filename": "pool/main/libd/libdrm/libdrm-amdgpu1_2.4.125-1ubuntu0.1~24.04.2_amd64.deb",
+      "index": "noble-updates-main.Packages"
+    },
+    "libpciaccess0": {
+      "Version": "0.17-3ubuntu0.24.04.3",
+      "Architecture": "amd64",
+      "SHA256": "87a3b1c2a09f54d229e5e1f5424adc806e8f99bbb8aa8c8dea114b727f7a5a96",
+      "Size": "19220",
+      "Filename": "pool/main/libp/libpciaccess/libpciaccess0_0.17-3ubuntu0.24.04.3_amd64.deb",
+      "index": "noble-updates-main.Packages"
+    },
+    "libdrm-intel1": {
+      "Version": "2.4.125-1ubuntu0.1~24.04.2",
+      "Architecture": "amd64",
+      "SHA256": "847195765b9ef7e7886677aeae9987aa54e496758b4e6e5a4ed2cb580b252244",
+      "Size": "63868",
+      "Filename": "pool/main/libd/libdrm/libdrm-intel1_2.4.125-1ubuntu0.1~24.04.2_amd64.deb",
+      "index": "noble-updates-main.Packages"
+    },
+    "libglvnd0": {
+      "Version": "1.7.0-1build1",
+      "Architecture": "amd64",
+      "SHA256": "33f5e07c74f73c2bfb44086ae0f9e6da52acd6c104d30ffe8fd768d8253d5e82",
+      "Size": "69594",
+      "Filename": "pool/main/libg/libglvnd/libglvnd0_1.7.0-1build1_amd64.deb",
+      "index": "noble-main.Packages"
+    },
+    "libllvm20": {
+      "Version": "1:20.1.2-0ubuntu1~24.04.3",
+      "Architecture": "amd64",
+      "SHA256": "f018e71c72c7a4742fb1aff9dc98b45586f42e6ea464d4918af7e3772b7f0658",
+      "Size": "30574382",
+      "Filename": "pool/main/l/llvm-toolchain-20/libllvm20_20.1.2-0ubuntu1~24.04.3_amd64.deb",
+      "index": "noble-updates-main.Packages"
+    },
+    "libxcb-dri3-0": {
+      "Version": "1.15-1ubuntu2",
+      "Architecture": "amd64",
+      "SHA256": "3d3d0e95e56ae16010a84883196b8153cba62d6831f9aaee2a68c46f20c7c004",
+      "Size": "7142",
+      "Filename": "pool/main/libx/libxcb/libxcb-dri3-0_1.15-1ubuntu2_amd64.deb",
+      "index": "noble-main.Packages"
+    },
+    "libxcb-present0": {
+      "Version": "1.15-1ubuntu2",
+      "Architecture": "amd64",
+      "SHA256": "2e36e6557e87dbfd64df3143cbf81a4f75c3447501a545b4730511d228b0dd17",
+      "Size": "5676",
+      "Filename": "pool/main/libx/libxcb/libxcb-present0_1.15-1ubuntu2_amd64.deb",
+      "index": "noble-main.Packages"
+    },
+    "libxcb-randr0": {
+      "Version": "1.15-1ubuntu2",
+      "Architecture": "amd64",
+      "SHA256": "b5cb519823a05a617b543dc9b6a9289b7648b20048244abe021caa706309835a",
+      "Size": "17862",
+      "Filename": "pool/main/libx/libxcb/libxcb-randr0_1.15-1ubuntu2_amd64.deb",
+      "index": "noble-main.Packages"
+    },
+    "libxcb-sync1": {
+      "Version": "1.15-1ubuntu2",
+      "Architecture": "amd64",
+      "SHA256": "14286795a258593259923619073e50c15345673befae2733f7b0577b07359aa8",
+      "Size": "9312",
+      "Filename": "pool/main/libx/libxcb/libxcb-sync1_1.15-1ubuntu2_amd64.deb",
+      "index": "noble-main.Packages"
+    },
+    "libxcb-xfixes0": {
+      "Version": "1.15-1ubuntu2",
+      "Architecture": "amd64",
+      "SHA256": "0b2ab64af92a71e3d1a35e3c819880ee28d04bfac81360df68ae8d8e9663ebd2",
+      "Size": "10190",
+      "Filename": "pool/main/libx/libxcb/libxcb-xfixes0_1.15-1ubuntu2_amd64.deb",
+      "index": "noble-main.Packages"
+    },
+    "libxshmfence1": {
+      "Version": "1.3-1build5",
+      "Architecture": "amd64",
+      "SHA256": "bc6de4bfaf9050a8ba83d4bcfb114131b081084a7972c03417f8523d52b5c742",
+      "Size": "4764",
+      "Filename": "pool/main/libx/libxshmfence/libxshmfence1_1.3-1build5_amd64.deb",
+      "index": "noble-main.Packages"
+    },
+    "mesa-libgallium": {
+      "Version": "25.2.8-0ubuntu0.24.04.4",
+      "Architecture": "amd64",
+      "SHA256": "0c50c3c18c1b3f3ac4243bbf1533c9202f9d7b4f646807e9ef0df4c801414256",
+      "Size": "10783312",
+      "Filename": "pool/main/m/mesa/mesa-libgallium_25.2.8-0ubuntu0.24.04.4_amd64.deb",
+      "index": "noble-updates-main.Packages"
+    },
+    "libgbm1": {
+      "Version": "25.2.8-0ubuntu0.24.04.4",
+      "Architecture": "amd64",
+      "SHA256": "4bfe348b456db5b445a80e0a3ffb9e9a01b91499bb86e0e568ca3634b134da7e",
+      "Size": "34172",
+      "Filename": "pool/main/m/mesa/libgbm1_25.2.8-0ubuntu0.24.04.4_amd64.deb",
+      "index": "noble-updates-main.Packages"
+    },
+    "libxcb-shm0": {
+      "Version": "1.15-1ubuntu2",
+      "Architecture": "amd64",
+      "SHA256": "229d1280d459f1ba44c22939d3f9b61d9d20932d9a646b3fe4ce50be4cdf2325",
+      "Size": "5756",
+      "Filename": "pool/main/libx/libxcb/libxcb-shm0_1.15-1ubuntu2_amd64.deb",
+      "index": "noble-main.Packages"
+    },
+    "libegl-mesa0": {
+      "Version": "25.2.8-0ubuntu0.24.04.4",
+      "Architecture": "amd64",
+      "SHA256": "2b8363cb29868603c827cb569a19373a45bebb29bdca5cd34de42dce2f3c9419",
+      "Size": "117224",
+      "Filename": "pool/main/m/mesa/libegl-mesa0_25.2.8-0ubuntu0.24.04.4_amd64.deb",
+      "index": "noble-updates-main.Packages"
+    },
+    "libegl1": {
+      "Version": "1.7.0-1build1",
+      "Architecture": "amd64",
+      "SHA256": "e549f7776216f7bd3b1c216729fb40a97a562e2eb7c563cde632b4931f9a4e57",
+      "Size": "28670",
+      "Filename": "pool/main/libg/libglvnd/libegl1_1.7.0-1build1_amd64.deb",
+      "index": "noble-main.Packages"
+    },
+    "libxcb-glx0": {
+      "Version": "1.15-1ubuntu2",
+      "Architecture": "amd64",
+      "SHA256": "d07cde26c70fe92df7c327928371e495cc4570fed2d6518758a5db5715cb34c1",
+      "Size": "24774",
+      "Filename": "pool/main/libx/libxcb/libxcb-glx0_1.15-1ubuntu2_amd64.deb",
+      "index": "noble-main.Packages"
+    },
+    "libxxf86vm1": {
+      "Version": "1:1.1.4-1build4",
+      "Architecture": "amd64",
+      "SHA256": "48b2799f52b86505d2bc91dcb1bfa6536545635b9849cb693d274d934116a8da",
+      "Size": "9282",
+      "Filename": "pool/main/libx/libxxf86vm/libxxf86vm1_1.1.4-1build4_amd64.deb",
+      "index": "noble-main.Packages"
+    },
+    "libvulkan1": {
+      "Version": "1.3.275.0-1build1",
+      "Architecture": "amd64",
+      "SHA256": "ccf4fe8f4461442f27ea2494c7ae650b60bd396fec2688b0c44a27d66a222f74",
+      "Size": "142010",
+      "Filename": "pool/main/v/vulkan-loader/libvulkan1_1.3.275.0-1build1_amd64.deb",
+      "index": "noble-main.Packages"
+    },
+    "libgl1-mesa-dri": {
+      "Version": "25.2.8-0ubuntu0.24.04.4",
+      "Architecture": "amd64",
+      "SHA256": "2dabbe4292b201ca07b38c0672352f68dbfc55b5850f96f89ef54d3b4b6c8a59",
+      "Size": "37950",
+      "Filename": "pool/main/m/mesa/libgl1-mesa-dri_25.2.8-0ubuntu0.24.04.4_amd64.deb",
+      "index": "noble-updates-main.Packages"
+    },
+    "libglx-mesa0": {
+      "Version": "25.2.8-0ubuntu0.24.04.4",
+      "Architecture": "amd64",
+      "SHA256": "5aa6164059989d476b15caa8ade892b1dec37593934dc4f617ece7ea0d639bc0",
+      "Size": "110128",
+      "Filename": "pool/main/m/mesa/libglx-mesa0_25.2.8-0ubuntu0.24.04.4_amd64.deb",
+      "index": "noble-updates-main.Packages"
+    },
+    "libglx0": {
+      "Version": "1.7.0-1build1",
+      "Architecture": "amd64",
+      "SHA256": "aa4953182f30abde90cb5b072e83d7286b557b325769b8686196a7bd396d8795",
+      "Size": "38558",
+      "Filename": "pool/main/libg/libglvnd/libglx0_1.7.0-1build1_amd64.deb",
+      "index": "noble-main.Packages"
+    },
+    "libgl1": {
+      "Version": "1.7.0-1build1",
+      "Architecture": "amd64",
+      "SHA256": "e2b2fadeb883f073b566ad1d7874f6702397514d258473e96152a89d4d502a09",
+      "Size": "101990",
+      "Filename": "pool/main/libg/libglvnd/libgl1_1.7.0-1build1_amd64.deb",
+      "index": "noble-main.Packages"
+    },
+    "libglx-dev": {
+      "Version": "1.7.0-1build1",
+      "Architecture": "amd64",
+      "SHA256": "0e2654950a881c20b640a3af590add2e0b612b8c0fdd945761fc695e1b6eb797",
+      "Size": "14176",
+      "Filename": "pool/main/libg/libglvnd/libglx-dev_1.7.0-1build1_amd64.deb",
+      "index": "noble-main.Packages"
+    },
+    "libgl-dev": {
+      "Version": "1.7.0-1build1",
+      "Architecture": "amd64",
+      "SHA256": "b7145fd8f8abe20d5cb436d2eae9b3235bd91be6fbddac581620d16763bd9250",
+      "Size": "102444",
+      "Filename": "pool/main/libg/libglvnd/libgl-dev_1.7.0-1build1_amd64.deb",
+      "index": "noble-main.Packages"
+    },
+    "libegl-dev": {
+      "Version": "1.7.0-1build1",
+      "Architecture": "amd64",
+      "SHA256": "3a0315216bb0d6fc4bbe7f689cf0168c2ffa3e62ac69bff06bbbe49679259990",
+      "Size": "18204",
+      "Filename": "pool/main/libg/libglvnd/libegl-dev_1.7.0-1build1_amd64.deb",
+      "index": "noble-main.Packages"
+    },
+    "libxcb1-dev": {
+      "Version": "1.15-1ubuntu2",
+      "Architecture": "amd64",
+      "SHA256": "1bafe3432feafc9e57f858721da524dfb3ee1f6fc4ef6b0c73023e79eadb9c28",
+      "Size": "85790",
+      "Filename": "pool/main/libx/libxcb/libxcb1-dev_1.15-1ubuntu2_amd64.deb",
+      "index": "noble-main.Packages"
+    }
+  },
+  "previous_bundle_sha256": "f608fd91b1e0224dbb6dc45741fa1cb4e3b8e3d690e7fc2f8bda533e4d3fb162",
+  "kit_manifest_sha256": "d20ceea13f64ef6fac356539fa346523b01bfed79ebf824f112dc946f305d1d1",
+  "build_inside_sha256": "995864e6b00adb1b2f9e3649c9a27756ab0caf95d0f08ff20af7a0b93e3c08ce",
+  "expected_sdk_source_digest": "b686fe76ffb86ccefa431bf5d7998c115a9297422eb078f55f51abbc2a75086e"
+}

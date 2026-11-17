@@ -1,0 +1,78 @@
+{
+  "head": "681349f95e6d97cd1328888e2f054fd2c0849311",
+  "branch": "codex/private-trailer-draw-gate",
+  "files": {
+    "AGENTS.md": {
+      "bytes": 62224,
+      "lines": 582,
+      "headings": 7,
+      "markdown_links": 0,
+      "decision_mentions": 94,
+      "experiment_mentions": 8,
+      "sha256": "db8c71cd55d716c4116c15f989834a0b6587c3a1a15ff637669e40a489c5ef33"
+    },
+    "PROJECT_STATE.md": {
+      "bytes": 224538,
+      "lines": 2769,
+      "headings": 170,
+      "markdown_links": 0,
+      "decision_mentions": 253,
+      "experiment_mentions": 253,
+      "sha256": "93498555a20fbcaf23648d99b0298cdfc1ef10f59fbf1e4389d1a149b7b4168a"
+    },
+    "CURRENT_TASK.md": {
+      "bytes": 208018,
+      "lines": 2644,
+      "headings": 188,
+      "markdown_links": 0,
+      "decision_mentions": 226,
+      "experiment_mentions": 267,
+      "sha256": "4f12495f4c971a904925fd57c0c026b260f1e89fa7822fff892dd62cf0464712"
+    },
+    "DECISIONS.md": {
+      "bytes": 315943,
+      "lines": 3432,
+      "headings": 168,
+      "markdown_links": 0,
+      "decision_mentions": 399,
+      "experiment_mentions": 166,
+      "sha256": "7f7cfd6b8cf6c605d85c2e9c055ad4cb0146f8a4d81a2404e5557744c6c46d91"
+    },
+    "EXPERIMENTS.md": {
+      "bytes": 606402,
+      "lines": 6872,
+      "headings": 369,
+      "markdown_links": 0,
+      "decision_mentions": 167,
+      "experiment_mentions": 518,
+      "sha256": "f85dc246c879b4f24fe4a435099a163c393dd92d5810ac2a8ca4f9a6feebc10e"
+    },
+    "RE_NOTES.md": {
+      "bytes": 222437,
+      "lines": 2624,
+      "headings": 180,
+      "markdown_links": 0,
+      "decision_mentions": 37,
+      "experiment_mentions": 141,
+      "sha256": "e639ee3dd31f70925af2c087ca25c8d37a38ab11cbdabf3e8f97124222c3ac46"
+    },
+    "RESEARCH.md": {
+      "bytes": 56840,
+      "lines": 635,
+      "headings": 35,
+      "markdown_links": 11,
+      "decision_mentions": 7,
+      "experiment_mentions": 17,
+      "sha256": "9528ce8566355ac2281cb2321a0cc592fa30e96255339b4e1b287c36022e5d72"
+    },
+    "CLAUDE.md": {
+      "bytes": 364,
+      "lines": 5,
+      "headings": 1,
+      "markdown_links": 0,
+      "decision_mentions": 0,
+      "experiment_mentions": 0,
+      "sha256": "1c6ce6a30bc3dec906256f4e043c05c96ef22281834e9c6b1194c0a9907f152c"
+    }
+  }
+}

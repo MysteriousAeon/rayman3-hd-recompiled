@@ -1,0 +1,63 @@
+{
+  "comparison_log": {
+    "path": "private/work/linux_build/lmc_evidence/lmc_input1/runtime.1.log",
+    "sha256": "692f571550b470702b35bae939044d3884f145b9dd7d283463c3eb0aa6c87f0f"
+  },
+  "content_inventory_sha256": "f869657a23dcec588efe5c125031946060bb2908d4f198cafb2c1b6b59af1a93",
+  "members": {
+    "OWNER.txt": "6fa37c2299f3e76c3d1cb4b86b6be379e26ddd75c481692b27df9a15a68fb09f",
+    "attempt.json": "f799de282c43847904c5cd1d66822561a7085adbac15db27f227ea1e9ed14d7f",
+    "content-after.json": "eddcd49ac557dc1511f22a71e3863e50762fcbebd277f652e284e6771dfd8c6e",
+    "content-after.stderr.txt": "c4a21aae2a3e112c0d9c412c30b26f8aaa0fa6a1c2fb8bc54b2097b6ed2ed212",
+    "content-before.json": "eddcd49ac557dc1511f22a71e3863e50762fcbebd277f652e284e6771dfd8c6e",
+    "content-before.stderr.txt": "c4a21aae2a3e112c0d9c412c30b26f8aaa0fa6a1c2fb8bc54b2097b6ed2ed212",
+    "data-prepare.log": "cf8864a347597353a8f65d19121bf187b8abb10a3ab2e7c0adf51e1bedbd4c44",
+    "exit.json": "3fa50979a0616d658572f5ee3b9f0cd9b5a33e1a2da11db3838454a15ccd786d",
+    "libffmpeg.so.loader.txt": "ed38144edfa4b8177e799e3f4bee7e7c38e1c02e770a575e3c7f9777111bf56c",
+    "libmspack.so.loader.txt": "bedf3df090f54ba7ce280904a6814c9a5717fb13c7e0ccd2e3b152656483c5d9",
+    "librexgpu-xenos.so.loader.txt": "39b692fdba3edb97000146250cf5117ddc7a2a7e81aa04083547cc54ef426cac",
+    "librexruntime.so.loader.txt": "316e07ddd3c0521840f977491d784d90bf52629c4241dda8b46f8ab05397d837",
+    "prepared.json": "61b6b658dbd6b94401d4148ac43206f08ac225f52192b60261462e9517e62915",
+    "process.json": "3bce10ef685e7260762a403605551f1bb3b6f303d7f1c09767e1431ca2f43b06",
+    "process.log": "ba0a94ea4634b912984097e93c89b999e6f1cd27f825c1d3ce647c1231daaa90",
+    "r3hd.loader.txt": "cfb13cc52023cd4ce05fde86f52ebc9226cedbeb4d876f5c8827bf0558ddec21",
+    "result.json": "bbf1a184eb688ec0005cb10199c8391106377aa910f23cb5930c9288c1965d38",
+    "runtime.log": "e4c1bd399b429f3f54c464314b89602868b6bc64d7437e6ced79e03492af7c1f"
+  },
+  "sidecar_sha256": "91ba64f24fb762ecde142471ca9ba24c53ca18834084967dc016f269ef0cd961",
+  "source_facts": {
+    "src/audio/audio_system.cpp": {
+      "commit": "c94f5ebdcb3c9d1a460ca48e04f9758448f8d518",
+      "sha256": "7e129af6ea359947d4cd148d59f92c26984666c422e8d616b80fda005ffe7a07"
+    },
+    "src/audio/sdl/sdl_audio_system.cpp": {
+      "commit": "c94f5ebdcb3c9d1a460ca48e04f9758448f8d518",
+      "sha256": "b3efec2dd114959f5b6b8f05a7cf9533e9cb22edde47fddd318e735c4b160a14"
+    },
+    "src/core/dbg_posix.cpp": {
+      "commit": "c94f5ebdcb3c9d1a460ca48e04f9758448f8d518",
+      "sha256": "f46178e9d7da4fe3cad747b4bfcc76c013269b88cd11e599b500a6cfdb7f6f00"
+    },
+    "src/kernel/xboxkrnl/xboxkrnl_audio.cpp": {
+      "commit": "c94f5ebdcb3c9d1a460ca48e04f9758448f8d518",
+      "sha256": "e5f46847dd93c7d74bfc6d728b901544bbd158b6e0828a3fe2f52206bd3ec62e"
+    },
+    "src/kernel/xboxkrnl/xboxkrnl_debug.cpp": {
+      "commit": "c94f5ebdcb3c9d1a460ca48e04f9758448f8d518",
+      "sha256": "3ce035778d33e0f0975172a243dd9c5e89e7dab3ad04714c34fe618a26c9980f"
+    },
+    "thirdparty/sdl3/include/SDL3/SDL_hints.h": {
+      "commit": "8bf3b7215ad9fc3deb583c6a3a37c6c67f2e24e4",
+      "sha256": "0cab42c704a86cafb23b335890bc4f154c5ca452c1ee7e835fac2af263e8793b"
+    },
+    "thirdparty/sdl3/src/audio/SDL_audio.c": {
+      "commit": "8bf3b7215ad9fc3deb583c6a3a37c6c67f2e24e4",
+      "sha256": "0649eef45b9b4c7fee21be29214633d50923d901d151e4553c0138795794e792"
+    },
+    "thirdparty/sdl3/src/audio/pulseaudio/SDL_pulseaudio.c": {
+      "commit": "8bf3b7215ad9fc3deb583c6a3a37c6c67f2e24e4",
+      "sha256": "65cab525597e6f99fb208723b2362419dec1fd52e6a33b8c63b2fccfb614bdee"
+    }
+  },
+  "zip_sha256": "3ad6770609b0675508fefed421ba015316348f0ad33279ab9f87f943416a8834"
+}

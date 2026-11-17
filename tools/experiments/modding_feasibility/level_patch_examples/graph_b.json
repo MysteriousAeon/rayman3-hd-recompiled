@@ -1,0 +1,19 @@
+{
+ "format": "level-patch-v1",
+ "level": "intro_20",
+ "lvl_sha256": "a21aa7691db4cedb3892e685e5395fd23b530b0bde4d64a09035dfb5f2d0b11f",
+ "ptr_sha256": "be90b58a3bfa78d19f3335489edcc79214442d52cbde04c6ad5a465f9fb17cb1",
+ "transit_sha256": "51c0fbf1239acd6188316a6d64507761903d5a087df1ea717426d5cb810e6aa8",
+ "id": "g6p21.fairy-b-terrain",
+ "description": "start-two-step-v1 terrain + FairyLight on graph B (offline only)",
+ "components": [
+  {
+   "type": "fairylight",
+   "follow_graph_of": 1
+  },
+  {
+   "type": "terrain",
+   "preset": "start-two-step-v1"
+  }
+ ]
+}

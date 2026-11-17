@@ -2,6 +2,51 @@
 from m3_runtime_patch import SDK, patch
 import os
 
+# D-020: the pinned SDK caches "vertex buffer resident" per fetch slot and then skips
+# SharedMemory::RequestRange while the fetch constant's address/size are unchanged. RequestRange is
+# what uploads guest pages modified since the last request, so a dynamic vertex buffer rewritten by
+# the CPU under an unchanged fetch constant was drawn with stale host data (menu atlas overlay).
+# Always request the range (already-valid ranges return early); R3HD_M5_VB_RESIDENCY_CACHE=1
+# restores the pinned behaviour for the A/B experiment only.
+D3D12_VB_EDITS = [(
+    '''      if (vertex_buffers_in_sync_[vfetch_index >> 6] & vfetch_bit) {
+        continue;
+      }
+      xenos::xe_gpu_vertex_fetch_t vfetch_constant = regs.GetVertexFetch(vfetch_index);''',
+    '''      static const bool m5_residency_cache = std::getenv("R3HD_M5_VB_RESIDENCY_CACHE") != nullptr;
+      if (m5_residency_cache && (vertex_buffers_in_sync_[vfetch_index >> 6] & vfetch_bit)) {
+        continue;
+      }
+      xenos::xe_gpu_vertex_fetch_t vfetch_constant = regs.GetVertexFetch(vfetch_index);'''), (
+    '''      if (state.address == vfetch_constant.address && state.size == vfetch_constant.size) {''',
+    '''      if (m5_residency_cache && state.address == vfetch_constant.address &&
+          state.size == vfetch_constant.size) {''')
+]
+
+# D-020 on the Vulkan backend (E-369: the Linux menu showed the same atlas overlay). The pinned Vulkan IssueDraw
+# has the identical shortcut; the same two guards, the same switch, plus <cstdlib> (the D3D12 file gets it through
+# m3_gpu_trace.h) and one log line naming the mode, so a Linux A/B log proves which behaviour ran.
+VULKAN_VB_EDITS = [(
+    '#include <cstdint>\n#include <cstring>\n',
+    '#include <cstdint>\n#include <cstdlib>\n#include <cstring>\n'), (
+    '''      if (vertex_buffers_in_sync_[vfetch_index >> 6] & vfetch_bit) {
+        continue;
+      }
+      xenos::xe_gpu_vertex_fetch_t vfetch_constant = regs.GetVertexFetch(vfetch_index);''',
+    '''      static const bool m5_residency_cache = [] {
+        const bool pinned = std::getenv("R3HD_M5_VB_RESIDENCY_CACHE") != nullptr;
+        REXGPU_INFO("M5 vb_residency backend=vulkan mode={}", pinned ? "pinned_cache" : "always_request");
+        return pinned;
+      }();
+      if (m5_residency_cache && (vertex_buffers_in_sync_[vfetch_index >> 6] & vfetch_bit)) {
+        continue;
+      }
+      xenos::xe_gpu_vertex_fetch_t vfetch_constant = regs.GetVertexFetch(vfetch_index);'''), (
+    '''      if (state.address == vfetch_constant.address && state.size == vfetch_constant.size) {''',
+    '''      if (m5_residency_cache && state.address == vfetch_constant.address &&
+          state.size == vfetch_constant.size) {''')
+]
+
 if __name__ == '__main__':
     patch('include/rex/m3_gpu_trace.h', [
         ('#include <atomic>', '#include <atomic>\n#include <cstdlib>'),
@@ -67,26 +112,9 @@ if __name__ == '__main__':
   }
   bool memexport_used_pixel = pixel_shader && (pixel_shader->memexport_eM_written() != 0);''')
     ], from_head=False)
-    # D-020: the pinned SDK caches "vertex buffer resident" per fetch slot and then skips
-    # SharedMemory::RequestRange while the fetch constant's address/size are unchanged. RequestRange is
-    # what uploads guest pages modified since the last request, so a dynamic vertex buffer rewritten by
-    # the CPU under an unchanged fetch constant was drawn with stale host data (menu atlas overlay).
-    # Always request the range (already-valid ranges return early); R3HD_M5_VB_RESIDENCY_CACHE=1
-    # restores the pinned behaviour for the A/B experiment only.
-    patch('src/graphics/d3d12/command_processor.cpp', [(
-        '''      if (vertex_buffers_in_sync_[vfetch_index >> 6] & vfetch_bit) {
-        continue;
-      }
-      xenos::xe_gpu_vertex_fetch_t vfetch_constant = regs.GetVertexFetch(vfetch_index);''',
-        '''      static const bool m5_residency_cache = std::getenv("R3HD_M5_VB_RESIDENCY_CACHE") != nullptr;
-      if (m5_residency_cache && (vertex_buffers_in_sync_[vfetch_index >> 6] & vfetch_bit)) {
-        continue;
-      }
-      xenos::xe_gpu_vertex_fetch_t vfetch_constant = regs.GetVertexFetch(vfetch_index);'''), (
-        '''      if (state.address == vfetch_constant.address && state.size == vfetch_constant.size) {''',
-        '''      if (m5_residency_cache && state.address == vfetch_constant.address &&
-          state.size == vfetch_constant.size) {''')
-    ], from_head=False)
+    # D-020: see D3D12_VB_EDITS / VULKAN_VB_EDITS above.
+    patch('src/graphics/d3d12/command_processor.cpp', D3D12_VB_EDITS, from_head=False)
+    patch('src/graphics/vulkan/command_processor.cpp', VULKAN_VB_EDITS, from_head=False)
     patch('src/kernel/xam/xam_input.cpp', [
         ('uint16_t buttons = 0; uint32_t packet = 0;', 'uint16_t buttons = 0; uint32_t packet = 0;\n  int16_t lx = 0, ly = 0, rx = 0, ry = 0;'),
         ('buttons = s->gamepad.buttons; packet = s->packet_number;', 'buttons = s->gamepad.buttons; packet = s->packet_number;\n    lx = s->gamepad.thumb_lx; ly = s->gamepad.thumb_ly; rx = s->gamepad.thumb_rx; ry = s->gamepad.thumb_ry;'),

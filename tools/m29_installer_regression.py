@@ -11,6 +11,7 @@ import json
 import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -57,7 +58,40 @@ def main() -> int:
                   for g in pallow["allow"]) for d in list(defn["app_files"]) + list(defn["licenses"]["files"]))
           and set(pallow["binaries"]) == {"bin/" + n for n in defn["binaries"]["files"]}
           | {"app/python/" + n for n in defn["python"]["files"] if n.endswith((".exe", ".dll"))} | {"app/python/python311.zip"}
-          | {defn["launcher"]["dest"]})  # M30: the Settings launcher
+          | {defn["launcher"]["dest"]}  # M30: the Settings launcher
+          # G6-P31 (D-287): the level editor's Tk binaries, exactly the PE members of config/release/python_tk.json
+          | {d for d in json.loads((ROOT / defn["python"]["tk"]).read_text(encoding="utf-8"))["files"]
+             if d.endswith((".exe", ".dll", ".pyd"))}
+          | {defn["scene_gl"]["dest"]})  # G6-P39 (D-295): the 3D editor's narrow OpenGL bridge
+    # G6-P39 (D-295): exactly one more native file, the pinned bridge from tools/scene_gl; still no FFI or network
+    # extension and no ctypes package in the standard-library zip
+    sg = defn.get("scene_gl", {})
+    check("G6-P39: the 3D editor's OpenGL bridge is one pinned editor_native file built from tools/scene_gl; no "
+          "_ctypes / libffi / _socket / _ssl, ctypes still excluded from the standard library",
+          sg.get("dest") == "app/python/_r3hd_scene_gl.pyd" and pallow["binaries"].get(sg.get("dest")) == "editor_native"
+          and re.fullmatch(r"[0-9a-f]{64}", sg.get("sha256") or "") and sg.get("build_dir") == "private/work/scene_gl"
+          and (ROOT / "tools" / "scene_gl" / "r3hd_scene_gl.cpp").is_file()
+          and not any(re.search(r"_ctypes|libffi|_socket|_ssl", b) for b in pallow["binaries"])
+          and "ctypes" in defn["python"]["stdlib_exclude"]
+          and all(f"app/tools/{n}" in defn["app_files"] for n in ("r3hd_scene_view.py", "r3hd_scene_gl.py",
+                                                                 "r3hd_level_scene.py")))
+    sys.path.insert(0, str(TOOLS))
+    import r3hd_release_audit as audit
+    with tempfile.TemporaryDirectory(prefix="r3hd_m29_sg_") as td:
+        nodef = {k: v for k, v in defn.items() if k != "scene_gl"}
+        (Path(td) / "payload.json").write_text(json.dumps(nodef), encoding="utf-8")
+        try:
+            audit.load_payload_rules(audit.DEFAULT_PAYLOAD_ALLOWLIST, str(Path(td) / "payload.json"))
+            unpinned = "accepted"
+        except audit.ConfigError:
+            unpinned = "refused"
+    check("G6-P39: without its scene_gl pin the allowlisted bridge is refused by the payload audit, never unpinned",
+          unpinned == "refused")
+    check("G6-P31: the Tk runtime is the four pinned binaries plus the Tcl / Tk script tree and its licence",
+          sorted(d for d in json.loads((ROOT / defn["python"]["tk"]).read_text(encoding="utf-8"))["files"]
+                 if d.endswith((".exe", ".dll", ".pyd"))) == ["app/python/_tkinter.pyd", "app/python/pythonw.exe",
+                                                             "app/python/tcl86t.dll", "app/python/tk86t.dll"]
+          and {"glob": "app/python/tcl/**", "kind": "text"} in pallow["allow"])
     check("bundled Python pinned (four files and the stdlib zip)", len(defn["python"]["files"]) == 4
           and re.fullmatch(r"[0-9a-f]{64}", defn["python"]["stdlib_zip_sha256"] or ""))
     check("licence texts for the LGPL components are staged", {"app/licenses/FFmpeg-COPYING.LGPLv2.1.txt",
@@ -99,7 +133,7 @@ def main() -> int:
           "CreateUninstallRegKey=not IsTestMode" in iss and iss.count("Check: not IsTestMode") == 2
           and "if IsTestMode then Result := ExpandConstant('{param:STARTMENUDIR|}')" in iss
           and "if IsTestMode then Result := ExpandConstant('{param:DESKTOPDIR|}')" in iss
-          and len(re.findall(r"^Name: \"\{code:(MenuDir|DesktopDir)\}", iss, re.M)) == 7  # M32: + Settings on the desktop; Play twice (with or without the local icon)
+          and len(re.findall(r"^Name: \"\{code:(MenuDir|DesktopDir)\}", iss, re.M)) == 8  # M32: + Settings on the desktop; Play twice (with or without the local icon); G6-P31: + Level Editor in the menu
           and "{userprograms}" not in iss.split("[Code]")[0] and "{userdesktop}" not in iss.split("[Code]")[0])
     # M31: the install run is ExecAndLogOutput (a console program is always hidden there) for its progress lines
     # M48-P: every bundled-Python run writes no bytecode; only the install run (output captured: hidden) is not SW_HIDE

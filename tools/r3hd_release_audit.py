@@ -165,8 +165,22 @@ class ConfigError(Exception):
     pass
 
 
+# G6-P31 (D-287): reviewed text findings recorded in the allowlist as exact acceptances.  Only these codes can be
+# accepted; an acceptance names one path and either the SHA-256 of each accepted line (CR stripped) or of the whole
+# file (GENERATED_CODE), so a new or changed line in the same file is still rejected.  "scope": "all" accepts the
+# finding wherever the audit runs; "development" accepts it in the development repository's tracked tree only and
+# never in a public audit (--scope public, run by tools/r3hd_public_export.py), so that export still stops on it.
+ACCEPTABLE = {"KEY_MATERIAL", "DEVELOPER_PATH", "GENERATED_CODE"}
+ACCEPT_SCOPES = ("all", "development")
+AUDIT_SCOPES = ("development", "public")
+
+
+def line_sha256(line):
+    return hashlib.sha256(line.rstrip("\r").encode("utf-8")).hexdigest()
+
+
 class Allowlist:
-    def __init__(self, path):
+    def __init__(self, path, scope="development"):
         try:
             with open(path, "r", encoding="utf-8") as f:
                 data = json.load(f)
@@ -187,6 +201,47 @@ class Allowlist:
         self.max_bytes = int(data.get("max_text_file_bytes", 0))
         if self.max_bytes <= 0:
             raise ConfigError("allowlist max_text_file_bytes missing")
+        if scope not in AUDIT_SCOPES:
+            raise ConfigError("audit scope must be one of %s" % (AUDIT_SCOPES,))
+        self.scope = scope
+        self.accepted = {}  # (path, code) -> acceptance
+        seen = set()
+        for a in data.get("accepted_findings", []):
+            path, code, sc = a.get("path"), a.get("code"), a.get("scope")
+            if code not in ACCEPTABLE:
+                raise ConfigError("accepted finding %r: code must be one of %s" % (path, sorted(ACCEPTABLE)))
+            if not isinstance(path, str) or not path or any(ch in path for ch in "*?["):
+                raise ConfigError("accepted finding names one exact path, got %r" % (path,))
+            if sc not in ACCEPT_SCOPES or not a.get("class") or not a.get("reason"):
+                raise ConfigError("accepted finding %s %s: needs scope %s, class and reason" % (path, code, ACCEPT_SCOPES))
+            lines, whole = a.get("line_sha256"), a.get("file_sha256")
+            if code == "GENERATED_CODE":
+                ok = isinstance(whole, str) and re.fullmatch(r"[0-9a-f]{64}", whole) and lines is None
+            else:
+                ok = (whole is None and isinstance(lines, list) and lines
+                      and all(isinstance(h, str) and re.fullmatch(r"[0-9a-f]{64}", h) for h in lines))
+            if not ok:
+                raise ConfigError("accepted finding %s %s: GENERATED_CODE takes file_sha256, other codes a "
+                                  "non-empty line_sha256 list" % (path, code))
+            if (path, code) in seen:
+                raise ConfigError("accepted finding %s %s listed twice" % (path, code))
+            seen.add((path, code))
+            if scope == "public" and sc != "all":
+                continue
+            self.accepted[(path, code)] = a
+
+    def accept(self, rel, code, lines, text):
+        """Split finding lines into (accepted, remaining) by one exact recorded acceptance."""
+        a = self.accepted.get((rel, code))
+        if a is None:
+            return [], list(lines)
+        if code == "GENERATED_CODE":
+            whole = hashlib.sha256(text.replace("\r\n", "\n").encode("utf-8")).hexdigest()
+            return (list(lines), []) if whole == a["file_sha256"] else ([], list(lines))
+        allowed = set(a["line_sha256"])
+        src = text.split("\n")
+        acc = [n for n in lines if line_sha256(src[n - 1]) in allowed]
+        return acc, [n for n in lines if n not in acc]
 
     def kind_of(self, rel):
         for _glob, kind, rx in self.entries:
@@ -376,6 +431,12 @@ def entries_git(rev):
 
 
 # --- the audit ---
+def capture_binary(data):
+    """Embedded identity, independent of filename or directory (private capture builds)."""
+    marker = "R3HD_PRIVATE_CAPTURE_BUILD_V1"
+    return data.startswith(b"MZ") and (marker.encode() in data or marker.encode("utf-16le") in data)
+
+
 def audit_entry(e, allow, hashes):
     """Return a list of findings [{code, lines?, detail?}] for one entry."""
     f = []
@@ -418,6 +479,10 @@ def audit_entry(e, allow, hashes):
     try:
         with e.opener() as fh:
             head = fh.read(64)
+            if head.startswith(b"MZ"):
+                if capture_binary(head + fh.read()):
+                    add("CAPTURE_BUILD")
+                fh.seek(64)
             mt = magic_type(head)
             if mt:
                 add("BINARY_MAGIC_" + mt)
@@ -458,7 +523,11 @@ def audit_entry(e, allow, hashes):
         else:
             found, _n = scan_text(text)
             for code in sorted(found):
-                add(code, lines=found[code][:20])
+                acc, rest = allow.accept(rel, code, found[code], text)
+                if rest:
+                    add(code, lines=rest[:20])
+                if acc:
+                    f.append({"code": code, "lines": acc[:20], "accepted": allow.accepted[(rel, code)]["class"]})
     return f
 
 
@@ -469,7 +538,10 @@ def run_audit(entries, allow, hashes, waivers=()):
         findings = audit_entry(e, allow, hashes)
         waived = []
         remaining = []
+        accepted = [fd for fd in findings if fd.get("accepted")]
         for fd in findings:
+            if fd.get("accepted"):
+                continue
             hit = next((w for w in waivers if w[0] == fd["code"] and w[2].match(e.rel)), None)
             if hit:
                 waived.append(fd)
@@ -479,12 +551,13 @@ def run_audit(entries, allow, hashes, waivers=()):
         for fd in remaining:
             counts[fd["code"]] = counts.get(fd["code"], 0) + 1
         files.append({"path": e.rel, "verdict": "FAIL" if remaining else "PASS",
-                      "reasons": remaining, "waived": waived})
+                      "reasons": remaining, "waived": waived, "accepted": accepted})
     rejected = sum(1 for x in files if x["verdict"] == "FAIL")
     return {"audit": "r3hd_release_audit", "notice": NOT_LEGAL,
             "verdict": "FAIL" if rejected else "PASS", "files": len(files), "rejected": rejected,
             "reason_counts": counts,
             "allowed_findings": sorted("%s:%s" % w for w in used),
+            "accepted_findings": sum(len(x["accepted"]) for x in files),
             "results": files}
 
 
@@ -505,13 +578,17 @@ def print_result(res, verbose, out=None):
             out.write("FAIL %s: %s\n" % (r["path"], "; ".join(fmt_reason(x) for x in r["reasons"])))
         elif verbose:
             out.write("PASS %s\n" % r["path"])
+        for a in r.get("accepted", []):
+            out.write("ACCEPTED_FINDING %s %s@%s (%s)\n" % (a["code"], r["path"],
+                                                            ",".join(str(n) for n in a["lines"]), a["accepted"]))
         for w in r["waived"]:
             out.write("ALLOWED_FINDING %s %s%s\n" % (w["code"], r["path"],
                                                       "@" + ",".join(str(n) for n in w["lines"]) if w.get("lines") else ""))
     if res["reason_counts"]:
         out.write("REASONS %s\n" % " ".join("%s=%d" % kv for kv in sorted(res["reason_counts"].items())))
     if res["verdict"] == "PASS":
-        out.write("R3HD_RELEASE_AUDIT PASS files=%d\n" % res["files"])
+        out.write("R3HD_RELEASE_AUDIT PASS files=%d%s\n" % (
+            res["files"], " accepted_findings=%d" % res["accepted_findings"] if res.get("accepted_findings") else ""))
     else:
         out.write("R3HD_RELEASE_AUDIT FAIL files=%d rejected=%d\n" % (res["files"], res["rejected"]))
     out.write("(%s)\n" % NOT_LEGAL)
@@ -537,7 +614,7 @@ def parse_waivers(items):
 
 
 def build_context(args):
-    allow = Allowlist(args.allowlist or DEFAULT_ALLOWLIST)
+    allow = Allowlist(args.allowlist or DEFAULT_ALLOWLIST, getattr(args, "scope", None) or "development")
     manifests = [args.game_manifest] if args.game_manifest else [DEFAULT_MANIFEST]
     return allow, GameHashes(manifests, DEFAULT_RELEASES), parse_waivers(args.allow_finding)
 
@@ -559,30 +636,87 @@ def cmd_git(args):
     return finish(run_audit(entries_git(args.rev), allow, hashes, waivers), args)
 
 
-# --- M29 (D-066): the private installer payload (a prebuilt application, never game data) ---
+# --- M29 / D-203: private application payload, plus the exact accepted glyph resources ---
 DEFAULT_PAYLOAD_ALLOWLIST = os.path.join(REPO, "config", "release", "payload_allowlist.json")
 DEFAULT_PAYLOAD_DEF = os.path.join(REPO, "config", "release", "payload.json")
 PRIVATE_NOTICE = ("PRIVATE payload: translated game code and a runtime with the public XEX keys compiled in; "
                   "NOT publishable (D-065, D-066)")
 # M30 (D-067): launcher_native = the Settings launcher, built from tools/launcher only (no SDK or game code): it is
 # checked like a native binary but does not by itself make a payload private.
-BINARY_ROLES = {"native": "PE", "launcher_native": "PE", "python_runtime": "PE", "python_stdlib": "ZIP"}
+# G6-P39 (D-295): editor_native = the 3D editor's narrow OpenGL bridge (app/python/_r3hd_scene_gl.pyd), this
+# project's own code built from tools/scene_gl alone; pinned by hash in config/release/payload.json ("scene_gl") and
+# checked for developer paths like the launcher.
+BINARY_ROLES = {"native": "PE", "launcher_native": "PE", "editor_native": "PE", "python_runtime": "PE",
+                "python_stdlib": "ZIP",
+                "controller_prompt_png": "PNG", "controller_prompt_manifest": None}
 
 
 def load_payload_rules(allow_path, def_path):
-    """Text allowlist, exact binary paths with their roles, and pinned hashes of the bundled Python runtime."""
+    """Text rules, exact binary/resource roles, and trusted pins; no payload-declared permission."""
     allow = Allowlist(allow_path)
     try:
         with open(allow_path, "r", encoding="utf-8") as f:
-            binaries = json.load(f).get("binaries", {})
+            policy = json.load(f)
+            binaries = policy.get("binaries", {})
         with open(def_path, "r", encoding="utf-8") as f:
-            py = json.load(f)["python"]
+            definition = json.load(f)
+            py = definition["python"]
     except (OSError, ValueError, KeyError) as e:
         raise ConfigError("cannot read payload rules: %s" % e)
     if not binaries or any(r not in BINARY_ROLES for r in binaries.values()):
         raise ConfigError("payload allowlist: binaries must map exact paths to %s" % sorted(BINARY_ROLES))
     pins = {"app/python/" + n: h.lower() for n, h in py["files"].items()}
     pins["app/python/python311.zip"] = py["stdlib_zip_sha256"].lower()
+    sg = definition.get("scene_gl")
+    if sg:
+        # G6-P39 (D-295): the OpenGL bridge is pinned exactly; the allowlist must name it as editor_native
+        try:
+            if binaries.get(sg["dest"]) != "editor_native":
+                raise KeyError("dest")
+            pins[sg["dest"]] = sg["sha256"].lower()
+        except (KeyError, TypeError, AttributeError) as e:
+            raise ConfigError("payload definition: bad scene_gl record (%s)" % e)
+    if any(r == "editor_native" and p not in pins for p, r in binaries.items()):
+        # an editor_native binary is never accepted unpinned (e.g. the scene_gl record removed from the definition)
+        raise ConfigError("payload allowlist: an editor_native binary has no pin in the payload definition")
+    if py.get("tk"):
+        # G6-P31 (D-287): every Tk runtime file (binaries, Tcl / Tk libraries, licence) is pinned individually.
+        try:
+            with open(os.path.join(REPO, py["tk"]), "r", encoding="utf-8") as f:
+                tk = json.load(f)
+            for dest, e in tk["files"].items():
+                pins[dest] = e["sha256"].lower()
+        except (OSError, ValueError, KeyError, TypeError, AttributeError) as e:
+            raise ConfigError("cannot read the Tk runtime record %s: %s" % (py["tk"], e))
+    record_path = policy.get("controller_prompt_record")
+    descriptor = definition.get("controller_prompts")
+    if record_path and descriptor:
+        # D-203: only this reviewed, closed resource set; never a PNG glob or role
+        # supplied by the payload manifest. Pixels are not part of public source.
+        if descriptor.get("record") != record_path or record_path != "config/release/controller_prompts.json":
+            raise ConfigError("controller prompt policy record mismatch")
+        try:
+            with open(os.path.join(REPO, record_path), encoding="utf-8") as f:
+                record = json.load(f)
+            prefix = "app/assets/playstation_prompts/"
+            names = {prefix + n + ".png" for n in ("cross", "circle", "square", "triangle", "L1", "R1", "L2", "R2", "start")}
+            names.add(prefix + "glyphs.json")
+            if (not isinstance(record, dict) or record.get("schema") != 1 or record.get("kind") != "r3hd-controller-prompt-bundle"
+                    or record.get("decision") != "D-203" or record.get("bundling_authorized") is not True
+                    or record.get("publication_authorized") is not False or not isinstance(record.get("files"), dict) or set(record["files"]) != names):
+                raise ValueError("unapproved controller prompt record")
+            for path, pin in record["files"].items():
+                if (not isinstance(pin, dict) or not isinstance(pin.get("size"), int) or isinstance(pin["size"], bool) or not 0 < pin["size"] <= 65536
+                        or not re.fullmatch(r"[0-9a-f]{64}", pin.get("sha256", ""))):
+                    raise ValueError("invalid controller prompt pin")
+                binaries[path] = "controller_prompt_png" if path.endswith(".png") else "controller_prompt_manifest"
+                pins[path] = pin["sha256"]
+                pins[path + ":size"] = pin["size"]
+            # D-297: public-format Windows candidates only. Actual publication still requires approval.
+            if record.get("public_candidate_version") == "1.2.0" and definition.get("version") == "1.2.0":
+                pins["controller_prompt_public_candidate_version"] = "1.2.0"
+        except (OSError, ValueError, KeyError, TypeError) as e:
+            raise ConfigError("cannot load exact controller prompt policy: %s" % e)
     return allow, binaries, pins
 
 
@@ -599,12 +733,15 @@ def audit_payload(root, allow, binaries, pins, hashes, public_release=False):
     root = os.path.abspath(root)
     files, counts, listed = [], {}, {}
     native = 0
+    prompt_candidate_eligible = False
     mf = os.path.join(root, "payload.json")
     manifest_problem = None
     try:
         with open(mf, "r", encoding="utf-8") as f:
             pdata = json.load(f)
         listed = pdata["files"]
+        candidate_version = pins.get("controller_prompt_public_candidate_version")
+        prompt_candidate_eligible = candidate_version is not None and pdata.get("version") == candidate_version
         if pdata.get("publishable") is not public_release:
             manifest_problem = "publishable must match the explicitly selected distribution mode"
     except (OSError, ValueError, KeyError) as e:
@@ -621,6 +758,15 @@ def audit_payload(root, allow, binaries, pins, hashes, public_release=False):
                 found.append({"code": "PAYLOAD_MANIFEST", "detail": manifest_problem})
         elif role is None:
             found = audit_entry(e, allow, hashes)
+            # G6-P31 (D-287): text members of the Python runtime (Tcl / Tk libraries, licences) are pinned too; an
+            # unpinned file under app/python/ (other than the generated ._pth) is refused.
+            if e.opener is not None and (rel in pins or rel.startswith("app/python/")):
+                with e.opener() as fh:
+                    digest = hashlib.sha256(fh.read()).hexdigest()
+                if rel in pins and digest != pins[rel]:
+                    found.append({"code": "PIN_MISMATCH", "detail": "not the pinned payload input"})
+                elif rel not in pins and rel != "app/python/python311._pth":
+                    found.append({"code": "UNPINNED_RUNTIME_FILE"})
         else:
             try:
                 with e.opener() as fh:
@@ -628,15 +774,24 @@ def audit_payload(root, allow, binaries, pins, hashes, public_release=False):
             except (OSError, TypeError) as ex:
                 found.append({"code": "UNREADABLE", "detail": str(ex)})
                 data = b""
+            if role.startswith("controller_prompt_"):
+                if e.unsafe or e.error or allow.denied(rel):
+                    found.append({"code": "UNSAFE_RESOURCE"})
+                if public_release and not prompt_candidate_eligible:
+                    found.append({"code": "RESOURCE_PUBLIC_AUTHORIZATION", "detail": "no matching public candidate policy"})
+                if e.size != pins.get(rel + ":size"):
+                    found.append({"code": "RESOURCE_SIZE"})
             kind = magic_type(data[:64])
+            if capture_binary(data):
+                found.append({"code": "CAPTURE_BUILD"})
             if kind != BINARY_ROLES[role]:
                 found.append({"code": "BINARY_KIND", "detail": "%s where %s expected" % (kind, BINARY_ROLES[role])})
             digest = hashlib.sha256(data).hexdigest()
             if rel in pins and digest != pins[rel]:
-                found.append({"code": "PIN_MISMATCH", "detail": "not the pinned Python runtime file"})
+                found.append({"code": "PIN_MISMATCH", "detail": "not the pinned payload input"})
             if digest in hashes.hashes:
                 found.append({"code": "GAME_FILE_HASH", "detail": hashes.hashes[digest]})
-            if role in ("native", "launcher_native"):
+            if role in ("native", "launcher_native", "editor_native"):
                 native += role == "native"
                 n = binary_dev_paths(data)
                 if n:
@@ -666,6 +821,11 @@ def audit_payload(root, allow, binaries, pins, hashes, public_release=False):
         for fd in found:
             counts[fd["code"]] = counts.get(fd["code"], 0) + 1
         files.append({"path": rel, "verdict": "FAIL" if found else "PASS", "reasons": found, "waived": []})
+    resources = {r for r, role in binaries.items() if role.startswith("controller_prompt_")}
+    if seen & resources and not resources <= seen:
+        counts["RESOURCE_INCOMPLETE"] = 1
+        files.append({"path": "app/assets/playstation_prompts", "verdict": "FAIL",
+                      "reasons": [{"code": "RESOURCE_INCOMPLETE"}], "waived": []})
     for rel in sorted(set(listed) - seen):
         counts["MISSING_FILE"] = counts.get("MISSING_FILE", 0) + 1
         files.append({"path": rel, "verdict": "FAIL", "reasons": [{"code": "MISSING_FILE"}], "waived": []})
@@ -917,6 +1077,76 @@ def selftest():
             js = json.load(f)
         check("JSON carries notice and verdict", "NOT a legal clearance" in js["notice"] and js["verdict"] == "PASS")
 
+    # G6-P31 (D-287): exact accepted findings (fixture strings assembled from parts, as above)
+    with tempfile.TemporaryDirectory(prefix="r3hd_accept_") as tmp:
+        kw, hexv = "to" + "ken", "0a" * 16
+        key_line = 'T = "%s"  # %s' % (hexv, kw)
+        dev_line = "SDK=" + home + "dev/sdk"
+        gen = "".join("PPC_" + "FUNC(sub_%d)\n" % i for i in range(GEN_THRESHOLD))
+        files = {"a.py": (key_line + "\nx = 1\n").encode(), "b.md": ("run\n" + dev_line + "\n").encode(),
+                 "c.md": ("note\n" + dev_line + "\n").encode(), "g.cpp": gen.encode()}
+        root = os.path.join(tmp, "pkg")
+        os.makedirs(root)
+        for rel, data in files.items():
+            with open(os.path.join(root, rel), "wb") as f:
+                f.write(data)
+        base = json.load(open(DEFAULT_ALLOWLIST, encoding="utf-8"))
+        base["allow"] = [{"glob": "*.py", "kind": "python"}, {"glob": "*.md", "kind": "markdown"},
+                         {"glob": "*.cpp", "kind": "cpp_source"}]
+
+        def acc_audit(acc, scope="development", name="al.json"):
+            data = dict(base, accepted_findings=acc)
+            p = os.path.join(tmp, name)
+            with open(p, "w", encoding="utf-8") as f:
+                json.dump(data, f)
+            res = run_audit(entries_dir(root), Allowlist(p, scope), GameHashes([], None))
+            return {r["path"]: {x["code"] for x in r["reasons"]} for r in res["results"]}, res
+
+        def ent(path, code, line=None, whole=None, scope="all"):
+            e = {"path": path, "code": code, "scope": scope, "class": "fixture", "reason": "selftest"}
+            if whole:
+                e["file_sha256"] = whole
+            else:
+                e["line_sha256"] = [line_sha256(line)]
+            return e
+
+        m, res = acc_audit([])
+        check("accept: findings reject without an acceptance", has(m, "a.py", "KEY_MATERIAL")
+              and has(m, "b.md", "DEVELOPER_PATH") and has(m, "g.cpp", "GENERATED_CODE"))
+        gen_sha = hashlib.sha256(gen.encode()).hexdigest()
+        good = [ent("a.py", "KEY_MATERIAL", key_line), ent("b.md", "DEVELOPER_PATH", dev_line, scope="development"),
+                ent("g.cpp", "GENERATED_CODE", whole=gen_sha)]
+        m, res = acc_audit(good)
+        check("accept: exact line / file acceptances pass and are counted",
+              not m["a.py"] and not m["b.md"] and not m["g.cpp"] and res["accepted_findings"] == 3)
+        check("accept: the same line on another path still rejects", has(m, "c.md", "DEVELOPER_PATH"))
+        m, res = acc_audit(good, scope="public")
+        check("accept: public scope ignores development acceptances", has(m, "b.md", "DEVELOPER_PATH")
+              and not m["a.py"] and not m["g.cpp"])
+        with open(os.path.join(root, "a.py"), "ab") as f:
+            f.write(('S = "%s"  # %s\n' % ("0b" * 16, kw)).encode())
+        with open(os.path.join(root, "g.cpp"), "ab") as f:
+            f.write(b"// edited\n")
+        m, _ = acc_audit(good)
+        check("accept: a new key line in an accepted file rejects", has(m, "a.py", "KEY_MATERIAL"))
+        check("accept: a changed generated-code file rejects", has(m, "g.cpp", "GENERATED_CODE"))
+        for bad, why in ((ent("a.py", "NOT_ALLOWLISTED", key_line), "unacceptable code"),
+                         (ent("a.py", "GAME_FILE_HASH", key_line), "game hash"),
+                         (ent("*.py", "KEY_MATERIAL", key_line), "pattern path"),
+                         (dict(ent("a.py", "KEY_MATERIAL", key_line), reason=""), "missing reason"),
+                         (dict(ent("a.py", "KEY_MATERIAL", key_line), scope="public"), "bad scope"),
+                         (ent("g.cpp", "GENERATED_CODE", key_line), "generated code by line"),
+                         (ent("a.py", "KEY_MATERIAL", whole=gen_sha), "key by file hash")):
+            try:
+                acc_audit([bad], name="bad.json")
+                ok = False
+            except ConfigError:
+                ok = True
+            check("accept: config refuses " + why, ok)
+        real = json.load(open(DEFAULT_ALLOWLIST, encoding="utf-8")).get("accepted_findings", [])
+        check("accept: tracked development-only acceptances are developer paths only",
+              all(a["code"] == "DEVELOPER_PATH" for a in real if a["scope"] == "development"))
+
     # M29: payload mode (synthetic fixtures; the tracked payload allowlist, fixture pins)
     with tempfile.TemporaryDirectory(prefix="r3hd_payload_") as tmp:
         manifest = os.path.join(tmp, "manifest.tsv")
@@ -1021,6 +1251,8 @@ def main(argv=None):
     common(p)
     p = sub.add_parser("git", help="audit the files git tracks in this repository")
     p.add_argument("--rev", help="read content from this revision instead of the working tree")
+    p.add_argument("--scope", choices=AUDIT_SCOPES, default="development",
+                   help="public: only acceptances with scope 'all' apply (the public source export uses it)")
     common(p)
     p = sub.add_parser("payload", help="audit a staged private installer payload (tools/r3hd_stage.py)")
     p.add_argument("target")

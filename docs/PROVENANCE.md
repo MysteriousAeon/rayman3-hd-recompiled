@@ -32,7 +32,10 @@ research and design influence, not collaboration or endorsement.
 ## Community research leads
 
 ICUP321's research on texture orientation in the PS3 HD release provided a diagnostic lead. The Xbox 360
-texture corrections were established separately against this version's own data; no PS3 patch assets are included.
+texture corrections were established separately against this version's own data; no assets from that community patch are included.
+D-203 separately uses nine owner-extracted PS3 button glyph crops as binary-package resources,
+excluded from MIT. Public source contains their metadata and integration code, not their pixels;
+release/rights checks and the acknowledged R-01 question remain independent of technical validation.
 Community issue reports have also helped identify problems for investigation. These references do not imply
 affiliation with or endorsement by their authors or the Rayman modding community.
 

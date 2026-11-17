@@ -1,0 +1,22 @@
+{
+  "original_members": {
+    "ABI_HASHES.json": "7393e68951acaf942d3964274908736ac38f0ab41288d0ead83a7028b51daa49",
+    "DIAG_LOCK.json": "6262c93ea9fac24e3613d966887f3cac3bfda9142966e8c105045aac2f83488e",
+    "EVIDENCE_LOCK.json": "e76c1eeb3eadcdaed7fce70cd0a229c6a6944bb6cfbcf113dce33b5b9f35a9a3",
+    "HANDOFF.md": "9499704b79be4f929976999eecaf3645fac256c54e3df218b2ad84d82be31980",
+    "PULSE_RESULT_LOCK.json": "fdcb03fa4f41f0797c6132a212ea76c88ce77b0434fffde68d235470ddcc10f6",
+    "SHA256SUMS": "28626872b6ed3d413946eb28b5d535982b4737aaf694e4f999f0da990b484fe0",
+    "STARTUP_LOCK.json": "9266009f47929462abe9ef406355bc087c7b12355197b5542387eb8adbeb68d3",
+    "VISIBLE_LOCK.json": "444e08fc1076cf230504f5de36da29b6539c4c179590f1059467f9dd8a30459b",
+    "audio_diag.py": "d0dd5aca963e3b7ec6ee5e008a7327ed6ae645e00ec28403934c2a706361dbab",
+    "checks.py": "62108d482cbd69beefe5a4815f2f99d09b52ff70f56673fd302b860fa5c787eb",
+    "forensic.py": "1b3f64b8fe5d171a21aa8743a7cb8c1024294a44af72879edf6387694e4ca93d",
+    "gameplay.py": "e2bbc9ecc5739d488dbc4c28a22264abe57883ab5165280a9dc0d6ecbe0039c7",
+    "pulse_review.py": "7715e5ea14a986ed907efcac925312beb4bfe6b3830463300ec1597a0759142f",
+    "review.py": "8673c703d404f8e9c055d417dabab5812e9c46e005f2b343ef0ba9ac9a1a4ae3",
+    "startup.py": "80bf5fd12e63a2df8f101f89f1565230789cf23220069299c9e19df43bb892bf",
+    "supplements.py": "d37a9486ea5ded88dcfed5b68a2da2df2d84e5c47bb8a80c926659b3c53c3dc7",
+    "visible.py": "9ebfbc276506bb1f85e52de7dd1e5e672b6b1318ec147e342aef5fd7388b0a1b"
+  },
+  "original_zip_sha256": "a6fb1f52dfa380adc45d9b4bca75fa94256401f6db78e768f3baf81220dccc4b"
+}

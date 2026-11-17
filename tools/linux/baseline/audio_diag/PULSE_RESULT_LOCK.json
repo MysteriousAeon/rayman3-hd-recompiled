@@ -1,0 +1,55 @@
+{
+  "members": {
+    "OWNER.txt": "6fa37c2299f3e76c3d1cb4b86b6be379e26ddd75c481692b27df9a15a68fb09f",
+    "attempt.json": "0db2265b31887ede67f98a302ade177247c243d085515ff98943923e014d965a",
+    "audio-preflight.json": "bf36fcb5cd571435da56caaeeb4c4efae8c0b72325cb7d936231089ee932d8fc",
+    "audio-route.json": "5059ef22b08b5d6ae3078813e2c043147faa6db23b77680ec2bde34f129ee933",
+    "content-after.json": "eddcd49ac557dc1511f22a71e3863e50762fcbebd277f652e284e6771dfd8c6e",
+    "content-after.stderr.txt": "c4a21aae2a3e112c0d9c412c30b26f8aaa0fa6a1c2fb8bc54b2097b6ed2ed212",
+    "content-before.json": "eddcd49ac557dc1511f22a71e3863e50762fcbebd277f652e284e6771dfd8c6e",
+    "content-before.stderr.txt": "c4a21aae2a3e112c0d9c412c30b26f8aaa0fa6a1c2fb8bc54b2097b6ed2ed212",
+    "content-clone.json": "eddcd49ac557dc1511f22a71e3863e50762fcbebd277f652e284e6771dfd8c6e",
+    "content-clone.stderr.txt": "c4a21aae2a3e112c0d9c412c30b26f8aaa0fa6a1c2fb8bc54b2097b6ed2ed212",
+    "diagnostic.json": "3e8bf10d11c404c1c5a64b38d5630e3112febdbcc492ee993e844f29589a3099",
+    "exit.json": "cc163a7e31c035d7ee0b2dde276c57837069ca6a57e050e7653b273a8a986427",
+    "libffmpeg.so.loader.txt": "1a95cba3c9d007a1d536dbd8f599cfbb6fa580fd52b0b5ed5505f4d3520fad1b",
+    "libmspack.so.loader.txt": "f6d6df6fd3675b1c7e7f376c733dd6c4f70a7c38e1fcdcc5fcdca05da39c0417",
+    "librexgpu-xenos.so.loader.txt": "fe4e99ec32c72a229355a4240e96987c44bfe53f91dc8921cd252bb4464e45a2",
+    "librexruntime.so.loader.txt": "5da371dc548ce98428f58f5f679e98c0566b91241b72dc4f60bd5321d433967a",
+    "prepared.json": "61b6b658dbd6b94401d4148ac43206f08ac225f52192b60261462e9517e62915",
+    "process.json": "beb7d5118040b43f4da571c814b6324df18866a3793138394cd7b7958af9f98a",
+    "process.log": "ba0a94ea4634b912984097e93c89b999e6f1cd27f825c1d3ce647c1231daaa90",
+    "r3hd.loader.txt": "5d03eecad7939f1d365065e9f9d1c1d404f6b87ecd32cc3e423795c240411e68",
+    "result.json": "94a110ec7f71a244088d09bfabdb86d25c5cff6977dc464179dcc1c08874398c",
+    "runtime.log": "873abaf26a56ab23f5b644ac25dff38497041fc79491b7226f2279fd0ddf5811"
+  },
+  "sidecar_sha256": "2781bb1ff2ca15817f9f1a24da62e4d55e9abc756f7793d2f87af6cee0338276",
+  "sources": {
+    "SDK/src/ui/rex_app.cpp": {
+      "commit": "c94f5ebdcb3c9d1a460ca48e04f9758448f8d518",
+      "sha256": "0ebbd4c0e484eb865f94de37cc71a70e3f25068b78d072cd7f577cdb811020b7"
+    },
+    "SDK/src/ui/vulkan/vulkan_presenter.cpp": {
+      "commit": "c94f5ebdcb3c9d1a460ca48e04f9758448f8d518",
+      "sha256": "a850f9764f62bc92ae5c5fdfa417e8879749074149953ff159631cbc4f95bb97"
+    },
+    "tools/linux/baseline/stage2b/SDK_REPLAY.json": {
+      "commit": "9881554ee0bec38d537ff2d400b0641292b86d43",
+      "sha256": "8d7e1622399986e47e6ada8e03b408a8585c8abdfa20f9e6d0f1960dd7deac33"
+    },
+    "tools/m11_frame_pacing.h": {
+      "commit": "9881554ee0bec38d537ff2d400b0641292b86d43",
+      "sha256": "4c82cd62a8e646617618c8857cf1ab7a65155bf13db45746f64d5b148152f249"
+    },
+    "tools/m11_runtime_patch.py": {
+      "commit": "9881554ee0bec38d537ff2d400b0641292b86d43",
+      "sha256": "9b70a374ce2967030a8d0e518ce07261e72d8ecda2d1b390dac639ef7727483e"
+    },
+    "tools/m24_runtime_patch.py": {
+      "commit": "9881554ee0bec38d537ff2d400b0641292b86d43",
+      "sha256": "8a16f5fbc360cb2e1bbb3a6e5413279b8117bff78876aa8391cb18b43e6c16b3"
+    }
+  },
+  "zip_sha256": "1b433160585251cf84a129d6f98c54d8d0f559903e1250cd8884532d5f47a03f",
+  "zip_size": 123165
+}

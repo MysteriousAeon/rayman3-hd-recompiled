@@ -5,7 +5,7 @@
 ; The wizard collects the choices; tools\r3hd_installer.py (run from the extracted payload with its bundled Python)
 ; does all the work: payload integrity, game-data identity and extraction through r3hd_intake.py, the preset through
 ; r3hd_settings.py, the transactional install / update / repair, and the uninstall of installer-owned files only.
-; The installer carries the staged payload (tools\r3hd_stage.py) and never any game data.
+; The installer carries the staged payload (tools\r3hd_stage.py) including D-203's nine native prompt crops; main game files remain owner-supplied.
 ;
 ; Compile (private; never publish the output):
 ;   ISCC.exe /DPayloadDir=<stage>\payload /DOutputDir=<out> tools\installer\r3hd_setup.iss
@@ -59,7 +59,7 @@
 ; its .zip is left in {app}\extras for Settings > Mods). An EXISTING installation keeps what it has: an installed copy
 ; is updated in place (on / off and order kept, a newer one kept), a missing or removed one is not added (--want 3).
 ; Silent: /TURKISH=0|1|2|3 overrides that choice (tests).
-#define AppVersion "1.1.0"
+#define AppVersion "1.2.0"
 #define AppTitle "Rayman 3 HD Recompiled"
 #ifdef BundledMod
   #define Playtest
@@ -152,6 +152,8 @@ Name: "settingsicon"; Description: "{cm:TaskSettings}"; GroupDescription: "{cm:T
 Name: "{code:MenuDir}\Rayman 3 HD Recompiled"; Filename: "{app}\app\r3hd_launcher.exe"; Parameters: "--play"; WorkingDir: "{app}"; Comment: "{cm:PlayComment}"; Check: MenuShortcuts and not HasPlayIcon; AppUserModelID: "Rayman3HDRecompiled.Game"
 Name: "{code:MenuDir}\Rayman 3 HD Recompiled"; Filename: "{app}\app\r3hd_launcher.exe"; Parameters: "--play"; WorkingDir: "{app}"; Comment: "{cm:PlayComment}"; IconFilename: "{app}\data\play_icon.ico"; Check: MenuShortcuts and HasPlayIcon; AppUserModelID: "Rayman3HDRecompiled.Game"
 Name: "{code:MenuDir}\Rayman 3 HD Recompiled - Settings"; Filename: "{app}\app\r3hd_launcher.exe"; WorkingDir: "{app}"; Comment: "{cm:SettingsComment}"; IconFilename: "{app}\app\r3hd_launcher.exe"; IconIndex: 1; Check: MenuShortcuts; AppUserModelID: "Rayman3HDRecompiled.Settings"
+; G6-P31 (D-287): the constrained intro_20 level editor, started by the launcher (the same entry as the Mods page).
+Name: "{code:MenuDir}\Rayman 3 HD Recompiled - Level Editor"; Filename: "{app}\app\r3hd_launcher.exe"; Parameters: "--level-editor"; WorkingDir: "{app}"; Comment: "{cm:LevelEditorComment}"; IconFilename: "{app}\app\r3hd_launcher.exe"; Check: MenuShortcuts; AppUserModelID: "Rayman3HDRecompiled.LevelEditor"
 Name: "{code:MenuDir}\Rayman 3 HD Recompiled - Uninstall"; Filename: "{uninstallexe}"; Check: MenuShortcuts
 Name: "{code:DesktopDir}\Rayman 3 HD Recompiled"; Filename: "{app}\app\r3hd_launcher.exe"; Parameters: "--play"; WorkingDir: "{app}"; Comment: "{cm:PlayComment}"; Check: DesktopShortcut and not HasPlayIcon; AppUserModelID: "Rayman3HDRecompiled.Game"
 Name: "{code:DesktopDir}\Rayman 3 HD Recompiled"; Filename: "{app}\app\r3hd_launcher.exe"; Parameters: "--play"; WorkingDir: "{app}"; Comment: "{cm:PlayComment}"; IconFilename: "{app}\data\play_icon.ico"; Check: DesktopShortcut and HasPlayIcon; AppUserModelID: "Rayman3HDRecompiled.Game"

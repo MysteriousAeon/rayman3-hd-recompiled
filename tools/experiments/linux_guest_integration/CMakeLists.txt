@@ -1,0 +1,18 @@
+cmake_minimum_required(VERSION 3.24)
+project(linux_guest_sdk_consumers LANGUAGES CXX)
+
+find_package(rexglue CONFIG REQUIRED)
+if(NOT TARGET rex::runtime)
+  message(FATAL_ERROR "The installed ReXGlue SDK does not export rex::runtime")
+endif()
+if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+  message(FATAL_ERROR "The isolated fixture requires Clang or GCC")
+endif()
+if(NOT PROBE_OPT STREQUAL "0" AND NOT PROBE_OPT STREQUAL "2")
+  message(FATAL_ERROR "Set PROBE_OPT to 0 or 2")
+endif()
+add_executable(sdk_consumers sdk_consumers.cpp)
+target_compile_features(sdk_consumers PRIVATE cxx_std_23)
+target_compile_options(sdk_consumers PRIVATE -O${PROBE_OPT} -Wall -Wextra -Werror
+  -fexceptions -fno-fast-math -frounding-math)
+target_link_libraries(sdk_consumers PRIVATE rex::runtime)
