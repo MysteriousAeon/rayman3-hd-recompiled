@@ -367,3 +367,13 @@ For complete third-party acknowledgments and licensing information, see the [Win
 The project's original source code is licensed under the [MIT licence](LICENSE). Third-party components retain their respective licences. The MIT licence does not cover the game, code translated from it or translations of its text; the Scope section of [LICENSE](LICENSE) lists these exclusions.
 
 Rayman 3 HD and its associated intellectual property belong to their respective rights holders.
+
+## Star History
+
+<a href="https://www.star-history.com/?repos=mysteriousaeon%2Frayman3-hd-recompiled&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=mysteriousaeon/rayman3-hd-recompiled&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=mysteriousaeon/rayman3-hd-recompiled&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=mysteriousaeon/rayman3-hd-recompiled&type=date&legend=top-left" />
+ </picture>
+</a>
