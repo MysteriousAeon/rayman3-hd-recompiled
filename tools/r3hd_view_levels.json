@@ -1,0 +1,1523 @@
+{
+ "format": "r3hd-view-levels-v1",
+ "levels": {
+  "ballmap": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "2 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "d944fad1d1d7635b9cbf6c55f65f4c39448f597fbe2f2a77330963d559c57afd",
+   "measured": {
+    "actors": 103,
+    "collision_triangles": 2631,
+    "graphs": 3,
+    "hidden_runtime_placed": 0,
+    "objects": 28,
+    "textures": 16,
+    "textures_decoded": 16,
+    "textures_shown": 16,
+    "triangles": 35236,
+    "waypoints": 30
+   },
+   "ptr": "1c25220f0402233350af0043c771b3c0ad9d18f1c2663de001576a892f602a2b",
+   "reason": "",
+   "transit": "433ebf5bc03dffa38536673207a21281612cef5faa9bc7a4d5b9be2fdb12cf1a"
+  },
+  "bonustxt": {
+   "class": "excluded",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "1 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "5273c1568d6e98ecc1003e758dbd1ad6fbf1b7148454fa393c8f8023cab22fca",
+   "measured": {
+    "actors": 1,
+    "collision_triangles": 2,
+    "graphs": 0,
+    "hidden_runtime_placed": 0,
+    "objects": 1,
+    "textures": 0,
+    "textures_decoded": 0,
+    "textures_shown": 0,
+    "triangles": 2,
+    "waypoints": 0
+   },
+   "ptr": "7f09b1740c941869305d1c6eefbcdeb8b490cc2eac0732adbca7aafc4bad3a9c",
+   "reason": "2 triangle(s): a 2D page, not a 3D scene",
+   "transit": "433ebf5bc03dffa38536673207a21281612cef5faa9bc7a4d5b9be2fdb12cf1a"
+  },
+  "commando": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "3 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "6e06c62016b0214b08f949626cae08ce1622b02bb0c06fec980dc27e69eddf41",
+   "measured": {
+    "actors": 102,
+    "collision_triangles": 3053,
+    "graphs": 10,
+    "hidden_runtime_placed": 0,
+    "objects": 68,
+    "textures": 49,
+    "textures_decoded": 49,
+    "textures_shown": 49,
+    "triangles": 51340,
+    "waypoints": 67
+   },
+   "ptr": "592903d78d48b9eae1108cb89d627e66250215eedd4e1f4a4c3ead5ff18725a5",
+   "reason": "",
+   "transit": "cd98afb5a4986e92a31553bdc291e6b05a780ee0b14ae40bea996e056237cafc"
+  },
+  "crush": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "4 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "a5682196c25ca8db12b6c9154c5ee259982c84b504bd54f2d3371625cee94c9a",
+   "measured": {
+    "actors": 7,
+    "collision_triangles": 430,
+    "graphs": 6,
+    "hidden_runtime_placed": 0,
+    "objects": 12,
+    "textures": 16,
+    "textures_decoded": 16,
+    "textures_shown": 16,
+    "triangles": 11613,
+    "waypoints": 122
+   },
+   "ptr": "44bfde46f9c787f5dc9dc7a373df55b2816cdda94ddb306830c2e2128fbefd05",
+   "reason": "",
+   "transit": "78f766a7c061a211c1849bc872408c9499a002be7562c4ab98797902890dec9b"
+  },
+  "endgame": {
+   "class": "excluded",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "1 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "9f14cb84b6afbb2d5b3d54219dc6e85479463fd273f2c22a27fef97bbf274875",
+   "measured": {
+    "actors": 1,
+    "collision_triangles": 2,
+    "graphs": 0,
+    "hidden_runtime_placed": 0,
+    "objects": 1,
+    "textures": 0,
+    "textures_decoded": 0,
+    "textures_shown": 0,
+    "triangles": 2,
+    "waypoints": 0
+   },
+   "ptr": "1b400e1a79ccd88ebb18939effbb76234ab1d6529e6e9cab7dc92b5722db8943",
+   "reason": "2 triangle(s): a 2D page, not a 3D scene",
+   "transit": "433ebf5bc03dffa38536673207a21281612cef5faa9bc7a4d5b9be2fdb12cf1a"
+  },
+  "fact_22": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "3 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "d1b776ac519e99614104a4ea727ad7c148f367be19bd8c959e485470d4d78a31",
+   "measured": {
+    "actors": 91,
+    "collision_triangles": 13662,
+    "graphs": 7,
+    "hidden_runtime_placed": 0,
+    "objects": 182,
+    "textures": 28,
+    "textures_decoded": 28,
+    "textures_shown": 28,
+    "triangles": 37340,
+    "waypoints": 58
+   },
+   "ptr": "83b0582f7aee919c87e06c896b99805d61e589ad5a0fb15892ba9791c0f51ebb",
+   "reason": "",
+   "transit": "cb256dc198c4853b0ccc88482ad4877e7cffb827a903cdf0a0eb31988f6e35b9"
+  },
+  "fact_34": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "4 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "532a68d2b04b3d3c0f8da39c88aea0a50dcbf2f417603cc7439f59aec7c3d1ee",
+   "measured": {
+    "actors": 58,
+    "collision_triangles": 1352,
+    "graphs": 11,
+    "hidden_runtime_placed": 0,
+    "objects": 57,
+    "textures": 22,
+    "textures_decoded": 22,
+    "textures_shown": 22,
+    "triangles": 25317,
+    "waypoints": 45
+   },
+   "ptr": "7426a01ed1506f74ab8cf69b67e6db35751aa7c223a24c2f980e961061141521",
+   "reason": "",
+   "transit": "0f4cdb9d58ef797d4d55895703cd8a0185c78bfa2883a0c592fc3b93265b5722"
+  },
+  "fact_40": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "7 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "5fbfd7bd128641e2c469e3e516fae0fa6705e73ba052b68f3b438506b0f2930f",
+   "measured": {
+    "actors": 127,
+    "collision_triangles": 3612,
+    "graphs": 22,
+    "hidden_runtime_placed": 0,
+    "objects": 159,
+    "textures": 31,
+    "textures_decoded": 31,
+    "textures_shown": 31,
+    "triangles": 33479,
+    "waypoints": 199
+   },
+   "ptr": "e8f32536d40dcc7b343726d0cf4f52838be4b71724957a691a56c5fef2280812",
+   "reason": "",
+   "transit": "113f0d8f49fce290265a10473a6848f74e49c345c1d8cb688ce3780f1c1e8703"
+  },
+  "fact_50": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "12 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "55190a61d4035bb7014215ba976b6c3fcd0d972ebeebdccf9c90f5c7e57619f7",
+   "measured": {
+    "actors": 111,
+    "collision_triangles": 2054,
+    "graphs": 26,
+    "hidden_runtime_placed": 0,
+    "objects": 74,
+    "textures": 33,
+    "textures_decoded": 33,
+    "textures_shown": 33,
+    "triangles": 40745,
+    "waypoints": 104
+   },
+   "ptr": "5861d1f59673af5491c3157ba42babcf8bb66f866a90482602206c93f12c67d5",
+   "reason": "",
+   "transit": "d15c88d7d6269eed6c94cee185342192511cc0acce4f0fa63a240aa135362a94"
+  },
+  "fact_55": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "6 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "ba8913f804cb6bc4a6ab0b86a55c0aaf26595501bb7092394c0b4a76c0ef041c",
+   "measured": {
+    "actors": 95,
+    "collision_triangles": 3140,
+    "graphs": 13,
+    "hidden_runtime_placed": 0,
+    "objects": 269,
+    "textures": 29,
+    "textures_decoded": 29,
+    "textures_shown": 29,
+    "triangles": 31283,
+    "waypoints": 44
+   },
+   "ptr": "f716fac589f90e969861141324723f3cfcb8942bb9eab3c1639399f42fb3cf42",
+   "reason": "",
+   "transit": "f69c0d5c4d79d1dd852c2a91e73857c4996920b849758ab305e88f3c914cd9ea"
+  },
+  "flash_10": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "4 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "e05b82c102786cc4345dd779a97495e716fe6600154216f0c7036917fa5a02fa",
+   "measured": {
+    "actors": 76,
+    "collision_triangles": 3718,
+    "graphs": 21,
+    "hidden_runtime_placed": 6,
+    "objects": 219,
+    "textures": 50,
+    "textures_decoded": 50,
+    "textures_shown": 44,
+    "triangles": 41191,
+    "waypoints": 90
+   },
+   "ptr": "238e3c218f0fe4a356d5baa44473509267ccaadbcab8586123820762ebc8f4af",
+   "reason": "",
+   "transit": "d08f38c2c3604e85b6be497a0265a36a19f25eb5859477fc9cd46133d5b24dc7"
+  },
+  "flash_20": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "3 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "7aeb461c42e9f8a292405ec4f9e31ff3f8eeb51d78c596bbdcfd6940cc33ca82",
+   "measured": {
+    "actors": 57,
+    "collision_triangles": 1695,
+    "graphs": 10,
+    "hidden_runtime_placed": 0,
+    "objects": 81,
+    "textures": 23,
+    "textures_decoded": 23,
+    "textures_shown": 23,
+    "triangles": 33931,
+    "waypoints": 50
+   },
+   "ptr": "a89593b4c196a995957d8e91618e4495ab877d50964ca0f69b7fee46f999b942",
+   "reason": "",
+   "transit": "825889b9f9071ed2a8ec8b002b54592d9c5d43d3a5e740dc7a9ae451938ffe2d"
+  },
+  "flash_30": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "5 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "81fd0023837c0b829516ed2b66f0df51037314bc6face73183c35b99ad74f3bf",
+   "measured": {
+    "actors": 59,
+    "collision_triangles": 4482,
+    "graphs": 21,
+    "hidden_runtime_placed": 0,
+    "objects": 96,
+    "textures": 27,
+    "textures_decoded": 27,
+    "textures_shown": 27,
+    "triangles": 28158,
+    "waypoints": 108
+   },
+   "ptr": "2a52dd711b9fcbe165bf2e1b47d23afd4a585a5d12ab35a0bc9f3acbcd5f8def",
+   "reason": "",
+   "transit": "e94dd6f6eaf7d0ec7314bacf4af3b222a2b038ef33c0d7188d6719ddefff973f"
+  },
+  "intro_10": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "14 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "a37638bf1370357db21f33df5c4d37ae806b3c4b9f81b331503ba62d1b19e2ee",
+   "measured": {
+    "actors": 60,
+    "collision_triangles": 7821,
+    "graphs": 14,
+    "hidden_runtime_placed": 0,
+    "objects": 158,
+    "textures": 44,
+    "textures_decoded": 44,
+    "textures_shown": 44,
+    "triangles": 70652,
+    "waypoints": 211
+   },
+   "ptr": "6c9dd70c488a1cac95efc0a55a6086255dae2d851bacd93f5abefdcc8200e940",
+   "reason": "",
+   "transit": "d300ba3a4a3c03cec6a73eb9da8a8d820fcc3a669591e976b357e804315bf275"
+  },
+  "intro_15": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "4 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "474596d68f86de3eba7f3cb19d1595abdc62b37252e2d6d13c6c83483416f4e2",
+   "measured": {
+    "actors": 101,
+    "collision_triangles": 9987,
+    "graphs": 21,
+    "hidden_runtime_placed": 1,
+    "objects": 136,
+    "textures": 40,
+    "textures_decoded": 40,
+    "textures_shown": 40,
+    "triangles": 47940,
+    "waypoints": 175
+   },
+   "ptr": "aaafc65cdf088e2fdb42425288a6f038e7bf7d99023f2aca3b828b231aa43457",
+   "reason": "",
+   "transit": "7510ea812092bd4ccbe468ac4c85af01bca37d9491a01e787a3733ab1379afc8"
+  },
+  "intro_17": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "6 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "886f779d90608e68fd008b739788b4ed6308533171424f8846a1595ec9945da9",
+   "measured": {
+    "actors": 49,
+    "collision_triangles": 2416,
+    "graphs": 4,
+    "hidden_runtime_placed": 0,
+    "objects": 44,
+    "textures": 30,
+    "textures_decoded": 30,
+    "textures_shown": 30,
+    "triangles": 15280,
+    "waypoints": 119
+   },
+   "ptr": "8dfd06792750f58261331e3cba6b58646d36431b258b0e491566bf3f4dd8eb3e",
+   "reason": "",
+   "transit": "fe4d0aa852a9b5f830c83b4a3c44a6992f5da54139e3a2dc129cebecfcf9c964"
+  },
+  "intro_20": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "10 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "a21aa7691db4cedb3892e685e5395fd23b530b0bde4d64a09035dfb5f2d0b11f",
+   "measured": {
+    "actors": 108,
+    "collision_triangles": 4627,
+    "graphs": 15,
+    "hidden_runtime_placed": 0,
+    "objects": 89,
+    "textures": 22,
+    "textures_decoded": 22,
+    "textures_shown": 22,
+    "triangles": 24046,
+    "waypoints": 138
+   },
+   "ptr": "be90b58a3bfa78d19f3335489edcc79214442d52cbde04c6ad5a465f9fb17cb1",
+   "reason": "",
+   "transit": "51c0fbf1239acd6188316a6d64507761903d5a087df1ea717426d5cb810e6aa8"
+  },
+  "knaar_10": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "9 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "e8a4af0372e866fdebfbdc4880dc5665dcc46f605e625b5bb3403456435bf98a",
+   "measured": {
+    "actors": 136,
+    "collision_triangles": 5955,
+    "graphs": 21,
+    "hidden_runtime_placed": 0,
+    "objects": 140,
+    "textures": 36,
+    "textures_decoded": 36,
+    "textures_shown": 36,
+    "triangles": 33027,
+    "waypoints": 237
+   },
+   "ptr": "0bd6742af315b7d9edab45820fa049f5d2538386598aeabbac03bfc4ba83d42b",
+   "reason": "",
+   "transit": "4645154d761bed9a2c21696b72e331cda1a7d077d1f9bd01ef8b157f48869e29"
+  },
+  "knaar_20": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "4 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "5c77436d71b311e8271b89493c4b7c272c8257303d176f9bbcfa86d240a7fe54",
+   "measured": {
+    "actors": 56,
+    "collision_triangles": 1905,
+    "graphs": 14,
+    "hidden_runtime_placed": 0,
+    "objects": 46,
+    "textures": 22,
+    "textures_decoded": 22,
+    "textures_shown": 22,
+    "triangles": 10441,
+    "waypoints": 70
+   },
+   "ptr": "befc53a7f5d5f833517cbbd78dc85333f5b4aa92cb10277507a183bf804e4497",
+   "reason": "",
+   "transit": "30ef32d3e16a584d1b7bd8090019145d4ed9abfdeb7569e1fe027015857bdc85"
+  },
+  "knaar_30": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "3 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "836d3a9aad1797cddec0545e11592953233eaa354c361fcc8fec242188dec738",
+   "measured": {
+    "actors": 131,
+    "collision_triangles": 6979,
+    "graphs": 15,
+    "hidden_runtime_placed": 0,
+    "objects": 80,
+    "textures": 34,
+    "textures_decoded": 34,
+    "textures_shown": 34,
+    "triangles": 30288,
+    "waypoints": 251
+   },
+   "ptr": "f011359e4e6f43c0e94902884734ad35f811f73939a9feba980707dad72aa2ee",
+   "reason": "",
+   "transit": "5c1c992b19e1e5775623643bd5764ae4c753869fb0b0dde1d13e961c9420623e"
+  },
+  "knaar_45": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "4 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "08cef6d1d86e59e0c893c368a46f2c165d4b369fec7fb26aff4421044774114f",
+   "measured": {
+    "actors": 146,
+    "collision_triangles": 5071,
+    "graphs": 10,
+    "hidden_runtime_placed": 0,
+    "objects": 130,
+    "textures": 38,
+    "textures_decoded": 38,
+    "textures_shown": 38,
+    "triangles": 37405,
+    "waypoints": 83
+   },
+   "ptr": "215b1a7adcc5ebf4e8f49d1142b27bdb6165e8b9d2ddf266d635ff4b89766e54",
+   "reason": "",
+   "transit": "85335f073fbb7cd6b8cd6f19dde72648e7e4d467a0a6b09147ea364440ba73d1"
+  },
+  "knaar_60": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "3 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "fdbcd6f79643b29fb1cddf0e7409915ec27e447101413d60e544687e446c6d8c",
+   "measured": {
+    "actors": 35,
+    "collision_triangles": 268,
+    "graphs": 0,
+    "hidden_runtime_placed": 165,
+    "objects": 181,
+    "textures": 35,
+    "textures_decoded": 35,
+    "textures_shown": 21,
+    "triangles": 21460,
+    "waypoints": 0
+   },
+   "ptr": "ed95588f7fb5c92b7338a60c33b97628241e0e0a8a105eee9517b5787df0f79c",
+   "reason": "",
+   "transit": "8512e97a0ea85d739cd9da2b81ac2cec13cf3f04fa5c7e4933aa447530e0fccc"
+  },
+  "knaar_69": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "3 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "dd72f23c2084b4b65b55374aaa3c3f7c9bd47235be2ada65ef7a46431ff9d2e6",
+   "measured": {
+    "actors": 45,
+    "collision_triangles": 564,
+    "graphs": 6,
+    "hidden_runtime_placed": 0,
+    "objects": 9,
+    "textures": 14,
+    "textures_decoded": 14,
+    "textures_shown": 14,
+    "triangles": 2239,
+    "waypoints": 49
+   },
+   "ptr": "95f805bc67e0d9635b87c6e3425d9c18f6cb4889600444d555d7e7280bd06bf4",
+   "reason": "",
+   "transit": "bed8c2bb1acf20822ee31bec5b497c8307aa487cbcda4825ac6dcc9bce2e2b07"
+  },
+  "knaar_70": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "5 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "dc629a02a23759809a31788e1aff9d5e2565f74ff0743242c41d267774e44889",
+   "measured": {
+    "actors": 81,
+    "collision_triangles": 3469,
+    "graphs": 20,
+    "hidden_runtime_placed": 2,
+    "objects": 75,
+    "textures": 17,
+    "textures_decoded": 17,
+    "textures_shown": 16,
+    "triangles": 15788,
+    "waypoints": 106
+   },
+   "ptr": "ef0168189c12004cbcdd9419630627ba15169a2bcb8b1a671552d3c3ad62cadc",
+   "reason": "",
+   "transit": "422b79f82c37ba79299d9c9fa6567e05c2934250b8cefc63d83333f3c5ee419c"
+  },
+  "lept_15": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "4 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "1ae3d223f2593a1b04968c55b4e5c879ce38df195726b502f2f5a2b4e1ca33bc",
+   "measured": {
+    "actors": 10,
+    "collision_triangles": 64,
+    "graphs": 0,
+    "hidden_runtime_placed": 63,
+    "objects": 96,
+    "textures": 30,
+    "textures_decoded": 30,
+    "textures_shown": 24,
+    "triangles": 27858,
+    "waypoints": 0
+   },
+   "ptr": "8b205f9e0a42054fb00c29ec57e39005c33a2a31ea9c860a69fb3711c0140202",
+   "reason": "",
+   "transit": "433ebf5bc03dffa38536673207a21281612cef5faa9bc7a4d5b9be2fdb12cf1a"
+  },
+  "menu_00": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "6 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "dd0dc0ad6db4edee04920ec7ca7117278b45cb54e83a3778fc568eb57cb4deb4",
+   "measured": {
+    "actors": 53,
+    "collision_triangles": 2186,
+    "graphs": 2,
+    "hidden_runtime_placed": 0,
+    "objects": 35,
+    "textures": 21,
+    "textures_decoded": 21,
+    "textures_shown": 21,
+    "triangles": 14726,
+    "waypoints": 3
+   },
+   "ptr": "c4671e24f01560918af34ca7b42888764f0ab1b8d2ae1b1670d3de463ada42a2",
+   "reason": "",
+   "transit": "80b7f20234daa664ba01bbe765331466eedca7da7e9a7a180d70960e2d0d1420"
+  },
+  "menu_10": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "1 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "10dac1c73022ef9d84c56da08c2c77d21b69a1eda54b90b85887568cb6c4e026",
+   "measured": {
+    "actors": 26,
+    "collision_triangles": 733,
+    "graphs": 8,
+    "hidden_runtime_placed": 0,
+    "objects": 23,
+    "textures": 11,
+    "textures_decoded": 11,
+    "textures_shown": 11,
+    "triangles": 29020,
+    "waypoints": 38
+   },
+   "ptr": "512de6aa3775c77f815021d99003f44e599add79569a0dac723634bce275f2d9",
+   "reason": "",
+   "transit": "672597fc110da8a8f47e28e9674065473b0a26bc7f31997942cba99ceb17cc6d"
+  },
+  "menu_20": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "1 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "1906c4950c1bd3ceaf6eb9ff8cc5bdebe998421659306000d6025ccc7cab7688",
+   "measured": {
+    "actors": 42,
+    "collision_triangles": 777,
+    "graphs": 9,
+    "hidden_runtime_placed": 0,
+    "objects": 28,
+    "textures": 10,
+    "textures_decoded": 10,
+    "textures_shown": 10,
+    "triangles": 6592,
+    "waypoints": 49
+   },
+   "ptr": "5af77b9812a86134f96538cf86352e7ce805edffa31b1b0c6af6c36070fabc8b",
+   "reason": "",
+   "transit": "2dcef706def7efdc3314ca231461d18ad72b21d07e9a0629ae5abf215ed37cfd"
+  },
+  "menu_30": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "1 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "0c57fff49b90e9b6cc1fb76eaf3e569d593a37d7966b763cabe22281104d78f1",
+   "measured": {
+    "actors": 39,
+    "collision_triangles": 924,
+    "graphs": 8,
+    "hidden_runtime_placed": 0,
+    "objects": 54,
+    "textures": 11,
+    "textures_decoded": 11,
+    "textures_shown": 11,
+    "triangles": 7814,
+    "waypoints": 38
+   },
+   "ptr": "41f757ad237fbeafb4f1a146c6979bec6daae579fd0d4f02a3e7ac4d385121e6",
+   "reason": "",
+   "transit": "2b5d2b81a89b55b9240674a4486674328692a7fab8c3bddd7647dcd4b2bcec83"
+  },
+  "menumap": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "5 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "8fabcb43bd5b83430746927b3f5416035d070ec7850348839aba69a686f0afb8",
+   "measured": {
+    "actors": 35,
+    "collision_triangles": 32310,
+    "graphs": 14,
+    "hidden_runtime_placed": 0,
+    "objects": 164,
+    "textures": 44,
+    "textures_decoded": 44,
+    "textures_shown": 44,
+    "triangles": 59139,
+    "waypoints": 183
+   },
+   "ptr": "a70cd8c62071e7de4c21d7a6c5859918b1100a7142c527eb50ce0d4a69c741f7",
+   "reason": "",
+   "transit": "b69a7e9c9586c712243da772213b16cf479ac083803ce98a03c80057d128abca"
+  },
+  "moor_00": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "9 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "8a98579189d1dd07aa0dfdf2541304a5a03a832753e5fd2119dab7b33f4e5fc5",
+   "measured": {
+    "actors": 161,
+    "collision_triangles": 2082,
+    "graphs": 25,
+    "hidden_runtime_placed": 0,
+    "objects": 70,
+    "textures": 33,
+    "textures_decoded": 33,
+    "textures_shown": 33,
+    "triangles": 26259,
+    "waypoints": 217
+   },
+   "ptr": "30336a927e1766e07629decaaf135bb0d6b3fa3b7be27c7fc17bcf3c827c02f6",
+   "reason": "",
+   "transit": "daa763346bfd43df33fc4c3805aec1f59d1b7415aa03a0ae2db16df8fdb3542a"
+  },
+  "moor_19": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "11 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "f2ec92d95e1bad8a43790efdac2dc08f26046a55b87e3444abc9d7c31932b5c0",
+   "measured": {
+    "actors": 51,
+    "collision_triangles": 2812,
+    "graphs": 11,
+    "hidden_runtime_placed": 3,
+    "objects": 59,
+    "textures": 35,
+    "textures_decoded": 35,
+    "textures_shown": 35,
+    "triangles": 32586,
+    "waypoints": 65
+   },
+   "ptr": "eeca26669507f67d1ed0b9747162fdcdf37178c969f1435746d3bc4260c6d8e0",
+   "reason": "",
+   "transit": "bc9b2534a7f551c05327d68536b38576ddc6f1e9deef267484e777837943fa33"
+  },
+  "moor_30": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "7 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "e13d0ac116927cd8a142bd05883de18dc7b7045ea477f56ff121120f9a6ea8a4",
+   "measured": {
+    "actors": 156,
+    "collision_triangles": 3374,
+    "graphs": 36,
+    "hidden_runtime_placed": 13,
+    "objects": 81,
+    "textures": 33,
+    "textures_decoded": 33,
+    "textures_shown": 31,
+    "triangles": 38586,
+    "waypoints": 309
+   },
+   "ptr": "af30c6c4e627773fadcd32ff2b58a543a2a797b8179bd911996a6ef42d3d1135",
+   "reason": "",
+   "transit": "369ef4d0936b43d4422801b59506cad38bab33cae480c1cdddca798a32a05310"
+  },
+  "moor_60": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "16 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "159e740e7ce73600c43cfcdf7376f0ac7577b68cffe8e00f40cb3058bd96c274",
+   "measured": {
+    "actors": 334,
+    "collision_triangles": 3652,
+    "graphs": 42,
+    "hidden_runtime_placed": 0,
+    "objects": 120,
+    "textures": 35,
+    "textures_decoded": 35,
+    "textures_shown": 35,
+    "triangles": 36053,
+    "waypoints": 320
+   },
+   "ptr": "e102850776158e2f4ebec8f33c1c86069aa3b6808141942891031536a3426782",
+   "reason": "",
+   "transit": "5c58136c5bc487650e0fdd46ed6fb94ca29990ba882f1fa776ffd119107a8373"
+  },
+  "mount_4x": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "4 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "e35d8694f42a50193905f25462cc89ac49caaa8c811a5bd106ec6d4bd839d6e0",
+   "measured": {
+    "actors": 23,
+    "collision_triangles": 5156,
+    "graphs": 8,
+    "hidden_runtime_placed": 5,
+    "objects": 199,
+    "textures": 24,
+    "textures_decoded": 24,
+    "textures_shown": 23,
+    "triangles": 59451,
+    "waypoints": 162
+   },
+   "ptr": "8800d45a61ee75b5f74b223284bb77285c6a4fe86eab2554ad1696ca94e149af",
+   "reason": "",
+   "transit": "61b588a6a53243be9b0923e5118ff05c8610141a5d2dabdf1ed7e70da8a59041"
+  },
+  "mount_50": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "9 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "1d7ed4502740cb951826035d551b90cf5d38cb4dc0ed7cfc1b479854b88d82bc",
+   "measured": {
+    "actors": 186,
+    "collision_triangles": 4807,
+    "graphs": 41,
+    "hidden_runtime_placed": 0,
+    "objects": 196,
+    "textures": 25,
+    "textures_decoded": 25,
+    "textures_shown": 25,
+    "triangles": 51732,
+    "waypoints": 345
+   },
+   "ptr": "b39ee833b9c6d42b37de04b2583ff5c0fc97b3552ea73376b99e7a24e224f892",
+   "reason": "",
+   "transit": "2e7c093caee2b308d838599c5b12d1ccb4649a45db8af7b6918d5b87e6120815"
+  },
+  "raz_map": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "3 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "93bd2dbe26e2714f67935d671e1f211170ebf25f43495f2ae3d0383d9a8ba057",
+   "measured": {
+    "actors": 74,
+    "collision_triangles": 7289,
+    "graphs": 11,
+    "hidden_runtime_placed": 0,
+    "objects": 170,
+    "textures": 40,
+    "textures_decoded": 40,
+    "textures_shown": 40,
+    "triangles": 33788,
+    "waypoints": 26
+   },
+   "ptr": "2fe5dd2df67c981380dcd89b225e8420dfb459d09f2397f82c777ca32fb1b9df",
+   "reason": "",
+   "transit": "433ebf5bc03dffa38536673207a21281612cef5faa9bc7a4d5b9be2fdb12cf1a"
+  },
+  "sea_10": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "3 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "604cb50b7c5068057ae46c244f89b5b0a1999f9ea6c3b2585e2bc73096a2741f",
+   "measured": {
+    "actors": 28,
+    "collision_triangles": 930,
+    "graphs": 23,
+    "hidden_runtime_placed": 12,
+    "objects": 26,
+    "textures": 18,
+    "textures_decoded": 18,
+    "textures_shown": 15,
+    "triangles": 16661,
+    "waypoints": 85
+   },
+   "ptr": "6659e02c2bd7acc78a844e9d3f43e16a12ca3b2eadb8fbc682fcdeee6fe18628",
+   "reason": "",
+   "transit": "e2a2a47a1c9121d4695259112a7db3155fecb7f667eeb15b7e359888b8964892"
+  },
+  "sentinel": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)"
+   ],
+   "lvl": "60af02e85cfe33962a17f2d0ed8e4a13bc5b36175811ee782384e470882bfeae",
+   "measured": {
+    "actors": 8,
+    "collision_triangles": 5647,
+    "graphs": 3,
+    "hidden_runtime_placed": 0,
+    "objects": 46,
+    "textures": 37,
+    "textures_decoded": 37,
+    "textures_shown": 37,
+    "triangles": 12395,
+    "waypoints": 57
+   },
+   "ptr": "9daf53a89ffbbbcd40cbdbfe4217c2811d6afa5b0fdce2911b4e4d68d115e79d",
+   "reason": "",
+   "transit": "57bb96cb9930a5784d399fbf95fc7aab836a8d137abc8c30bcc49278e407030f"
+  },
+  "ship_map": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "2 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "fc963ecba9b1929f12b66665565bc8d8987e56c793f13eca6f734ef70a83310b",
+   "measured": {
+    "actors": 71,
+    "collision_triangles": 18352,
+    "graphs": 4,
+    "hidden_runtime_placed": 0,
+    "objects": 160,
+    "textures": 50,
+    "textures_decoded": 50,
+    "textures_shown": 50,
+    "triangles": 52360,
+    "waypoints": 37
+   },
+   "ptr": "fa550a138db81b1fed6ca2525583f5024967d9dba2514f12ae70f15eb03186ad",
+   "reason": "",
+   "transit": "433ebf5bc03dffa38536673207a21281612cef5faa9bc7a4d5b9be2fdb12cf1a"
+  },
+  "sk8_00": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "1 16x16 packed-tail texture(s) decoded by the G6-P68 rule (E-554)",
+    "4 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "b6bed4e972aee5aab71e39376159976450cc584e919d03f283692d7022d21a88",
+   "measured": {
+    "actors": 187,
+    "collision_triangles": 372,
+    "graphs": 1,
+    "hidden_runtime_placed": 2,
+    "objects": 65,
+    "textures": 23,
+    "textures_decoded": 23,
+    "textures_shown": 23,
+    "triangles": 13084,
+    "waypoints": 2
+   },
+   "ptr": "38f39da2f1ce9275dcb479960d28988908e2665b76147128df46890bd065e774",
+   "reason": "",
+   "transit": "b1983150bfb5cd6f9578e172957e5f96f75fd98c878f0d3f3849fa37759d725e"
+  },
+  "sk8_10": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "1 16x16 packed-tail texture(s) decoded by the G6-P68 rule (E-554)",
+    "4 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "669426e7894da0adf11d33587772dc2b45501fdc057ff80968c7e0601efe79f0",
+   "measured": {
+    "actors": 162,
+    "collision_triangles": 338,
+    "graphs": 1,
+    "hidden_runtime_placed": 0,
+    "objects": 70,
+    "textures": 21,
+    "textures_decoded": 21,
+    "textures_shown": 21,
+    "triangles": 11022,
+    "waypoints": 2
+   },
+   "ptr": "6d25bc40565bf4ce44fe05f1674e127663ba1214b1d4215360767c63418d5028",
+   "reason": "",
+   "transit": "902b0255ca370a586b8e09c702a35abddfbc10bd2badc7f3dd81b7f5d984e3e9"
+  },
+  "sk8_20": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "1 16x16 packed-tail texture(s) decoded by the G6-P68 rule (E-554)",
+    "4 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "b153d0e6b32facf0aab3fdcce639c6596bafb1a19771c1c2d4e52723a2c3d878",
+   "measured": {
+    "actors": 245,
+    "collision_triangles": 440,
+    "graphs": 1,
+    "hidden_runtime_placed": 0,
+    "objects": 75,
+    "textures": 26,
+    "textures_decoded": 26,
+    "textures_shown": 26,
+    "triangles": 22230,
+    "waypoints": 2
+   },
+   "ptr": "bfec300ddf9416eb7961cce4ba187c8c04fca53e2aabb1e09b8402886a8a4c47",
+   "reason": "",
+   "transit": "37a16c5ed47b7fdf07c6d92e16845d23018d1daa36f0bbe84967889311a6d186"
+  },
+  "snipe_00": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)"
+   ],
+   "lvl": "8137b1910d16b47ca90964ddd98dd875bbad8928b303a78628ea321e7f5691ae",
+   "measured": {
+    "actors": 8,
+    "collision_triangles": 36318,
+    "graphs": 0,
+    "hidden_runtime_placed": 0,
+    "objects": 86,
+    "textures": 9,
+    "textures_decoded": 9,
+    "textures_shown": 9,
+    "triangles": 49855,
+    "waypoints": 0
+   },
+   "ptr": "476338c6a8a69fff03d9c6d3604a093ea95cabca0bcec63a5614a855e372929c",
+   "reason": "",
+   "transit": "28776e1aff256e74a178d12f079e841b9c7870032a00e5bad06db3b17f8fce63"
+  },
+  "staff": {
+   "class": "excluded",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)"
+   ],
+   "lvl": "8b7c78b17221804dc8d5d876f01234b5498ff3cad02ce0a095c0122b0c552675",
+   "measured": {
+    "actors": 4,
+    "collision_triangles": 2,
+    "graphs": 0,
+    "hidden_runtime_placed": 0,
+    "objects": 1,
+    "textures": 1,
+    "textures_decoded": 1,
+    "textures_shown": 1,
+    "triangles": 2,
+    "waypoints": 0
+   },
+   "ptr": "a4be2b49aa2ac545217eb90688b6bb6ae4ba2203847f428a9b625a558faddeb4",
+   "reason": "2 triangle(s): a 2D page, not a 3D scene",
+   "transit": "433ebf5bc03dffa38536673207a21281612cef5faa9bc7a4d5b9be2fdb12cf1a"
+  },
+  "swamp_50": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "3 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "aabf7a1f2b5a23506c1e5bc4edb791da01881785d747f383c0bc81dead6753d2",
+   "measured": {
+    "actors": 112,
+    "collision_triangles": 3974,
+    "graphs": 10,
+    "hidden_runtime_placed": 0,
+    "objects": 278,
+    "textures": 40,
+    "textures_decoded": 40,
+    "textures_shown": 40,
+    "triangles": 63803,
+    "waypoints": 207
+   },
+   "ptr": "3bb0fc53c9d330097c2388a4e7caffb6af795e0a669aca8cdb76b8ed984c9d54",
+   "reason": "",
+   "transit": "9dc2c838293d072cef6cbe7e1aa63a0cc88181027ac281189583bdc4ff8a6a58"
+  },
+  "swamp_51": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "1 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "98eb9405dfd6efa9d04d4ab3434d714620fefd8d690ecb10422942c76a154df3",
+   "measured": {
+    "actors": 10,
+    "collision_triangles": 264,
+    "graphs": 4,
+    "hidden_runtime_placed": 0,
+    "objects": 39,
+    "textures": 19,
+    "textures_decoded": 19,
+    "textures_shown": 19,
+    "triangles": 13891,
+    "waypoints": 131
+   },
+   "ptr": "d8f1c1cc588133c071a4c5fdbf653b029f5e50ea2c8d0e6971bc5c40a075fa95",
+   "reason": "",
+   "transit": "b9ada5c2a21b1d0a98b01fbf50d5dc2945144a3e8855b85ef09d9e774096f538"
+  },
+  "swamp_60": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "2 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "22c51ffd79a947f933e2757393a1581feeec2838099d1de5c8ae75f8922d4eab",
+   "measured": {
+    "actors": 68,
+    "collision_triangles": 3169,
+    "graphs": 20,
+    "hidden_runtime_placed": 2,
+    "objects": 120,
+    "textures": 42,
+    "textures_decoded": 42,
+    "textures_shown": 41,
+    "triangles": 44487,
+    "waypoints": 137
+   },
+   "ptr": "81690aff72fd230d066708f3fbc04e62c6bd74e0042f3be1874d3ddf80c2305c",
+   "reason": "",
+   "transit": "3a9220c50a5b42f03203f738277fb0970a8570a6b4d44b0306a9670738e56b10"
+  },
+  "swamp_81": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "11 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "6cbb1cab8df03d514200ec4e9d664a9bf9d0569d7ae73af36109c764b0fbd206",
+   "measured": {
+    "actors": 159,
+    "collision_triangles": 5353,
+    "graphs": 36,
+    "hidden_runtime_placed": 0,
+    "objects": 167,
+    "textures": 31,
+    "textures_decoded": 31,
+    "textures_shown": 31,
+    "triangles": 42328,
+    "waypoints": 266
+   },
+   "ptr": "5f354f9bf4c9127bc3abac9d9c8e646b90c5c90f3683fc4ab446e3089624f0a4",
+   "reason": "",
+   "transit": "c9aa4802dca560f5a0de569b3cf05f6269beef3590e1f22ac332bf288900d527"
+  },
+  "swamp_82": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "7 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "45fcdf5c8955edbdf7c76d8341ebe744ea393b588478f22bf7a7b60beea21287",
+   "measured": {
+    "actors": 68,
+    "collision_triangles": 1561,
+    "graphs": 23,
+    "hidden_runtime_placed": 0,
+    "objects": 41,
+    "textures": 27,
+    "textures_decoded": 27,
+    "textures_shown": 27,
+    "triangles": 14693,
+    "waypoints": 88
+   },
+   "ptr": "46e96ff2079a6aaedccf5b7baadf0192c740d9d902f67763d0324c2f23e598c8",
+   "reason": "",
+   "transit": "cce10a0bde0d71daeb1db05003fb6136a0162169e11abe28483d852375253803"
+  },
+  "swamp_83": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "9 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "efe7694580025edfd650abbaef895ce142dc587d64952cc1cf382ec7aa5151ce",
+   "measured": {
+    "actors": 112,
+    "collision_triangles": 5829,
+    "graphs": 29,
+    "hidden_runtime_placed": 0,
+    "objects": 167,
+    "textures": 31,
+    "textures_decoded": 31,
+    "textures_shown": 31,
+    "triangles": 44153,
+    "waypoints": 187
+   },
+   "ptr": "bce581de423fa045cc75e4d38fd40369c5f412345bb2b49d33a83ae2216c8084",
+   "reason": "",
+   "transit": "e3a0bca42d706594665652b80c362e6b8991c638d97283550a90efbb23233cbf"
+  },
+  "ten_map": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "1 16x16 packed-tail texture(s) decoded by the G6-P68 rule (E-554)",
+    "2 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "36489adbd9747943d05721c975c34fc26e29854ee3c71f3e2d1d527fbe5c4fb3",
+   "measured": {
+    "actors": 9,
+    "collision_triangles": 19400,
+    "graphs": 1,
+    "hidden_runtime_placed": 0,
+    "objects": 112,
+    "textures": 46,
+    "textures_decoded": 46,
+    "textures_shown": 46,
+    "triangles": 22021,
+    "waypoints": 4
+   },
+   "ptr": "c077941cced1539438b43912529dc34f2fe1411a759e8919e882cddc5f7b4665",
+   "reason": "",
+   "transit": "433ebf5bc03dffa38536673207a21281612cef5faa9bc7a4d5b9be2fdb12cf1a"
+  },
+  "toudi_00": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "2 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "17e5da1bfbd0030f3924af0591c1a2cec9ee13659d6a75cbe8b3ee8db9b574dc",
+   "measured": {
+    "actors": 51,
+    "collision_triangles": 718,
+    "graphs": 3,
+    "hidden_runtime_placed": 0,
+    "objects": 189,
+    "textures": 28,
+    "textures_decoded": 28,
+    "textures_shown": 28,
+    "triangles": 10082,
+    "waypoints": 6
+   },
+   "ptr": "dac3a603b05d517bd1f3b8ce367b7bd1812aee673cc27eb637bef9fbe937fe0c",
+   "reason": "",
+   "transit": "02f19a8c8c334f7bf95e64db0ea9b2a071b9d7142c8eaa1a9d83b47fe053f111"
+  },
+  "tower_10": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "7 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "a39175eec50f6bed2ecfe9012944fce3bc9bbc6c46f2fc414d243de9fa519734",
+   "measured": {
+    "actors": 142,
+    "collision_triangles": 5438,
+    "graphs": 28,
+    "hidden_runtime_placed": 0,
+    "objects": 169,
+    "textures": 30,
+    "textures_decoded": 30,
+    "textures_shown": 30,
+    "triangles": 42847,
+    "waypoints": 255
+   },
+   "ptr": "abffa531dedc041e3e0db432fa43de7efbdc10eecf69ad20babb4d849c17b63b",
+   "reason": "",
+   "transit": "2cb95d58e4421c189dd255415b2671d77a5206177f2bf2b618df2bb0ab6a15cb"
+  },
+  "tower_20": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "4 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "47acad7b8d7d7827a9483216206ba95eab410528a75a71b7b8cb5e2e699f056d",
+   "measured": {
+    "actors": 186,
+    "collision_triangles": 4338,
+    "graphs": 28,
+    "hidden_runtime_placed": 0,
+    "objects": 78,
+    "textures": 24,
+    "textures_decoded": 24,
+    "textures_shown": 24,
+    "triangles": 37781,
+    "waypoints": 302
+   },
+   "ptr": "c2d9b0d56611c43245fcc6890f5d99e6fd5cbafff1658bd7d2d5c64fe35bb11a",
+   "reason": "",
+   "transit": "07a65b72330484eea00579f9d014a4cc002f4a08faa34c8a4d80956438cfb09d"
+  },
+  "tower_30": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "1 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "4454c56203ff0889ef82a6bf8eed21752f014e1d7e8f476a5df497d12bf0386a",
+   "measured": {
+    "actors": 36,
+    "collision_triangles": 28895,
+    "graphs": 6,
+    "hidden_runtime_placed": 0,
+    "objects": 107,
+    "textures": 16,
+    "textures_decoded": 16,
+    "textures_shown": 16,
+    "triangles": 50081,
+    "waypoints": 55
+   },
+   "ptr": "4edfe8c54e0d076c2dd97257b85a1441d9c5bc9b09e3bfc2c50e904c660713eb",
+   "reason": "",
+   "transit": "b16f33a0d4d2cae590ca55e614436e90270665268932ec783d81e7cb65b67e72"
+  },
+  "tower_40": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "8 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "b93ff888227423e901a2e6baefbb4abc98bc3a24d93c0ed11271991afcaf9370",
+   "measured": {
+    "actors": 117,
+    "collision_triangles": 5786,
+    "graphs": 16,
+    "hidden_runtime_placed": 0,
+    "objects": 58,
+    "textures": 24,
+    "textures_decoded": 24,
+    "textures_shown": 24,
+    "triangles": 23476,
+    "waypoints": 38
+   },
+   "ptr": "4b20fad0e09d202a778b0333bb398339a47ec9e3793b62ac3c553cc71624acf4",
+   "reason": "",
+   "transit": "3efd846bade26e3c4eb5caea5112bb5a4c56c4adc170b8d6561b6e63429abc05"
+  },
+  "wood_10": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "12 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "d2402e23f771143d5906569b9562abce5ba4c2af3b1f342106b394c1b5b0bedc",
+   "measured": {
+    "actors": 211,
+    "collision_triangles": 4954,
+    "graphs": 37,
+    "hidden_runtime_placed": 0,
+    "objects": 147,
+    "textures": 41,
+    "textures_decoded": 41,
+    "textures_shown": 41,
+    "triangles": 41288,
+    "waypoints": 265
+   },
+   "ptr": "ead99e4313d3aceb54304a7bb5f221585bce97451545a7572c7997868eba6a1b",
+   "reason": "",
+   "transit": "f570b6ed498f2966f70efd94a3d82e8fb5d00038d578f7244d6e0cd37163a701"
+  },
+  "wood_11": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "9 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "4cdaad5aa72bd1fa3e369b50affb28450e458cfb4e6e9c19babbee0575cff54d",
+   "measured": {
+    "actors": 156,
+    "collision_triangles": 2890,
+    "graphs": 22,
+    "hidden_runtime_placed": 0,
+    "objects": 106,
+    "textures": 53,
+    "textures_decoded": 53,
+    "textures_shown": 53,
+    "triangles": 33793,
+    "waypoints": 202
+   },
+   "ptr": "72f8ee44123946b7356cc0e5918d783151e8b0f0884e0196827132c0b6df6101",
+   "reason": "",
+   "transit": "f395094a47634d516161d9fc4bdfb5334d66a38a61089deaca4cf0130754434a"
+  },
+  "wood_19": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "9 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "eebca8dc0c717f9466af4237e48a40d8d1cf410aa6ef116a5654e3bc0c023543",
+   "measured": {
+    "actors": 213,
+    "collision_triangles": 3157,
+    "graphs": 26,
+    "hidden_runtime_placed": 29,
+    "objects": 140,
+    "textures": 37,
+    "textures_decoded": 37,
+    "textures_shown": 36,
+    "triangles": 40316,
+    "waypoints": 232
+   },
+   "ptr": "4f5e316418442e4cb141274dbe7326dfa6bec5cd1a51d0741197ae7a7c8243d5",
+   "reason": "",
+   "transit": "864dc27efb720fed75784ee73fdc0b86642e0d94932c26ea0c66df539c93937b"
+  },
+  "wood_50": {
+   "class": "view",
+   "limits": [
+    "draw modes traced on intro_15 only (E-527); the same byte table is applied here, unverified",
+    "blend mode 0x03 is an approximation (never seen in a traced draw)",
+    "sky / backdrop roles and runtime-placed objects are a labelled heuristic (G6-P38)",
+    "5 scene link(s) skipped, never guessed"
+   ],
+   "lvl": "6180ea868adbee2b1061dd33722d714b20cd3fc1463874d759375b4232bb8986",
+   "measured": {
+    "actors": 32,
+    "collision_triangles": 1095,
+    "graphs": 15,
+    "hidden_runtime_placed": 0,
+    "objects": 45,
+    "textures": 45,
+    "textures_decoded": 45,
+    "textures_shown": 45,
+    "triangles": 29613,
+    "waypoints": 148
+   },
+   "ptr": "a48fdf4845fe5c37892ad73e4a3ed2100b477bf0cc65ab5c71a4a96f03d17ce5",
+   "reason": "",
+   "transit": "a017cc9bf8ea3047a0342165b1ce2185e7aa001b03c4fa060ab299f12fdb8289"
+  }
+ },
+ "min_triangles": 100,
+ "note": "G6-P68 (D-317 / E-554): measured by tools/g6p68_view_catalog_check.py measure on the person's extracted Xbox 360 HD files; hashes and counts only. 'view' = the 3D viewer may show it read only; editable levels are never offered as view-only."
+}

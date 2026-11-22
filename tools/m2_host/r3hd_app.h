@@ -11,6 +11,8 @@
 #include "r3hd_window_icon.h"
 #include "r3hd_discord.h"
 #include "r3hd_pc_settings.h"
+#include "r3hd_hud_toggle.h"
+#include <limits>
 void R3hdSwirlInitialize();
 #ifdef R3HD_PRIVATE_CAPTURE
 #include "trailer_capture_input.h"
@@ -137,6 +139,17 @@ class R3hdApp : public rex::ReXApp {
     if (!rex::ReXApp::SetupPresentation()) return false;
     // Keep the SDK/application IDs used by paths and tests; expose a stable product title to Windows.
     if (window()) window()->SetTitle("Rayman 3 HD Recompiled");
+    // Issue #6 / D-301: only with hud_toggle on is F5 taken from the game (r3hd_hud_toggle.h); off registers nothing.
+    REXLOG_INFO("R3HD hud_toggle={}", r3hd_hud::Enabled() ? "f5" : "off");
+    if (window() && r3hd_hud::Enabled()) {
+      hud_input_ = std::make_shared<r3hd_hud::Input>([this] {
+        return HostUiInputBlocked() || (pcset_drawer_ &&
+            (pcset_drawer_->GetIO().WantCaptureKeyboard || pcset_drawer_->GetIO().WantCaptureMouse));
+      });
+      r3hd_hud::state.Focus(window()->HasFocus());
+      window()->AddListener(hud_input_.get());
+      window()->AddInputListener(hud_input_.get(), std::numeric_limits<size_t>::max());
+    }
 #ifdef R3HD_PRIVATE_CAPTURE
     if (window()) {
       capture_input_ = std::make_shared<trailer_capture::Input>([this] {
@@ -170,6 +183,12 @@ class R3hdApp : public rex::ReXApp {
     capture_input_.reset();
     trailer_capture::state.Focus(false);
 #endif
+    if (window() && hud_input_) {
+      window()->RemoveInputListener(hud_input_.get());
+      window()->RemoveListener(hud_input_.get());
+    }
+    hud_input_.reset();
+    r3hd_hud::state.Focus(false);
     discord_.Stop();
     if (pcset_) {  // the drawer goes away with the app; no input to give back any more
       pcset_host_.closed = nullptr;
@@ -223,6 +242,7 @@ class R3hdApp : public rex::ReXApp {
   }
 #endif
   r3hd::DiscordPresence discord_;
+  std::shared_ptr<r3hd_hud::Input> hud_input_;  // D-301: null unless hud_toggle is on
   rex::ui::ImGuiDrawer* pcset_drawer_ = nullptr;
   r3hd_pcset::Panel* pcset_ = nullptr;  // D-139: deletes itself when it closes (ImGuiDialog)
   r3hd_pcset::Host pcset_host_;

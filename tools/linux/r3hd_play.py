@@ -29,6 +29,7 @@ import json
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
 from pathlib import Path
@@ -41,22 +42,22 @@ SETTING_PARAMS = {
     "GameLanguage": "game_language", "RenderScale": "render_scale", "LayerCoords": "layer_coords",
     "TextureOrient": "texture_orient", "RedCorrection": "red_correction", "SkyClear": "sky_clear",
     "LitUvScroll": "lit_uv_scroll", "PowerSwirl": "power_swirl", "BeamColor": "beam_color", "LockonColor": "lockon_far_color", "VSync": "display_vsync", "WindowSize": "window_size", "ComboClose": "combo_close",
-    "Diagnostics": "diagnostics", "GameplaySubtitles": "gameplay_subtitles", "DiscordPresence": "discord_presence",
+    "Diagnostics": "diagnostics", "GameplaySubtitles": "gameplay_subtitles", "HudToggle": "hud_toggle", "DiscordPresence": "discord_presence",
     "DualSenseLight": "dualsense_light", "DualSenseTrigger": "dualsense_trigger",
     "DualSenseTriggerStrength": "dualsense_trigger_strength", "DualSenseSpeaker": "dualsense_speaker",
     "DualSenseSpeakerVolume": "dualsense_speaker_volume", "MouseCamera": "mouse_camera",
     "MouseSensitivity": "mouse_sensitivity", "MouseButtons": "mouse_buttons", "ButtonPrompts": "controller_prompts",
 }
 # play.ps1: `$env:R3HD_X = $Param` for a setting passed through unchanged.
-# D-220: R3HD_DISPLAY_VSYNC is mapped for parity only; it is Windows-only (D3D12 presenter) and the Vulkan
-# presenter used here does not read it, so the preference has no effect on Linux.
+# D-220: R3HD_DISPLAY_VSYNC is read by the Windows D3D12 presenter only. On Linux the preference is applied by
+# VSYNC_ON_ARGS below instead (G6-P59, D-310); the variable stays mapped so session records match play.ps1.
 ENV_FROM_PARAM = {
     "R3HD_DISCORD": "DiscordPresence", "R3HD_DS_LIGHT": "DualSenseLight", "R3HD_DS_TRIGGER": "DualSenseTrigger",
     "R3HD_DS_TRIGGER_STRENGTH": "DualSenseTriggerStrength", "R3HD_DS_SPEAKER": "DualSenseSpeaker",
     "R3HD_DS_SPEAKER_VOLUME": "DualSenseSpeakerVolume", "R3HD_REVISIT": "Revisit", "R3HD_LAYER_COORDS": "LayerCoords",
     "R3HD_TEXTURE_ORIENT": "TextureOrient", "R3HD_RED_CORRECTION": "RedCorrection", "R3HD_SKY_CLEAR": "SkyClear",
     "R3HD_LIT_UV_SCROLL": "LitUvScroll", "R3HD_POWER_SWIRL": "PowerSwirl", "R3HD_BEAM_COLOR": "BeamColor", "R3HD_LOCKON_COLOR": "LockonColor", "R3HD_DISPLAY_VSYNC": "VSync", "R3HD_COMBO_CLOSE": "ComboClose",
-    "R3HD_GAMEPLAY_SUBTITLES": "GameplaySubtitles",
+    "R3HD_GAMEPLAY_SUBTITLES": "GameplaySubtitles", "R3HD_HUD_TOGGLE": "HudToggle",
     "R3HD_BUTTON_PROMPTS": "ButtonPrompts",
 }
 GAME_LANGUAGE_ID = {"en": 1, "fr": 4, "es": 5, "it": 6, "de": 3}  # play.ps1 $gameLanguageId
@@ -70,7 +71,15 @@ TEST_ONLY = ("R3HD_NONINTRUSIVE", "R3HD_TEST_SECONDS", "R3HD_INPUT_SCHEDULE", "R
              "R3HD_PAD_MAP", "R3HD_DISCORD", "R3HD_DS_LIGHT", "R3HD_DS_TRIGGER", "R3HD_DS_TRIGGER_STRENGTH",
              "R3HD_DS_SPEAKER", "R3HD_DS_SPEAKER_VOLUME", "R3HD_ACH_TEXT", "R3HD_PCSET_TEST", "R3HD_PCSET_HOME",
              "R3HD_PCSET_PYTHON", "R3HD_PCSET_TOOLS", "R3HD_PCSET_SESSION", "R3HD_PCSET_SETTINGS_APP", "R3HD_BUTTON_PROMPTS", "R3HD_BUTTON_PROMPTS_PLAN", "R3HD_BUTTON_PROMPTS_TEST", "R3HD_BUTTON_PROMPTS_EFFECTIVE")
-FORBIDDEN_EXTRA = ("--license_mask=", "--user_language=", "--cl=", "--bind_settings=", "--bind_debug_overlay=")
+FORBIDDEN_EXTRA = ("--license_mask=", "--user_language=", "--cl=", "--bind_settings=", "--bind_debug_overlay=",
+                   "--vulkan_allow_present_mode_")
+# G6-P59 (D-310): V-Sync On for the pinned Vulkan presenter (src/ui/vulkan/vulkan_presenter.cpp, SDK c94f5eb). It
+# prefers IMMEDIATE, then MAILBOX, then FIFO_RELAXED, then FIFO; refusing the first three selects FIFO, the only mode
+# Vulkan guarantees, which presents once per vertical blank and never tears. With FIFO the presenter reports implicit
+# V-Sync, as the D3D12 patch does for Present(1, 0). Off passes nothing: the pinned presentation is unchanged, as on
+# Windows. Launch-time cvars only: no SDK patch, no guest vblank change (the SDK's `vsync` cvar is never touched).
+VSYNC_ON_ARGS = ("--vulkan_allow_present_mode_immediate=false", "--vulkan_allow_present_mode_mailbox=false",
+                 "--vulkan_allow_present_mode_fifo_relaxed=false")
 SESSION_LIMIT = 10  # play.ps1 $sessionLimit (M31): an installed home keeps its 10 newest sessions
 APP_ID = "rayman3hd-recompiled"  # SDL_APP_ID: the Wayland app_id / X11 WM_CLASS that the desktop entry names
 
@@ -238,6 +247,9 @@ def build_plan(a, now=None):
             key_args = [k for k in key_args if not k.startswith("--mnk_modifier_keys=")]
         args += key_args
     args.append(f"--user_language={GAME_LANGUAGE_ID[v['GameLanguage']]}")
+    vsync_on = v["VSync"] == "on"
+    if vsync_on:
+        args += VSYNC_ON_ARGS
     args += a.extra
 
     plan, ach_text, mods_text, mod_notes = mods_plan(home, cache, game, a.mods == "on")
@@ -280,6 +292,7 @@ def build_plan(a, now=None):
         "keyboard": f"{keyboard.get('layout_name')} ({keyboard.get('state')})" if not a.no_keyboard else "none",
         "controller": f"{controller.get('state')}{': ' + controller['env'] if controller.get('env') else ''}",
         "mods": mods_text, "notes": notes,
+        "vsync": "on (Vulkan FIFO presentation)" if vsync_on else "off (presentation unchanged)",
     }
 
 
@@ -466,6 +479,7 @@ def launch(plan, bin_dir):
     for name in plan.get("prune_sessions", []):  # M31: only timestamp-named session folders of an installed home
         shutil.rmtree(session.parent / name, ignore_errors=True)
     session.mkdir(parents=True, exist_ok=True)
+    plan["platform"] = "linux"  # G6-P58: the support report applies the Linux rules even to an unfinished record
     (session / "session.json").write_text(json.dumps(plan, indent=1) + "\n", encoding="utf-8")
     env = {k: v for k, v in os.environ.items() if k not in TEST_ONLY}
     for k, v in plan["env"].items():
@@ -474,7 +488,96 @@ def launch(plan, bin_dir):
         else:
             env.pop(k, None)  # empty: the variable stays unset, as in play.ps1
     env["LD_LIBRARY_PATH"] = os.pathsep.join(p for p in (str(bin_dir), os.environ.get("LD_LIBRARY_PATH", "")) if p)
+    plan["started"] = datetime.datetime.now().isoformat()  # G6-P58: for the duration in the finished session.json
     return subprocess.call([plan["executable"], *plan["arguments"]], env=env, cwd=session)  # play.ps1: -WorkingDirectory $session
+
+
+def log_census(session):
+    """play.ps1 Get-LogCensus over runtime.N.log (oldest first) and runtime.log: counts and the last 15 lines.
+    The Windows-only parts (m2_faults.log host exceptions, licence masks) are left out."""
+    census = {"lines": 0, "warning": 0, "error": 0, "critical": 0, "stub_imports": 0, "last_lines": []}
+    rotated = sorted(session.glob("runtime.*.log"), key=lambda p: int(p.name.split(".")[1])
+                     if p.name.split(".")[1].isdigit() else -1, reverse=True)
+    for f in [*rotated, session / "runtime.log"]:
+        if not f.is_file():
+            continue
+        with open(f, encoding="utf-8", errors="replace") as fh:
+            for line in fh:
+                line = line.rstrip("\r\n")
+                census["lines"] += 1
+                for level in ("warning", "error", "critical"):
+                    if f"] [{level}] " in line:
+                        census[level] += 1
+                        break
+                if " stub=true count=1 " in line:
+                    census["stub_imports"] += 1
+                census["last_lines"] = (census["last_lines"] + [line])[-15:]
+    return census
+
+
+def finalize_session(plan, exit_code, ended=None):
+    """G6-P58: complete session.json after the game ends, with the fields play.ps1 records that apply on Linux, so the
+    shared support report (r3hd_installer.py support-report) can read it. A negative exit code is a signal
+    (subprocess). Nothing is guessed: no NTSTATUS code, no Windows crash handler fields."""
+    session = Path(plan["session"])
+    ended = ended or datetime.datetime.now()
+    record = dict(plan)
+    values = plan.get("settings", {}).get("values", {})
+    scale = next((a.split("=", 1)[1] for a in plan.get("arguments", []) if a.startswith("--resolution_scale=")), None)
+    record.update({
+        "platform": "linux", "preset": plan.get("settings", {}).get("label"),
+        "license_mode": "trial" if plan.get("env", {}).get("R3HD_TRIAL") else "full",
+        "render_scale": int(scale) if scale and scale.isdigit() else scale,
+        **{k: values[k] for k in ("display", "pacing", "display_vsync", "diagnostics", "game_language",
+                                  "controller_prompts") if k in values},
+        "ended": ended.isoformat(), "exit_code": exit_code, "clean_exit": exit_code == 0,
+        "crash_report": (session / "r3hd_crash.txt").is_file(), "log": log_census(session),
+    })
+    if plan.get("started"):
+        record["seconds"] = round((ended - datetime.datetime.fromisoformat(plan["started"])).total_seconds(), 1)
+    if exit_code < 0:
+        try:
+            record["exit_signal"] = signal.Signals(-exit_code).name
+        except ValueError:
+            record["exit_signal"] = f"signal {-exit_code}"
+    try:
+        h = hashlib.sha256()
+        with open(plan["executable"], "rb") as fh:
+            for chunk in iter(lambda: fh.read(1 << 20), b""):
+                h.update(chunk)
+        record["executable_sha256"] = h.hexdigest()
+    except OSError:
+        pass
+    (session / "session.json").write_text(json.dumps(record, indent=1) + "\n", encoding="utf-8")
+    return record
+
+
+def write_support_report(session, run=subprocess.run):
+    """G6-P46/G6-P58: the redacted local support_report.txt, through the same engine command play.ps1 calls.
+    Best effort: returns its path or None; never raises, never changes the session's exit code. Nothing is uploaded."""
+    session = Path(session)
+    try:
+        r = run([sys.executable, "-B", str(TOOLS / "r3hd_installer.py"), "support-report", "--home",
+                 str(session.parent.parent), "--session", session.name, "--json"],
+                capture_output=True, text=True, timeout=120, check=False)
+        return json.loads(r.stdout)["report"] if r.returncode == 0 else None
+    except Exception:  # noqa: BLE001 - any failure leaves the session result untouched
+        return None
+
+
+def finish(plan, exit_code, run=subprocess.run):
+    """Record the session and write the support report, best effort; returns exit_code unchanged."""
+    try:
+        record = finalize_session(plan, exit_code)
+        sig = f" ({record['exit_signal']})" if record.get("exit_signal") else ""
+        print(f"Session {Path(plan['session']).name} ended after {record.get('seconds', '?')} s, exit code {exit_code}{sig}.")
+    except Exception as e:  # noqa: BLE001
+        print(f"note: session.json could not be completed: {type(e).__name__}", file=sys.stderr)
+    print(f"Diagnostics: {plan['session']}")
+    report = write_support_report(plan["session"], run)
+    if report:
+        print(f"Support report (redacted; review before sharing): {report}")
+    return exit_code
 
 
 def main(argv=None) -> int:
@@ -518,9 +621,10 @@ def main(argv=None) -> int:
         print(f"note: {w}")
     print(f"R3HD_PLAY session={plan['session']} preset={plan['settings']['label']} render={plan['render']} mods={plan['mods']}")
     print(f"In-game PC Settings: {plan['pc_settings']}")
+    print(f"V-Sync: {plan['vsync']}")
     if plan.get("installed"):
         update_desktop_entry_if_present(a.home)  # E-379: an existing entry follows this home (icon, paths)
-    return launch(plan, Path(plan["executable"]).parent)
+    return finish(plan, launch(plan, Path(plan["executable"]).parent))
 
 
 if __name__ == "__main__":

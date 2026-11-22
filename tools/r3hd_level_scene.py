@@ -295,12 +295,23 @@ class Scene:
         if bhf is None or not bhf.is_file():
             raise SceneError("TEXTURE_MISSING", f"{t['name']}: no bundle for file id {t['file']}")
         want = t["name"].lower()[:-4] + ".dds"
-        for e in rm.bhf_entries(bhf):
-            if e[0].lower() == want:
-                base, mips, _ = rm.layout(t["width"], t["height"], t["format"])
-                if (base, mips) != (e[1], e[3]):
-                    raise SceneError("LAYOUT", f"{t['name']}: stored sizes {e[1]} / {e[3]} differ from {base} / {mips}")
-                return bhf, e
+        # G6-P70: each bundle's entry table is read once per Scene (it was re-read for every texture); first entry of a
+        # name wins, as in the former linear search. Owned by this Scene, so it ends with the level.
+        index = self.__dict__.setdefault("_bundle_index", {})
+        names = index.get(bhf)
+        if names is None:                             # built fully before it is kept: a read error stays an error
+            names = {}
+            for e in rm.bhf_entries(bhf):
+                names.setdefault(e[0].lower(), e)
+            index[bhf] = names
+        e = names.get(want)
+        if e is not None:
+            base, mips, _ = rm.layout(t["width"], t["height"], t["format"])
+            if base is None and (e[1], e[3]) == (packed_base_tile(t["width"], t["height"], t["format"]), 0):
+                return bhf, e                                         # G6-P68: base level in the packed tail
+            if (base, mips) != (e[1], e[3]):
+                raise SceneError("LAYOUT", f"{t['name']}: stored sizes {e[1]} / {e[3]} differ from {base} / {mips}")
+            return bhf, e
         raise SceneError("TEXTURE_MISSING", f"{t['name']} is not in {bhf.name}")
 
     def decode_texture(self, key, max_side=256):
@@ -310,6 +321,8 @@ class Scene:
         t = self.textures[key]
         bhf, e = self.texture_entry(key)
         w, h, fmt = t["width"], t["height"], t["format"]
+        if rm.layout(w, h, fmt)[0] is None:
+            return self._decode_packed_base(bhf, e, w, h, fmt)
         base_size, _, levels = rm.layout(w, h, fmt)
         bpb = 16 if fmt == "DXT5" else 8
         pick = 0
@@ -322,10 +335,27 @@ class Scene:
             fh.seek(start)
             raw = rm.swap16(fh.read(size))
         rows = [raw[area + j * pitch:area + j * pitch + ((lw + 3) // 4) * bpb] for j in range((lh + 3) // 4)]
-        upright = rm.decode_level(lw, lh, rows, fmt)
-        stride = lw * 4
-        stored = b"".join(upright[(lh - 1 - y) * stride:(lh - y) * stride] for y in range(lh))
-        return lw, lh, stored
+        return lw, lh, decode_stored(lw, lh, rows, fmt)
+
+    @staticmethod
+    def _decode_packed_base(bhf, e, w, h, fmt):
+        """G6-P68 (E-554): a 16 x 16 texture whose base level sits in the packed mip tail. The entry is one tail page
+        (32 x 32 blocks, no mip blob); the base is at the pinned SDK's GetPackedMipOffset for level 0 (rm.
+        packed_mip_offset). Evidence on the four census records: sfx\\white decodes to one colour (255, 255, 255,
+        255); mip 1 at its own offset equals the 2 x 2 box filter of the base within DXT rounding; three differently
+        filled sk8 pages give byte-identical bases; four wrong offsets fail both checks."""
+        bpb = 16 if fmt == "DXT5" else 8
+        pitch = rm._align(32 * bpb, 256)
+        x, y = rm.packed_mip_offset(w, h, 0)
+        bx, by = x // 4, y // 4
+        with open(bhf.with_suffix(".btf"), "rb") as fh:
+            fh.seek(e[2])
+            raw = rm.swap16(fh.read(e[1]))
+        nbx, nby = (w + 3) // 4, (h + 3) // 4
+        if len(raw) < (by + nby) * pitch:
+            raise SceneError("LAYOUT", f"packed tail page of {len(raw)} bytes is too short")
+        rows = [raw[(by + j) * pitch + bx * bpb:(by + j) * pitch + (bx + nbx) * bpb] for j in range(nby)]
+        return w, h, decode_stored(w, h, rows, fmt)
 
     # ---------------------------------------------------------------------------------------------------- summaries
     def triangle_count(self):
@@ -357,6 +387,117 @@ class Scene:
                 "roles": {r: sum(1 for o in self.objects if o.get("role") == r)
                           for r in sorted({o.get("role", "scene") for o in self.objects})},
                 "note": "game-derived statistics; keep any geometry or pixels under private/"}
+
+
+def packed_base_tile(w, h, fmt):
+    """G6-P68: stored size of the one evidenced packed-base shape (square 16 x 16, DXT1 or DXT5: one 32 x 32-block
+    tail page); None for every other shape, which stays unsupported (LAYOUT) rather than guessed."""
+    if (w, h) != (16, 16) or fmt not in ("DXT1", "DXT5"):
+        return None
+    bpb = 16 if fmt == "DXT5" else 8
+    return rm._align(32 * bpb, 256) * 32
+
+
+# ---------------------------------------------------------------------------------------------------------- DXT decode
+# G6-P70 (E-556): the viewer's decoder. Same arithmetic as rm.decode_level (the mod pipeline's decoder, unchanged and
+# the byte oracle), but written per block row instead of per texel, straight into storage row order: texel row r of the
+# result is block row r // 4, texel row r % 4 - exactly rm.decode_level followed by the vertical flip it replaced.
+_C5 = [(v * 255 + 15) // 31 for v in range(32)]                   # rm._rgb, per channel
+_C6 = [(v * 255 + 31) // 63 for v in range(64)]
+_IDX4 = [tuple((b >> (2 * i)) & 3 for i in range(4)) for b in range(256)]          # colour index byte -> 4 indices
+_AIDX4 = [bytes((v >> (3 * i)) & 7 for i in range(4)) for v in range(4096)]        # 12 alpha bits -> 4 indices
+_PAD248 = bytes(248)
+
+
+def decode_stored_reference(w, h, rows, fmt):
+    """The pre-G6-P70 path (rm.decode_level, then flipped to storage order): any shape, and the oracle."""
+    upright = rm.decode_level(w, h, rows, fmt)
+    stride = w * 4
+    return b"".join(upright[(h - 1 - y) * stride:(h - y) * stride] for y in range(h))
+
+
+def _colour_palette(k, four):
+    """Four RGBA entries (4 bytes each) of a colour block whose endpoints are the 4 bytes k (little-endian)."""
+    c0, c1 = k[0] | k[1] << 8, k[2] | k[3] << 8
+    r0, g0, b0 = _C5[c0 >> 11], _C6[(c0 >> 5) & 63], _C5[c0 & 31]
+    r1, g1, b1 = _C5[c1 >> 11], _C6[(c1 >> 5) & 63], _C5[c1 & 31]
+    if four or c0 > c1:
+        return (bytes((r0, g0, b0, 255)), bytes((r1, g1, b1, 255)),
+                bytes(((2 * r0 + r1 + 1) // 3, (2 * g0 + g1 + 1) // 3, (2 * b0 + b1 + 1) // 3, 255)),
+                bytes(((r0 + 2 * r1 + 1) // 3, (g0 + 2 * g1 + 1) // 3, (b0 + 2 * b1 + 1) // 3, 255)))
+    return (bytes((r0, g0, b0, 255)), bytes((r1, g1, b1, 255)),
+            bytes(((r0 + r1) // 2, (g0 + g1) // 2, (b0 + b1) // 2, 255)), b"\0\0\0\0")
+
+
+def _alpha_table(a0, a1):
+    """DXT5 alpha palette as a 256-byte bytes.translate table (indices 0..7 used)."""
+    if a0 > a1:
+        pal = [a0, a1] + [((7 - k) * a0 + k * a1 + 3) // 7 for k in range(1, 7)]
+    else:
+        pal = [a0, a1] + [((5 - k) * a0 + k * a1 + 2) // 5 for k in range(1, 5)] + [0, 255]
+    return bytes(pal) + _PAD248
+
+
+def _alpha_lines(row, n, nbx):
+    """The four alpha lines (nbx * 4 bytes each, missing blocks 0) of one DXT5 block row, concatenated."""
+    q0, q1, q2, q3 = [], [], [], []
+    tables = {}
+    ai = _AIDX4
+    for o in range(0, n * 16, 16):
+        k = row[o:o + 2]
+        t = tables.get(k)
+        if t is None:
+            t = tables[k] = _alpha_table(k[0], k[1])
+        bits = int.from_bytes(row[o + 2:o + 8], "little")
+        q0.append(ai[bits & 4095].translate(t))
+        q1.append(ai[(bits >> 12) & 4095].translate(t))
+        q2.append(ai[(bits >> 24) & 4095].translate(t))
+        q3.append(ai[bits >> 36].translate(t))
+    pad = bytes(4 * (nbx - n))
+    j = b"".join
+    return j((j(q0), pad, j(q1), pad, j(q2), pad, j(q3), pad))
+
+
+def decode_stored(w, h, rows, fmt):
+    """Storage-order RGBA of one DXT level (rows = block rows, little-endian blocks), byte-identical to
+    decode_stored_reference. Like rm.decode_level: a short or missing block row leaves zero texels, extra blocks are
+    ignored, and every format other than DXT5 is read as DXT1 (the scene reader only yields those two). A side that is
+    not a multiple of 4 takes the reference path (no viewer level has one)."""
+    if w % 4 or h % 4:
+        return decode_stored_reference(w, h, rows, fmt)
+    dxt5 = fmt == "DXT5"
+    bpb, co = (16, 8) if dxt5 else (8, 0)
+    nbx = w // 4
+    palettes = {}                                  # this level's colour endpoints -> palette (dropped on return)
+    idx4, join = _IDX4, b"".join
+    lines, alpha = [], []
+    for by in range(h // 4):
+        row = bytes(rows[by]) if by < len(rows) else b""
+        n = min(len(row) // bpb, nbx)
+        p0, p1, p2, p3 = [], [], [], []
+        for o in range(co, co + n * bpb, bpb):
+            k = row[o:o + 4]
+            pal = palettes.get(k)
+            if pal is None:
+                pal = palettes[k] = _colour_palette(k, dxt5)
+            a, b, c, d = idx4[row[o + 4]]
+            p0.append(join((pal[a], pal[b], pal[c], pal[d])))
+            a, b, c, d = idx4[row[o + 5]]
+            p1.append(join((pal[a], pal[b], pal[c], pal[d])))
+            a, b, c, d = idx4[row[o + 6]]
+            p2.append(join((pal[a], pal[b], pal[c], pal[d])))
+            a, b, c, d = idx4[row[o + 7]]
+            p3.append(join((pal[a], pal[b], pal[c], pal[d])))
+        pad = bytes(16 * (nbx - n))
+        lines += (join(p0), pad, join(p1), pad, join(p2), pad, join(p3), pad)
+        if dxt5:
+            alpha.append(_alpha_lines(row, n, nbx))
+    out = join(lines)
+    if not dxt5:
+        return out
+    buf = bytearray(out)                           # DXT5: the alpha block replaces the colour block's 255
+    buf[3::4] = join(alpha)
+    return bytes(buf)
 
 
 # ---------------------------------------------------------------------------------------------------------- checks
@@ -481,6 +622,26 @@ def selftest() -> int:
     blue = struct.pack("<HHI", 0x001F, 0x001F, 0)
     up = rm.decode_level(4, 8, [red, blue], "DXT1")
     check("decode_level is upright (stored first row at the bottom)", up[0:4] == bytes((0, 0, 255, 255)))
+    # G6-P70: the viewer decoder equals the reference byte for byte (both DXT1 modes, both DXT5 alpha modes, equal
+    # endpoints, short / missing / extra rows and blocks, a bytearray row, a non-multiple-of-4 side)
+    import random
+    rnd = random.Random(70)
+    same = []
+    for fmt in ("DXT1", "DXT5"):
+        bpb = 16 if fmt == "DXT5" else 8
+        for w_, h_ in ((4, 4), (8, 4), (64, 32), (16, 16), (32, 128), (6, 6), (12, 2)):
+            nbx, nby = (w_ + 3) // 4, (h_ + 3) // 4
+            rows = [bytes(rnd.getrandbits(8) for _ in range(nbx * bpb)) for _ in range(nby)]
+            for j in range(0, len(rows), 3):           # forced equal / reversed endpoints and alpha ends
+                r = bytearray(rows[j])
+                r[bpb - 8:bpb - 4] = r[bpb - 6:bpb - 4] * 2 if j % 2 else bytes((0, 0, 0xFF, 0xFF))
+                if fmt == "DXT5":
+                    r[0:2] = bytes((3, 200)) if j % 2 else bytes((9, 9))
+                rows[j] = bytes(r)
+            variants = [rows, rows[:-1], rows + [rows[0]], [rows[0][:bpb + 3]] + rows[1:],
+                        [rows[0] + rows[0][:bpb]] + rows[1:], [bytearray(rows[0])] + rows[1:]]
+            same += [decode_stored(w_, h_, v, fmt) == decode_stored_reference(w_, h_, v, fmt) for v in variants]
+    check(f"G6-P70 decode_stored == reference on {len(same)} synthetic levels", all(same) and len(same) == 84)
     print(f"r3hd_level_scene selftest {sum(ok)}/{len(ok)}")
     return 0 if all(ok) else 1
 

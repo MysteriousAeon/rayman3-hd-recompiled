@@ -1,10 +1,10 @@
 {
   "schema": 1,
   "strings": {
-    "&3D Level Remix Editor...": {"en": "Experimental &3D Level Viewer...", "tr": "Deneysel &3B Bölüm Görüntüleyici..."},
+    "Experimental &3D Level Viewer...": {"en": "Experimental &3D Level Viewer...", "tr": "Deneysel &3B Bölüm Görüntüleyici..."},
     "C&lassic / Advanced Editor...": {"en": "C&lassic / Advanced Editor...", "tr": "K&lasik / Gelişmiş Düzenleyici..."},
-    "The 3D Level Remix Editor is opening in its own window. Install its exported mod here, then play.": {"en": "The Experimental 3D Level Viewer is opening in its own window. Install its exported mod here, then play.", "tr": "Deneysel 3B Bölüm Görüntüleyici kendi penceresinde açılıyor. Dışa aktardığı modu buradan yükleyin, sonra oynayın."},
-    "The 3D Level Remix Editor could not start: ": {"en": "The Experimental 3D Level Viewer could not start: ", "tr": "Deneysel 3B Bölüm Görüntüleyici başlatılamadı: "},
+    "The Experimental 3D Level Viewer is opening in its own window. Install its exported mod here, then play.": {"en": "The Experimental 3D Level Viewer is opening in its own window. Install its exported mod here, then play.", "tr": "Deneysel 3B Bölüm Görüntüleyici kendi penceresinde açılıyor. Dışa aktardığı modu buradan yükleyin, sonra oynayın."},
+    "The Experimental 3D Level Viewer could not start: ": {"en": "The Experimental 3D Level Viewer could not start: ", "tr": "Deneysel 3B Bölüm Görüntüleyici başlatılamadı: "},
     "The level editor could not start: ": {"en": "The level editor could not start: ", "tr": "Bölüm düzenleyici başlatılamadı: "},
     "The level editor is opening in its own window. Install its exported mod here, then play.": {"en": "The level editor is opening in its own window. Install its exported mod here, then play.", "tr": "Bölüm düzenleyici kendi penceresinde açılıyor. Dışa aktardığı modu buradan yükleyin, sonra oynayın."},
     "Xbox": {"en": "Xbox", "tr": "Xbox"},
@@ -136,9 +136,9 @@
       "en": "Rendering resolution",
       "tr": "Görüntü çözünürlüğü"
     },
-    "Auto selects the smallest supported rendering resolution that covers your screen in Fullscreen, or your window in Window mode, up to 2160p. In Fullscreen on a 1080p display, the game renders at 1440p. If performance is poor, manually selecting 720p can help.": {
-      "en": "Auto selects the smallest supported rendering resolution that covers your screen in Fullscreen, or your window in Window mode, up to 2160p. In Fullscreen on a 1080p display, the game renders at 1440p. If performance is poor, manually selecting 720p can help.",
-      "tr": "Otomatik, tam ekran modunda ekran boyutunuza, pencere modunda ise pencere boyutuna göre uygun olan en düşük desteklenen görüntü çözünürlüğünü seçer (en fazla 2160p). Örneğin, 1080p ekranda tam ekran oynarken oyun 1440p çözünürlükte işlenir. Performans sorunu yaşıyorsanız 720p seçeneğini deneyebilirsiniz."
+    "Auto selects the smallest supported rendering resolution that covers the 16:9 game picture on your screen or window, not counting black bars, up to 2160p. In Fullscreen on a 1080p display, the game renders at 1440p. If performance is poor, manually selecting 720p can help.": {
+      "en": "Auto selects the smallest supported rendering resolution that covers the 16:9 game picture on your screen or window, not counting black bars, up to 2160p. In Fullscreen on a 1080p display, the game renders at 1440p. If performance is poor, manually selecting 720p can help.",
+      "tr": "Otomatik, ekranın ya da pencerenin tamamına değil, siyah çubuklar dışında kalan 16:9 oyun görüntüsüne uygun en düşük desteklenen görüntü çözünürlüğünü seçer (en fazla 2160p). Örneğin, 1080p ekranda tam ekran oynarken oyun 1440p çözünürlükte işlenir. Performans sorunu yaşıyorsanız 720p seçeneğini deneyebilirsiniz."
     },
     "Auto": {
       "en": "Auto",
@@ -219,6 +219,14 @@
     "Also outside cutscenes. The game's Subtitles option still applies.": {
       "en": "Also outside cutscenes. The game's Subtitles option still applies.",
       "tr": "Ara sahneler dışında da altyazı gösterir. Oyunun Altyazılar seçeneği yine geçerlidir."
+    },
+    "Score HUD toggle (F5)": {
+      "en": "Score HUD toggle (F5)",
+      "tr": "Skor göstergesi kısayolu (F5)"
+    },
+    "F5 hides or shows the score and Combo Meter. Other HUD stays.": {
+      "en": "F5 hides or shows the score and Combo Meter. Other HUD stays.",
+      "tr": "F5 skoru ve Kombo Göstergesi'ni gizler/gösterir. Diğer HUD kalır."
     },
     "Settings language": {
       "en": "Settings language",
@@ -1232,9 +1240,17 @@
       "en": "The game is already being started.",
       "tr": "Oyun zaten başlatılıyor."
     },
-    "The last session ended unexpectedly. Logs: sessions\\{session}": {
-      "en": "The last session ended unexpectedly. Logs: sessions\\{session}",
-      "tr": "Son oturum beklenmedik biçimde sonlandı. Günlükler: sessions\\{session}"
+    "The last session ended unexpectedly. Logs and support_report.txt: sessions\\{session}": {
+      "en": "The last session ended unexpectedly. Logs and support_report.txt: sessions\\{session}",
+      "tr": "Son oturum beklenmedik şekilde sona erdi. Kayıtlar ve support_report.txt: sessions\\{session}"
+    },
+    "The game couldn't be started. Check the latest support report for details.": {
+      "en": "The game couldn't be started. Check the latest support report for details.",
+      "tr": "Oyun başlatılamadı. Ayrıntılar için son destek raporunu kontrol edin."
+    },
+    "The game couldn't be started.": {
+      "en": "The game couldn't be started.",
+      "tr": "Oyun başlatılamadı."
     },
     "The mod component could not be started.": {
       "en": "The mod component could not be started.",

@@ -1,0 +1,35 @@
+# G6-P62: the finished campaign, loaded from a genuine save, revisits the last world.
+#   Working copy of the private entry endgame_finished_human (M25 session 20261013-202020, snapshot 026: state
+#   finished, end-of-game flag 1, names endgame). title -> Load -> slot -> endgame (the hub) -> LT x2 (page 8,
+#   The Tower of the Leptys) -> A (Revisit: offered only with the end-of-game flag set, RE_NOTES "M18")
+#   -> "quit the current game and revisit a previous level?" (cursor on No) -> left + A -> Tower_10 in revisit
+#   mode. Hub navigation as config/m18/hub_tower.txt; load steps as tools/m12_save_entry.py load_steps.
+# Regression: python tools/g6p62_late_campaign_check.py TAG finished_tower_revisit
+log VIDEOS\ubi.bik result=00000000
+log menumap\menumap.lvl result=00000000
+wait 10
+press 40
+wait 12
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 2
+press 44
+wait 8
+press 44
+log endgame\endgame.lvl result=00000000 60
+wait 15
+press 20
+wait 1.5
+press 20
+wait 1.5
+press 44
+wait 2
+axis 300 -32767
+wait 0.3
+axis 300 0
+wait 1.2
+press 44
+wait 2
+log tower_10\tower_10.lvl result=00000000 40
+wait 20

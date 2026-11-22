@@ -191,7 +191,8 @@ check(mapping == {s["launcher"]: k for k, s in S.items() if s.get("launcher")},
       "play.ps1: the parameter map covers exactly the runtime settings")
 check("$PSBoundParameters.ContainsKey($_)" in block and "'r3hd_settings.py'" in block and block.count("Set-Variable") == 1,
       "play.ps1: explicit parameters are passed on; the resolver sets the rest")
-check("preset = $presetLabel" in play and play.count("preset = $presetLabel") == 2, "play.ps1: the preset is recorded with the session")
+# launch.json, session.json and (G6-P73, D-322) the launcher-only session.json of a start Windows refused
+check("preset = $presetLabel" in play and play.count("preset = $presetLabel") == 3, "play.ps1: the preset is recorded with the session")
 check("python" not in play[:play.index("# --- presets (M27")].split("param(")[1], "play.ps1: no Python before a preset is asked for")
 
 # --- 3. play.ps1 -DryRun -------------------------------------------------------------------------------------

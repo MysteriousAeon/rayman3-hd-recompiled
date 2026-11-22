@@ -10,6 +10,7 @@
 
 The GUI runs with its root window withdrawn (never shown); handlers are called directly, never desktop input. Mods are
 imported into private test folders under private/work/e524, never the person's. No game process, build or gate change.
+`check` also takes --identity X / --bin DIR for its build identity row (build_identity.py; G6-P64, D-313).
 """
 import json
 import math
@@ -36,10 +37,12 @@ EX = HERE / "remix_examples"
 STAGE_PY = ROOT / "private" / "work" / "e520" / "stage" / "payload" / "app" / "python" / "python.exe"
 LEVELS = ("intro_10", "intro_15", "intro_20")
 BIN = ROOT / "private" / "work" / "rex" / "out" / "build" / "win-amd64-release"
-# G6-P39 (D-295): the current validated production identity (G6-P36 relink, D-292; was 6635d232... at G6-P30)
-CURRENT = json.loads((ROOT / "config" / "release" / "production_identity.json").read_text(
-    encoding="utf-8"))["current"]["binaries"]
-PROD = {"r3hd.exe": CURRENT["r3hd.exe"]}
+# G6-P39 (D-295) pinned the validated production identity here (G6-P36 relink, D-292; was 6635d232... at G6-P30).
+# G6-P64 (D-313): build_identity.py picks it: `development` (the last authoritative replay) by default, or a
+# historical identity at its retained folder with `check --identity release|D-292`; nested checks get the same choice.
+import build_identity as bi  # noqa: E402
+PROD = ("r3hd.exe",)
+IDENT, IDENT_BIN = "development", None
 EXAMPLES = {
     "intro10_lums_on_flight_path.r3hdmap.json": (
         ["intro10-lums-on-flight-path"], "intro_10", "example.intro10-lums",
@@ -432,7 +435,7 @@ def check():
 
     # ------------------------------------------------------------------ A6 regressions
     a6 = {}
-    r = subprocess.run([sys.executable, "-I", str(HERE / "g6p33_remix_check.py"), "check"], cwd=ROOT,
+    r = subprocess.run([sys.executable, "-I", str(HERE / "g6p33_remix_check.py"), "check", *bi.forward(IDENT, IDENT_BIN)], cwd=ROOT,
                        capture_output=True, text=True, timeout=1500)
     last = [x for x in r.stdout.splitlines() if x.startswith("G6-P33 ")]
     det["g6p33"] = last
@@ -480,9 +483,10 @@ def check():
     a8["no window shown, no desktop input (withdrawn roots; handlers called directly); no game process"] = True
     st = subprocess.run([sys.executable, str(HERE / "g5p1_dev_gate.py"), "status"], cwd=ROOT, capture_output=True,
                         text=True).stdout.strip()
-    a8["development gate production; r3hd.exe = the production identity; variable absent"] = (
-        st == "production" and rm.STRUCT_ENV not in os.environ and all(
-            rm.sha256_bytes((BIN / n).read_bytes()) == h for n, h in PROD.items()))
+    id_ok, id_label, id_det = bi.verify(IDENT, PROD, IDENT_BIN)
+    det["identity"] = dict(id_det, label=id_label)
+    a8["development gate production; r3hd.exe = the build identity (G6-P64 build_identity); variable absent"] = (
+        st == "production" and rm.STRUCT_ENV not in os.environ and id_ok)
     ex_ok = True
     for fn in EXAMPLES:
         d = json.loads((EX / fn).read_bytes())
@@ -549,7 +553,8 @@ def runtime(tools, game, work):
 
 
 if __name__ == "__main__":
-    if sys.argv[1:] == ["check"]:
+    _rest, IDENT, IDENT_BIN = bi.parse(sys.argv[1:])
+    if _rest == ["check"]:
         sys.exit(check())
     if sys.argv[1:] == ["examples"]:
         sys.exit(write_examples())

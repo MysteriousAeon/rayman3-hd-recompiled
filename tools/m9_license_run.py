@@ -43,6 +43,18 @@ def main() -> int:
     parser.add_argument("--extra", default="")
     parser.add_argument("--test-level", default="",
                         help="M13 (D-040): isolated test-only entry into this level directory (guest option -level:)")
+    parser.add_argument("--input-user", type=int, choices=(0, 1, 2, 3), default=0,
+                        help="G6-P77 (test only): guest user that receives the scoped schedule (runner -TestInputUser)")
+    parser.add_argument("--profile-trace", action="store_true",
+                        help="G6-P77 (test only): log the profile / save boundary XAM imports (runner -ProfileTrace)")
+    parser.add_argument("--profile-handoff", action="store_true",
+                        help="G6-P79 (test only, D-328): the profile handoff prototype (runner -ProfileHandoff)")
+    parser.add_argument("--user-events", action="store_true",
+                        help="G6-P80 (test only, D-329): user-scoped schedule events and scripted message-box "
+                             "answers (runner -UserEvents)")
+    parser.add_argument("--signin-notify-legacy", action="store_true",
+                        help="G6-P83 (D-332): select the legacy XamShowSigninUI notification, XN_SYS_SIGNINCHANGED on "
+                             "every call (runner -SigninNotifyLegacy); default: only on an owner change")
     parser.add_argument("--audio-after", type=int, default=0,
                         help="M12: start the bounded 10 s float capture this many seconds after start-up")
     args = parser.parse_args()
@@ -88,6 +100,16 @@ def main() -> int:
         command += ["-TestLevel", args.test_level]
     if args.audio_after:
         command += ["-AudioAfter", str(args.audio_after)]
+    if args.input_user:
+        command += ["-TestInputUser", str(args.input_user)]
+    if args.profile_trace:
+        command.append("-ProfileTrace")
+    if args.profile_handoff:
+        command.append("-ProfileHandoff")
+    if args.user_events:
+        command.append("-UserEvents")
+    if args.signin_notify_legacy:
+        command.append("-SigninNotifyLegacy")
     with launch_log.open("w", encoding="utf-8") as output:
         launch = subprocess.Popen(command, cwd=ROOT, stdout=output, stderr=subprocess.STDOUT)
         try:
@@ -159,6 +181,10 @@ def main() -> int:
             if run_dir.exists():
                 (run_dir / "license_run.json").write_text(json.dumps({
                     "run": args.run, "license_mask": args.license_mask, "user_root": args.user_root or None,
+                    "input_user": args.input_user, "profile_trace": args.profile_trace,
+                    "profile_handoff": args.profile_handoff, "user_events": args.user_events,
+                    "signin_notify_on_change": not args.signin_notify_legacy,
+                    "signin_notify": "legacy" if args.signin_notify_legacy else "on_change",
                     "steps": str(args.steps), "movie_time_scale": round(scale, 3), "events": events,
                     "launch_return_code": launch.returncode,
                     "error": None if failure is None else {"type": type(failure).__name__, "message": str(failure)},

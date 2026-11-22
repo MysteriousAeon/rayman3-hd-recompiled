@@ -98,7 +98,19 @@ if __name__ == '__main__':
     patch('src/kernel/xam/xam_input.cpp', [
         ('#include <rex/input/input.h>', '#include <rex/input/input.h>\n#include <rex/m6_test_input.h>'),
         ('  return is->GetState(actual_user_index, input_state);', '''  if (m6input::Enabled()) {
-    if (actual_user_index != 0) return X_ERROR_DEVICE_NOT_CONNECTED;
+    // G6-P77 (test only): R3HD_TEST_INPUT_USER may move the schedule to guest user 1-3 (m6_test_input.h).
+    static const bool g6p77_logged = [] {
+      if (std::getenv("R3HD_TEST_INPUT_USER"))
+        REXKRNL_INFO("G6P77 test_input user={}", m6input::TestUser());
+      return true;
+    }();
+    (void)g6p77_logged;
+    const auto m6_route = m6input::RouteFor(actual_user_index);
+    if (m6_route == m6input::kNotConnected) return X_ERROR_DEVICE_NOT_CONNECTED;
+    if (m6_route == m6input::kIdle) {
+      if (input_state) *input_state = {};
+      return X_ERROR_SUCCESS;
+    }
     auto s = m6input::Sample(bool(input_state));
     if (input_state) {
       *input_state = {};
@@ -114,15 +126,18 @@ if __name__ == '__main__':
         ('  REXKRNL_TRACE("[XAM] XamInputGetCapabilities called:', '''  if (m6input::Enabled()) {
     if (!caps) return X_ERROR_BAD_ARGUMENTS;
     if ((flags & 0xFF) && !(flags & XINPUT_FLAG_GAMEPAD)) return X_ERROR_DEVICE_NOT_CONNECTED;
-    if (uint32_t(user_index) != 0 && (user_index & 0xFF) != 0xFF && !(flags & XINPUT_FLAG_ANY_USER)) return X_ERROR_DEVICE_NOT_CONNECTED;
+    if ((user_index & 0xFF) != 0xFF && !(flags & XINPUT_FLAG_ANY_USER) &&
+        m6input::RouteFor(uint32_t(user_index)) == m6input::kNotConnected) return X_ERROR_DEVICE_NOT_CONNECTED;
     *caps = {}; caps->type = 1; caps->sub_type = 1;
     return X_ERROR_SUCCESS;
   }
   REXKRNL_TRACE("[XAM] XamInputGetCapabilities called:''')
         ,('  return is->GetKeystroke(actual_user_index, flags, keystroke);', '''  // M6 state-only test controller: desktop/physical keystrokes cannot leak in.
+  if (m6input::Enabled() && m6input::RouteFor(actual_user_index) == m6input::kSchedule) return X_ERROR_EMPTY;  // G6-P77
   if (m6input::Enabled()) return actual_user_index == 0 ? X_ERROR_EMPTY : X_ERROR_DEVICE_NOT_CONNECTED;
   return is->GetKeystroke(actual_user_index, flags, keystroke);''')
-        ,('  auto result = is->GetKeystroke(user_index, flags, keystroke);', '''  if (m6input::Enabled()) return user_index == 0 ? X_ERROR_EMPTY : X_ERROR_DEVICE_NOT_CONNECTED;
+        ,('  auto result = is->GetKeystroke(user_index, flags, keystroke);', '''  if (m6input::Enabled() && m6input::RouteFor(user_index) == m6input::kSchedule) return X_ERROR_EMPTY;  // G6-P77
+  if (m6input::Enabled()) return user_index == 0 ? X_ERROR_EMPTY : X_ERROR_DEVICE_NOT_CONNECTED;
   auto result = is->GetKeystroke(user_index, flags, keystroke);''')
     ], from_head=False)
     patch('src/kernel/xam/xam_content.cpp', [

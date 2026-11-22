@@ -182,6 +182,7 @@ void M11GpuWaitStep(PPCRegister&) {
 // the only place where the host changes what the title does, and R3HD_REVISIT=original turns it off.
 #if __has_include("m18_revisit.h")
 #include "m18_revisit.h"
+#include "r3hd_hud_state.h"
 #include <rex/ppc/func.h>
 #include <rex/system/kernel_state.h>
 REX_EXTERN(sub_82104BE0);
@@ -472,6 +473,24 @@ void SkyClearTest(PPCRegister& r7) {
   if (colour != last) REXLOG_INFO("SkyClearTest colour={:08X}", colour);
   last = colour;
   r7.u64 = colour;
+}
+// Issue #6 / D-301: the opt-in F5 score / Combo Meter toggle (registry hud_toggle, off by default; play.ps1
+// -HudToggle f5 -> R3HD_HUD_TOGGLE). E-359: the score / Combo draw entry 821A0128 (called at 821A36D0) compares the
+// word 82837E9C, loaded into r11, at 821A0158; zero takes the title's own branch 821A015C -> 821A0584 past the draw
+// and state submission. While the toggle hides the HUD only that temporary register becomes 0: the word, scoring,
+// timers, the Combo update 8219F2C0 and every other guest byte are untouched. Off: the hook returns at once.
+// Reads the level name 82C06221, the pause word 82875F2C and 82876194 (E-359's ordinary-gameplay context).
+void HudScoreGate(PPCRegister& r11) {
+  if (!r3hd_hud::Enabled()) return;
+  char level[m18::kNameLimit];
+  const bool named = M18String(0x82C06221, level, true);
+  const bool ordinary = named && r3hd_hud::OrdinaryContext(level, M18Load(0x82875F2C), M18Load(0x82876194));
+  r3hd_hud::state.Context(ordinary, named ? level : "");
+  const bool hidden = r3hd_hud::state.Hidden();
+  static bool previous = false;
+  if (hidden != previous) REXLOG_INFO("R3HD hud_toggle hidden={} native={:08X} level={}", hidden, r11.u32, level);
+  previous = hidden;
+  if (hidden) r11.u64 = 0;
 }
 #endif
 #if !defined(_WIN32)

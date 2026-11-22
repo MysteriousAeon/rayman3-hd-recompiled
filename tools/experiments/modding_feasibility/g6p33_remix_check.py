@@ -10,6 +10,7 @@ The GUI runs with its root window withdrawn (never shown); clicks and drags go t
 to the desktop. Mods are imported into a private test mods folder, never the person's. Level-file copies used for the
 mismatch refusal and the re-decode live in private/work/e522 and are removed afterwards. Outputs: numbers only.
 No game process, build or gate change.
+`check` also takes --identity X / --bin DIR for its build identity row (build_identity.py; G6-P64, D-313).
 """
 import ast
 import json
@@ -39,10 +40,12 @@ MESHES = {"intro_10": 11, "intro_15": 59, "intro_20": 44}            # G6-P12 ce
 W_E464 = (19.207331, -32.903214, -40.101063)                          # E-464 node 13 original
 W_E464_NEW = (25.08, -34.13, -40.10)                                  # E-464 mod position (6.0 units)
 BIN = ROOT / "private" / "work" / "rex" / "out" / "build" / "win-amd64-release"
-# G6-P39 (D-295): the current validated production identity (G6-P36 relink, D-292; was 6635d232... at G6-P30)
-CURRENT = json.loads((ROOT / "config" / "release" / "production_identity.json").read_text(
-    encoding="utf-8"))["current"]["binaries"]
-PROD = {"r3hd.exe": CURRENT["r3hd.exe"]}
+# G6-P39 (D-295) pinned the validated production identity here (G6-P36 relink, D-292; was 6635d232... at G6-P30).
+# G6-P64 (D-313): build_identity.py picks it: `development` (the last authoritative replay) by default, or a
+# historical identity at its retained folder with `check --identity release|D-292`; nested checks get the same choice.
+import build_identity as bi  # noqa: E402
+PROD = ("r3hd.exe",)
+IDENT, IDENT_BIN = "development", None
 
 
 class Ev:
@@ -370,7 +373,7 @@ def check():
         b.mode == "patch" and r and r["ok"] and r["report"]["transaction"]["id"] == "9083786df631a5a3")
     b.export_mod(WORK / "basin_mod")
     root.destroy()
-    g29 = subprocess.run([sys.executable, "-I", str(HERE / "g6p29_editor_check.py"), "check"], cwd=ROOT,
+    g29 = subprocess.run([sys.executable, "-I", str(HERE / "g6p29_editor_check.py"), "check", *bi.forward(IDENT, IDENT_BIN)], cwd=ROOT,
                          capture_output=True, text=True)
     det["g6p29_tail"] = g29.stdout[-300:]
     e4["G6-P29 editor check (v1 level-patch editor) still passes"] = g29.returncode == 0
@@ -523,8 +526,10 @@ def check():
     e6["no window was shown (withdrawn roots; handlers called directly, no desktop input)"] = True
     st = subprocess.run([sys.executable, str(HERE / "g5p1_dev_gate.py"), "status"], cwd=ROOT, capture_output=True,
                         text=True).stdout.strip()
-    e6["development gate production; r3hd.exe = the production identity"] = st == "production" and all(
-        rm.sha256_bytes((BIN / n).read_bytes()) == h for n, h in PROD.items())
+    id_ok, id_label, id_det = bi.verify(IDENT, PROD, IDENT_BIN)
+    det["identity"] = dict(id_det, label=id_label)
+    e6["development gate production; r3hd.exe = the build identity (G6-P64 build_identity)"] = (
+        st == "production" and id_ok)
     E["E6"] = e6
 
     for t in ("badgame", "regame"):       # level-file copies: delete (plain files, no links created)
@@ -565,7 +570,8 @@ def runtime(tools, game, work):
 
 
 if __name__ == "__main__":
-    if sys.argv[1:] == ["check"]:
+    _rest, IDENT, IDENT_BIN = bi.parse(sys.argv[1:])
+    if _rest == ["check"]:
         sys.exit(check())
     if sys.argv[1:2] == ["runtime"] and len(sys.argv) == 5:
         sys.exit(runtime(*sys.argv[2:]))

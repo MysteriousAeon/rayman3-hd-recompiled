@@ -69,7 +69,7 @@ def resolver_checks():
           prefs == {"display", "window_size", "render_scale", "cursor", "save_clock", "diagnostics",
                       "gameplay_subtitles", "game_language", "ui_language", "discord_presence", "dualsense_light",
                       "dualsense_trigger", "dualsense_trigger_strength", "dualsense_speaker", "dualsense_speaker_volume", "mouse_camera", "mouse_sensitivity",
-                      "mouse_buttons", "controller_prompts", "display_vsync"})  # independent Settings preferences (D-138: mouse; D-220: V-Sync)
+                      "mouse_buttons", "controller_prompts", "display_vsync", "hud_toggle"})  # independent Settings preferences (D-138: mouse; D-220: V-Sync; D-301: HUD toggle)
     check("registry: the corrections stay preset settings; HD+ = layer_coords separate, texture_orient corrected (M43)",
           rs.scope(S["layer_coords"]) == rs.scope(S["texture_orient"]) == "preset"
           and S["layer_coords"]["hdplus"] == "separate" and S["texture_orient"]["hdplus"] == "corrected")
@@ -263,7 +263,7 @@ def static_checks():
     pallow = json.loads((ROOT / "config" / "release" / "payload_allowlist.json").read_text(encoding="utf-8"))
     check("payload: the launcher is staged to app/r3hd_launcher.exe with the launcher_native role",
           defn["launcher"]["dest"] == engine.LAUNCHER == "app/r3hd_launcher.exe"
-          and pallow["binaries"].get("app/r3hd_launcher.exe") == "launcher_native" and defn["version"].startswith(("0.30.0", "0.31.0", "0.32.0", "0.33.0", "0.34.0", "0.35.0", "0.36.0", "0.49.0", "0.50.0", "1.0.0", "1.0.1", "1.0.2", "1.0.3", "1.1.0", "1.2.0")))
+          and pallow["binaries"].get("app/r3hd_launcher.exe") == "launcher_native" and defn["version"].startswith(("0.30.0", "0.31.0", "0.32.0", "0.33.0", "0.34.0", "0.35.0", "0.36.0", "0.49.0", "0.50.0", "1.0.0", "1.0.1", "1.0.2", "1.0.3", "1.1.0", "1.2.0", "1.3.0")))
     bat = (TOOLS / "build_milestone8.bat").read_text(encoding="utf-8")
     check("build: launcher built before the regressions, this regression in the build",
           "call tools\\launcher\\build_launcher.bat || exit /b 1" in bat and "python tools\\m30_launcher_regression.py || exit /b 1" in bat
@@ -440,11 +440,12 @@ def launcher_checks(keep, skip_runtime=False):
                       d["c1"]["custom_base"] == "hdplus" and d["c1"]["setting.layer_coords"] == "separate enabled=1"
                       and d["c1"]["setting.texture_orient"] == "corrected enabled=1")
                 order = d["c1"].get("settings_tab_order", "").split(",")
-                check("UI (D-151, D-161, D-203): Custom on HD+ shows the red correction on; Tab on Settings walks the "
-                      "profile, the button prompts (below it, left column), Display, then gameplay subtitles (moved under "
-                      "Display), then Mouse; no correction is on it",
+                check("UI (D-151, D-161, D-203, D-303): Custom on HD+ shows the red correction on; Tab on Settings walks the "
+                      "profile, the button prompts (below it, left column), the score HUD key (under them), Display, then "
+                      "gameplay subtitles (moved under Display), then Mouse; no correction is on it",
                       d["c1"].get("setting.red_correction") == "bypass enabled=1"
-                      and order[:3] == ["profile", "controller_prompts", "display"] and "render_scale" in order and "gameplay_subtitles" in order
+                      and order[:4] == ["profile", "controller_prompts", "hud_toggle", "display"]
+                      and d["c1"].get("setting.hud_toggle") == "off enabled=1" and "render_scale" in order and "gameplay_subtitles" in order
                       and "mouse_camera" in order and not {"combo_close", "red_correction", "sky_clear", "lit_uv_scroll", "power_swirl", "beam_color",
                                     "lockon_far_color"} & set(order)
                       and order.index("display") < order.index("render_scale") < order.index("gameplay_subtitles")
@@ -546,6 +547,50 @@ def launcher_checks(keep, skip_runtime=False):
                   and "needs repair" in d["open"]["banner"])
             code, d, log, _ = ui(home3, t, "badscript", "frobnicate\n")
             check("UI test: an unknown command fails the run", code == 2)
+
+            # G6-P74 (D-323): the banner after a launcher-only failed start, in English and Turkish.
+            home6 = make_home(t, "home_g6p74")
+            approved = ("The game couldn't be started. Check the latest support report for details.",
+                        "Oyun başlatılamadı. Ayrıntılar için son destek raporunu kontrol edin.")
+            fallback = ("The game couldn't be started.", "Oyun başlatılamadı.")
+            lang_script = "dump en\nlanguage tr\ndump tr\nlanguage en\n"
+
+            def newest(stamp, body, report=True):
+                s = home6 / "sessions" / stamp
+                s.mkdir(parents=True)
+                (s / "session.json").write_text(json.dumps(body), encoding="utf-8-sig")
+                if report:
+                    (s / "support_report.txt").write_text("synthetic\n", encoding="utf-8")
+            lo = {"record": "launcher_only", "outcome": "start_failed", "game_started": False, "game_pid": None}
+            newest("20261120-100000", lo)
+            code, d, log, _ = ui(home6, t, "g6p74_start_failed", lang_script)
+            check("UI (G6-P74): a launcher-only failed start shows the approved text in English and Turkish",
+                  code == 0 and approved[0] in d["en"]["banner"] and approved[1] in d["tr"]["banner"]
+                  and "ended unexpectedly" not in d["en"]["banner"] and "beklenmedik" not in d["tr"]["banner"],
+                  log[-300:] + json.dumps({k: d.get(k, {}).get("banner") for k in ("en", "tr")}, ensure_ascii=False))
+            (home6 / "sessions" / "20261120-100000" / "support_report.txt").unlink()
+            code, d, log, _ = ui(home6, t, "g6p74_no_report", lang_script)
+            check("UI (G6-P74): without its support report the banner says only that the game couldn't be started",
+                  code == 0 and fallback[0] in d["en"]["banner"] and fallback[1] in d["tr"]["banner"]
+                  and "report" not in d["en"]["banner"] and "rapor" not in d["tr"]["banner"],
+                  json.dumps({k: d.get(k, {}).get("banner") for k in ("en", "tr")}, ensure_ascii=False))
+            newest("20261120-100001", {"exit_code": -1073741819, "exit_hex": "C0000005", "clean_exit": False, "crash_report": True})
+            code, d, log, _ = ui(home6, t, "g6p74_crash", lang_script)
+            check("UI (G6-P74): a later genuine crash keeps D-306's text in both languages",
+                  code == 0 and "ended unexpectedly" in d["en"]["banner"] and "20261120-100001" in d["en"]["banner"]
+                  and "beklenmedik" in d["tr"]["banner"] and fallback[0] not in d["en"]["banner"]
+                  and fallback[1] not in d["tr"]["banner"],
+                  json.dumps({k: d.get(k, {}).get("banner") for k in ("en", "tr")}, ensure_ascii=False))
+            newest("20261120-100002", {"outcome": "start_failed"})
+            code, d, log, _ = ui(home6, t, "g6p74_partial", "dump en\n")
+            check("UI (G6-P74): a partial launcher-only record gets the general text, not the start wording",
+                  code == 0 and "ended unexpectedly" in d["en"]["banner"] and fallback[0] not in d["en"]["banner"],
+                  d.get("en", {}).get("banner", ""))
+            newest("20261120-100003", {"exit_code": 0, "exit_hex": "00000000", "clean_exit": True, "crash_report": False})
+            code, d, log, _ = ui(home6, t, "g6p74_normal", "dump en\n")
+            check("UI (G6-P74): a later normal exit shows no failure line",
+                  code == 0 and "ended unexpectedly" not in d["en"]["banner"] and fallback[0] not in d["en"]["banner"]
+                  and d["en"]["banner"].startswith("Ready to play"), d.get("en", {}).get("banner", ""))
 
             # A real running launcher (its private desktop, held open by "wait") blocks uninstall: no test hook.
             home4 = make_home(t, "home4")

@@ -4,6 +4,7 @@
     g6p28_fairy_route.py check   O1-O5: source compatibility, reference equivalence, authoring variation, integrity
                                  and refusal, regression against the HEAD-before-G6-P28 compiler and production isolation
 Outputs: private/work/e517/ (numbers only). No game process, build or gate change.
+`check` also takes --identity X / --bin DIR for its build identity row (build_identity.py; G6-P64, D-313).
 """
 import copy
 import importlib.util
@@ -321,8 +322,8 @@ def check():
     o5["selftest PASS"] = bool(st) and st[-1].startswith("R3HD_MODS_SELFTEST PASS")
     gate = subprocess.run([sys.executable, str(HERE / "g5p1_dev_gate.py"), "status"], cwd=ROOT, capture_output=True,
                           text=True).stdout.strip()
-    o5["development gate production; binaries = the G6-P27 production identity"] = gate == "production" and {
-        n_: rm.sha256_bytes((g24.BIN / n_).read_bytes()) for n_ in g24.PROD} == g24.PROD
+    o5["development gate production; binaries = the build identity (G6-P64 build_identity)"] = (
+        gate == "production" and g24.identity_ok())
     O["O5"] = o5
 
     res = {"pass": all(all(v.values()) for v in O.values()), "checks": O, "details": det}
@@ -332,6 +333,6 @@ def check():
 
 
 if __name__ == "__main__":
-    if sys.argv[1:] == ["check"]:
+    if g24.take_identity(sys.argv[1:]) == ["check"]:
         sys.exit(check())
     raise SystemExit(__doc__)

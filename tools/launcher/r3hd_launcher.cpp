@@ -279,6 +279,7 @@ struct Setting {
   std::vector<Value> values;
   bool slider = false;  // D-108: model SLIDER row: a trackbar over the values (min ... max), its value beside it
   bool profileRadios = false;
+  bool leftColumn = false;  // G6-P49 (D-303): model LEFT_COLUMN: a check box at the end of the left column
   bool Prompts() const { return profileRadios; }
   bool Toggle() const { return !slider && values.size() == 2 && (scope == L"preset" || group == L"corrections" ||
       (values[0].value == L"off" && values[1].value == L"on")); }
@@ -379,6 +380,8 @@ bool LoadModel(const Paths& p, Model& m, std::wstring& error) {
         if (s.key == at(1)) { s.requiresKey = at(2); s.requiresValue = at(3); }
     } else if (k == L"PROFILE_RADIOS") {
       for (auto& s : m.settings) if (s.key == at(1)) s.profileRadios = true;
+    } else if (k == L"LEFT_COLUMN") {
+      for (auto& s : m.settings) if (s.key == at(1)) s.leftColumn = true;
     } else if (k == L"SLIDER") {
       for (auto& s : m.settings)
         if (s.key == at(1)) s.slider = true;
@@ -653,6 +656,7 @@ struct Ui {
   Model model;
   HWND hwnd = nullptr;
   int dpi = 96, forcedDpi = 0, scrollY = 0, contentHeight = 0;
+  int settingsLeft = 0, settingsRight = 0;  // G6-P49: the Settings page's column bottoms (content pixels; the dump)
   HFONT body = nullptr, bold = nullptr, title = nullptr;
   HBRUSH background = nullptr;
   HICON icon = nullptr;
@@ -831,6 +835,17 @@ void BuildControls() {
       for (auto& s : g.model.settings) if (s.Moved()) s.shown = gr.first;
       break;
     }
+  // G6-P49 (D-303): a LEFT_COLUMN check box (the score HUD key) is drawn at the end of the left column, under the button prompts: the
+  // right column has no room left at 150 % on a 1080p screen (G6-P45), the left one has. Made here, so Tab reaches it
+  // in reading order (the left column, then the right). Its group, key and saving are unchanged; its help is shown.
+  for (size_t i = 0; i < g.model.settings.size(); ++i) {
+    Setting& s = g.model.settings[i];
+    if (!s.leftColumn || !s.Moved()) continue;
+    s.shown = L"left_column";
+    s.control = Make(L"BUTTON", SettingLabel(s), BS_AUTOCHECKBOX | WS_TABSTOP | WS_GROUP, kIdSetting + (int)i);
+    if (!s.help.empty()) s.helpText = Text(s.help, true);
+    for (HWND h : {s.control, s.helpText}) if (h) g.settingsPage.push_back(h);
+  }
   // D-151: controls are made, and so tabbed, in reading order: the corrections (D-161: their own page, which shows
   // the profile that sets them), then the Settings page's groups.
   auto groups = g.model.groups;
@@ -961,7 +976,7 @@ void BuildControls() {
   g.modFolder = Make(L"BUTTON", T(L"Install &folder..."), BS_PUSHBUTTON | WS_TABSTOP, kIdModFolder);
   // G6-P31 (D-287): the constrained intro_20 level editor (its own window); its exported mods are installed here.
   // G6-P39 (D-295): the 3D Level Remix Editor first; the 2D editor stays as the classic / advanced editor.
-  g.levelEditor3D = Make(L"BUTTON", T(L"&3D Level Remix Editor..."), BS_PUSHBUTTON | WS_TABSTOP, kIdLevelEditor3D);
+  g.levelEditor3D = Make(L"BUTTON", T(L"Experimental &3D Level Viewer..."), BS_PUSHBUTTON | WS_TABSTOP, kIdLevelEditor3D);
   g.levelEditor = Make(L"BUTTON", T(L"C&lassic / Advanced Editor..."), BS_PUSHBUTTON | WS_TABSTOP, kIdLevelEditor);
   g.modToggle = Make(L"BUTTON", T(L"&Enable"), BS_PUSHBUTTON | WS_TABSTOP, kIdModToggle);
   g.modUp = Make(L"BUTTON", T(L"&Up"), BS_PUSHBUTTON | WS_TABSTOP, kIdModUp);
@@ -1254,7 +1269,13 @@ int Layout() {
     // now share one size and the details box shows five lines, so the page fits 1920 x 1032 at 144 DPI (M43, D-120).
     for (HWND b : {g.modZip, g.modFolder, g.levelEditor3D, g.levelEditor}) { put(b, margin + listW + S(12), by, bw2, S(28)); by += S(32); }
     by += S(8);
-    for (HWND b : {g.modToggle, g.modUp, g.modDown, g.modRemove}) { put(b, margin + listW + S(12), by, bw2, S(28)); by += S(32); }
+    // G6-P50 (D-304): the eighth button (G6-P39) made this column the tallest part again; Up and Down share one row
+    // (half width each, same order), so the column is back to the seven rows that fit 1920 x 1032 at 144 DPI.
+    const int bx = margin + listW + S(12), half = (bw2 - S(6)) / 2;
+    put(g.modToggle, bx, by, bw2, S(28)); by += S(32);
+    put(g.modUp, bx, by, half, S(28));
+    put(g.modDown, bx + bw2 - half, by, half, S(28)); by += S(32);
+    put(g.modRemove, bx, by, bw2, S(28)); by += S(32);
     my += std::max(listH, by - my) + S(10);
     const int dh = line * 5 + S(8);  // five lines; more scroll inside the box
     put(g.modDetail, margin, my, full, dh);
@@ -1309,6 +1330,17 @@ int Layout() {
       put(setting.helpText, x, ly, col, h); ly += h + S(6);
       for (HWND h : promptRadios) { put(h, x, ly, col, rowH); ly += rowH; }
     }
+    for (auto& s : g.model.settings) if (s.Shown() == L"left_column" && s.control) {  // G6-P49 (D-303)
+      ly += S(12);
+      int ch = std::max(Measure(s.control, g.body, col - S(22)), rowH - S(8));
+      put(s.control, x, ly, col, ch);
+      ly += ch;
+      if (s.helpText) {
+        int hh2 = Measure(s.helpText, g.body, col - S(22));
+        put(s.helpText, x + S(22), ly, col - S(22), hh2);
+        ly += hh2;
+      }
+    }
     // The other groups fill the right column.
     int rx = margin + col + gap, ry = top;
     for (const auto& gr : g.model.groups) {
@@ -1359,6 +1391,7 @@ int Layout() {
         }
       }
     }
+    g.settingsLeft = ly; g.settingsRight = ry;
     bottom = std::max(ly, ry);
   }
   // The button row: under the page, or (D-116) at the bottom of a window shorter than the content.
@@ -2203,8 +2236,14 @@ void UpdateBanner() {
   std::wstring banner = ok ? T(L"Ready to play. Settings apply the next time the game starts.") : why;
   if (m.settingsState == L"invalid")
     banner += L"\n" + T(L"Saved settings could not be read. Save replaces them and keeps a backup.");
-  if (m.lastFailed)
-    banner += L"\n" + F(L"The last session ended unexpectedly. Logs: sessions\\{session}", {{L"session", m.lastStamp}});
+  // G6-P74 (D-323): a launcher-only record of a start Windows refused (the model's LASTRUN exit field) has its own
+  // wording; without its support_report.txt the report is not mentioned. Everything else keeps D-306's text.
+  if (m.lastFailed && m.lastExit == L"start_failed")
+    banner += L"\n" + T(L"The game couldn't be started. Check the latest support report for details.");
+  else if (m.lastFailed && m.lastExit == L"start_failed_no_report")
+    banner += L"\n" + T(L"The game couldn't be started.");
+  else if (m.lastFailed)
+    banner += L"\n" + F(L"The last session ended unexpectedly. Logs and support_report.txt: sessions\\{session}", {{L"session", m.lastStamp}});
   if (m.keyboardState == L"invalid")
     banner += L"\n" + T(L"Saved keys could not be used. Save replaces them and keeps a backup.");
   if (m.padState == L"invalid")
@@ -2507,8 +2546,8 @@ void OnModsCommand(int id, int code) {
       std::wstring detail;
       bool ok = StartLevelEditor(g.paths, g.testMode, detail, true);
       if (g.testMode) Note(std::wstring(L"3d level editor: ") + (ok ? L"dry run " : L"failed ") + detail);
-      SetStatus(ok ? T(L"The 3D Level Remix Editor is opening in its own window. Install its exported mod here, then play.")
-                   : T(L"The 3D Level Remix Editor could not start: ") + detail, !ok);
+      SetStatus(ok ? T(L"The Experimental 3D Level Viewer is opening in its own window. Install its exported mod here, then play.")
+                   : T(L"The Experimental 3D Level Viewer could not start: ") + detail, !ok);
       break;
     }
     case kIdModToggle:
@@ -3038,6 +3077,7 @@ std::wstring StateDump() {
     GetWindowTextW(g.modToggle, buf, (int)std::size(buf));
     s += L"mod_toggle=" + std::wstring(buf) + L" enabled=" + std::to_wstring(IsWindowEnabled(g.modToggle) != 0) + L"\n";
   }
+  s += L"settings_columns=" + std::to_wstring(g.settingsLeft) + L"," + std::to_wstring(g.settingsRight) + L"\n";
   // D-151: the Settings page's keyboard order as Tab walks it (enabled, visible controls): profile, then setting keys.
   // D-161: the same for the Corrections page.
   if (g.page == Page::Settings || g.page == Page::Corrections) {
@@ -3543,7 +3583,7 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE, PWSTR, int) {
            (ok ? (dryRun ? L"DRY_RUN " : L"STARTED ") : L"FAILED ") + detail);
     if (!ok && !quiet) {
       Model initial; std::wstring error; LoadModel(p, initial, error);
-      MessageBoxW(nullptr, ((editor3d ? T(L"The 3D Level Remix Editor could not start: ")
+      MessageBoxW(nullptr, ((editor3d ? T(L"The Experimental 3D Level Viewer could not start: ")
                                       : T(L"The level editor could not start: ")) + detail).c_str(),
                   L"Rayman 3 HD", MB_ICONERROR);
     }

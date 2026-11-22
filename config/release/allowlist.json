@@ -78,6 +78,7 @@
     {"glob": "tools/experiments/modding_feasibility/level_patch_examples/*.json", "kind": "json"},
     {"glob": "tools/experiments/modding_feasibility/terrain_patches/*.json", "kind": "json"},
     {"glob": "tools/experiments/modding_feasibility/remix_examples/*.r3hdmap.json", "kind": "json"},
+    {"glob": "tools/r3hd_view_levels.json", "kind": "json"},
     {"glob": "docs/maintenance/baseline.json", "kind": "json"}
   ],
   "accepted_findings": [

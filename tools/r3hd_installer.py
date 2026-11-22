@@ -1518,7 +1518,11 @@ def describe_options() -> list:
 
 
 def last_session(home: Path) -> tuple:
-    """The newest finished play session (play.ps1 writes session.json at its end): name, exit code, failed."""
+    """The newest finished play session (play.ps1 writes session.json at its end): name, exit code, failed.
+    G6-P74 (D-323): the exit field of a launcher-only failed start is `start_failed` (its support_report.txt exists)
+    or `start_failed_no_report`; only a record with all three of record / outcome / game_started is one. A record
+    that has only part of them is `incomplete` (failed, the general banner); a file that is not a JSON object is
+    `unreadable`, as before."""
     sessions = home / "sessions"
     names = sorted((d.name for d in sessions.iterdir() if (d / "session.json").is_file()), reverse=True) \
         if sessions.is_dir() else []
@@ -1527,9 +1531,148 @@ def last_session(home: Path) -> tuple:
             s = json.loads((sessions / name / "session.json").read_text(encoding="utf-8-sig"))
         except (OSError, ValueError):
             return name, "unreadable", 0
+        if not isinstance(s, dict):
+            return name, "unreadable", 0
+        if (s.get("record") == "launcher_only" and s.get("outcome") == "start_failed"
+                and s.get("game_started") is False):  # G6-P73 (D-322): no game ran (0 / "false" are not False)
+            report = (sessions / name / SUPPORT_REPORT).is_file()
+            return name, "start_failed" if report else "start_failed_no_report", 1
+        if s.get("record") == "launcher_only" or s.get("outcome") == "start_failed" or "game_started" in s:
+            return name, "incomplete", 1
         failed = not s.get("clean_exit", False) or bool(s.get("crash_report"))
         return name, f"0x{s.get('exit_hex', '')}" if s.get("exit_hex") else str(s.get("exit_code")), int(failed)
     return "", "", 0
+
+
+# G6-P46 (D-302): a local, redacted plain-text support report for one play session. Nothing is uploaded; no save,
+# profile, game data or minidump content is read or copied. Paths and the Windows user / computer name are replaced.
+SUPPORT_REPORT = "support_report.txt"
+SUPPORT_EXIT_CODES = {
+    "00000000": "normal exit", "00000001": "the game or play.ps1 reported an error",
+    "C0000005": "access violation", "C000001D": "illegal instruction (CPU feature?)",
+    "C00000FD": "stack overflow", "C0000135": "a required DLL was not found",
+    "C0000142": "a DLL failed to initialise", "C0000374": "heap corruption",
+    "C0000409": "fail-fast / stack buffer overrun", "C000013A": "closed with Ctrl+C or console close",
+    "80000003": "breakpoint", "E06D7363": "unhandled C++ exception", "40010004": "terminated by another process",
+}
+SUPPORT_SETTINGS = ("preset", "license_mode", "display", "window", "render_scale", "render_target", "pacing",
+                    "display_vsync", "diagnostics", "game_language", "controller_prompts", "mods", "dev_overlay")
+
+
+def _support_redactor(home: Path, posix: bool = False, env=None):
+    """G6-P58: posix (the Linux launcher) also replaces $HOME and the POSIX user (USER / LOGNAME) and host names;
+    the Windows rules are unchanged. `env` is for synthetic tests only (default: os.environ)."""
+    import re
+    env = os.environ if env is None else env
+    subs = []
+    places = [(str(home), "<INSTALL>"), (env.get("USERPROFILE", ""), "<USERPROFILE>"),
+              (env.get("LOCALAPPDATA", ""), "<LOCALAPPDATA>"), (env.get("APPDATA", ""), "<APPDATA>")]
+    if posix:
+        places.append((env.get("HOME", "").rstrip("/"), "<HOME>"))
+    for value, label in places:
+        if len(value) > 3:
+            # $HOME only where a path starts (/var/home/<name> is left to the /home/ rule below)
+            lead = r"(?<![^\s\"'=:(\[])" if label == "<HOME>" else ""
+            for v in {value, value.replace("\\", "/")}:
+                subs.append((re.compile(lead + re.escape(v), re.IGNORECASE), label))
+    users = re.compile(r"([A-Za-z]:[\\/](?:Users|Documents and Settings)[\\/])[^\\/\s\"']+", re.IGNORECASE)
+    linux = re.compile(r"/home/[^/\s\"']+")
+    names = [env.get("USERNAME", ""), env.get("COMPUTERNAME", "")]
+    if posix:
+        names += [env.get("USER", ""), env.get("LOGNAME", ""), env.get("HOSTNAME") or platform.node()]
+    names = [n for n in dict.fromkeys(names) if len(n) >= 3]
+    words = [re.compile(r"(?<![A-Za-z0-9])" + re.escape(n) + r"(?![A-Za-z0-9])", re.IGNORECASE) for n in names]
+
+    def redact(text) -> str:
+        text = str(text)
+        for pattern, label in subs:
+            text = pattern.sub(label, text)
+        text = users.sub(r"\1<USER>", text)
+        text = linux.sub("/home/<USER>", text)
+        for pattern in words:
+            text = pattern.sub("<NAME>", text)
+        return text
+    return redact
+
+
+def support_report(home: Path, session: str = "", env=None) -> Path:
+    """Write sessions/<session>/support_report.txt (the newest session when none is named) and return its path.
+
+    G6-P58: a session recorded by the Linux launcher (session.json "platform": "linux", tools/linux/r3hd_play.py) or
+    a report made on a non-Windows host uses the POSIX redaction rules, an `os:` line instead of `windows:`, and a
+    signal name instead of an NTSTATUS code; a Windows session's report is unchanged. `env` is for tests only."""
+    home = Path(os.path.abspath(home))
+    sessions = home / "sessions"
+    if not session:
+        session = last_session(home)[0]
+    if not session or any(c in session for c in "\\/:") or not (sessions / session).is_dir():
+        raise Refusal("NO_SESSION", "no play session to report")
+    folder = sessions / session
+    try:
+        info = json.loads((folder / "session.json").read_text(encoding="utf-8-sig"))
+        info = info if isinstance(info, dict) else {}
+    except (OSError, ValueError):
+        info = {}
+    linux = info.get("platform") == "linux" or os.name != "nt"
+    redact = _support_redactor(home, posix=linux, env=env)
+    try:
+        version = (read_state(home) or {}).get("version", "unknown")
+    except Refusal:
+        version = "unreadable installer.json"
+    exit_hex = str(info.get("exit_hex") or "").upper()
+    host = (f"os: {platform.system()} {platform.release()} {platform.machine()}" if linux else
+            f"windows: {platform.system()} {platform.release()} (build {platform.version()}) {platform.machine()}")
+    lines = [f"{PRODUCT} support report (format 1)",
+             "Generated on this computer; nothing was uploaded. Paths and the user / host name are replaced." if linux
+             else "Generated on this PC; nothing was uploaded. Paths and the Windows user / computer name are replaced.",
+             "Review it before sharing. Saves, profiles, game files and memory dumps are not included.", "",
+             f"version: {version}", f"session: {session}", redact(host) if linux else host,
+             f"executable_sha256: {info.get('executable_sha256') or 'unknown'}"]
+    if info.get("outcome") == "start_failed":
+        # G6-P73 (D-322): play.ps1's launcher-only record of a start Windows refused; there is no game exit to report.
+        lines += ["outcome: start_failed (the game process was not created; no game session ran)", "game_started: false",
+                  f"start_error: {redact(_field(info.get('start_error') or 'unknown'))[:400]}"]
+    elif info and linux and "exit_code" not in info:
+        lines.append("exit: unknown (the launcher did not record the end of this session; it may still be running)")
+    elif info and linux:
+        code, sig = info.get("exit_code"), info.get("exit_signal")
+        meaning = f"(signal {sig})" if sig else "normal exit" if code == 0 else ""
+        lines += [f"duration_s: {info.get('seconds')}", f"exit: {code} {meaning}".rstrip(),
+                  f"clean_exit: {bool(info.get('clean_exit'))}", f"crash_record: {bool(info.get('crash_report'))}"]
+    elif info:
+        lines += [f"duration_s: {info.get('seconds')}",
+                  f"exit: {info.get('exit_code')} (0x{exit_hex or '?'}) {SUPPORT_EXIT_CODES.get(exit_hex, '')}".rstrip(),
+                  f"clean_exit: {bool(info.get('clean_exit'))}", f"crash_record: {bool(info.get('crash_report'))}"]
+    else:
+        lines.append("session.json: missing or unreadable (the session may still be running, or "
+                     + ("the launcher was stopped)" if linux else "play.ps1 was stopped)"))
+    lines += ["", "[settings]"] + [f"{k}: {redact(_field(info[k]))}" for k in SUPPORT_SETTINGS if k in info]
+    log = info.get("log") or {}
+    if log:
+        lines += ["", "[log summary]"] + [f"{k}: {log[k]}" for k in ("lines", "warning", "error", "critical",
+                                                                    "stub_imports") if k in log]
+        if log.get("host_fault_codes"):
+            lines.append("host_fault_codes: " + ", ".join(map(str, log["host_fault_codes"])))
+    crash = folder / "r3hd_crash.txt"
+    if crash.is_file():
+        lines += ["", "[crash record]"]
+        for raw in crash.read_text(encoding="utf-8", errors="replace").splitlines()[:40]:
+            if raw.startswith("minidump="):
+                lines.append("minidump: not included (r3hd_crash.dmp stays on this PC; share it only if asked)")
+                continue
+            if raw.startswith("address=") and " module=" in raw:  # keep only the module's file name
+                head, _, rest = raw.partition(" module=")
+                path, _, offset = rest.rpartition(" offset=")
+                raw = f"{head} module={Path(path.replace(chr(92), '/')).name or '?'} offset={offset}"
+            lines.append(redact(raw))
+    tail = log.get("last_lines") or []
+    if tail:
+        lines += ["", "[last log lines]"] + [redact(t)[:400] for t in tail[-15:]]
+    lines += ["", "Attach this file to a report at https://github.com/MysteriousAeon/rayman3-hd-recompiled/issues",
+              "with the steps that lead to the problem, your graphics card and controller.", ""]
+    out = folder / SUPPORT_REPORT
+    out.write_text("\n".join(lines), encoding="utf-8", newline="\r\n")
+    return out
 
 
 def _field(v) -> str:
@@ -1614,6 +1757,8 @@ def launcher_model(home: Path, releases=None) -> str:
                      o["note"], o["vanilla"], o["hdplus"], values[o["key"]]))
         if o["ui"] == "profile_radios":
             rows.append(("PROFILE_RADIOS", o["key"]))
+        if o["ui"] == "left_column":  # G6-P49 (D-303)
+            rows.append(("LEFT_COLUMN", o["key"]))
         for v in o["values"]:
             rows.append(("VALUE", o["key"], v, o["value_labels"].get(v, v)))
         for other, v in o["requires"].items():
@@ -2162,7 +2307,7 @@ def selftest() -> int:
                   [o["key"] for o in describe_options()] == ["display", "window_size", "render_scale", "display_vsync", "combo_close", "layer_coords",
                                                              "red_correction", "texture_orient", "sky_clear", "lit_uv_scroll",
                                                              "power_swirl", "beam_color", "lockon_far_color",  # D-218 / D-219 / D-221
-                                                             "gameplay_subtitles", "controller_prompts", "mouse_camera", "mouse_sensitivity",
+                                                             "gameplay_subtitles", "hud_toggle", "controller_prompts", "mouse_camera", "mouse_sensitivity",
                                                              "mouse_buttons", "game_language", "discord_presence",
                                                              "dualsense_light", "dualsense_trigger",
                                                              "dualsense_trigger_strength", "dualsense_speaker",
@@ -2430,7 +2575,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("cmd", choices=["check-source", "preflight", "install", "verify", "repair", "set-preset", "set-option",
                                     "set-preferences",
-                                    "status", "uninstall", "describe-options", "configure", "launcher-model", "selftest"])
+                                    "status", "uninstall", "describe-options", "configure", "launcher-model", "selftest",
+                                    "support-report"])
     ap.add_argument("source_arg", nargs="?")
     ap.add_argument("--home")
     ap.add_argument("--payload")
@@ -2450,6 +2596,7 @@ def main() -> int:
     ap.add_argument("--check", action="store_true")
     ap.add_argument("--releases")
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--session", help="support-report: the sessions\\ folder name (default: the newest)")
     ap.add_argument("--result-file")
     ap.add_argument("--progress", action="store_true", help="install: R3HD_STEP / R3HD_PROGRESS lines on stdout (M31)")
     ap.add_argument("--cancel-file", help="install: stop and discard the staged work when this file appears (M31)")
@@ -2550,6 +2697,10 @@ def main() -> int:
             sys.stdout.buffer.write(launcher_model(Path(a.home), rels).encode("utf-8"))
             sys.stdout.flush()
             return 0
+        elif a.cmd == "support-report":
+            need("home")
+            out = support_report(Path(a.home), a.session or "")
+            r = {"result": "ok", "report": str(out), "message": f"support report: {out}"}
         elif a.cmd == "status":
             need("home")
             r = status(Path(a.home))

@@ -56,8 +56,10 @@ r = subprocess.run([sys.executable, str(TOOLS / "r3hd_paths.py"), "selftest"], c
 check("r3hd_paths selftest", r.returncode == 0 and "R3HD_PATHS_SELFTEST PASS" in r.stdout, r.stdout[-300:])
 
 r = subprocess.run([sys.executable, str(TOOLS / "r3hd_release_audit.py"), "git"], capture_output=True, text=True, cwd=ROOT)
+# G6-P61: name the rejected files themselves; a bare output tail showed only accepted entries and hid them.
+audit_fail_lines = [l for l in r.stdout.splitlines() if l.startswith(("FAIL ", "REASONS ", "R3HD_RELEASE_AUDIT "))]
 check("release audit of the tracked tree (G-PKG for the source-only release)", r.returncode == 0
-      and "R3HD_RELEASE_AUDIT PASS" in r.stdout, (r.stdout + r.stderr)[-400:])
+      and "R3HD_RELEASE_AUDIT PASS" in r.stdout, "\n".join(audit_fail_lines) or (r.stdout + r.stderr)[-400:])
 
 bat = (TOOLS / "build_milestone8.bat").read_text(encoding="utf-8")
 for needle in ['if not defined R3HD_GAME_DIR set "R3HD_GAME_DIR=%CD%\\private\\extracted\\5841123F"',

@@ -82,7 +82,7 @@ PADMAP_SCHEMA = 2  # D-116: analog inputs and the listed actions
 CONTROLLER_FIELDS = {"buttons", "analog"}
 ANALOG_IDS = ("left_trigger", "right_trigger", "left_stick", "right_stick")
 SCOPES = ("preset", "preference")
-UI_MODES = ("shown", "hidden", "profile_radios")
+UI_MODES = ("shown", "hidden", "profile_radios", "left_column")  # G6-P49 (D-303): left_column
 FIXED_PRESETS = ("vanilla", "hdplus")
 CATEGORIES = ("mandatory", "platform", "hd_correction", "enhancement", "experimental")
 
@@ -144,6 +144,11 @@ def load_registry(path: Path = REGISTRY) -> dict:
             o = reg["settings"].get(other)
             if o is None or value not in o["values"] or other == key:
                 raise Refused("REGISTRY_INVALID", f"{key}: requires {other}={value!r}")
+    for key, s in reg["settings"].items():  # G6-P49 (D-303): a preference check box under the button prompts
+        if s.get("ui") == "left_column" and (scope(s) != "preference" or len(s["values"]) != 2 or s.get("group") != "corrections"):
+            raise Refused("REGISTRY_INVALID", f"{key}: left_column requires a two-value preference of the corrections group")
+    if sum(s.get("ui") == "left_column" for s in reg["settings"].values()) > 1:
+        raise Refused("REGISTRY_INVALID", "only one left-column check box is supported")
     if sum(s.get("ui") == "profile_radios" for s in reg["settings"].values()) > 1:
         raise Refused("REGISTRY_INVALID", "only one profile radio section is supported")
     reg["_sha256"] = hashlib.sha256(raw).hexdigest()

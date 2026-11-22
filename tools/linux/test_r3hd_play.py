@@ -88,6 +88,45 @@ class Plans(unittest.TestCase):
         self.assertEqual((e["R3HD_COMBO_CLOSE"], e["R3HD_LAYER_COORDS"], e["R3HD_RED_CORRECTION"], e["R3HD_SKY_CLEAR"],
                           e["R3HD_LIT_UV_SCROLL"]), ("delayed", "separate", "bypass", "background", "applied"))
         self.assertEqual(e["R3HD_VBLANK"], "deadline")
+        # Windows v1.2.0 HD+ corrections (D-218, D-219, D-221) reach the Linux launch as on Windows.
+        self.assertEqual((e["R3HD_POWER_SWIRL"], e["R3HD_BEAM_COLOR"], e["R3HD_LOCKON_COLOR"]),
+                         ("restored", "restored", "restored"))
+        v = plan(("preset", "vanilla"))["env"]
+        self.assertEqual((v["R3HD_POWER_SWIRL"], v["R3HD_BEAM_COLOR"], v["R3HD_LOCKON_COLOR"]),
+                         ("original", "original", "original"))
+
+    def test_hud_toggle_and_prompts_reach_the_launch(self):
+        e = plan(("set", ["hud_toggle=f5", "controller_prompts=playstation"]))["env"]
+        self.assertEqual((e["R3HD_HUD_TOGGLE"], e["R3HD_BUTTON_PROMPTS"]), ("f5", "playstation"))
+        self.assertEqual(plan()["env"]["R3HD_HUD_TOGGLE"], "off")
+
+    def test_vsync_selects_vulkan_fifo(self):
+        """G6-P59 (D-310): On refuses the three tearing / frame-dropping Vulkan modes; Off passes nothing."""
+        off = plan()
+        self.assertFalse([a for a in off["arguments"] if a.startswith("--vulkan_allow_present_mode_")])
+        self.assertTrue(off["vsync"].startswith("off"))
+        self.assertEqual(off["env"]["R3HD_DISPLAY_VSYNC"], "off")
+        on = plan(("set", ["display_vsync=on"]))
+        self.assertEqual([a for a in on["arguments"] if a.startswith("--vulkan_allow_present_mode_")],
+                         list(P.VSYNC_ON_ARGS))
+        self.assertEqual(set(P.VSYNC_ON_ARGS), {"--vulkan_allow_present_mode_immediate=false",
+                                                "--vulkan_allow_present_mode_mailbox=false",
+                                                "--vulkan_allow_present_mode_fifo_relaxed=false"})
+        self.assertTrue(on["vsync"].startswith("on"))
+        self.assertNotIn("--vsync=false", on["arguments"])  # the guest-vblank cvar is never touched (E-265)
+        with self.assertRaises(P.Refused):  # the setting owns these cvars
+            plan(("set", ["display_vsync=on"]), ("extra", ["--vulkan_allow_present_mode_mailbox=true"]))
+
+    def test_vsync_cvars_exist_in_the_pinned_presenter(self):
+        """The three cvars and their FIFO fallback are the pinned SDK's (skipped without the SDK checkout)."""
+        src = HERE.parents[1] / "external/rexglue-sdk/src/ui/vulkan/vulkan_presenter.cpp"
+        if not src.is_file():
+            self.skipTest("no SDK checkout")
+        text = src.read_text(encoding="utf-8", errors="replace")
+        for arg in P.VSYNC_ON_ARGS:
+            self.assertIn(f"REXCVAR_DEFINE_BOOL({arg[2:].split('=')[0]}, true,", text)
+        self.assertIn("swapchain_create_info.presentMode = VK_PRESENT_MODE_FIFO_KHR;", text)
+        self.assertIn("is_vsync_implicit_out = paint_context_.swapchain_is_fifo;", text)
 
     def test_explicit_preferences(self):
         p = plan(("set", ["dualsense_light=on", "gameplay_subtitles=all", "window_size=1920x1080", "render_scale=auto",

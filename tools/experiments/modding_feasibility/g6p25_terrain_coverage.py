@@ -7,6 +7,7 @@
                                       twins, and representative trials through the unchanged compiler validator
                                       (rm.collision_edit) plus the independent G6-P22 geometry checker
 Outputs: private/work/e514/ (numbers only). Reuses the G6-P19 mesh / visual decoders; no new decoder.
+`check` also takes --identity X / --bin DIR for its build identity row (build_identity.py; G6-P64, D-313).
 """
 import json
 import math
@@ -236,14 +237,34 @@ def check():
         p.write_text(json.dumps(d), encoding="utf-8")
         rc, r, _ = g24.cli(["level-patch", str(p), "--out", str(WORK / "bad_out")], extra=("--json",))
         o5[f"refused: {n} ({code}), nothing written"] = rc == 2 and r.get("code") == code and not (WORK / "bad_out").exists()
+        # G6-P65 (D-314): the production scope (gate off) enforces the same region and bounds
+        rc_p, rp, _ = g24.cli(["level-patch", str(p), "--out", str(WORK / "bad_out")], gate=None, extra=("--json",))
+        o5[f"gate off: {n} refused identically, nothing written"] = (
+            rc_p == 2 and (rp.get("code"), rp.get("detail")) == (r.get("code"), r.get("detail"))
+            and not (WORK / "bad_out").exists())
+    # G6-P65 (D-314): was "gate off: refused (UNSUPPORTED)", stale since D-286 (G6-P30) made start-floor terrain +
+    # FairyLight graph A production content. The west-basin (start-floor-v2) now validates with the gate off, with the
+    # transaction of the gated compile; its graph B variant stays development-only and is refused.
     rc, r, _ = g24.cli(["level-patch", str(BASIN_LP), "--check"], gate=None, extra=("--json",))
-    o5["gate off: refused (UNSUPPORTED)"] = rc == 2 and r.get("code") == "UNSUPPORTED"
+    pv = r.get("preview", {}) if isinstance(r, dict) else {}
+    o5["gate off: west-basin (start-floor-v2 + FairyLight graph A, D-286) validates, tx 9083786df631a5a3, "
+       "production-eligible"] = (
+        rc == 0 and r["transaction"]["id"] == "9083786df631a5a3" and r.get("development_only") is False
+        and pv.get("production", {}).get("eligible") is True)
+    d = json.loads(json.dumps(base))
+    d["components"][0]["follow_graph_of"] = 1
+    p = WORK / "gate_off_graph_b.json"
+    p.write_text(json.dumps(d), encoding="utf-8")
+    rc_p, rp, _ = g24.cli(["level-patch", str(p), "--out", str(WORK / "bad_out")], gate=None, extra=("--json",))
+    rc_d, _, _ = g24.cli(["level-patch", str(p), "--check"], extra=("--json",))
+    o5["gate off: the same terrain with the FairyLight on graph B is refused as development-only (valid gated)"] = (
+        rc_p == 2 and rp.get("code") == "UNSUPPORTED" and "only the FairyLight on graph A" in rp.get("detail", "")
+        and not (WORK / "bad_out").exists() and rc_d == 0)
     st = subprocess_run([sys.executable, "-I", str(ROOT / "tools" / "r3hd_mods.py"), "selftest"])
     o5["selftest PASS"] = st.strip().splitlines()[-1].startswith("R3HD_MODS_SELFTEST PASS")
     det["selftest"] = st.strip().splitlines()[-1]
     gate = subprocess_run([sys.executable, str(HERE / "g5p1_dev_gate.py"), "status"]).strip()
-    o5["development gate production; binaries unchanged"] = gate == "production" and {
-        n: rm.sha256_bytes((g24.BIN / n).read_bytes()) for n in g24.PROD} == g24.PROD
+    o5["development gate production; binaries unchanged"] = gate == "production" and g24.identity_ok()
     O["O5"] = o5
     det["elapsed_s"] = round(time.perf_counter() - t_start, 1)
     res = {"pass": all(all(v.values()) for v in O.values()), "checks": O, "details": det}
@@ -265,7 +286,8 @@ def _write(path, src, dz6):
 
 
 if __name__ == "__main__":
-    cmd = sys.argv[1:]
+    import g6p24_authoring_ux as _g24
+    cmd = _g24.take_identity(sys.argv[1:])     # G6-P64 (D-313): --identity / --bin for the O5 identity row
     if cmd == ["study"]:
         sys.exit(study())
     if cmd == ["check"]:

@@ -1,8 +1,21 @@
 {
   "schema": 1,
-  "note": "G6-P43 (D-299): the production binaries of the current Windows 1.2.0 candidate, rebuilt by the full replay with the prompt Auto snapshot moved into rexruntime. Live-state rows of the modding checks ('the build folder holds the production identity') compare against 'current'. 'history' lists earlier identities; their retained runtime evidence stays tied to them and is not transferred.",
+  "note": "G6-P43 (D-299): 'current' holds the production binaries of the Windows 1.2.0 candidate, published as v1.2.0 (D-300), rebuilt by the full replay with the prompt Auto snapshot moved into rexruntime. 'history' lists earlier identities; their retained runtime evidence stays tied to them and is not transferred. G6-P64 (D-313): live-state rows of the modding / editor checks ('the build folder holds the production identity') compare against 'development' by default (tools/experiments/modding_feasibility/build_identity.py); 'current' and 'history' are historical identities checked at their retained 'artifact' folders. Replace 'development' only after a full replay ends M8_BUILD_OK, with that replay's log and commit.",
+  "development": {
+    "decision": "D-313",
+    "note": "G6-P83 full replay (E-569, D-332: state-change-aware XamShowSigninUI XN_SYS_SIGNINCHANGED by default, exact legacy switch back; the D-328..D-330 handoff prototype stays behind its own exact hidden flags) of commit d48b0e7, linked inside the build log's lifetime (17:48:13-18:03:14, M8_BUILD_OK, rc=0). Binaries also retained at private/work/g6p83/replay_bin. Replaces the G6-P77 replay (r3hd.exe 62a8e158, source 7fe6f7e; history entry, retained at private/work/g6p83/d313_bin).",
+    "source_commit": "d48b0e717b9f2b695cc3233dd5b720cc30013893",
+    "build_log": "private/work/g6p83/build.log",
+    "build_dir": "private/work/rex/out/build/win-amd64-release",
+    "binaries": {
+      "r3hd.exe": "94b4b5b458be57a80a48f3d3461ec4259049c034dcccf44d72731a9ec91e084d",
+      "rexruntime.dll": "8b9ec3b5b77c2c7dd5dec01be6f76c2532332177d952ba7f8d993d260528c982",
+      "rexgpu-xenos.dll": "f7a00802b62c282e38d3380cce3531b9b3d5d81e9628e651f04b2f5ad8f5fabf"
+    }
+  },
   "current": {
     "decision": "D-299",
+    "artifact": "private/work/g6p43/candidate/stage/payload/bin",
     "binaries": {
       "r3hd.exe": "766d63af511c3e7582f29cbf921eabebd2f12baf9ad90720ccd60ca58b0d901b",
       "rexruntime.dll": "1a7357b2da0cf463c18712dc3652cfb5dff638302d7fb56aac3444fde17b0b77",
@@ -11,8 +24,57 @@
   },
   "history": [
     {
+      "decision": "D-313",
+      "note": "Previous development identity (G6-P77 full replay 2 of 7fe6f7e, E-563). Superseded as 'development' by the G6-P83 replay (D-332); the G6-P78..P82 flag-off baselines and every runtime record before G6-P83 that names r3hd.exe 62a8e158 belong to it. Binaries retained before the G6-P83 replay. G6-P77 full replay 2 (E-563, D-326: test-only R3HD_TEST_INPUT_USER / R3HD_PROFILE_TRACE under the hidden-test gate) of commit 7fe6f7e, linked inside the build log's lifetime (01:30:07-01:45:08, M8_BUILD_OK, rc=0). Replay 1 of the same tree (r3hd.exe 8187ea3d, rexruntime.dll df40e69e; private/work/g6p77/replay1_bin) had no exit-code marker. Replaces the G6-P75 replay (r3hd.exe c3782c9f, rexruntime.dll db65f4ea, source 220b04c; binaries retained at private/work/g6p77/baseline_bin).",
+      "source_commit": "7fe6f7e3e773e1279569cb32d88602a2887967d7",
+      "build_log": "private/work/g6p77/build.log",
+      "artifact": "private/work/g6p83/d313_bin",
+      "binaries": {
+        "r3hd.exe": "62a8e158848c67f063505b2717e6849cb2b4192fd716248b564cc9f2721e1a36",
+        "rexruntime.dll": "5694816c04398780bcf31db9b6c222e336a057a4dc59b481694dd3ee98ff0a9c",
+        "rexgpu-xenos.dll": "a947fe69e14ecc46bf007b4cdc189d66a8bf8e65cb499c848d885b058fdb5c24"
+      }
+    },
+    {
+      "decision": "D-331",
+      "note": "G6-P82 EXPERIMENTAL, test-only identity (E-568): full replay 2 of commit 00bb7be (M8_BUILD_OK, BUILD_SCRIPT_ENDED rc=0, 16:58:59-17:14:19) with the state-change-aware XamShowSigninUI notification behind the hidden-test gate and the exact G6-P82 test flag (plus the D-329 prototype, still behind its own flags). Not the development identity and not a product build: the live build folder was restored to the D-313 development binaries. Replay 1 of 24b8ae7 (r3hd.exe 15dce1c9, rexruntime.dll 23d2e45b, rexgpu-xenos.dll 7ce2ad95; private/work/g6p82/attempt1_bin, build_attempt1.log) ended rc=1 at the new regression's flag-name rule and is not an identity.",
+      "source_commit": "00bb7be3320bb47371c86e994c5635a82f3eed85",
+      "build_log": "private/work/g6p82/build.log",
+      "artifact": "private/work/g6p82/replay_bin",
+      "binaries": {
+        "r3hd.exe": "352a4e016b43b48b61c76b4ed60279005da223215cdb25f759f68d6a6dcc0ee1",
+        "rexruntime.dll": "ea98df4f44a0630265a2ad51ba3a72cdfc29252cd696813ed2120c8fe3132c35",
+        "rexgpu-xenos.dll": "1ef1517d1f3f7d2ea1b99118544efaf9d033aa762c9d45fbed1fe2f49d13fe12"
+      }
+    },
+    {
+      "decision": "D-329",
+      "note": "G6-P80 EXPERIMENTAL, test-only identity (E-566): full replay of commit e4b0438 (M8_BUILD_OK, BUILD_SCRIPT_ENDED rc=0, 05:37:48-05:52:32) with the profile handoff transaction (title-selected candidate, one-use START authorization, pre-commit rollback) and the user-scoped test events / scripted message-box answers, all behind R3HD_NONINTRUSIVE + exact flags. Not the development identity and not a product build: the live build folder was restored to the D-313 development binaries. The interim replay of 6a88b4a (r3hd.exe 0094c7d3, rexruntime.dll 698569f2, rexgpu-xenos.dll 2e8506cd; private/work/g6p80/replay_bin_0094c7d3, build_0094c7d3.log) is superseded and not recorded as an identity.",
+      "source_commit": "e4b0438dec564a955673d067de0afc81e346d529",
+      "build_log": "private/work/g6p80/build.log",
+      "artifact": "private/work/g6p80/replay_bin",
+      "binaries": {
+        "r3hd.exe": "64b8be0342d55de0858b53e08b8061f4169d1ca2b4090075089caec85e5dff66",
+        "rexruntime.dll": "c2212cd853c6472c550e2bb40822ba0ba631a216f3a925b392eb6233549fc05d",
+        "rexgpu-xenos.dll": "2712b2285feeee467bfe62aa2b7a660f676d3a167eb749edc930fb920a0e4e23"
+      }
+    },
+    {
+      "decision": "D-328",
+      "note": "G6-P79 EXPERIMENTAL, test-only identity (E-565): full replay attempt 2 of commit 7bc200a (M8_BUILD_OK, BUILD_SCRIPT_ENDED rc=0, 02:42:40-02:58:16) containing the profile handoff prototype behind R3HD_NONINTRUSIVE + R3HD_TEST_PROFILE_HANDOFF=1. Not the development identity and not a product build: the live build folder was restored to the D-313 development binaries after the G6-P79 runs. Attempt 1 (971908c) compiled but stopped at a chain-tail pin (build_attempt1.log).",
+      "source_commit": "7bc200a28ebf16634e370165b16c50cb01371fe0",
+      "build_log": "private/work/g6p79/build.log",
+      "artifact": "private/work/g6p79/replay_bin",
+      "binaries": {
+        "r3hd.exe": "303b5a70a9f48c774afa6c6ee1b309d875566288927e04485faaa14e5b79252c",
+        "rexruntime.dll": "2a01487ef573b3ea22480b6d9a7ecef1ff074100178f1c9fd37ffd045b34dff2",
+        "rexgpu-xenos.dll": "0486f6c0af4157e1cf239cfdf6c3dd4c26b7001ed3024dc0449df9a0cf8f3068"
+      }
+    },
+    {
       "decision": "D-292",
       "note": "G6-P36 production build (E-525); shipped in the superseded G6-P39 to G6-P42 Windows 1.2.0 candidates. Its host executable inlined the prompt Auto snapshot against its own uninitialized SDL copy (D-299)",
+      "artifact": "private/work/e525/stage/payload/bin",
       "binaries": {
         "r3hd.exe": "9e85202b1d7095bd2ea707ec61caf6135fb282491eb4bce4683ccb17634c4abd",
         "rexruntime.dll": "c22375b5d0fd7142aab444e6eeb56aa8d41f58390f336508493867042d38edb4",

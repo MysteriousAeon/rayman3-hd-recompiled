@@ -39,6 +39,18 @@ PRESETS = ("vanilla", "hdplus", "custom")
 TABS = (("display", "Display"), ("corrections", "Corrections"), ("controller", "Controller"), ("mouse", "Mouse"),
         ("advanced", "Troubleshooting"))
 LINUX_NOTES = {"discord_presence": "Windows only: no effect on Linux yet."}
+# G6-P59 (D-310): registry help that says "Windows only." for a preference the Linux launcher now applies. The
+# registry (and so the Windows and Turkish text) is unchanged; only this English-only window shows the Linux wording.
+LINUX_REPLACES = {"display_vsync": ("Windows only.", "On Linux it selects Vulkan FIFO presentation. "
+                                    "Takes effect the next time the game starts.")}
+
+
+def linux_help(key, text):
+    """The registry help as this window shows it on Linux."""
+    old, new = LINUX_REPLACES.get(key, (None, None))
+    if old and old in text:
+        text = text.replace(old, new)
+    return " ".join(x for x in (text, LINUX_NOTES.get(key, "")) if x)
 
 
 def gui_available():
@@ -565,7 +577,7 @@ def run_settings(home):  # pragma: no cover - interactive
             w.bind("<<ComboboxSelected>>", picked)
             w.grid(row=r, column=1, sticky="w", padx=8, pady=(6, 0))
             widgets[s["key"]] = (w, var, "combo")
-        help_text = " ".join(x for x in (s["help"], LINUX_NOTES.get(s["key"], "")) if x)
+        help_text = linux_help(s["key"], s["help"])
         ttk.Label(page, text=help_text, foreground="#555", wraplength=640).grid(row=r + 1, column=0, columnspan=3,
                                                                                sticky="w")
 

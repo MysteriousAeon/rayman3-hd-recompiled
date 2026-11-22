@@ -1,0 +1,17 @@
+# G6-P84: steady-play render cost on a working copy of the genuine swamp_60 save (entry swamp_60_human).
+#   Same front-end route as config/m24/pause_lengths_swamp60.txt, then 60 s of uninterrupted play (no input) in the
+#   level opening. No pause, no frames. Run: python tools/g6p84_render_cost.py run TAG --scale N [--window WxH]
+log VIDEOS\ubi.bik result=00000000
+log menumap\menumap.lvl result=00000000
+wait 10
+press 40
+wait 12
+axis 301 -32767
+wait 0.3
+axis 301 0
+wait 2
+press 44
+wait 8
+press 44
+log swamp_60\swamp_60.lvl result=00000000 60
+wait 60

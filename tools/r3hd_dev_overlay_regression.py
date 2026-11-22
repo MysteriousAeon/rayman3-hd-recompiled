@@ -71,7 +71,7 @@ def static_checks():
     move = play.index("\nMove-DevConfig $devConfig")
     check("play.ps1: the file is moved only in a real launch, after the dry-run exit and the agent guard",
           move > play.index("if ($DryRun) {") and move > play.index("if ($agent -and -not $AllowFromAgent)")
-          and move < play.index("$process = Start-Process"))
+          and move < play.index("$process = Start-R3hdGameProcess $exe $quoted $session"))
     check("play.ps1: the choice is recorded in launch.json and session.json",
           "dev_overlay = $devText; sessions_removed" in play and "    dev_overlay = $devText\n" in play)
     check("play.ps1: the set-aside never deletes (no Remove-Item in its functions)",

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "note": "M27 (D-060): the one source of truth for the Vanilla / HD+ / Custom presets. tools/r3hd_settings.py resolves it; tools/play.ps1 parameter defaults must equal the vanilla column (m27_settings_regression.py). Categories: mandatory = native compatibility / safety, the same in every preset and not a preference (a different value is a diagnostic launch only); platform = native PC behaviour with a console-faithful default; hd_correction = reversible correction of an inherited Xbox 360 HD defect; enhancement = optional quality of life; experimental = insufficiently verified, Custom only and only with allow_experimental. M30 (D-067): scope 'preset' (the default) = decided by the preset, changed only in Custom; scope 'preference' = a per-installation choice, the same default in every preset, adjustable under any preset and kept when the preset changes. group / label / help / value_labels are what the installer and the Settings launcher show (tools/r3hd_installer.py launcher-model); the launcher holds no setting of its own. M31 (D-068): install_default = the value a brand-new installation stores (a preference only; upgrades and repairs keep their settings.json); ui 'hidden' = resolved and kept but not shown in the launcher or configure; requires = the setting applies only while another setting has that value (the launcher disables it otherwise).",
+  "note": "M27 (D-060): the one source of truth for the Vanilla / HD+ / Custom presets. tools/r3hd_settings.py resolves it; tools/play.ps1 parameter defaults must equal the vanilla column (m27_settings_regression.py). Categories: mandatory = native compatibility / safety, the same in every preset and not a preference (a different value is a diagnostic launch only); platform = native PC behaviour with a console-faithful default; hd_correction = reversible correction of an inherited Xbox 360 HD defect; enhancement = optional quality of life; experimental = insufficiently verified, Custom only and only with allow_experimental. M30 (D-067): scope 'preset' (the default) = decided by the preset, changed only in Custom; scope 'preference' = a per-installation choice, the same default in every preset, adjustable under any preset and kept when the preset changes. group / label / help / value_labels are what the installer and the Settings launcher show (tools/r3hd_installer.py launcher-model); the launcher holds no setting of its own. M31 (D-068): install_default = the value a brand-new installation stores (a preference only; upgrades and repairs keep their settings.json); ui 'hidden' = resolved and kept but not shown in the launcher or configure; requires = the setting applies only while another setting has that value (the launcher disables it otherwise). G6-P49 (D-303): ui 'left_column' = a two-value corrections preference drawn as a check box with its help at the end of the Settings page's left column, under the button prompts (at most one).",
   "presets": {
     "vanilla": "Xbox 360 HD presentation and gameplay with the essential native PC compatibility and safety behaviour.",
     "hdplus": "Vanilla plus the curated, evidence-supported corrections whose validation gate has passed, and those marked provisional that the person chose to include before their in-game look (M43, D-080).",
@@ -73,7 +73,7 @@
     },
     "render_scale": {
       "label": "Rendering resolution",
-      "help": "Auto selects the smallest supported rendering resolution that covers your screen in Fullscreen, or your window in Window mode, up to 2160p. In Fullscreen on a 1080p display, the game renders at 1440p. If performance is poor, manually selecting 720p can help.",
+      "help": "Auto selects the smallest supported rendering resolution that covers the 16:9 game picture on your screen or window, not counting black bars, up to 2160p. In Fullscreen on a 1080p display, the game renders at 1440p. If performance is poor, manually selecting 720p can help.",
       "group": "display",
       "category": "enhancement",
       "scope": "preference",
@@ -240,6 +240,22 @@
       "decision": "D-081, D-090",
       "validation": "M44 (D-081): the title's rule VERIFIED from its code and hidden traces; D-090: a per-installation preference (Settings > Corrections), on for a fresh HD+ installation",
       "why": "the Xbox 360 HD release shows gameplay voice subtitles only in cinematic mode or for a fixed list of lines (title design, not a port defect)"
+    },
+    "hud_toggle": {
+      "label": "Score HUD toggle (F5)",
+      "help": "F5 hides or shows the score and Combo Meter. Other HUD stays.",
+      "group": "corrections",
+      "category": "enhancement",
+      "scope": "preference",
+      "ui": "left_column",
+      "values": ["off", "f5"],
+      "value_labels": {"off": "Off", "f5": "On"},
+      "vanilla": "off",
+      "hdplus": "off",
+      "launcher": "HudToggle",
+      "decision": "D-301",
+      "validation": "E-359 / E-360: the private trailer gate hid and restored the score panel and Combo row on a genuine Moor_00 save; E-530: the same gate and F5 rules in the normal build",
+      "why": "issue #6: a clean picture for screenshots and recordings; the title has no such option. Only the score / Combo draw has a verified visual-only gate"
     },
     "controller_prompts": {
       "label": "Controller button prompts",

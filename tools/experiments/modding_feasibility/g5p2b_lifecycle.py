@@ -234,7 +234,8 @@ def recovery():
     # G5-P4b (D-248): the plan call and the structural end moved into play.ps1's own functions Invoke-R3hdModsPlan /
     # Complete-R3hdStructuralSession (defined near the top); the order is checked at their call sites, and the
     # definitions must still pass the session and call structural-end (with the crash-record check)
-    i_plan, i_start, i_wait, i_end = (ps.find("$modsOut = Invoke-R3hdModsPlan"), ps.find("$process = Start-Process"),
+    # G6-P74: since G6-P72 (D-321) the start is `$process = Start-R3hdGameProcess` (the old anchor no longer existed)
+    i_plan, i_start, i_wait, i_end = (ps.find("$modsOut = Invoke-R3hdModsPlan"), ps.find("$process = Start-R3hdGameProcess"),
                                       ps.find("$exitCode = $process.ExitCode"),
                                       ps.find("Complete-R3hdStructuralSession $python"))
     i_t, i_c = ps.find("function Test-R3hdOrderlyExit"), ps.find("function Complete-R3hdStructuralSession")

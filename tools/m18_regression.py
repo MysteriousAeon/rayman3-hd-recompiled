@@ -32,8 +32,12 @@ def read(path: Path) -> str:
 # --- hook configuration --------------------------------------------------------------------------------------------
 compat = tomllib.loads(read(ROOT / "config/rexglue/r3hd_compat.toml"))["midasm_hook"]
 by_name = {hook["name"]: hook for hook in compat}
-check(sorted(by_name) == ["ComboCountdownTest", "ComboTimedCloseTest", "M18RevisitRedirect", "M18TestWorldEnd", "SkyClearTest"],
-      "the file holds the two M18 hooks, the two private Combo experiments and the private sky clear diagnostic only")
+check(sorted(by_name) == ["ComboCountdownTest", "ComboTimedCloseTest", "HudScoreGate", "M18RevisitRedirect", "M18TestWorldEnd",
+                         "SkyClearTest"],
+      "the file holds the two M18 hooks, the two private Combo experiments, the private sky clear diagnostic and the "
+      "D-301 score HUD toggle only")
+check(by_name.get("HudScoreGate") == dict(address=0x821A0158, name="HudScoreGate", registers=["r11"]),
+      "score HUD toggle (D-301, E-359): site 821A0158, r11 only, no return / jump flag")
 check(by_name.get("SkyClearTest") == dict(address=0x821C354C, name="SkyClearTest", registers=["r7"]),
       "sky clear diagnostic (E-350): site 821C354C, r7 only, no return / jump flag")
 check(by_name.get("ComboCountdownTest") == dict(address=0x8219F2D8, name="ComboCountdownTest",
@@ -87,6 +91,12 @@ if sources:
         _, text, at = calls["M18TestWorldEnd("][0]
         check(text[at:at + 120].startswith("\tM18TestWorldEnd(ctx.r3);") and "ctx.r30.u64 = ctx.r3.u64;" in text[at:at + 120],
               "the test trigger runs before the name in r3 is first used")
+    hud = [(path, m.start()) for path in sources for m in re.finditer(r"^\tHudScoreGate\(ctx\.r11\);", read(path), re.M)]
+    check(len(hud) == 1, "the score HUD toggle is called from exactly one place")
+    if len(hud) == 1:
+        text = read(hud[0][0])
+        check("DEFINE_REX_FUNC(sub_821A0128)" in text[max(0, hud[0][1] - 4000):hud[0][1]],
+              "the score HUD toggle runs in the score / Combo draw entry sub_821A0128")
     sky = [(path, m.start()) for path in sources for m in re.finditer(r"^	SkyClearTest\(ctx\.r7\);", read(path), re.M)]
     check(len(sky) == 1, "the sky clear diagnostic is called from exactly one place")
     if len(sky) == 1:
@@ -124,7 +134,20 @@ check("const PPCContext saved = *ctx;" in redirect_body and "*ctx = saved;" in r
 check(all(word not in section for word in ("0x82836F64", "0x82875F4C", "M18Store(kM18EndOfGame")),
       "highest world, end-of-game flag and the world mask are never written")
 check("achievement" not in section.lower(), "achievements are not touched")
-sky_body = section[section.index("void SkyClearTest("):]
+sky_body = section[section.index("void SkyClearTest("):section.index("void HudScoreGate(")]
+hud_body = section[section.index("void HudScoreGate("):]
+hud_body = hud_body[:hud_body.index("\n}\n") + 3]
+check(hud_body.index("if (!r3hd_hud::Enabled()) return;") < hud_body.index("M18"),
+      "score HUD toggle: off returns before reading anything")
+check("M18Store(" not in hud_body and "memcpy(M18Base()" not in hud_body
+      and re.findall(r"M18Load\((\w+)\)", hud_body) == ["0x82875F2C", "0x82876194"]
+      and re.findall(r"M18String\((\w+),", hud_body) == ["0x82C06221"],
+      "score HUD toggle reads the level name, pause and cinematic words and writes no guest memory")
+check(re.findall(r"r11\.\w+ = ", hud_body) == ["r11.u64 = "] and "if (hidden) r11.u64 = 0;" in hud_body,
+      "score HUD toggle changes only the temporary r11, and only to 0 while hidden")
+state = read(ROOT / "tools/m2_host/r3hd_hud_state.h")
+check('EnabledValue(std::getenv("R3HD_HUD_TOGGLE"))' in state and '!std::strcmp(v, "f5")' in state,
+      "score HUD toggle is off unless R3HD_HUD_TOGGLE=f5")
 check('std::getenv("R3HD_NONINTRUSIVE")' in sky_body and 'std::getenv("R3HD_TEST_SKY_CLEAR")' in sky_body
       and '!std::strcmp(v, "background")' in sky_body and '!std::strcmp(v, "alternate")' in sky_body
       and "if (!mode) return;" in sky_body,

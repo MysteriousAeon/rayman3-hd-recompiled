@@ -82,6 +82,8 @@ python tools\m45_runtime_patch.py || exit /b 1
 python tools\m46_runtime_patch.py || exit /b 1
 python tools\m49_runtime_patch.py || exit /b 1
 python tools\m50_runtime_patch.py || exit /b 1
+rem G6-P75 (D-324): take back a superseded insert of the first G6-P75 build before the D-102 patch reads its block.
+python tools\r3hd_pad_motors_patch.py migrate || exit /b 1
 python tools\r3hd_dualsense_patch.py || exit /b 1
 python tools\r3hd_padmap_patch.py || exit /b 1
 python tools\r3hd_mouse_patch.py || exit /b 1
@@ -95,6 +97,10 @@ rem D-220: host display V-Sync for the D3D12 presenter (last; launch-time prefer
 python tools\r3hd_display_vsync_patch.py || exit /b 1
 rem D-221: HD+ out-of-range lock-on colour (last; read overlay before M33, off by default).
 python tools\r3hd_lockon_runtime_patch.py || exit /b 1
+rem G6-P75 (D-324): controller motors stopped when the game closes (last; window close and title exit).
+python tools\r3hd_pad_motors_patch.py || exit /b 1
+rem G6-P79 (D-328): TEST-ONLY profile handoff prototype (last; inert without the hidden-test gate and its exact flag).
+python tools\g6p79_profile_handoff_patch.py || exit /b 1
 rem M29 (D-066): the binaries carry no absolute path of the build machine. Source paths (__FILE__, debug info) are
 rem written relative to the repository and the PDB reference is the file name only. A repository path with a space
 rem cannot be one compiler argument inside CMAKE_*_FLAGS, so there the map is left out (the binaries then keep it).
@@ -231,5 +237,8 @@ call tools\build_swirl_test.bat || exit /b 1
 call tools\build_beam_test.bat || exit /b 1
 call tools\build_display_vsync_test.bat || exit /b 1
 call tools\build_lockon_test.bat || exit /b 1
+call tools\build_pad_motors_test.bat || exit /b 1
+python tools\g6p79_handoff_regression.py || exit /b 1
+python tools\g6p82_signin_notify_regression.py || exit /b 1
 echo M8_BUILD_OK
 exit /b 0

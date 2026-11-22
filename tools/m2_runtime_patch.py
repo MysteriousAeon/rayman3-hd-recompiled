@@ -9,7 +9,7 @@ original = subprocess.check_output(['git', '-C', str(SDK), 'show', 'HEAD:include
 text = original.replace('#include <rex/logging.h>', '#include <rex/logging.h>\n#include <rex/m2_import_trace.h>')
 # Typed export wrappers: retain original marshaling and return behavior.
 text = text.replace('    rex::ppc::HostToGuestFunction<function>(ctx, base);',
-                    '    M2_IMPORT_TRACE(#subroutine, false); \\\n+    rex::ppc::HostToGuestFunction<function>(ctx, base);')
+                    '    M2_IMPORT_TRACE(#subroutine, false); G6P77_PROFILE_TRACE(#subroutine); \\\n+    rex::ppc::HostToGuestFunction<function>(ctx, base);')
 # Stub wrappers: retain the exact original warning and result behavior.
 text = text.replace('    (void)base;', '    M2_IMPORT_TRACE(#subroutine, true); \\\n+    (void)base;')
 text = text.replace('\n+    ', '\n    ')

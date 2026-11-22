@@ -239,6 +239,7 @@ class Static(unittest.TestCase):
             next(u for u in uses if u.startswith("[ordered]@{ session = $stamp;")),
             "$env:R3HD_DISPLAY_VSYNC = $VSync",
             "display_vsync = $VSync",
+            "display_vsync = $VSync",  # D-322 (G6-P73): the launcher-only session.json of a refused start
         ])
         self.assertFalse(any("--vsync" in u for u in uses))
 
@@ -251,12 +252,20 @@ class Static(unittest.TestCase):
     def test_patch_chain(self):
         bat = read(TOOLS / "build_milestone8.bat")
         chain = [ln.strip() for ln in bat.splitlines() if ln.strip().startswith("python tools\\") and "_patch.py" in ln]
-        # D-221: the lock-on colour read overlay (host file read path, no presenter anchor) follows it.
-        self.assertEqual(chain[-2:], ["python tools\\r3hd_display_vsync_patch.py || exit /b 1",
-                                      "python tools\\r3hd_lockon_runtime_patch.py || exit /b 1"])
+        # D-221: the lock-on colour read overlay (host file read path, no presenter anchor) follows it;
+        # D-324: the controller-motor stop (input / SDL driver files and ReXApp::OnClosing only) follows;
+        # D-328: the test-only profile handoff prototype (XAM user / input / UI files only) is last.
+        self.assertEqual(chain[-4:], ["python tools\\r3hd_display_vsync_patch.py || exit /b 1",
+                                      "python tools\\r3hd_lockon_runtime_patch.py || exit /b 1",
+                                      "python tools\\r3hd_pad_motors_patch.py || exit /b 1",
+                                      "python tools\\g6p79_profile_handoff_patch.py || exit /b 1"])
         self.assertLess(bat.index("r3hd_display_vsync_patch.py"), bat.index("cmake -S external"))
         self.assertIn("call tools\\build_display_vsync_test.bat || exit /b 1\n"
-                      "call tools\\build_lockon_test.bat || exit /b 1\necho M8_BUILD_OK", bat.replace("\r\n", "\n"))
+                      "call tools\\build_lockon_test.bat || exit /b 1\n"
+                      "call tools\\build_pad_motors_test.bat || exit /b 1\n"
+                      "python tools\\g6p79_handoff_regression.py || exit /b 1\n"
+                      "python tools\\g6p82_signin_notify_regression.py || exit /b 1\necho M8_BUILD_OK",  # D-331
+                      bat.replace("\r\n", "\n"))
 
     def test_header_has_no_dxgi_dependency(self):
         header = read(TOOLS / "r3hd_display_vsync.h")

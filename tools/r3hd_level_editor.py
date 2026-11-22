@@ -72,6 +72,9 @@ CHOICES = [("patch", "intro_20", "intro_20 - terrain + FairyLight level patch"),
            ("remix", "intro_10", "intro_10 - actor and waypoint remix"),
            ("remix", "intro_15", "intro_15 - actor and waypoint remix"),
            ("remix", "intro_20", "intro_20 - actor and waypoint remix")]
+# G6-P66 (D-315): development-only levels appear only while R3HD_DEV_EDITOR_LEVELS names them at start
+CHOICES += [("remix", lv, f"{lv} - DEVELOPMENT ONLY: Powerz / Chameleon positions")
+            for lv in core.dev_levels_enabled() if lv not in core.REMIX_LEVELS]
 STATUS_TEXT = {"verified": "VERIFIED", "placement": "PLACEMENT VERIFIED", "supported": "ROUTE SUPPORTED",
                "experimental": "EXPERIMENTAL", "script_overridden": "SCRIPT-OVERRIDDEN", "locked": "LOCKED"}
 COL.update({"actor_verified": "#3fc380", "actor_placement": "#9bd36a", "actor_experimental": "#e8c547",
@@ -87,6 +90,8 @@ def json_bytes(p):
 
 
 PROJECT_TYPES = [("Level editor project", "*.r3hdmap.json"), ("JSON", "*.json"), ("All files", "*.*")]
+# G6-P63: File > Open also reopens an exported editor mod (its mod.json); Save never offers that name
+OPEN_TYPES = [("Project or exported mod", "*.r3hdmap.json mod.json")] + PROJECT_TYPES
 
 
 def height_colour(z, lo, hi):
@@ -467,7 +472,7 @@ class EditorApp:
         kind, ident = sel
         if kind == "actor":
             a = m.actors.get(ident)
-            return a and (a["position"], a["status"], a["why"], core.MAX_ACTOR_MOVE)
+            return a and (a["position"], a["status"], a["why"], getattr(m, "max_actor_move", core.MAX_ACTOR_MOVE))
         if kind == "rwp":
             g = m.graphs.get(ident[:3])
             nd = g["nodes"][ident[3]] if g and ident[3] < len(g["nodes"]) else None
@@ -725,7 +730,7 @@ class EditorApp:
         if m:
             c, hs = m.counts(), m.hashes
             self.level_lbl.config(text=(
-                f"{r['level']} (existing level; {core.REMIX_LEVELS[r['level']]['note']})\n{self.game_dir}\n"
+                f"{r['level']} (existing level; {core.level_entry(r['level'])['note']})\n{self.game_dir}\n"
                 f"exact supported originals: lvl {hs['lvl'][:8]}, ptr {hs['ptr'][:8]}, transit {hs['transit'][:8]}\n"
                 f"actors: {c['actors_verified']} verified, {c['actors_placement']} placement-verified, "
                 f"{c['actors_experimental']} experimental, "
@@ -1139,17 +1144,23 @@ class EditorApp:
         self.edited()
 
     def open_project(self, path):
+        """A project file, or (G6-P63) an exported editor mod - its folder or mod.json - reopened as a new unsaved
+        project: it keeps no path, so Save asks for a project file and never writes over the mod."""
         try:
-            kind, p = core.load_any(path)
+            kind, p, source = core.open_file(path)
         except (core.EditorError, OSError) as x:
             self.flash(f"Could not open {Path(path).name}: {getattr(x, 'detail', x)}", error=True)
             return False
+        keep = None if source == "mod" else Path(path)
         if kind == "v2":
-            self.set_mode("remix", project=p, path=path)
-            return True
-        if self.mode != "patch":
-            self.set_mode("patch")
-        self.set_project(p, Path(path))
+            self.set_mode("remix", project=p, path=keep)
+        else:
+            if self.mode != "patch":
+                self.set_mode("patch")
+            self.set_project(p, keep)
+        if source == "mod":
+            self.flash(f"Opened the exported mod {p['meta']['id']} as a new project (not saved yet). Save writes a "
+                       "project file; Export writes a new mod folder.")
         return True
 
     def save_project(self, path):
@@ -1174,7 +1185,7 @@ class EditorApp:
     def cmd_open(self):
         if not self._confirm_discard():
             return
-        f = filedialog.askopenfilename(filetypes=PROJECT_TYPES)
+        f = filedialog.askopenfilename(filetypes=OPEN_TYPES)
         if f:
             self.open_project(f)
 
@@ -1260,20 +1271,41 @@ class EditorApp:
     def cmd_import_mod(self):
         d = filedialog.askdirectory(title="Exported mod folder (contains mod.json)")
         if d:
-            self.import_mod(d)
+            self.import_mod_asking(d, self.root)
 
-    def import_mod(self, folder, paths=None):
-        """Through the existing mod manager (r3hd_mods import --enable); the game applies it at its next start."""
-        res = core.import_mod(folder, paths)
+    def import_mod_asking(self, folder, parent, paths=None):
+        """G6-P63: import; when another mod already has the id, a person decides in a dialog whether to replace it.
+        A window that is not viewable (tests, withdrawn) never opens a dialog and leaves the refusal in place."""
+        res = self.import_mod(folder, paths)
+        if res.get("code") != "EXISTS":
+            return res
+        try:
+            viewable = bool(parent.winfo_viewable())
+        except tk.TclError:
+            viewable = False
+        if viewable and messagebox.askyesno(
+                "Replace installed mod?", f"{res['detail']}\n\nReplace it with the mod in {Path(folder).name}? The "
+                "installed copy is removed; its place in the mod order is kept.", icon="warning", default="no",
+                parent=parent):
+            res = self.import_mod(folder, paths, replace=True)
+        return res
+
+    def import_mod(self, folder, paths=None, replace=False):
+        """Through the existing mod manager (r3hd_mods import --enable); the game applies it at its next start.
+        G6-P63: an installed mod with the same id is replaced only with replace=True."""
+        res = core.import_mod(folder, paths, replace=replace)
         self.report.delete("1.0", "end")
         if res["ok"]:
-            self.status_var.set(f"IMPORTED and ENABLED in {res['mods']}. The game applies it at its next start; a "
-                                "production game accepts only production-supported content.")
+            r = res["result"]
+            what = (" (the same package was already installed)" if r.get("unchanged") else
+                    f" (replaced the installed {r['id']})" if r.get("replaced") else "")
+            self.status_var.set(f"IMPORTED and ENABLED in {res['mods']}{what}. The game applies it at its next "
+                                "start; a production game accepts only production-supported content.")
             self.status_lbl.config(fg="#1d8a4a")
         else:
-            self.status_var.set(f"NOT IMPORTED ({res['code']}).")
+            self.status_var.set(f"NOT IMPORTED ({res['code']}) - nothing was changed.")
             self.status_lbl.config(fg="#c0392b")
-            self.report.insert("end", res["detail"] + "\n")
+            self.report.insert("end", res["detail"] + "\n" + (f"\n{res['advice']}\n" if res.get("advice") else ""))
         return res
 
     def cmd_quit(self):

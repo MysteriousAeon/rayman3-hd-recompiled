@@ -1,4 +1,4 @@
-Rayman 3 HD Recompiled 1.2.0
+Rayman 3 HD Recompiled 1.3.0
 ============================
 
 Portable edition: use the top-level Play.cmd and Settings.cmd, and follow PORTABLE.txt

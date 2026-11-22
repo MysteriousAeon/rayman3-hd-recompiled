@@ -46,3 +46,12 @@ registers = ["r3"]
 address = 0x821C354C
 name = "SkyClearTest"
 registers = ["r7"]
+
+# Issue #6 / D-301 (E-359, E-360): the opt-in F5 score / Combo Meter toggle, registry hud_toggle (off by default).
+# 0x821A0158 is the comparison of the word 0x82837E9C, loaded into r11, in the score / Combo draw entry 0x821A0128;
+# zero takes the title's own branch 0x821A015C -> 0x821A0584 past the draw. While the HUD is hidden the hook sets
+# only the temporary r11 to 0; the word and all guest memory stay untouched. No return / jump flag.
+[[midasm_hook]]
+address = 0x821A0158
+name = "HudScoreGate"
+registers = ["r11"]

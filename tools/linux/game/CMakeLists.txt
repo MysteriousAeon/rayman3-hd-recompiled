@@ -42,7 +42,14 @@ rexglue_apply_target_settings(r3hd_recomp)
 target_precompile_headers(r3hd_recomp PRIVATE "${R3HD_GEN}/r3hd_pch.h")
 target_compile_options(r3hd_recomp PRIVATE ${R3HD_RECOMP_OPTIONS})
 
-add_executable(r3hd "${R3HD_TREE}/src/main.cpp" "${R3HD_TREE}/src/m2_trace.cpp" ${R3HD_BANNER})
+# G6-P59 (D-310): the host sources of tools/m2_prepare.py (main.cpp, r3hd_swirl.cpp, m2_trace.cpp). r3hd_app.h calls
+# R3hdSwirlInitialize() since the D-218 power swirl, so a tree that has r3hd_swirl.cpp must compile it (else the link
+# fails, or the weak guest alias silently drops the swirl). Older trees without the file keep their two sources.
+set(R3HD_HOST_SOURCES "${R3HD_TREE}/src/main.cpp" "${R3HD_TREE}/src/m2_trace.cpp")
+if(EXISTS "${R3HD_TREE}/src/r3hd_swirl.cpp")
+  list(APPEND R3HD_HOST_SOURCES "${R3HD_TREE}/src/r3hd_swirl.cpp")
+endif()
+add_executable(r3hd ${R3HD_HOST_SOURCES} ${R3HD_BANNER})
 target_include_directories(r3hd PRIVATE "${R3HD_TREE}" "${R3HD_TREE}/src" "${R3HD_GEN}"
                            "${R3HD_REPO}/tools/linux/compat"
                            "${R3HD_SDK_SOURCE}/thirdparty/inja/third_party/include")

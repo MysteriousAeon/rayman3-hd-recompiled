@@ -64,7 +64,8 @@ includes = ["../../../config/rexglue/r3hd_functions.toml", "../../../config/rexg
 generate_exception_handlers = true
 ''')
         for name in ('main.cpp', 'r3hd_app.h', 'r3hd_window_icon.h', 'r3hd_discord.h', 'r3hd_pc_settings.h', 'm2_trace.h',
-                     'm2_trace.cpp', 'r3hd_swirl.cpp', 'r3hd_swirl_policy.h'):
+                     'm2_trace.cpp', 'r3hd_swirl.cpp', 'r3hd_swirl_policy.h', 'r3hd_hud_state.h',
+                     'r3hd_hud_toggle.h'):
             source, target = ROOT/'tools/m2_host'/name, W/'src'/name
             if not target.exists() or source.read_bytes() != target.read_bytes():
                 shutil.copyfile(source, target)

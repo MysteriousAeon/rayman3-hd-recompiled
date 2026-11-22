@@ -23,9 +23,10 @@
     Rendering resolution (D-042, reports/milestone15/REPORT.md):
       -RenderScale auto   default. The title renders a 1280x720 image; the host renderer draws it N times larger
                           along each axis (render targets, depth, viewports, resolves) and the title still sees
-                          1280x720. auto picks the smallest N whose image covers the target: the display mode in
-                          -Fullscreen (2560x1440 -> 2, i.e. a native 2560x1440 3D image), the window size
-                          otherwise (1280x720 window -> 1).
+                          1280x720. auto picks the smallest N (up to 3) whose image covers the 16:9 picture shown
+                          on the target, not the black bars beside or above it: the display mode in -Fullscreen
+                          (2560x1440 -> 2, i.e. a native 2560x1440 3D image; 2560x1600 -> 2 for its 2560x1440
+                          picture), the window size otherwise (1280x720 window -> 1).
       -RenderScale 1      original resolution (1280x720, stretched to the window): the compatibility mode.
       -RenderScale 2|3    2560x1440 or 3840x2160 internal image, whatever the window size.
     The choice is printed at launch and recorded in launch.json / session.json. resolution_scale and
@@ -150,6 +151,9 @@ param(
     # release does (in cinematic mode, or for the title's own short list of lines); 'all' lets the title's own
     # subtitle update show every voiced line it starts, with its own text and timing. D-090: a preference (Settings).
     [ValidateSet('original', 'all')][string]$GameplaySubtitles = 'original',
+    # Issue #6 (D-301): 'f5' lets F5 hide / show the score and Combo Meter during ordinary gameplay (consumed by the
+    # game window, never passed to a gameplay binding); 'off' registers nothing and leaves the HUD as the title draws it.
+    [ValidateSet('off', 'f5')][string]$HudToggle = 'off',
     # M27 (D-060): a preset from config/settings/registry.json (vanilla, hdplus, custom) and / or a settings file
     # written by tools\r3hd_settings.py write. Without either, the defaults above are the vanilla preset. A
     # parameter named on the command line always wins over the preset.
@@ -248,6 +252,22 @@ function Complete-R3hdStructuralSession([string]$Python, [string]$Tools, [string
             --controlled $(if ($exit.controlled) { 'yes' } else { 'no' }) | Out-String) | ConvertFrom-Json
     } catch { $end = $null }
     return [ordered]@{ exit = $exit; end = $end }
+}
+
+function Clear-R3hdUnstartedStructuralSession([string]$Python, [string]$Tools, [string]$ModsRoot, [string]$Stamp, $Marker) {
+    # G6-P74 (D-323): after a start Windows refused (a thrown Start-Process error: no game process existed, so no game
+    # read the plan), ends the marker THIS attempt armed: its session must be this stamp, and `structural-end` re-reads
+    # the file and clears it only for that session and plan; another session's, a malformed or a changed marker is kept.
+    # Never `structural-recovery clear`. Returns cleared and, when kept, the reason (the marker then stays, as before).
+    if (-not $Marker -or [string]$Marker.session -ne $Stamp) { return [ordered]@{ cleared = $false; reason = 'not armed by this attempt' } }
+    $end = $null
+    try {
+        $end = (& $Python (Join-Path $Tools 'r3hd_mods.py') structural-end --json --mods-root $ModsRoot `
+            --session $Stamp --plan-sha ([string]$Marker.plan_sha256) --controlled yes | Out-String) | ConvertFrom-Json
+    } catch { $end = $null }
+    if ($end -and $end.cleared -eq $true) { return [ordered]@{ cleared = $true; reason = $null } }
+    $why = if (-not $end) { 'the mod tool gave no result' } elseif ($end.reason) { [string]$end.reason } elseif ($end.detail) { "$($end.code): $($end.detail)" } else { "marker $($end.marker)" }
+    return [ordered]@{ cleared = $false; reason = $why }
 }
 if ($homeRoot) { $homeRoot = ConvertTo-FullPath $homeRoot }
 function Resolve-R3hdPath([string]$Explicit, [string]$EnvName, [string]$HomeRelative, [string]$Legacy) {
@@ -359,6 +379,21 @@ function Get-PrimaryWorkArea {
     } catch { return $null }
 }
 
+function Get-AutoRenderScale($Width, $Height) {
+    # D-333 Policy A (G6-P85): -RenderScale auto. The SDK presenter shows the 16:9 image in the largest 16:9 rectangle
+    # inside the Width x Height target (present_letterbox; black bars elsewhere): min(W, H*16/9) x min(H, W*9/16).
+    # A 1280N x 720N image covers that rectangle exactly when it reaches the target's width or its height, so Auto is
+    # the smallest N with 1280N >= W or 720N >= H: min(ceil(W/1280), ceil(H/720)), integers only, clamped 1..3. On a
+    # 16:9 target this equals the earlier whole-target rule max(ceil(W/1280), ceil(H/720)). A missing, unreadable or
+    # non-positive size is taken as 1280x720 (scale 1). Pure: tested by tools\m15_resolution_regression.py.
+    try { $w = [long]$Width; $h = [long]$Height } catch { return 1 }
+    if ($w -le 0 -or $h -le 0) { return 1 }
+    $r = [long]0
+    $nw = [Math]::DivRem($w, [long]1280, [ref]$r); if ($r -gt 0) { $nw++ }
+    $nh = [Math]::DivRem($h, [long]720, [ref]$r); if ($r -gt 0) { $nh++ }
+    return [int][Math]::Min([long]3, [Math]::Max([long]1, [Math]::Min($nw, $nh)))
+}
+
 function Get-WindowPlan([string]$Size, $Area) {
     # M31 (D-068): the client size in physical pixels for -WindowSize, fitted to the work area, and the logical size
     # the runtime is given (it multiplies by the display scaling, SDL_GetWindowDisplayScale). Pure: tested by
@@ -391,6 +426,30 @@ function Get-WindowPlan([string]$Size, $Area) {
     return [ordered]@{ requested = $Size; width = $w; height = $h
         logical_width = [int][Math]::Round($w * 96.0 / $dpi); logical_height = [int][Math]::Round($h * 96.0 / $dpi); dpi = $dpi; fitted = $fitted
         note = $(if (-not $Area) { 'display not read: taken as 100 % scaling, not fitted' } elseif ($fitted) { "reduced to fit the work area $($Area.width)x$($Area.height)" } else { 'fits' }) }
+}
+
+function Start-R3hdGameProcess([string]$Exe, [string]$Arguments, [string]$Session) {
+    # G6-P72: Windows PowerShell 5.1 resolves Start-Process -FilePath and -WorkingDirectory as wildcard paths. A home
+    # whose path holds [ ] ('D:\Games\Rayman 3 HD [PC]') then failed with "file not found", or, when the pattern
+    # matched another folder, ran in that folder. Both are passed escaped, so they name exactly these paths.
+    return Start-Process -FilePath ([Management.Automation.WildcardPattern]::Escape($Exe)) -ArgumentList $Arguments `
+        -WorkingDirectory ([Management.Automation.WildcardPattern]::Escape($Session)) -PassThru
+}
+
+function Remove-R3hdUnstartedSnapshot($Keeper, [bool]$Created) {
+    # G6-P73 (D-322): the profile copy taken just before a start that Windows refused. No game process existed, so the
+    # copy duplicates the profile that is still in place. It is removed only when this launch created the session's
+    # history folder, the folder holds exactly that one copy (000 with snapshot.json and user) and the profile has not
+    # changed since; anything else is kept. Earlier sessions' history is never touched.
+    if (-not $Keeper -or -not $Created -or $Keeper.Index -ne 1) { return $false }
+    $root = $Keeper.HistoryRoot
+    $items = @(Get-ChildItem -LiteralPath $root -Force -ErrorAction Stop)
+    if ($items.Count -ne 1 -or $items[0].Name -ne '000' -or -not $items[0].PSIsContainer) { return $false }
+    $inner = @(Get-ChildItem -LiteralPath $items[0].FullName -Force -ErrorAction Stop | ForEach-Object { $_.Name } | Sort-Object)
+    if (($inner -join '|') -ne 'snapshot.json|user') { return $false }
+    if ((Get-ProfileFingerprint $Keeper.UserRoot) -ne $Keeper.Last) { return $false }
+    Remove-Item -LiteralPath $root -Recurse -Force -ErrorAction Stop
+    return $true
 }
 
 function Get-SessionsToPrune([string]$Root, [int]$Keep) {
@@ -496,7 +555,9 @@ if ($Collect) {
     $zip = Join-Path $latest.FullName 'diagnostics.zip'
     $items = @(Get-ChildItem -LiteralPath $latest.FullName -File | Where-Object { $_.Name -match '\.(log|txt|json|dmp)$' })
     if (Test-Path -LiteralPath $zip) { Remove-Item -LiteralPath $zip }
-    Compress-Archive -LiteralPath ($items | ForEach-Object { $_.FullName }) -DestinationPath $zip
+    # G6-P74 (D-323): Windows PowerShell 5.1's Compress-Archive (Archive 1.0.1) resolves the -DestinationPath folder as a
+    # wildcard (Resolve-Path -Path), so a home with [ ] wrote the archive into another matching folder or failed.
+    Compress-Archive -LiteralPath ($items | ForEach-Object { $_.FullName }) -DestinationPath ([Management.Automation.WildcardPattern]::Escape($zip))
     Write-Host "Diagnostics of session $($latest.Name): $zip"
     Write-Host 'The archive contains file names and addresses from the game; keep it private.'
     exit 0
@@ -525,7 +586,7 @@ $controller = $null
 if ($true) {
     $settingParams = [ordered]@{ Revisit = 'revisit'; Pacing = 'pacing'; Display = 'display'; Cursor = 'cursor'; SaveClock = 'save_clock'; GameLanguage = 'game_language';
         RenderScale = 'render_scale'; LayerCoords = 'layer_coords'; TextureOrient = 'texture_orient'; RedCorrection = 'red_correction'; SkyClear = 'sky_clear'; LitUvScroll = 'lit_uv_scroll'; PowerSwirl = 'power_swirl'; BeamColor = 'beam_color'; LockonColor = 'lockon_far_color'; VSync = 'display_vsync'; WindowSize = 'window_size'; ComboClose = 'combo_close';
-        Diagnostics = 'diagnostics'; GameplaySubtitles = 'gameplay_subtitles'; DiscordPresence = 'discord_presence'; DualSenseLight = 'dualsense_light'; DualSenseTrigger = 'dualsense_trigger';
+        Diagnostics = 'diagnostics'; GameplaySubtitles = 'gameplay_subtitles'; HudToggle = 'hud_toggle'; DiscordPresence = 'discord_presence'; DualSenseLight = 'dualsense_light'; DualSenseTrigger = 'dualsense_trigger';
         DualSenseTriggerStrength = 'dualsense_trigger_strength'; DualSenseSpeaker = 'dualsense_speaker'; DualSenseSpeakerVolume = 'dualsense_speaker_volume'; MouseCamera = 'mouse_camera'; MouseSensitivity = 'mouse_sensitivity'; MouseButtons = 'mouse_buttons'; ButtonPrompts = 'controller_prompts' }
     $resolverArgs = @((Join-Path $PSScriptRoot 'r3hd_settings.py'), 'resolve')
     if ($Preset) { $resolverArgs += @('--preset', $Preset) }
@@ -631,10 +692,7 @@ $windowText = if ($window) { "$($window.width)x$($window.height) ($($window.note
 # M31 (D-068): an installed home keeps its 10 newest sessions (this one included); a repository keeps all.
 $sessionLimit = 10
 $prune = if ($installed) { @(Get-SessionsToPrune $sessions ($sessionLimit - 1)) } else { @() }
-if ($RenderScale -eq 'auto') {
-    $scale = [Math]::Max([Math]::Ceiling($target.width / 1280.0), [Math]::Ceiling($target.height / 720.0))
-    $scale = [int][Math]::Min(3, [Math]::Max(1, $scale))
-} else { $scale = [int]$RenderScale }
+if ($RenderScale -eq 'auto') { $scale = Get-AutoRenderScale $target.width $target.height } else { $scale = [int]$RenderScale }
 $arguments += "--resolution_scale=$scale"
 $arguments += $keyArgs
 $gameLanguageId = @{ en = 1; fr = 4; es = 5; it = 6; de = 3 }[$GameLanguage]
@@ -726,6 +784,7 @@ if ($DryRun) {
     Write-Host "lockon far : $LockonColor"
     Write-Host "v-sync     : $VSync"
     Write-Host "gameplay sub: $GameplaySubtitles"
+    Write-Host "hud toggle  : $HudToggle"
     Write-Host "dualsense  : light=$DualSenseLight trigger=$DualSenseTrigger strength=$DualSenseTriggerStrength speaker=$DualSenseSpeaker speaker_volume=$DualSenseSpeakerVolume"
     Write-Host "mouse      : camera=$MouseCamera sensitivity=$MouseSensitivity buttons=$MouseButtons"
     Write-Host "keyboard   : $keyText"
@@ -750,7 +809,7 @@ foreach ($old in $prune) { try { Remove-Item -LiteralPath $old.FullName -Recurse
 Move-DevConfig $devConfig
 New-Item -ItemType Directory -Path $session, $user, $cache -Force | Out-Null
 # Written before the launch so the selected licence mode is on record even if this script is interrupted.
-[ordered]@{ session = $stamp; profile = $Profile; preset = $presetLabel; settings_file = $SettingsFile; license_mode = $License; license_mask = $licenseMask; display = $Display; window = $window; render_scale = $scale; render_scale_option = $RenderScale; pacing = $Pacing; revisit = $Revisit; cursor = $Cursor; save_clock = $SaveClock; game_language = $GameLanguage; layer_coords = $LayerCoords; texture_orient = $TextureOrient; red_correction = $RedCorrection; sky_clear = $SkyClear; lit_uv_scroll = $LitUvScroll; power_swirl = $PowerSwirl; beam_color = $BeamColor; lockon_far_color = $LockonColor; display_vsync = $VSync; combo_close = $ComboClose; gameplay_subtitles = $GameplaySubtitles; diagnostics = $Diagnostics; dualsense_light = $DualSenseLight; dualsense_trigger = $DualSenseTrigger; dualsense_trigger_strength = $DualSenseTriggerStrength; dualsense_speaker = $DualSenseSpeaker; dualsense_speaker_volume = $DualSenseSpeakerVolume; mouse_camera = $MouseCamera; mouse_sensitivity = $MouseSensitivity; mouse_buttons = $MouseButtons; keyboard = $keyText; controller = $padText; controller_prompts = $ButtonPrompts; mods = $modsText; mods_notes = $modsNotes; dev_overlay = $devText; sessions_removed = $pruned; render_target = $target; arguments = $arguments } |
+[ordered]@{ session = $stamp; profile = $Profile; preset = $presetLabel; settings_file = $SettingsFile; license_mode = $License; license_mask = $licenseMask; display = $Display; window = $window; render_scale = $scale; render_scale_option = $RenderScale; pacing = $Pacing; revisit = $Revisit; cursor = $Cursor; save_clock = $SaveClock; game_language = $GameLanguage; layer_coords = $LayerCoords; texture_orient = $TextureOrient; red_correction = $RedCorrection; sky_clear = $SkyClear; lit_uv_scroll = $LitUvScroll; power_swirl = $PowerSwirl; beam_color = $BeamColor; lockon_far_color = $LockonColor; display_vsync = $VSync; combo_close = $ComboClose; gameplay_subtitles = $GameplaySubtitles; hud_toggle = $HudToggle; diagnostics = $Diagnostics; dualsense_light = $DualSenseLight; dualsense_trigger = $DualSenseTrigger; dualsense_trigger_strength = $DualSenseTriggerStrength; dualsense_speaker = $DualSenseSpeaker; dualsense_speaker_volume = $DualSenseSpeakerVolume; mouse_camera = $MouseCamera; mouse_sensitivity = $MouseSensitivity; mouse_buttons = $MouseButtons; keyboard = $keyText; controller = $padText; controller_prompts = $ButtonPrompts; mods = $modsText; mods_notes = $modsNotes; dev_overlay = $devText; sessions_removed = $pruned; render_target = $target; arguments = $arguments } |
     ConvertTo-Json -Depth 3 | Set-Content -LiteralPath (Join-Path $session 'launch.json') -Encoding UTF8
 $testOnly = 'R3HD_NONINTRUSIVE', 'R3HD_TEST_SECONDS', 'R3HD_INPUT_SCHEDULE', 'R3HD_INPUT_FOLLOW', 'R3HD_M5_CAPTURE',
     'R3HD_FRAME_REQUEST', 'R3HD_AUDIO_CAPTURE', 'R3HD_AUDIO_AFTER', 'R3HD_M5_VB_RESIDENCY_CACHE', 'R3HD_PLAY', 'R3HD_TRIAL',
@@ -818,6 +877,8 @@ $savedComboClose = $env:R3HD_COMBO_CLOSE
 $env:R3HD_COMBO_CLOSE = $ComboClose
 $savedGameplaySubs = $env:R3HD_GAMEPLAY_SUBTITLES
 $env:R3HD_GAMEPLAY_SUBTITLES = $GameplaySubtitles
+$savedHudToggle = $env:R3HD_HUD_TOGGLE
+$env:R3HD_HUD_TOGGLE = $HudToggle
 # M33: the verified mod plan, or none (a value from the caller's environment never reaches a playtest).
 $savedModsPlan = $env:R3HD_MODS_PLAN
 $env:R3HD_MODS_PLAN = $(if ($modsPlan) { $modsPlan } else { $null })
@@ -830,6 +891,8 @@ if ($Diagnostics -eq 'detailed') { $env:R3HD_DIAGNOSTICS = 'detailed' }
 if ($License -eq 'trial') { $env:R3HD_TRIAL = '1' }
 $started = Get-Date
 $exitCode = $null
+$startError = $null
+$structuralEnd = $null
 try {
     $quoted = ($arguments | ForEach-Object { '"' + ($_ -replace '(\\+)$', '$1$1') + '"' }) -join ' '
     Write-Host "Licence mode: $licenseText"
@@ -846,33 +909,51 @@ try {
     Write-Host "Starting r3hd (session $stamp). Close the window or press Alt+F4 to quit."
     # M16 (D-045): keep a copy of the profile as it is now and after every change (one save entry per level
     # reached). Read-only on the profile; a keeper problem never stops or delays the session.
+    # The copy is taken before the start: the game may change the profile as soon as its process exists.
     $keeper = $null
+    $keeperCreated = $false
     try {
         . (Join-Path $PSScriptRoot 'play_savekeeper.ps1')
         $keeper = New-SaveKeeper $user (Join-Path $play "save_history/$stamp")
+        $keeperCreated = -not (Test-Path -LiteralPath $keeper.HistoryRoot)
         [void](Update-SaveKeeper $keeper 'before the session' -Final)
     } catch { Write-Host "Save keeper unavailable: $($_.Exception.Message)"; $keeper = $null }
-    $process = Start-Process -FilePath $exe -ArgumentList $quoted -WorkingDirectory $session -PassThru
-    while (-not $process.WaitForExit(2000)) {
-        if ($keeper) { try { [void](Update-SaveKeeper $keeper 'changed during the session') } catch { $keeper.Pending = $null } }
-    }
-    $process.WaitForExit()
-    $exitCode = $process.ExitCode
-    # G5-P2b (D-245), G5-P4b (D-248): the marker of a development structural session is cleared only after an orderly
-    # exit (exit code 0, no crash report and the runtime's orderly-shutdown line) for this session and plan; otherwise
-    # it stays and the next launch refuses structural mods. Nothing here names a cause.
-    if ($structuralMarker) {
-        try { [void](Complete-R3hdStructuralSession $python $PSScriptRoot $modsRoot $stamp $structuralMarker $session $exitCode) } catch { }
-    }
-    if ($keeper) { try { [void](Update-SaveKeeper $keeper 'after the session' -Final) } catch { } }
-    # M18 (D-047): a save that resumes in the end-of-game hub with the campaign unfinished cannot reach the Tower
-    # of the Leptys. Read-only check; the profile is not changed.
-    try {
-        foreach ($slot in @(Get-StrandedSlots $user)) {
-            Write-Host "WARNING: save '$slot' now resumes in the end-of-game hub although the campaign is not finished."
-            Write-Host "         Earlier states of this profile are under $historyText (see reports\milestone18\REPORT.md)."
+    # G6-P73 (D-322): a start that Windows refuses is recorded (session.json, support report) instead of ending here.
+    $process = $null
+    try { $process = Start-R3hdGameProcess $exe $quoted $session } catch { $startError = $_ }
+    if (-not $process) {
+        # Only a thrown start proves that no process exists; without one (no error, no object) the copy is kept.
+        if ($startError) {
+            try { if (Remove-R3hdUnstartedSnapshot $keeper $keeperCreated) { $keeper = $null } } catch { }
+            # G6-P74 (D-323): the development structural marker this attempt armed is ended the same way (see above).
+            if ($structuralMarker) {
+                try { $structuralEnd = Clear-R3hdUnstartedStructuralSession $python $PSScriptRoot $modsRoot $stamp $structuralMarker }
+                catch { $structuralEnd = [ordered]@{ cleared = $false; reason = $_.Exception.Message } }
+            }
         }
-    } catch { }
+        else { $startError = 'Start-Process returned no process object' }
+    } else {
+        while (-not $process.WaitForExit(2000)) {
+            if ($keeper) { try { [void](Update-SaveKeeper $keeper 'changed during the session') } catch { $keeper.Pending = $null } }
+        }
+        $process.WaitForExit()
+        $exitCode = $process.ExitCode
+        # G5-P2b (D-245), G5-P4b (D-248): the marker of a development structural session is cleared only after an orderly
+        # exit (exit code 0, no crash report and the runtime's orderly-shutdown line) for this session and plan; otherwise
+        # it stays and the next launch refuses structural mods. Nothing here names a cause.
+        if ($structuralMarker) {
+            try { [void](Complete-R3hdStructuralSession $python $PSScriptRoot $modsRoot $stamp $structuralMarker $session $exitCode) } catch { }
+        }
+        if ($keeper) { try { [void](Update-SaveKeeper $keeper 'after the session' -Final) } catch { } }
+        # M18 (D-047): a save that resumes in the end-of-game hub with the campaign unfinished cannot reach the Tower
+        # of the Leptys. Read-only check; the profile is not changed.
+        try {
+            foreach ($slot in @(Get-StrandedSlots $user)) {
+                Write-Host "WARNING: save '$slot' now resumes in the end-of-game hub although the campaign is not finished."
+                Write-Host "         Earlier states of this profile are under $historyText (see reports\milestone18\REPORT.md)."
+            }
+        } catch { }
+    }
 } finally {
     foreach ($name in $testOnly) { [Environment]::SetEnvironmentVariable($name, $saved[$name]) }
     $env:R3HD_VBLANK = $savedVblank
@@ -889,61 +970,128 @@ try {
     $env:R3HD_DISPLAY_VSYNC = $savedDisplayVSync
     $env:R3HD_COMBO_CLOSE = $savedComboClose
     $env:R3HD_GAMEPLAY_SUBTITLES = $savedGameplaySubs
+    $env:R3HD_HUD_TOGGLE = $savedHudToggle
     $env:R3HD_MODS_PLAN = $savedModsPlan
 }
 $ended = Get-Date
 
 # --- summary -----------------------------------------------------------------------------------
-$census = Get-LogCensus $session
-$crash = Join-Path $session 'r3hd_crash.txt'
-$result = [ordered]@{
-    session = $stamp
-    profile = $Profile
-    preset = $presetLabel
-    license_mode = $License
-    license_mask = $licenseMask
-    license_note = 'configured runtime setting; not an entitlement or ownership check'
-    display = $Display
-    window = $window
-    render_scale = $scale
-    render_target = $target
-    diagnostics = $Diagnostics
-    keyboard = $keyText
-    controller = $padText
-    controller_prompts = $ButtonPrompts
-    pacing = $Pacing
-    cursor = $Cursor
-    save_clock = $SaveClock
-    game_language = $GameLanguage
-    layer_coords = $LayerCoords
-    texture_orient = $TextureOrient
-    red_correction = $RedCorrection
-    sky_clear = $SkyClear
-    lit_uv_scroll = $LitUvScroll
-    power_swirl = $PowerSwirl
-    beam_color = $BeamColor
-    lockon_far_color = $LockonColor
-    display_vsync = $VSync
-    combo_close = $ComboClose
-    gameplay_subtitles = $GameplaySubtitles
-    mods = $modsText
-    dev_overlay = $devText
-    started = $started.ToString('o')
-    ended = $ended.ToString('o')
-    seconds = [Math]::Round(($ended - $started).TotalSeconds, 1)
-    exit_code = $exitCode
-    exit_hex = ('{0:X8}' -f ([int64]$exitCode -band 0xFFFFFFFFL))
-    clean_exit = ($exitCode -eq 0)
-    crash_report = (Test-Path -LiteralPath $crash)
-    save_snapshots = $(if ($keeper) { $keeper.Index } else { 0 })
-    save_history = $(if ($keeper -and $keeper.Index) { $(if ($legacyPlay) { "private/play/save_history/$stamp" } else { Join-Path $play "save_history/$stamp" }) } else { $null })
-    executable_sha256 = Get-FileSha256 $exe
-    arguments = $arguments
-    log = $census
+if ($startError) {
+    # G6-P73 (D-322): Windows did not create the game process. session.json is a launcher-only record of the attempt:
+    # no PID, exit code, duration, log or crash fields, because no game ran (its settings are in launch.json).
+    $startText = if ($startError -is [Management.Automation.ErrorRecord]) {
+        "$($startError.Exception.GetType().FullName): $startError ($($startError.FullyQualifiedErrorId))" } else { [string]$startError }
+    $result = [ordered]@{
+        session = $stamp
+        record = 'launcher_only'
+        outcome = 'start_failed'
+        game_started = $false
+        game_pid = $null
+        profile = $Profile
+        preset = $presetLabel
+        license_mode = $License
+        license_mask = $licenseMask
+        display = $Display
+        window = $window
+        render_scale = $scale
+        render_target = $target
+        diagnostics = $Diagnostics
+        controller_prompts = $ButtonPrompts
+        pacing = $Pacing
+        game_language = $GameLanguage
+        display_vsync = $VSync
+        mods = $modsText
+        dev_overlay = $devText
+        attempted = $started.ToString('o')
+        start_error = $startText
+        save_snapshots = $(if ($keeper) { $keeper.Index } else { 0 })
+        save_history = $(if ($keeper -and $keeper.Index) { $(if ($legacyPlay) { "private/play/save_history/$stamp" } else { Join-Path $play "save_history/$stamp" }) } else { $null })
+        executable_sha256 = $(if (Test-Path -LiteralPath $exe -PathType Leaf) { Get-FileSha256 $exe } else { $null })
+        arguments = $arguments
+    }
+    # G6-P74 (D-323): only when this attempt armed a development structural marker.
+    if ($structuralEnd) { $result.structural_session = $(if ($structuralEnd.cleared) { 'cleared (no game ran)' } else { "kept: $($structuralEnd.reason)" }) }
+    # A folder that cannot take the record leaves the original error as the result.
+    try { $result | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $session 'session.json') -Encoding UTF8 } catch { }
+} else {
+    $census = Get-LogCensus $session
+    $crash = Join-Path $session 'r3hd_crash.txt'
+    $result = [ordered]@{
+        session = $stamp
+        profile = $Profile
+        preset = $presetLabel
+        license_mode = $License
+        license_mask = $licenseMask
+        license_note = 'configured runtime setting; not an entitlement or ownership check'
+        display = $Display
+        window = $window
+        render_scale = $scale
+        render_target = $target
+        diagnostics = $Diagnostics
+        keyboard = $keyText
+        controller = $padText
+        controller_prompts = $ButtonPrompts
+        pacing = $Pacing
+        cursor = $Cursor
+        save_clock = $SaveClock
+        game_language = $GameLanguage
+        layer_coords = $LayerCoords
+        texture_orient = $TextureOrient
+        red_correction = $RedCorrection
+        sky_clear = $SkyClear
+        lit_uv_scroll = $LitUvScroll
+        power_swirl = $PowerSwirl
+        beam_color = $BeamColor
+        lockon_far_color = $LockonColor
+        display_vsync = $VSync
+        combo_close = $ComboClose
+        gameplay_subtitles = $GameplaySubtitles
+        hud_toggle = $HudToggle
+        mods = $modsText
+        dev_overlay = $devText
+        started = $started.ToString('o')
+        ended = $ended.ToString('o')
+        seconds = [Math]::Round(($ended - $started).TotalSeconds, 1)
+        exit_code = $exitCode
+        exit_hex = ('{0:X8}' -f ([int64]$exitCode -band 0xFFFFFFFFL))
+        clean_exit = ($exitCode -eq 0)
+        crash_report = (Test-Path -LiteralPath $crash)
+        save_snapshots = $(if ($keeper) { $keeper.Index } else { 0 })
+        save_history = $(if ($keeper -and $keeper.Index) { $(if ($legacyPlay) { "private/play/save_history/$stamp" } else { Join-Path $play "save_history/$stamp" }) } else { $null })
+        executable_sha256 = Get-FileSha256 $exe
+        arguments = $arguments
+        log = $census
+    }
+    $result | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $session 'session.json') -Encoding UTF8
 }
-$result | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $session 'session.json') -Encoding UTF8
+# G6-P46 (D-302): a local, redacted support_report.txt beside the logs, safe to attach to a bug report after review.
+# Best effort: it never changes the session result or the exit code; nothing is uploaded.
+$supportReport = $null
+# G6-P53: the engine prints its status line on stderr; under 'Stop' Windows PowerShell 5.1 turns that redirected
+# line into a terminating error, so the written report's path was lost. Only this call continues past stderr.
+$reportPreference = $ErrorActionPreference
+try {
+    $ErrorActionPreference = 'Continue'
+    $reportPython = Join-Path $repo 'python\python.exe'
+    if (-not (Test-Path -LiteralPath $reportPython -PathType Leaf)) { $reportPython = 'python' }
+    $reportOut = & $reportPython -B (Join-Path $PSScriptRoot 'r3hd_installer.py') support-report --home $play --session $stamp --json 2>$null | Out-String
+    if ($LASTEXITCODE -eq 0) { $supportReport = ($reportOut | ConvertFrom-Json).report }
+} catch { $supportReport = $null } finally { $ErrorActionPreference = $reportPreference }
 
 Write-Host ''
+if ($startError) {
+    # G6-P73 (D-322): then the original error, unchanged, so the launcher reports the failed start as before.
+    Write-Host "The game was not started (session $stamp): $($result.start_error)"
+    Write-Host "Diagnostics: $session"
+    if ($supportReport) { Write-Host "Support report (redacted; review before sharing): $supportReport" }
+    if ($structuralEnd -and $structuralEnd.cleared) { Write-Host 'Development structural session: its marker was cleared; no game ran with it.' }
+    elseif ($structuralEnd) {
+        Write-Host "Development structural session: its marker was kept ($($structuralEnd.reason)); structural mods stay off until"
+        Write-Host "  r3hd_mods.py structural-recovery clear  (development only; check the mods folder first)."
+    }
+    Write-Host ''
+    throw $startError
+}
 Write-Host "Session $stamp ended after $($result.seconds) s, exit code $exitCode (0x$($result.exit_hex))."
 Write-Host "Licence mode: $License (configured mask $licenseMask; the title received: $(if ($census.guest_license_masks.Count) { $census.guest_license_masks -join ', ' } else { 'no query logged' }))."
 Write-Host "Log: $($census.lines) lines, $($census.warning) warnings, $($census.error) errors, $($census.critical) critical, $($census.stub_imports) stubbed imports first reached."
@@ -952,5 +1100,6 @@ elseif ($exitCode -ne 0) { Write-Host 'Abnormal exit without a crash record; the
 if ($census.host_fault_codes.Count) { Write-Host "Host exceptions recorded in m2_faults.log: $($census.host_fault_codes -join ', ')" }
 if ($result.save_snapshots) { Write-Host "Profile snapshots kept: $($result.save_snapshots) under $($result.save_history) (private; one per save change)" }
 Write-Host "Diagnostics: $session"
+if ($supportReport) { Write-Host "Support report (redacted; review before sharing): $supportReport" }
 Write-Host 'To bundle them: powershell -ExecutionPolicy Bypass -File tools\play.ps1 -Collect'
 exit $(if ($exitCode -eq 0) { 0 } else { 1 })

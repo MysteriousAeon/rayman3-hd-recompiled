@@ -17,8 +17,15 @@ import r3hd_installer as engine  # noqa: E402
 import r3hd_portable as portable  # noqa: E402
 import r3hd_play as P  # noqa: E402
 
-HDPLUS_CORRECTIONS = {"combo_close": "delayed", "layer_coords": "separate", "red_correction": "bypass",
-                      "texture_orient": "corrected", "sky_clear": "background", "lit_uv_scroll": "applied"}
+REGISTRY = json.loads((HERE.parents[1] / "config/settings/registry.json").read_text(encoding="utf-8"))
+# G6-P59: every preset-scope setting whose HD+ value differs from Vanilla, read from the registry, so a correction
+# added to HD+ (power_swirl, beam_color and lockon_far_color in v1.2.0) is typed in too. The six original LX2D
+# corrections must stay among them.
+HDPLUS_CORRECTIONS = {k: s["hdplus"] for k, s in REGISTRY["settings"].items()
+                      if isinstance(s, dict) and s.get("scope", "preset") == "preset"
+                      and s.get("vanilla") != s.get("hdplus")}
+assert {"combo_close": "delayed", "layer_coords": "separate", "red_correction": "bypass", "texture_orient": "corrected",
+        "sky_clear": "background", "lit_uv_scroll": "applied"}.items() <= HDPLUS_CORRECTIONS.items(), HDPLUS_CORRECTIONS
 
 
 def home_with(root, settings):
@@ -73,6 +80,18 @@ class SettingsModel(unittest.TestCase):
             m.save()
             d = saved(home)
             self.assertEqual((d["preset"], d["base"], d["overrides"]), ("custom", "hdplus", {"combo_close": "original"}))
+
+    def test_vsync_help_names_the_linux_behaviour(self):
+        """G6-P59 (D-310): the registry still says "Windows only." (Windows / Turkish text unchanged); this window
+        replaces exactly that sentence for V-Sync and leaves every other help text as the registry has it."""
+        reg = REGISTRY["settings"]["display_vsync"]["help"]
+        self.assertIn("Windows only.", reg)
+        shown = G.linux_help("display_vsync", reg)
+        self.assertNotIn("Windows only", shown)
+        self.assertIn("Vulkan FIFO", shown)
+        self.assertTrue(shown.startswith(reg.split("Windows only.")[0]))
+        self.assertEqual(G.linux_help("discord_presence", "x"), "x Windows only: no effect on Linux yet.")
+        self.assertEqual(G.linux_help("combo_close", "y"), "y")
 
     def test_lx2d_custom_equal_to_hdplus_is_recognised(self):
         """The LX2D file: Custom on Vanilla with every HD+ correction typed in by hand."""

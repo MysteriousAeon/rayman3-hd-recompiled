@@ -203,45 +203,48 @@ MODE_ORDER = ("opaque", "test", "blend", "add")
 BACKGROUND = (0.30, 0.36, 0.45)          # neutral backdrop colour when no sky dome surrounds the camera
 
 
-class Renderer:
-    """Batches of a Scene grouped by (texture, mode, role); textures from the bundle's own stored mip levels. The
-    vertex data and textures are copied into the bridge, which owns them until close()."""
+TEXTURE_ERRORS = (ls.SceneError, OSError, ValueError, TypeError, RuntimeError, IndexError, KeyError, struct.error)
 
-    def __init__(self, ctx: Context, scene: ls.Scene, max_side=256, shade=True):
-        self.ctx, self.scene, self.n = ctx, scene, ctx.n
-        self.batches, self.tex_ids = [], {}
-        self.stats = {"textures": 0, "texture_errors": [], "texels": 0, "hidden_runtime_placed": 0}
-        self.overlays = {"points": [], "lines": [], "selected": None, "ghost": None}
-        self.show = {"scene": True, "backdrop": True, "collision": False, "overlays": True}
-        self.collision = None
-        self.shade = shade
+
+class Cancelled(Exception):
+    """G6-P69: a CPU preparation abandoned because a newer request or a closing window superseded it."""
+
+
+class Prepared:
+    """G6-P69: everything a Renderer needs that is CPU work only - vertex batches expanded from the scene and textures
+    decoded from the bundle - as plain bytes / arrays. No OpenGL and no Tk: it may be built on a worker thread and is
+    handed to Renderer on the thread that owns the GL context. `cancelled` (a callable) is polled between objects and
+    textures; when it returns true, Cancelled is raised and the partial work is dropped."""
+
+    def __init__(self, scene: ls.Scene, max_side=256, shade=True, cancelled=None):
+        self.max_side, self.shade = max_side, shade
+        self.groups, self.boxes, self.textures = {}, {}, {}
+        self.hidden_runtime_placed = 0
+        self.seconds = {}
+        stop = cancelled or (lambda: False)
         t0 = time.perf_counter()
-        self._build(max_side)
-        self.stats["build_seconds"] = round(time.perf_counter() - t0, 3)
+        self._expand(scene, stop)
+        t1 = time.perf_counter()
+        for key in self.groups:                    # the textures of drawn batches only, in batch order
+            if key[0] is None or key[0] in self.textures:
+                continue
+            if stop():
+                raise Cancelled()
+            try:
+                self.textures[key[0]] = scene.decode_texture(key[0], max_side)
+            except TEXTURE_ERRORS as x:             # a damaged texture is reported, the rest still draws
+                self.textures[key[0]] = f"{scene.textures[key[0]]['name']}: {x}"
+        self.seconds = {"expand": round(t1 - t0, 4), "decode": round(time.perf_counter() - t1, 4)}
 
-    def _upload(self, key, max_side):
-        if key in self.tex_ids:
-            return self.tex_ids[key]
-        try:
-            w, h, rgba = self.scene.decode_texture(key, max_side)
-            tid = self.n.texture(w, h, bytes(rgba))
-        except (ls.SceneError, OSError, ValueError, TypeError, RuntimeError, IndexError, KeyError,
-                struct.error) as x:            # a damaged texture is reported, the rest still draws
-            self.stats["texture_errors"].append(f"{self.scene.textures[key]['name']}: {x}")
-            self.tex_ids[key] = 0
-            return 0
-        self.tex_ids[key] = tid
-        self.stats["textures"] += 1
-        self.stats["texels"] += w * h
-        return tid
-
-    def _build(self, max_side):
-        groups, boxes = {}, {}
+    def _expand(self, scene, stop):
+        groups, boxes = self.groups, self.boxes
         light = (0.35, -0.45, 0.82)
-        for o in self.scene.objects:
+        for o in scene.objects:
+            if stop():
+                raise Cancelled()
             role = o.get("role", "scene")
             if role == "runtime_placed":
-                self.stats["hidden_runtime_placed"] += 1
+                self.hidden_runtime_placed += 1
                 continue
             V = o["vertices"]
             for e in o["elements"]:
@@ -272,13 +275,64 @@ class Renderer:
                         else:
                             uv.extend((0.0, 0.0))
                         col.extend(shade)
-        for key, (pos, uv, col) in groups.items():
-            tid = self._upload(key[0], max_side) if key[0] is not None else 0
+
+
+class Renderer:
+    """Batches of a Scene grouped by (texture, mode, role); textures from the bundle's own stored mip levels. The
+    vertex data and textures are copied into the bridge, which owns them until close().
+
+    G6-P69: the CPU part is a `Prepared` (built here when not given); the constructor itself only uploads, so it runs
+    on the GL context's thread. If an upload fails, everything already handed to the bridge is released again."""
+
+    def __init__(self, ctx: Context, scene: ls.Scene, max_side=256, shade=True, prepared=None):
+        self.ctx, self.scene, self.n = ctx, scene, ctx.n
+        self.batches, self.tex_ids = [], {}
+        self.stats = {"textures": 0, "texture_errors": [], "texels": 0, "hidden_runtime_placed": 0}
+        self.overlays = {"points": [], "lines": [], "selected": None, "ghost": None}
+        self.show = {"scene": True, "backdrop": True, "collision": False, "overlays": True}
+        self.collision = None
+        self.shade = shade
+        t0 = time.perf_counter()
+        if prepared is None:
+            prepared = Prepared(scene, max_side, shade)
+        t1 = time.perf_counter()
+        try:
+            self._build(prepared)
+        except BaseException:
+            self.close()                             # no handle of a half-built renderer is left in the bridge
+            raise
+        self.stats["upload_seconds"] = round(time.perf_counter() - t1, 4)
+        self.stats["prepare_seconds"] = prepared.seconds
+        self.stats["build_seconds"] = round(time.perf_counter() - t0, 3)
+
+    def _upload(self, key, prepared):
+        if key in self.tex_ids:
+            return self.tex_ids[key]
+        got = prepared.textures.get(key)
+        try:
+            if isinstance(got, str):
+                raise ls.SceneError("TEXTURE", got)
+            w, h, rgba = got
+            tid = self.n.texture(w, h, bytes(rgba))
+        except TEXTURE_ERRORS as x:                 # a damaged texture is reported, the rest still draws
+            self.stats["texture_errors"].append(got if isinstance(got, str)
+                                                else f"{self.scene.textures[key]['name']}: {x}")
+            self.tex_ids[key] = 0
+            return 0
+        self.tex_ids[key] = tid
+        self.stats["textures"] += 1
+        self.stats["texels"] += w * h
+        return tid
+
+    def _build(self, prepared):
+        self.stats["hidden_runtime_placed"] = prepared.hidden_runtime_placed
+        for key, (pos, uv, col) in prepared.groups.items():
+            tid = self._upload(key[0], prepared) if key[0] is not None else 0
             try:
                 h = self.n.batch(tid, pos, uv, col)
             except (ValueError, TypeError, RuntimeError) as x:
                 raise ls.SceneError("GL_UNAVAILABLE", f"the scene could not be handed to the 3D view: {x}")
-            self.batches.append({"texture": key[0], "mode": key[1], "role": key[2], "box": boxes.get(key),
+            self.batches.append({"texture": key[0], "mode": key[1], "role": key[2], "box": prepared.boxes.get(key),
                                  "tid": tid, "count": len(pos) // 3, "handle": h})
         self.stats["batches"] = len(self.batches)
         self.stats["vertices"] = sum(b["count"] for b in self.batches)
@@ -414,23 +468,29 @@ VIEWS = {   # named cameras for the render test: (yaw, pitch, distance factor of
 }
 
 
-def classified_scene(game, level, model=None):
-    """Scene with G6-P38 roles from the editor's own read-only model (collision + actor positions)."""
+def classified_scene(game, level, model=None, view=False):
+    """Scene with G6-P38 roles from the editor's own read-only model (collision + actor positions). view=True (G6-P68)
+    reads any other level with the never-editable ViewModel; a level whose actors cannot be read is drawn unclassified."""
     import r3hd_level_editor_core as core
     scene = ls.Scene(game, level)
-    if model is None and level in core.REMIX_LEVELS:
+    if model is None and level in core.remix_level_names():
         model = core.RemixModel(game, level)
+    elif model is None and view:
+        try:
+            model = core.ViewModel(game, level)
+        except core.EditorError:
+            model = None
     if model is not None:
         scene.classify([p for t in model.tris for p in t] + [a["position"] for a in model.actors.values()])
     return scene, model
 
 
 def render_test(game, level, out: Path, view="overview", size=(960, 540), max_side=256, camera=None, markers=False,
-                frames=30):
+                frames=30, view_only=False):
     """Draw the scene into a framebuffer object of a never-shown window: `frames` timed frames of a moving camera
     (no readback), then the requested camera once with one bounded readback to a private PNG. Statistics only."""
     t0 = time.perf_counter()
-    scene, model = classified_scene(game, level)
+    scene, model = classified_scene(game, level, view=view_only)
     t_scene = time.perf_counter() - t0
     w, h = size
     ctx = Context(offscreen=(w, h))

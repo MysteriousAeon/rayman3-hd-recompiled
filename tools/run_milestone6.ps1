@@ -16,7 +16,22 @@ param(
     # M13 (D-040): isolated test-only level entry. Passes the title's own developer option "-level:NAME" on the
     # guest command line (runtime setting cl); the title then starts in that level instead of its front end.
     # Hidden test runs only: tools\play.ps1 refuses cl, and cl stays refused in -ExtraArgs. Not normal progression.
-    [string]$TestLevel = ''
+    [string]$TestLevel = '',
+    # G6-P77 (test only): the guest user that receives the scoped XAM schedule (R3HD_TEST_INPUT_USER). 0 = the M6
+    # default (user 0; users 1-3 not connected). 1-3 = that user; user 0 then stays an idle connected pad. Hidden only.
+    [ValidateSet(0, 1, 2, 3)][int]$TestInputUser = 0,
+    # G6-P77 (test only): log the profile / save boundary XAM imports once per distinct call (R3HD_PROFILE_TRACE).
+    [switch]$ProfileTrace,
+    # G6-P79 (test only, D-328): the profile handoff prototype (R3HD_TEST_PROFILE_HANDOFF=1). Hidden runs only; off
+    # unless this switch is given. Never a product setting.
+    [switch]$ProfileHandoff,
+    # G6-P80 (test only, D-329): user-scoped schedule events and scripted message-box answers
+    # (R3HD_TEST_USER_EVENTS=1, m6_test_input.h / g6p80_test_dialog.h). Hidden runs only; off unless given.
+    [switch]$UserEvents,
+    # G6-P83 (D-332): select the legacy XamShowSigninUI notification (XN_SYS_SIGNINCHANGED on every call) for an A/B
+    # (R3HD_SIGNIN_NOTIFY=legacy, g6p82_signin_notify.h). Off unless given: the run gets the state-change-aware default
+    # and an inherited R3HD_SIGNIN_NOTIFY is cleared.
+    [switch]$SigninNotifyLegacy
 )
 $ErrorActionPreference = 'Stop'
 
@@ -188,7 +203,7 @@ $pollCount = 0
 $hookStopClean = $null
 $arguments = @()
 $watch = [System.Diagnostics.Stopwatch]::new()
-$names = @('R3HD_NONINTRUSIVE', 'R3HD_TEST_SECONDS', 'R3HD_INPUT_SCHEDULE', 'R3HD_M5_CAPTURE', 'R3HD_FRAME_REQUEST', 'R3HD_AUDIO_CAPTURE', 'R3HD_AUDIO_AFTER', 'R3HD_PLAY', 'R3HD_TRIAL')
+$names = @('R3HD_NONINTRUSIVE', 'R3HD_TEST_SECONDS', 'R3HD_INPUT_SCHEDULE', 'R3HD_M5_CAPTURE', 'R3HD_FRAME_REQUEST', 'R3HD_AUDIO_CAPTURE', 'R3HD_AUDIO_AFTER', 'R3HD_PLAY', 'R3HD_TRIAL', 'R3HD_TEST_INPUT_USER', 'R3HD_PROFILE_TRACE', 'R3HD_TEST_PROFILE_HANDOFF', 'R3HD_TEST_USER_EVENTS', 'R3HD_SIGNIN_NOTIFY')
 $saved = @{}
 foreach ($name in $names) { $saved[$name] = [Environment]::GetEnvironmentVariable($name) }
 
@@ -304,6 +319,11 @@ try {
     $env:R3HD_AUDIO_AFTER = "$AudioAfter"
     if ($Play) { $env:R3HD_PLAY = '1' } else { [Environment]::SetEnvironmentVariable('R3HD_PLAY', $null) }
     if ($LicenseMask -eq 0) { $env:R3HD_TRIAL = '1' } else { [Environment]::SetEnvironmentVariable('R3HD_TRIAL', $null) }
+    if ($TestInputUser -ne 0) { $env:R3HD_TEST_INPUT_USER = "$TestInputUser" } else { [Environment]::SetEnvironmentVariable('R3HD_TEST_INPUT_USER', $null) }
+    if ($ProfileTrace) { $env:R3HD_PROFILE_TRACE = '1' } else { [Environment]::SetEnvironmentVariable('R3HD_PROFILE_TRACE', $null) }
+    if ($ProfileHandoff) { $env:R3HD_TEST_PROFILE_HANDOFF = '1' } else { [Environment]::SetEnvironmentVariable('R3HD_TEST_PROFILE_HANDOFF', $null) }
+    if ($UserEvents) { $env:R3HD_TEST_USER_EVENTS = '1' } else { [Environment]::SetEnvironmentVariable('R3HD_TEST_USER_EVENTS', $null) }
+    if ($SigninNotifyLegacy) { $env:R3HD_SIGNIN_NOTIFY = 'legacy' } else { [Environment]::SetEnvironmentVariable('R3HD_SIGNIN_NOTIFY', $null) }
     $logLevel = if ($Play) { 'info' } else { 'debug' }
 
     $arguments = @(
@@ -445,6 +465,12 @@ try {
             test_level = if ($TestLevel) { $TestLevel } else { $null }
             license_mask = $LicenseMask
             user_root = $userRootPath
+            test_input_user = $TestInputUser
+            profile_trace = [bool]$ProfileTrace
+            profile_handoff = [bool]$ProfileHandoff
+            user_events = [bool]$UserEvents
+            signin_notify_on_change = -not [bool]$SigninNotifyLegacy
+            signin_notify = $(if ($SigninNotifyLegacy) { 'legacy' } else { 'on_change' })
             started_utc = $(if ($runtimeStarted) { $runtimeStarted.ToString('o') } else { $null })
             finished_utc = $endUtc
             initial_foreground = $initialForeground

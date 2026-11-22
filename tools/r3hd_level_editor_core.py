@@ -312,14 +312,69 @@ def mod_paths():
     return rm.resolve_paths(argparse.Namespace(home=None, mods_root=None, cache=None, game_dir=None))
 
 
-def import_mod(folder, paths=None):
-    """Import and enable an exported mod folder through the existing mod manager (r3hd_mods import --enable). The
-    game applies it at its next start (plan); nothing else is changed. {"ok": True, "id", "mods"} or a refusal."""
-    paths = paths or mod_paths()
+def installed_mod_info(paths, mod_id):
+    """G6-P63: what the mod manager holds under an id (read only): name, version, enabled, priority, source folder
+    name and the installed files' SHA-256 (installed.json), or {} when nothing is installed under it."""
+    info = {}
     try:
-        r = rm.cmd_import(paths, Path(folder), replace=True, enable=True)
+        state = rm.load_state(paths)
+    except rm.Refusal:
+        state = {"mods": []}
+    ids = [e["id"] for e in state["mods"]]
+    if mod_id in ids:
+        info["enabled"] = state["mods"][ids.index(mod_id)]["enabled"]
+        info["priority"] = ids.index(mod_id) + 1
+    d = rm.installed_dir(paths, mod_id)
+    if d.is_dir():
+        info["folder"] = True
+        try:
+            rec = json.loads((d / "installed.json").read_text(encoding="utf-8"))
+            info["source_name"], info["files"] = str(rec.get("source_name", "")), dict(rec.get("files") or {})
+        except (OSError, ValueError, AttributeError, TypeError):
+            pass
+        try:
+            m = json.loads((d / "mod.json").read_text(encoding="utf-8-sig"))
+            info["name"], info["version"] = str(m.get("name", "")), str(m.get("version", ""))
+        except (OSError, ValueError, AttributeError):
+            pass
+    return info
+
+
+def import_mod(folder, paths=None, replace=False):
+    """Import and enable an exported mod folder through the existing mod manager (r3hd_mods import --enable). The
+    game applies it at its next start (plan); nothing else is changed. {"ok": True, "id", "mods"} or a refusal.
+    G6-P63: an installed mod with the same id is replaced only with replace=True (the person's explicit choice, as
+    the launcher's Mods page and `r3hd_mods import` without --replace); otherwise the refusal EXISTS describes the
+    installed mod and nothing changes. Re-importing a byte-identical package is not a replacement and goes ahead.
+    A replacement keeps the mod's priority (the mod manager's own rule)."""
+    paths = paths or mod_paths()
+    folder = Path(folder)
+    try:
+        r = rm.cmd_import(paths, folder, replace=replace, enable=True)
     except rm.Refusal as x:
-        return {"ok": False, "code": x.code, "detail": x.detail, "advice": ""}
+        if x.code != "EXISTS":
+            return {"ok": False, "code": x.code, "detail": x.detail, "advice": ""}
+        info = installed_mod_info(paths, x.detail)
+        try:
+            same = bool(info.get("files")) and info["files"] == {
+                rel: rm.sha256_bytes(b) for rel, b in rm.read_package(folder).items()}
+        except rm.Refusal:
+            same = False
+        if not same:
+            what = " ".join(v for v in (info.get("name") and repr(info["name"]), info.get("version") and
+                                        f"version {info['version']}") if v) or "a mod"
+            state = {True: "enabled", False: "disabled"}.get(info.get("enabled"), "not in the mod list")
+            src = f", imported from a folder named {info['source_name']!r}" if info.get("source_name") else ""
+            return {"ok": False, "code": "EXISTS", "existing": info, "mod_id": x.detail,
+                    "detail": f"An installed mod already uses the id {x.detail}: {what} ({state}{src}). "
+                              "Nothing was changed.",
+                    "advice": "To keep both, give this project another mod id and export it again. To overwrite "
+                              "the installed mod with this one, confirm the replacement (its priority is kept)."}
+        try:
+            r = rm.cmd_import(paths, folder, replace=True, enable=True)
+        except rm.Refusal as y:
+            return {"ok": False, "code": y.code, "detail": y.detail, "advice": ""}
+        r["unchanged"] = True
     return {"ok": True, "result": r, "mods": str(paths["mods"])}
 
 
@@ -366,6 +421,55 @@ REMIX_LEVELS = {
                  "note": "walking level (graph C consumer measured, E-480; terrain / FairyLight in v1 level-patch "
                          "projects)"},
 }
+# G6-P66 (D-315): development-only level entries. Not part of the editor's supported levels: such a level is offered,
+# opened, validated, exported or reopened only while R3HD_DEV_EDITOR_LEVELS names it (comma-separated) in the
+# environment that started the editor; otherwise it is refused like any other level. Pinned by exact lvl / ptr /
+# transit SHA-256 like REMIX_LEVELS. Edits are narrowed to the listed actor models (instances the compiler accepts),
+# moves of at most `max_actor_move`, and no waypoints: every other actor and every graph is shown read-only (LOCKED).
+DEV_LEVELS_ENV = "R3HD_DEV_EDITOR_LEVELS"
+DEV_LEVELS = {
+    "wood_10": {"lvl": "d2402e23f771143d5906569b9562abce5ba4c2af3b1f342106b394c1b5b0bedc",
+                "ptr": "ead99e4313d3aceb54304a7bb5f221585bce97451545a7572c7997868eba6a1b",
+                "transit": "f570b6ed498f2966f70efd94a3d82e8fb5d00038d578f7244d6e0cd37163a701",
+                "note": "DEVELOPMENT ONLY (G6-P66): first post-intro level; Powerz / Chameleon positions only, "
+                        "no waypoints",
+                "actor_models": ("YAM_mPowerz", "NIK_mChameleon"), "waypoints": False, "max_actor_move": 5.0},
+}
+
+
+def dev_levels_enabled(env=None):
+    """The DEV_LEVELS the environment enables (R3HD_DEV_EDITOR_LEVELS, comma-separated; unknown names ignored)."""
+    v = (os.environ if env is None else env).get(DEV_LEVELS_ENV, "")
+    return sorted({x.strip() for x in v.split(",")} & set(DEV_LEVELS))
+
+
+def level_entry(level):
+    """The pinned entry of an editable level: REMIX_LEVELS, or an enabled DEV_LEVELS entry; else EditorError."""
+    if level in REMIX_LEVELS:
+        return REMIX_LEVELS[level]
+    if level in DEV_LEVELS and level in dev_levels_enabled():
+        return DEV_LEVELS[level]
+    if level in DEV_LEVELS:
+        raise EditorError("UNSUPPORTED", f"level {level!r} is a development-only editor level; it needs "
+                                         f"{DEV_LEVELS_ENV}={level} in the environment that started the editor")
+    raise EditorError("UNSUPPORTED", f"level {level!r} (supported: {', '.join(REMIX_LEVELS)})")
+
+
+def is_dev_level(level):
+    return level in DEV_LEVELS and level not in REMIX_LEVELS
+
+
+def remix_level_names():
+    return list(REMIX_LEVELS) + [lv for lv in dev_levels_enabled() if lv not in REMIX_LEVELS]
+
+
+def actor_move_limit(level):
+    try:
+        return float(level_entry(level).get("max_actor_move", MAX_ACTOR_MOVE))
+    except EditorError:
+        return MAX_ACTOR_MOVE
+
+
 LUM10 = "lum\\NIN_m_Lums_Int10\\NIN_m_Lums_Int10.rul^CreateIntelligence^CreateComport:NIN_C_RedLums_Init"
 # Runtime evidence, never inferred: only these exact items are VERIFIED. Everything else that the compiler accepts
 # is EXPERIMENTAL (bytes verified, gameplay behaviour not measured).
@@ -497,10 +601,13 @@ class RemixModel:
     """Read-only actors, graphs and collision of one supported level from the person's files. Eligibility comes only
     from the compiler's own readers (read_script_index -> placement_rows / waypoint_rows, D-229 refusal)."""
 
+    view_only = False
+
     def __init__(self, game_dir, level):
-        if level not in REMIX_LEVELS:
-            raise EditorError("UNSUPPORTED", f"level {level!r} (supported: {', '.join(REMIX_LEVELS)})")
+        entry = self._entry(level)
         self.level, self.game = level, Path(game_dir)
+        self.dev = not self.view_only and is_dev_level(level)
+        self.max_actor_move = 0.0 if self.view_only else actor_move_limit(level)
         try:
             lvl_p, ptr_p, _ = rm.script_level_files(self.game, level)
             files = {"lvl": lvl_p, "ptr": ptr_p, "transit": lvl_p.with_name("transit.lvl")}
@@ -508,10 +615,10 @@ class RemixModel:
         except OSError as x:
             raise EditorError("TARGET_MISSING", f"the {level} level files were not found under {self.game} ({x})")
         self.hashes = {k: rm.sha256_bytes(b) for k, b in raw.items()}
-        bad = [k for k in ("lvl", "ptr", "transit") if self.hashes[k] != REMIX_LEVELS[level][k]]
+        bad = [k for k in ("lvl", "ptr", "transit") if entry is not None and self.hashes[k] != entry[k]]
         if bad:
             raise EditorError("TARGET_CHANGED", f"{level}: these files are not the exact supported originals: "
-                              + ", ".join(f"{k} {self.hashes[k][:8]}... (expected {REMIX_LEVELS[level][k][:8]}...)"
+                              + ", ".join(f"{k} {self.hashes[k][:8]}... (expected {entry[k][:8]}...)"
                                           for k in bad))
         try:
             ix = rm.read_script_index(self.game, level)
@@ -576,6 +683,35 @@ class RemixModel:
                     "the compiler accepts these waypoints (owned by one actor, unshared), but no measurement shows "
                     "that an active actor follows this graph at the new positions")
             self.graphs[(key, n, var)] = g
+        if self.dev:
+            self._narrow_dev(entry)
+        if self.view_only:
+            self._lock_all()
+
+    def _entry(self, level):
+        return level_entry(level)
+
+    def _lock_all(self):
+        pass
+
+    def _narrow_dev(self, entry):
+        """G6-P66 (D-315): a development level edits only its listed actor models, never waypoints."""
+        allowed = set(entry.get("actor_models", ()))
+        for a in self.actors.values():
+            if a["status"] in ("locked", "script_overridden"):
+                continue
+            if a["name"] not in allowed:
+                a["status"], a["why"] = "locked", (
+                    f"view only: {self.level} is a development-only editor level whose edits are limited to "
+                    f"{' / '.join(sorted(allowed))} positions (G6-P66)")
+            else:
+                a["why"] = (f"DEVELOPMENT ONLY ({self.level}, G6-P66): " + a["why"]
+                            + f"; moves of at most {self.max_actor_move:g} units")
+        if not entry.get("waypoints"):
+            for g in self.graphs.values():
+                if g["status"] != "locked":
+                    g["status"], g["why"] = "locked", (f"view only: waypoints of the development-only level "
+                                                       f"{self.level} are not editable (G6-P66)")
 
     def ground_index(self):
         """G6-P35: the ground-like static collision on a grid (built once per loaded level)."""
@@ -593,16 +729,93 @@ class RemixModel:
                 "triangles": len(self.tris), "meshes": self.meshes}
 
 
+# G6-P68 (D-317): read-only level browsing in the Experimental 3D Level Viewer. A view-only level is never an editor
+# level: no project, no validation, no export, no import. The catalog (r3hd_view_levels.json beside this module) is
+# written by tools/g6p68_view_catalog_check.py from measurements of the person's own files and records, per level, the
+# exact lvl / ptr / transit SHA-256 that was measured and what the viewer showed. Levels the editor can edit (the
+# supported intros, and a development level while its variable enables it) are not offered as view-only.
+VIEW_CATALOG_FILE = Path(__file__).resolve().with_name("r3hd_view_levels.json")
+VIEW_CATALOG_FORMAT = "r3hd-view-levels-v1"
+VIEW_ENTRY_KEYS = {"lvl", "ptr", "transit", "class", "reason", "measured", "limits"}
+
+
+def _level_name_ok(level):
+    return (isinstance(level, str) and 0 < len(level) <= 32 and level[0].isalpha()
+            and all(c.isascii() and (c.isalnum() or c == "_") for c in level) and level == level.lower())
+
+
+def load_view_catalog(path=None):
+    """{level: entry} of the read-only catalog; {} if the file is absent or malformed (the viewer then offers only the
+    editor's own levels). Never raises."""
+    try:
+        d = json.loads(Path(path or VIEW_CATALOG_FILE).read_text(encoding="utf-8"))
+        if not isinstance(d, dict) or d.get("format") != VIEW_CATALOG_FORMAT or not isinstance(d.get("levels"), dict):
+            return {}
+        out = {}
+        for lv, e in d["levels"].items():
+            if (_level_name_ok(lv) and isinstance(e, dict) and set(e) == VIEW_ENTRY_KEYS
+                    and e["class"] in ("view", "excluded")
+                    and all(isinstance(e[k], str) and len(e[k]) == 64 for k in ("lvl", "ptr"))):
+                out[lv] = e
+        return out
+    except (OSError, ValueError, UnicodeDecodeError):
+        return {}
+
+
+_VIEW_CATALOG = None
+
+
+def view_catalog():
+    global _VIEW_CATALOG
+    if _VIEW_CATALOG is None:
+        _VIEW_CATALOG = load_view_catalog()
+    return _VIEW_CATALOG
+
+
+def view_level_names(catalog=None):
+    """Levels the 3D viewer offers as VIEW ONLY: catalogued as viewable and not editable in this process."""
+    cat = view_catalog() if catalog is None else catalog
+    editable = set(remix_level_names())
+    return sorted(lv for lv, e in cat.items() if e["class"] == "view" and lv not in editable)
+
+
+class ViewModel(RemixModel):
+    """G6-P68 (D-317): actors, graphs and collision of any level, read with the editor's own readers but never
+    editable: every actor and graph is LOCKED ("view only"), the compiler's own verdict is kept as `compiler_status`
+    for display. No identity pin is required; `identity` says whether the files are the catalogued measured copy."""
+    view_only = True
+
+    def _entry(self, level):
+        if not _level_name_ok(level):
+            raise EditorError("UNSUPPORTED", f"level name {level!r}")
+        return None
+
+    def _lock_all(self):
+        why = f"view only: {self.level} is not an editor level; the 3D viewer only shows it (G6-P68)"
+        for a in self.actors.values():
+            a["compiler_status"], a["compiler_why"] = a["status"], a["why"]
+            a["status"], a["why"] = "locked", why
+        for g in self.graphs.values():
+            g["compiler_status"], g["compiler_why"] = g["status"], g["why"]
+            g["status"], g["why"] = "locked", why
+        e = view_catalog().get(self.level)
+        if e is None:
+            self.identity = "uncatalogued"
+        else:
+            same = all(self.hashes[k] == e[k] for k in ("lvl", "ptr", "transit") if e[k])
+            self.identity = "measured" if same else "differs"
+
+
 def new_remix(level):
-    if level not in REMIX_LEVELS:
-        raise EditorError("UNSUPPORTED", f"level {level!r} (supported: {', '.join(REMIX_LEVELS)})")
+    level_entry(level)
     return {"format": REMIX_FORMAT, "level": level, "target": remix_target(level), "actors": [], "waypoints": [],
             "meta": {"id": f"custom.{level.replace('_', '')}-remix", "name": f"Untitled {level} remix",
                      "description": ""}}
 
 
 def remix_target(level):
-    return {f"{k}_sha256": REMIX_LEVELS[level][k] for k in ("lvl", "ptr", "transit")}
+    e = level_entry(level)
+    return {f"{k}_sha256": e[k] for k in ("lvl", "ptr", "transit")}
 
 
 def _pos(v, where):
@@ -628,8 +841,9 @@ def check_remix(p):
     if set(p) != REMIX_KEYS:
         raise EditorError("BAD_PROJECT", f"unknown keys {sorted(set(p) - REMIX_KEYS)}, missing "
                                          f"{sorted(REMIX_KEYS - set(p))}")
-    if p["level"] not in REMIX_LEVELS:
+    if not isinstance(p["level"], str):
         raise EditorError("UNSUPPORTED", f"level {p['level']!r} (supported: {', '.join(REMIX_LEVELS)})")
+    entry = level_entry(p["level"])
     if p["target"] != remix_target(p["level"]):
         raise EditorError("UNSUPPORTED", f"the project's target hashes are not the supported {p['level']} originals")
     if not isinstance(p["actors"], list) or not isinstance(p["waypoints"], list):
@@ -667,6 +881,14 @@ def check_remix(p):
         seen.add(ident)
         wps.append({"model": w["model"], "instance": w["instance"], "variable": w["variable"], "node": w["node"],
                     "waypoint_sha256": w["waypoint_sha256"], "position": _pos(w["position"], where)})
+    if is_dev_level(p["level"]):   # G6-P66 (D-315): the development level's narrow edit class, before any game data
+        allowed = set(entry.get("actor_models", ()))
+        for a in actors:
+            if short_name(a["model"]) not in allowed:
+                raise EditorError("UNSUPPORTED", f"actor {short_name(a['model'])} #{a['instance']}: {p['level']} "
+                                                 f"(development only) edits only {' / '.join(sorted(allowed))}")
+        if wps and not entry.get("waypoints"):
+            raise EditorError("UNSUPPORTED", f"{p['level']} (development only) has no editable waypoints")
     m = p["meta"]
     if not isinstance(m, dict) or set(m) != META_KEYS:
         raise EditorError("BAD_PROJECT", f"'meta' needs exactly {sorted(META_KEYS)}")
@@ -687,6 +909,8 @@ def check_remix_level(p, model):
     p = check_remix(p)
     if model is None or model.level != p["level"]:
         return [f"the {p['level']} level is not loaded"]
+    if getattr(model, "view_only", False):                 # G6-P68: a view-only model never validates an edit
+        return [f"the {p['level']} level is loaded view only (G6-P68); it cannot validate edits"]
     out = []
     for a in p["actors"]:
         x = model.actors.get((a["model"], a["instance"]))
@@ -698,9 +922,9 @@ def check_remix_level(p, model):
                        "of the project")
         elif x["matrix_sha256"] != a["matrix_sha256"]:
             out.append(f"{name}: the project was made for a different actor matrix")
-        elif math.dist(a["position"], x["position"]) > MAX_ACTOR_MOVE + 1e-4:
+        elif math.dist(a["position"], x["position"]) > actor_move_limit(p["level"]) + 1e-4:
             out.append(f"{name}: moved {math.dist(a['position'], x['position']):.3f} units (at most "
-                       f"{MAX_ACTOR_MOVE:g})")
+                       f"{actor_move_limit(p['level']):g})")
     for w in p["waypoints"]:
         g = model.graphs.get((w["model"], w["instance"], w["variable"]))
         nd = g["nodes"][w["node"]] if g and w["node"] < len(g["nodes"]) else None
@@ -727,8 +951,8 @@ def remix_manifest(p, paths):
             "variable": w["variable"], "node": w["node"], "waypoint_sha256": w["waypoint_sha256"],
             "position": w["position"]} for w in p["waypoints"]]
     m = {"format": rm.FORMAT, "id": p["meta"]["id"], "name": p["meta"]["name"] or p["meta"]["id"], "version": "1.0.0",
-         "description": p["meta"]["description"] or f"{p['level']} remix: {len(p['actors'])} actor and "
-                                                     f"{len(p['waypoints'])} waypoint position(s)",
+         "description": p["meta"]["description"] or _remix_description(p["level"], len(p["actors"]),
+                                                                       len(p["waypoints"])),
          "target": {"title_id": rm.TITLE_ID, "releases": rm.release_ids(paths), "min_port_version": "0.0.1"},
          "overrides": ov}
     return m
@@ -778,6 +1002,9 @@ def validate_remix(p, game_dir, out_dir=None, model=None):
              "Production: in-place actor-position / waypoint-position ranges (no level transaction, no growth); the "
              "mod is marked as changing game logic (no new achievements while it is enabled, D-224).",
              "Gameplay: only items marked VERIFIED have runtime evidence; EXPERIMENTAL items are byte-verified only."]
+    if is_dev_level(p["level"]):
+        lines.insert(0, f"DEVELOPMENT ONLY ({DEV_LEVELS_ENV}): {p['level']} is not a supported editor level; this "
+                        "export is for development testing, not for players (G6-P66, D-315).")
     lines += [f"  {Path(f).name} +0x{o:X} {len(d)} bytes  {w}" for f, o, d, w in ranges]
     return {"ok": True, "ranges": r["ranges"], "report": r, "manifest": m, "text": "\n".join(lines) + "\n",
             "range_list": [(Path(f).name, o, d.hex(), w) for f, o, d, w in ranges]}
@@ -798,9 +1025,132 @@ def load_any(path):
         raise EditorError("BAD_PROJECT", x.detail)
     if isinstance(p, dict) and p.get("format") == REMIX_FORMAT:
         return "v2", check_remix(p)
+    if isinstance(p, dict) and p.get("format") == rm.FORMAT and "overrides" in p:
+        raise EditorError("UNSUPPORTED", "this is an exported mod (mod.json), not a project file; open it with "
+                                         "File > Open to edit it as a new project")
     if len(raw) > MAX_PROJECT_BYTES:
         raise EditorError("BAD_PROJECT", f"the project file is larger than {MAX_PROJECT_BYTES} bytes")
     return "v1", check_project(p)
+
+
+# ================================================================================================ G6-P63
+# Reopening an exported editor mod. An export carries everything its project held except, for a level patch, the
+# project's display name: a remix mod.json has one actor-position / waypoint-position override per edit, and a
+# level-patch mod.json embeds the editor's exact level-patch-v1 declaration. A mod is reopened only when re-exporting
+# the reopened project would give the same manifest (apart from target.releases, which names the installation's
+# release); anything else - a hand-edited, merged or foreign manifest, other override types, extra package files - is
+# refused, because editing it here would silently drop or rewrite content. The reopened project has no file path:
+# Save asks for a project file and never writes over the mod.json. Nothing is written or imported.
+REMIX_OVERRIDES = {"actor-position", "waypoint-position"}
+
+
+def _remix_description(level, n_actors, n_waypoints):
+    """The description remix_manifest generates for a project without one."""
+    dev = " - DEVELOPMENT ONLY, not verified in game (G6-P66)" if is_dev_level(level) else ""
+    return f"{level} remix: {n_actors} actor and {n_waypoints} waypoint position(s){dev}"
+
+
+def _without_releases(m):
+    t = m.get("target")
+    return {**m, "target": {**t, "releases": None}} if isinstance(t, dict) else m
+
+
+def project_from_mod(path):
+    """("v1" | "v2", project) from an editor-exported mod: a mod folder or its mod.json. Refusals are EditorError:
+    NOT_EDITOR_MOD (not an export this editor can reproduce), or the mod manager's own package / manifest codes."""
+    path = Path(path)
+    folder = path if path.is_dir() else path.parent
+    if not path.is_dir() and path.name.lower() != "mod.json":
+        raise EditorError("NOT_EDITOR_MOD", f"{path.name}: an exported mod is a folder with a mod.json")
+    try:
+        files = rm.read_package(folder)
+        rm.parse_manifest(dict(files))
+    except rm.Refusal as x:
+        raise EditorError(x.code, x.detail)
+    m = json.loads(files["mod.json"].decode("utf-8-sig"))
+    extra = set(files) - {"mod.json"}
+    if extra == {"installed.json"}:   # a mod manager's installed copy: its own record, not package content
+        try:
+            rec = json.loads(files["installed.json"].decode("utf-8"))
+            if isinstance(rec, dict) and rec.get("schema") == 1 and rec.get("id") == m["id"]:
+                extra = set()
+        except (UnicodeDecodeError, ValueError):
+            pass
+    if extra:
+        raise EditorError("NOT_EDITOR_MOD", f"the mod has files the editor does not make ({', '.join(sorted(extra))})"
+                                            "; reopening it would drop them")
+    types = sorted({o.get("type") for o in m["overrides"]})
+    if set(types) <= REMIX_OVERRIDES:
+        kind, p = "v2", _remix_from_manifest(m)
+        expected = remix_manifest(p, mod_paths())
+    elif types == ["level-patch"] and len(m["overrides"]) == 1:
+        kind, p = "v1", _patch_from_manifest(m)
+        decl = declaration(p)
+        expected = {"format": rm.FORMAT, "id": decl["id"], "name": f"Level patch {decl['id']}", "version": "1.0.0",
+                    "description": decl.get("description", "") or f"{rm.LEVEL_PATCH_FORMAT} {decl['id']}",
+                    "target": {"title_id": rm.TITLE_ID, "releases": None, "min_port_version": "0.0.1"},
+                    "overrides": [{"type": "level-patch", "patch": decl}]}   # as r3hd_mods.cmd_level_patch writes it
+    else:
+        raise EditorError("NOT_EDITOR_MOD", f"the mod's overrides ({', '.join(map(str, types))}) are not an editor "
+                                            "export (remix: actor-position / waypoint-position; level patch: one "
+                                            "level-patch)")
+    if _without_releases(expected) != _without_releases(m):
+        diff = sorted(k for k in set(m) | set(expected)
+                      if _without_releases(m).get(k) != _without_releases(expected).get(k))
+        raise EditorError("NOT_EDITOR_MOD", f"the mod.json differs from what the editor would export for it "
+                                            f"({', '.join(diff)}); it was changed by hand or made elsewhere, and "
+                                            "editing it here would rewrite those parts")
+    return kind, p
+
+
+def _remix_from_manifest(m):
+    ov = m["overrides"]
+    levels = sorted({o.get("level") for o in ov})
+    if len(levels) != 1 or levels[0] not in remix_level_names():
+        if len(levels) == 1 and is_dev_level(levels[0]):
+            level_entry(levels[0])   # raises: a development-only level that this environment does not enable
+        raise EditorError("NOT_EDITOR_MOD", f"a remix mod edits exactly one of {', '.join(remix_level_names())} "
+                                            f"(this one: {', '.join(map(str, levels))})")
+    level = levels[0]
+    try:
+        actors = [{k: o[k] for k in ACTOR_KEYS} for o in ov if o["type"] == "actor-position"]
+        wps = [{k: o[k] for k in WAYPOINT_KEYS} for o in ov if o["type"] == "waypoint-position"]
+    except KeyError as x:
+        raise EditorError("NOT_EDITOR_MOD", f"an override lacks {x.args[0]!r}")
+    desc = m.get("description", "")
+    if desc == _remix_description(level, len(actors), len(wps)):
+        desc = ""    # the export's generated text, regenerated from the edits on the next export
+    return check_remix({"format": REMIX_FORMAT, "level": level, "target": remix_target(level), "actors": actors,
+                        "waypoints": wps, "meta": {"id": m["id"], "name": m["name"], "description": desc}})
+
+
+def _patch_from_manifest(m):
+    d = m["overrides"][0]["patch"]
+    try:
+        comps = {c["type"]: c for c in d["components"]}
+        tp = comps["terrain"]["patch"]
+        groups = tp["groups"]
+        terrain = {}
+        for g in groups:
+            if g["name"] != f"vertex-{g['vertices'][0]}" or len(g["vertices"]) != 1:
+                raise EditorError("NOT_EDITOR_MOD", "the terrain groups are not the editor's one-vertex groups")
+            terrain[str(g["vertices"][0])] = g["delta_z"]
+        route = {str(w["node"]): w["offset"] for w in comps.get("route", {}).get("waypoints", [])}
+        p = {"format": PROJECT_FORMAT, "level": d["level"], "target": targets(), "region": tp["region"],
+             "terrain": terrain, "route": route,
+             "fairylight": {"follow_graph_of": comps["fairylight"]["follow_graph_of"]},
+             "meta": {"id": d["id"], "name": m["name"], "description": d.get("description", "")}}
+    except (KeyError, TypeError, IndexError, AttributeError) as x:
+        raise EditorError("NOT_EDITOR_MOD", f"the level patch is not an editor declaration ({x!r})")
+    return check_project(p)
+
+
+def open_file(path):
+    """(kind, project, source) for File > Open: a project file ("project") or an exported editor mod ("mod")."""
+    path = Path(path)
+    if path.is_dir() or path.name.lower() == "mod.json":
+        return project_from_mod(path) + ("mod",)
+    return load_any(path) + ("project",)
 
 
 # ================================================================================================ G6-P35 (D-291)
@@ -1102,8 +1452,9 @@ def remix_warnings(p, model):
                                            + ", ".join(f"{zz:.2f}" for zz, _ in q["window"]) + "); which floor it "
                                            "lands on is not predictable from geometry"))
         d = math.dist(a["position"], x["position"])
-        if d > NEAR_BOUND * MAX_ACTOR_MOVE:
-            out.append(("info", "NEAR_BOUND", f"{name}: moved {d:.2f} of at most {MAX_ACTOR_MOVE:g} units"))
+        lim = getattr(model, "max_actor_move", MAX_ACTOR_MOVE)
+        if d > NEAR_BOUND * lim:
+            out.append(("info", "NEAR_BOUND", f"{name}: moved {d:.2f} of at most {lim:g} units"))
         if x["status"] != "verified":
             out.append(("info", "BEHAVIOUR_UNVERIFIED", f"{name}: {x['status'].upper()} - its behaviour at the new "
                                                         "position is not verified"))

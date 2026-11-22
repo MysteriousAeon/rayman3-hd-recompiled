@@ -12,10 +12,13 @@ O2 predictions: the preview's standing height equals the independent geometry mo
    final image) for the runtime-verified west-dip, the G6-P19 / G6-P20 preset and an offline-only 2-group graph-B
    patch; the measured runtime value is never used; probe models that do not apply are reported unavailable.
 O3 refusals: representative author mistakes -> exit 2, stable code, actionable detail, `written` false, no output.
+   G6-P65 (D-314): with the gate off the D-286 production composition validates; the same mistakes refuse identically,
+   and development-only compositions (graph B, route, other component sets) refuse naming the variable.
 O4 walkthrough: copy an example, --check, change one value, --check, --out, import, plan (private folders), inspect the
    plan's level-tx and run the independent combined checker on it; no Python edited.
 O5 compatibility / safety: G6-P21 / G6-P22 fixed declarations unchanged (tx ids, results), generic mixed mods and
    production refused (selftest), gate off refused, dev gate status production, binaries unchanged.
+`check` also takes --identity X / --bin DIR for its build identity row (build_identity.py; G6-P64, D-313).
 """
 import copy
 import json
@@ -40,9 +43,22 @@ BIN = ROOT / "private" / "work" / "rex" / "out" / "build" / "win-amd64-release"
 # policy, E-519, 2026-11-17); before: 2506d0a7... / bad7a072... (G6-P27 restore), e1c6df2b... / b47316a8... (G6-P23).
 # G6-P39 (D-295): the live rows compare with the CURRENT validated identity, config/release/production_identity.json
 # (G6-P36 relink, D-292); the history stays in that record and with its own runtime evidence.
-CURRENT = json.loads((ROOT / "config" / "release" / "production_identity.json").read_text(
-    encoding="utf-8"))["current"]["binaries"]
-PROD = {n: CURRENT[n] for n in ("r3hd.exe", "rexruntime.dll")}
+# G6-P64 (D-313): build_identity.py picks the identity: `development` (the last authoritative replay) by default,
+# or a historical one at its retained folder with `check --identity release|D-292`.
+import build_identity as bi  # noqa: E402
+PROD = ("r3hd.exe", "rexruntime.dll")
+IDENT, IDENT_BIN = "development", None
+
+
+def take_identity(argv):
+    """Remove `--identity X` / `--bin DIR` from argv into this module's choice (shared by G6-P25 / P28 / P29)."""
+    global IDENT, IDENT_BIN
+    rest, IDENT, IDENT_BIN = bi.parse(argv)
+    return rest
+
+
+def identity_ok():
+    return bi.verify(IDENT, PROD, IDENT_BIN)[0]
 KNOWN = {"g6p22_west_dip_fairy.json": "3e74d122bdb042e3", "g6p22_reference_patch.json": "1b1f404eaf81a240",
          "g6p20_reference.json": "1b1f404eaf81a240", "graph_b.json": "3cdb5be5ebafc590"}
 
@@ -170,9 +186,38 @@ def check():
             rc_c == 2 and c.get("code") == code and sub in c.get("detail", "") and c.get("written") is False
             and not out.exists() and rc_t == 2 and "Nothing was written." in t and "Traceback" not in t)
     det["o3"] = nd
-    # gate off / gate naming another level / --check with --out
+    # G6-P65 (D-314): until G6-P30 the west-dip was refused with the gate off. D-286 made exactly this composition
+    # (intro_20 start-floor terrain + FairyLight on graph A, no route) production content, so with the gate off it now
+    # validates: same transaction, nothing written, reported production-eligible. The negatives above, run with the
+    # gate off as well, must still refuse with the same code and detail: the production scope keeps the region
+    # vertices, lower-only deltas, depth bound, one-group-per-vertex rule and source hashes. Development-only
+    # compositions (graph B, graph C route, other component sets) are refused, naming the variable.
+    rc, r, _ = cli(["level-patch", str(WEST), "--check"], gate=None, extra=("--json",))
+    pv = r.get("preview", {}) if isinstance(r, dict) else {}
+    o3["gate off: the D-286 production composition (start-floor-v1 + FairyLight graph A) validates, "
+       f"tx {KNOWN[WEST.name]}, production-eligible, not development-only"] = (
+        rc == 0 and r["transaction"]["id"] == KNOWN[WEST.name] and r.get("development_only") is False
+        and pv.get("production", {}).get("eligible") is True
+        and pv.get("authorization", {}).get("production_policy") == "D-286")
+    for n, (f, code, sub) in neg.items():
+        rc_p, p, _ = cli(["level-patch", str(f), "--check"], gate=None, extra=("--json",))
+        if n in ("missing-terrain", "graph"):   # outside the policy: refused as development-only
+            o3[f"gate off: {n} refused as development-only (UNSUPPORTED, names {rm.STRUCT_ENV}=intro_20)"] = (
+                rc_p == 2 and p.get("code") == "UNSUPPORTED" and "development-only level patch" in p.get("detail", "")
+                and f"{rm.STRUCT_ENV}=intro_20" in p.get("detail", "") and p.get("written") is False)
+        else:
+            o3[f"gate off: {n} refused exactly as with the gate ({code}, '{sub}')"] = (
+                rc_p == 2 and (p.get("code"), p.get("detail")) == (nd[n]["code"], nd[n]["detail"])
+                and p.get("written") is False)
+    for fn, why in (("graph_b.json", "only the FairyLight on graph A"), ("g6p28_fairy_route.json", "routes stay "
+                                                                                                  "development-only")):
+        rc_p, p, _ = cli(["level-patch", str(EX / fn), "--check"], gate=None, extra=("--json",))
+        rc_d, _, _ = cli(["level-patch", str(EX / fn), "--check"], extra=("--json",))
+        o3[f"gate off: {fn} refused as development-only ('{why}'); valid with the gate"] = (
+            rc_p == 2 and p.get("code") == "UNSUPPORTED" and why in p.get("detail", "")
+            and f"{rm.STRUCT_ENV}=intro_20" in p.get("detail", "") and p.get("written") is False and rc_d == 0)
+    # gate naming another level / --check with --out
     for name, gate, args, code, sub in (
-            ("gate off", None, ["--check"], "UNSUPPORTED", f"{rm.STRUCT_ENV}=intro_20"),
             ("gate names intro_15", "intro_15", ["--check"], "UNSUPPORTED", f"{rm.STRUCT_ENV}=intro_20"),
             ("--check with --out", LEVEL, ["--check", "--out", str(WORK / "o3_out" / "both")], "USAGE", "--check")):
         rc, r, _ = cli(["level-patch", str(WEST), *args], gate=gate, extra=("--json",))
@@ -297,11 +342,12 @@ def check():
     det["selftest"] = last
     gate1 = subprocess.run([sys.executable, str(HERE / "g5p1_dev_gate.py"), "status"], capture_output=True, text=True)
     o5["development gate status production before and after"] = gate0.stdout.strip() == gate1.stdout.strip() == "production"
-    hs = {n: rm.sha256_bytes((BIN / n).read_bytes()) for n in PROD}
-    o5["production binaries unchanged (r3hd.exe e1c6df2b..., rexruntime.dll b47316a8...)"] = hs == PROD
+    id_ok, id_label, id_det = bi.verify(IDENT, PROD, IDENT_BIN)
+    o5["production binaries = the build identity (G6-P64 build_identity; was a fixed pin)"] = id_ok
+    folder = Path(id_det.get("folder", BIN))
     o5["no development gate string in the production binaries"] = all(
-        rm.STRUCT_ENV.encode() not in (BIN / n).read_bytes() for n in PROD)
-    det["binaries"] = hs
+        (folder / n).is_file() and rm.STRUCT_ENV.encode() not in (folder / n).read_bytes() for n in PROD)
+    det["binaries"] = dict(id_det, label=id_label)
     O["O5"] = o5
 
     res = {"pass": all(all(v.values()) for v in O.values()), "checks": O, "details": det}
@@ -311,6 +357,6 @@ def check():
 
 
 if __name__ == "__main__":
-    if sys.argv[1:] != ["check"]:
+    if take_identity(sys.argv[1:]) != ["check"]:
         raise SystemExit(__doc__)
     sys.exit(check())

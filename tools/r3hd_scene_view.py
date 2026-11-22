@@ -14,11 +14,19 @@ Input is bound to this window's own widgets; there are no global hooks, no injec
 moves. A held button is the operating system's ordinary capture and ends with the release; drags and held keys are
 dropped on focus loss and Escape. The view draws only after an input, resize, expose or editor change; flying with a
 held key runs a 16 ms timer that stops with the last key release or focus loss (D-294).
+
+G6-P69 (D-318): a VIEW ONLY level is read on one background thread (`LevelLoader`): the never-editable model, the
+scene, its vertex batches and its decoded textures - CPU work on the person's files only. That thread never calls Tk
+or OpenGL. This window's thread polls for the result, uploads it to its own GL context and updates the widgets. The
+latest selection wins: older requests are cancelled cooperatively and their results are dropped twice (by the loader
+and again before the commit). The level shown stays shown, and navigable, until the new one is ready; a level that
+cannot be read leaves it in place with an error. Editor levels still load on this thread (the editor owns their model).
 """
 import argparse
 import math
 import os
 import sys
+import threading
 import time
 import tkinter as tk
 from pathlib import Path
@@ -44,6 +52,24 @@ WHY_DISABLED = {
     "remix": "Terrain lowering belongs to the intro_20 terrain + FairyLight project: choose it under Level.",
     "patch": "Objects and Paths belong to the actor and waypoint remix projects: choose one under Level. "
              "The FairyLight route of this project is edited in the classic 2D editor."}
+# G6-P68 (D-317): view-only levels from the read-only catalog. Nothing of such a level can be selected for editing,
+# saved, validated, exported or installed; the editor's own project (if any) is kept untouched in the background.
+PLAIN_STATUS["view"] = "View only: this level is shown, never edited"
+STATUS_FG["view"] = "#2e6db4"
+VIEW_RGB = (0.55, 0.72, 0.95)
+VIEW_SUFFIX = " - VIEW ONLY"
+WHY_DISABLED["view"] = ("This level is VIEW ONLY: it cannot be edited, saved, validated, exported or installed as a "
+                        "mod. Choose an editable level under Level to edit; your project there is kept.")
+VIEW_LIMITS = ("Approximate picture: draw modes were traced only on intro_15; sky, water, animation, lighting and "
+               "shaders are not reproduced; objects the game places at run time are hidden or shown where the file "
+               "puts them.")
+EDIT_COMMANDS = ("open", "save", "validate", "export", "import", "classic")
+
+
+def view_label(level):
+    return f"{level}{VIEW_SUFFIX}"
+
+
 HINT = ("Left-drag: orbit   Right-drag: look   Middle-drag: pan   Wheel: zoom   W A S D Q E: fly (Shift: faster)   "
         "F: focus   Home: whole level   Enter: apply   Esc: cancel   Ctrl+Z: undo")
 FLY_KEYS = {"w": (1, 0, 0), "s": (-1, 0, 0), "a": (0, -1, 0), "d": (0, 1, 0), "q": (0, 0, -1), "e": (0, 0, 1)}
@@ -59,6 +85,132 @@ def dim(rgb, k=0.55):
     return tuple(c * k for c in rgb)
 
 
+# -------------------------------------------------------------------------------------------------- G6-P69 loading
+POLL_MS = 15                 # how often this window looks for a finished background load (only while one is pending)
+JOIN_SECONDS = 10.0          # closing waits this long for the loader thread (it stops at its next checkpoint)
+# While a background load runs, both threads want the interpreter lock: every Tk call releases it, and getting it back
+# from the busy loader thread takes up to the switch interval (5 ms by default) - so a handler making 50 Tk calls
+# would wait about 250 ms. Only while a load is pending, the interval is 0.5 ms (restored afterwards; it costs the
+# loader nothing while this thread is idle in the event loop). Measured in G6-P69 (E-555).
+SWITCH_SECONDS = 0.0005
+LOAD_ERRORS = (ls.SceneError, core.EditorError, OSError, MemoryError)
+
+
+def load_view_level(game_dir, level, cancelled):
+    """The CPU part of showing a VIEW ONLY level (G6-P69): the never-editable model, the scene with its roles, the
+    vertex batches and the decoded textures. Runs on the loader's thread: no Tk, no OpenGL, no shared editor state;
+    it only reads the person's files. Raises sg.Cancelled when `cancelled()` turns true at a checkpoint."""
+    t0 = time.perf_counter()
+    try:
+        model, err = core.ViewModel(game_dir, level), None
+    except core.EditorError as x:                     # actors unreadable: the picture alone, unclassified
+        model, err = None, x.detail
+    t1 = time.perf_counter()
+    if cancelled():
+        raise sg.Cancelled()
+    scene = ls.Scene(game_dir, level) if model is None else sg.classified_scene(game_dir, level, model)[0]
+    if not scene.objects:                             # G6-P68: e.g. a truncated file that parses to nothing
+        raise ls.SceneError("EMPTY", f"{level} has no drawable geometry (the files may be damaged)")
+    t2 = time.perf_counter()
+    if cancelled():
+        raise sg.Cancelled()
+    prepared = sg.Prepared(scene, cancelled=cancelled)
+    return {"level": level, "model": model, "error": err, "scene": scene, "prepared": prepared,
+            "seconds": {"model": round(t1 - t0, 4), "scene": round(t2 - t1, 4), **prepared.seconds,
+                        "cpu_total": round(time.perf_counter() - t0, 4)}}
+
+
+class LevelLoader:
+    """G6-P69: one background thread, at most one waiting request and at most one finished result.
+
+    submit() replaces any waiting request and supersedes the running one (its `cancelled()` turns true; it stops at
+    its next checkpoint, never by force). A result is kept only if its request is still the latest when it finishes;
+    take() hands it to the owner's thread. shutdown() cancels everything, stops the thread and waits for it. The work
+    function runs on the thread and must not touch Tk or OpenGL; any exception it raises becomes a failed result."""
+
+    def __init__(self, work):
+        self._work = work
+        self._lock = threading.Lock()
+        self._wake = threading.Condition(self._lock)
+        self._gen = 0
+        self._request = None            # (gen, args) not yet started
+        self._result = None             # (gen, result) of the latest request
+        self._thread = None
+        self._stopped = False
+        self.busy = False               # a request is running on the thread (diagnostics / tests)
+
+    def submit(self, *args):
+        with self._lock:
+            if self._stopped:
+                raise RuntimeError("the level loader has been shut down")
+            self._gen += 1
+            self._request, self._result = (self._gen, args), None
+            if self._thread is None:
+                self._thread = threading.Thread(target=self._run, name="r3hd-level-loader", daemon=True)
+                self._thread.start()
+            self._wake.notify()
+            return self._gen
+
+    def cancel(self):
+        """Supersede the waiting and the running request; nothing of them will be delivered."""
+        with self._lock:
+            self._gen += 1
+            self._request, self._result = None, None
+
+    def is_current(self, gen):
+        with self._lock:
+            return gen == self._gen and not self._stopped
+
+    def take(self):
+        """(gen, result) of a finished request, or None. The caller still checks gen against what it is waiting for."""
+        with self._lock:
+            out, self._result = self._result, None
+            return out
+
+    def shutdown(self, timeout=JOIN_SECONDS):
+        """Cancel, stop and join the thread. True when no loader thread is left running."""
+        with self._lock:
+            self._stopped = True
+            self._gen += 1
+            self._request, self._result = None, None
+            self._wake.notify_all()
+            t = self._thread
+        if t is not None:
+            t.join(timeout)
+            return not t.is_alive()
+        return True
+
+    def alive(self):
+        return self._thread is not None and self._thread.is_alive()
+
+    def _run(self):
+        while True:
+            with self._lock:
+                while self._request is None and not self._stopped:
+                    self._wake.wait()
+                if self._stopped:
+                    return
+                (gen, args), self._request = self._request, None
+                self.busy = True
+
+            def cancelled(gen=gen):
+                return self._gen != gen or self._stopped   # a plain read: an int / bool, set under the lock
+            try:
+                res = self._work(*args, cancelled)
+            except sg.Cancelled:
+                res = None
+            except LOAD_ERRORS as x:
+                res = {"failed": getattr(x, "detail", None) or str(x) or type(x).__name__}
+            except Exception as x:      # noqa: BLE001 - the thread must outlive any defect of one level
+                res = {"failed": f"unexpected {type(x).__name__}: {x}"}
+            with self._lock:
+                self.busy = False
+                if res is not None and gen == self._gen and not self._stopped:
+                    self._result = (gen, res)
+                # else: superseded while running - dropped here, before the owner can ever see it
+            res = args = None   # this thread keeps no level alive while it waits (found in G6-P69 measurement)
+
+
 class Editor3D:
     def __init__(self, app, top):
         self.app, self.top = app, top
@@ -71,6 +223,13 @@ class Editor3D:
         self._redraw_pending, self._closing = False, False
         self.timing = {"frames": 0, "last_ms": None, "max_ms": 0.0, "load_seconds": None}
         self.picks = []                      # [(position, selection)] of the current tool
+        self.view = None                     # G6-P68: {"level", "model", "error", "entry"} while a view-only level shows
+        self.vsel = None                     # the viewer's own selection on a view-only level (never the editor's)
+        self.view_levels = core.view_level_names()
+        self.pending = None                  # G6-P69: {"level", "gen", "t0"} while a view-only level loads
+        self.loader = LevelLoader(load_view_level)
+        self.loader_stopped = None           # G6-P69: True once closing has joined the loader thread
+        self._poll_job, self._busy_prev, self._switch_prev = None, None, None
         self._build()
         self._hook()
 
@@ -101,7 +260,7 @@ class Editor3D:
         ttk.Label(bar, text="Level").pack(side="left")
         self.level_var = tk.StringVar()
         self.level_cb = ttk.Combobox(bar, textvariable=self.level_var, state="readonly", width=44,
-                                     values=[c[2] for c in ed.CHOICES])
+                                     values=[c[2] for c in ed.CHOICES] + [view_label(lv) for lv in self.view_levels])
         self.level_cb.pack(side="left", padx=(4, 12))
         self.level_cb.bind("<<ComboboxSelected>>", lambda e: self.choose_level(self.level_var.get()))
         self.tool = tk.StringVar(value="objects")
@@ -114,12 +273,16 @@ class Editor3D:
         ttk.Separator(bar, orient="vertical").pack(side="left", fill="y", padx=8)
         self.undo_btn = ttk.Button(bar, text="Undo", command=self.undo)
         self.undo_btn.pack(side="left")
-        for label, fn in (("Save", self.save), ("Validate", self.validate), ("Export mod...", self.export),
-                          ("Import + enable...", self.import_mod)):
-            ttk.Button(bar, text=label, command=fn).pack(side="left", padx=1)
+        self.cmd_btns = {}
+        for key, label, fn in (("open", "Open...", self.open), ("save", "Save", self.save),
+                               ("validate", "Validate", self.validate), ("export", "Export mod...", self.export),
+                               ("import", "Import + enable...", self.import_mod)):
+            self.cmd_btns[key] = ttk.Button(bar, text=label, command=fn)
+            self.cmd_btns[key].pack(side="left", padx=1)
         self.adv = tk.BooleanVar(value=False)
         ttk.Checkbutton(bar, text="Advanced details", variable=self.adv, command=self.refresh_panel).pack(side="right")
-        ttk.Button(bar, text="Classic 2D editor", command=self.show_2d).pack(side="right", padx=6)
+        self.cmd_btns["classic"] = ttk.Button(bar, text="Classic 2D editor", command=self.show_2d)
+        self.cmd_btns["classic"].pack(side="right", padx=6)
 
         body = ttk.Frame(t)
         body.pack(side="top", fill="both", expand=True)
@@ -130,6 +293,9 @@ class Editor3D:
         self.vp = tk.Frame(body, background="", takefocus=1, cursor="crosshair")
         self.vp.pack(side="left", fill="both", expand=True)
 
+        self.cap_lbl = tk.Label(side, text="", anchor="w", justify="left", wraplength=310,
+                                font=("Segoe UI", 9, "bold"))
+        self.cap_lbl.pack(fill="x", pady=(0, 6))
         self.insp = ttk.LabelFrame(side, text="Selected", padding=6)
         self.insp.pack(fill="x")
         self.name_lbl = ttk.Label(self.insp, text="", font=("Segoe UI", 11, "bold"), wraplength=300)
@@ -214,12 +380,28 @@ class Editor3D:
         return True
 
     def level_key(self):
+        if self.view:
+            return ("view", self.view["level"])
         a = self.app
         return ("remix", a.remix["level"]) if a.mode == "remix" else ("patch", core.LEVEL)
+
+    def cur_sel(self):
+        """The selection this window shows: its own on a view-only level, else the editor's."""
+        return self.vsel if self.view else self.app.sel
+
+    def cur_model(self):
+        """The level model whose actors and routes are shown: the ViewModel of a view-only level, the editor's remix
+        model, or None (the intro_20 level patch)."""
+        if self.view:
+            return self.view["model"]
+        return self.app.rmodel if self.app.mode == "remix" else None
 
     def ensure_scene(self):
         key = self.level_key()
         if self.r is not None and self.scene_key == key:
+            return
+        if key[0] == "view":                           # G6-P69: never read here; installed from a finished load
+            self._install_view()
             return
         if self.r is not None and self.scene_key and self.scene_key[1] == key[1]:
             self.scene_key = key                       # same level, other project kind: keep the scene
@@ -229,25 +411,180 @@ class Editor3D:
         self.status(f"Loading {key[1]} from your game files...")
         t0 = time.perf_counter()
         old, self.r = self.r, None
+        self.scene = None
         if old is not None:
             self.ctx.current()
             old.close()                                # free the previous level's textures before loading
-        model = self.app.rmodel if key[0] == "remix" else None
+        model = self.cur_model() if key[0] == "remix" else None
+        busy = self._busy(True)
         try:
             self.scene, _ = sg.classified_scene(self.app.game_dir, key[1], model)
+            if not self.scene.objects:                 # G6-P68: e.g. a truncated file that parses to nothing
+                raise ls.SceneError("EMPTY", f"{key[1]} has no drawable geometry (the files may be damaged)")
             self.ctx.current()
             self.r = sg.Renderer(self.ctx, self.scene)
-        except (ls.SceneError, core.EditorError, OSError) as x:
+        except (ls.SceneError, core.EditorError, OSError, MemoryError) as x:
             self.scene = None
             self.status(f"The level's scene could not be read: {getattr(x, 'detail', x)}", True)
             return
+        finally:
+            self._busy(False, busy)
         self.r.set_collision(self.collision_tris(key))
         self.scene_key = key
         self.timing["load_seconds"] = round(time.perf_counter() - t0, 3)
         self.fit_content()
         self.status(f"{key[1]} loaded from your game files.")
 
+    def _install_view(self):
+        """G6-P69: put a committed view-only level on screen: the renderer built at commit time, or - when the GL
+        context started only afterwards - an upload of its prepared data now. Old level freed after the new one is
+        in place. Never reads a file."""
+        v = self.view
+        r = v.pop("ready", None)
+        if r is None:
+            if self.ctx is None or v.get("prepared") is None:
+                return
+            try:
+                self.ctx.current()
+                r = sg.Renderer(self.ctx, v["scene"], prepared=v["prepared"])
+            except (ls.SceneError, OSError, MemoryError) as x:
+                v["prepared"] = None
+                self.status(f"The level's scene could not be shown: {getattr(x, 'detail', x)}", True)
+                return
+        v["prepared"] = None                           # decoded pixels now live in the bridge only
+        old, self.r = self.r, r
+        if old is not None:
+            self.ctx.current()
+            old.close()
+        self.scene, self.scene_key = v["scene"], ("view", v["level"])
+        self.r.set_collision(self.collision_tris(self.scene_key))
+        self.timing["load_seconds"] = v.get("seconds", {}).get("shown")
+        self.fit_content()
+        errs = len(self.r.stats["texture_errors"])
+        self.status(f"{v['level']} loaded from your game files - VIEW ONLY"
+                    + (f"; {errs} texture(s) could not be shown (drawn untextured)" if errs else "") + ".")
+
+    def _busy(self, on, prev=None, cursor="watch"):
+        """A wait cursor on this window while a level loads (no grab, no global cursor change). G6-P69: "starting"
+        (arrow and hourglass) while a view-only level loads in the background and the window still responds."""
+        try:
+            if on:
+                prev = self.top.cget("cursor")
+                self.top.config(cursor=cursor)
+                if cursor == "watch":
+                    self.top.update_idletasks()
+                return prev
+            self.top.config(cursor=prev or "")
+        except tk.TclError:
+            pass
+        return None
+
+    # ---------------------------------------------------------------------------------------------- G6-P69 loading
+    def _start_pending(self, level):
+        """Mark the level as loading (the caller updates the widgets), then _submit_pending hands it to the loader."""
+        self.cancel_pending(quiet=True)
+        self.pending = {"level": level, "gen": None, "t0": time.perf_counter()}
+        self._busy_prev = self._busy(True, cursor="starting")
+
+    def _submit_pending(self):
+        """After the widgets show the pending state: start the CPU work and poll for it. While it runs, this thread
+        gets the interpreter lock back quickly after each Tk call (see SWITCH_SECONDS)."""
+        self._fast_switch(True)
+        self.pending["gen"] = self.loader.submit(self.app.game_dir, self.pending["level"])
+        self._poll_job = self.top.after(POLL_MS, self._poll)
+
+    def _fast_switch(self, on):
+        if on and self._switch_prev is None:
+            self._switch_prev = sys.getswitchinterval()
+            sys.setswitchinterval(min(self._switch_prev, SWITCH_SECONDS))
+        elif not on and self._switch_prev is not None:
+            sys.setswitchinterval(self._switch_prev)
+            self._switch_prev = None
+
+    def cancel_pending(self, quiet=False):
+        """Forget the level being loaded (a newer choice, an editor level, or closing). The loader drops its result."""
+        if not self.pending:
+            return False
+        level = self.pending["level"]
+        self.loader.cancel()
+        self._fast_switch(False)
+        self.pending = None
+        if self._poll_job is not None:
+            try:
+                self.top.after_cancel(self._poll_job)
+            except tk.TclError:
+                pass
+            self._poll_job = None
+        self._busy(False, self._busy_prev)
+        self._busy_prev = None
+        if not quiet and not self._closing:
+            self.status(f"Loading {level} was cancelled.")
+        return True
+
+    def _poll(self):
+        """This window's thread: look for the finished load; commit it only if it is the latest request."""
+        self._poll_job = None
+        if self._closing or not self.pending:
+            return
+        got = self.loader.take()
+        if got is not None and got[0] == self.pending["gen"] and self.loader.is_current(got[0]):
+            self._commit(got[1])
+            return
+        self._poll_job = self.top.after(POLL_MS, self._poll)   # nothing yet, or an obsolete result (dropped)
+
+    def _commit(self, res):
+        p = self.pending
+        self.pending = None
+        self._fast_switch(False)
+        self._busy(False, self._busy_prev)
+        self._busy_prev = None
+        shown = self.view["level"] + VIEW_SUFFIX if self.view else self.level_key()[1]
+        if "failed" in res:                            # the level shown stays as it is
+            self.status(f"{p['level']} could not be shown: {res['failed']}. Still showing {shown}.", True)
+            self.sync()
+            return
+        r = None
+        if self.ctx is not None:                       # upload first: if it fails, nothing of the shown level changed
+            try:
+                self.ctx.current()
+                r = sg.Renderer(self.ctx, res["scene"], prepared=res["prepared"])
+            except (ls.SceneError, OSError, MemoryError) as x:
+                self.status(f"{p['level']} could not be shown: {getattr(x, 'detail', x)}. Still showing {shown}.",
+                            True)
+                self.sync()
+                return
+        self.preview, self.vsel, self.drag = None, None, None
+        self.stop_fly()
+        secs = dict(res.get("seconds", {}), shown=round(time.perf_counter() - p["t0"], 3))
+        self.view = {"level": p["level"], "model": res["model"], "error": res["error"],
+                     "entry": core.view_catalog().get(p["level"]), "scene": res["scene"],
+                     "prepared": res["prepared"], "seconds": secs}
+        if r is not None:
+            self.view["ready"] = r
+        self.sync()
+        if self.ctx is None:
+            err = res["error"]
+            self.status(f"{p['level']} is VIEW ONLY." + (f" Objects could not be read: {err}" if err else ""),
+                        bool(err))
+
+    def finish_pending(self, timeout=120.0):
+        """Tests and tools only: run this window's timer and idle events (the poll, queued redraws) until no view-only
+        load is pending, then the idle events once more. No window events, so a withdrawn test window keeps its size
+        (as G6-P68's update_idletasks did)."""
+        import _tkinter
+        end = time.monotonic() + timeout
+        flags = _tkinter.TIMER_EVENTS | _tkinter.IDLE_EVENTS | _tkinter.DONT_WAIT
+        while self.pending and time.monotonic() < end and not self._closing:
+            while self.top.tk.dooneevent(flags):
+                pass
+            time.sleep(0.002)
+        if not self._closing:
+            self.top.update_idletasks()
+        return not self.pending
+
     def collision_tris(self, key):
+        if key[0] == "view":
+            return self.view["model"].tris if self.view and self.view["model"] else []
         if key[0] == "remix" and self.app.rmodel:
             return self.app.rmodel.tris
         return core.RemixModel(self.app.game_dir, core.LEVEL).tris if key[0] == "patch" else []
@@ -267,6 +604,14 @@ class Editor3D:
                                                       parent=self.top):
             return
         self._closing = True
+        self.cancel_pending(quiet=True)                # G6-P69: no load is committed after this point
+        self.loader_stopped = self.loader.shutdown()   # cooperative: the thread stops at its next checkpoint
+        if self.view:
+            self.view["prepared"] = None
+            ready = self.view.pop("ready", None)       # (normally installed by sync at once; never left in the bridge)
+            if ready is not None and self.ctx:
+                self.ctx.current()
+                ready.close()
         self.stop_fly()
         self.free_gl()
         try:
@@ -308,31 +653,74 @@ class Editor3D:
     # ---------------------------------------------------------------------------------------------- sync from editor
     def sync(self):
         """Rebuild what the current tool shows from the editor's state; then one redraw."""
-        if self._closing or self.ctx is None:
+        if self._closing:
+            return
+        if self.ctx is None:                           # G6-P68: no 3D view, but the capability state still applies
+            self.sync_controls()
             return
         app = self.app
         self.ensure_scene()
-        name = app.path.name if app.path else "unsaved project"
-        self.top.title(f"Experimental 3D Level Viewer - {self.level_key()[1]} - {name}{' *' if app.dirty else ''}")
-        self.level_var.set(app.current_choice()[2])
+        self.sync_controls()
         kind = self.level_key()[0]
-        for key, b in self.tool_btns.items():
-            ok = (key != "terrain") if kind == "remix" else (key == "terrain")
-            b.config(state="normal" if ok else "disabled")
-        if app.sel and TOOL_FOR_KIND.get(app.sel[0]) and TOOL_FOR_KIND[app.sel[0]] != self.tool.get():
-            self.tool.set(TOOL_FOR_KIND[app.sel[0]])
+        sel = self.cur_sel()
+        if sel and TOOL_FOR_KIND.get(sel[0]) and TOOL_FOR_KIND[sel[0]] != self.tool.get():
+            self.tool.set(TOOL_FOR_KIND[sel[0]])
         if str(self.tool_btns[self.tool.get()].cget("state")) == "disabled":
-            self.tool.set("objects" if kind == "remix" else "terrain")
-        self.undo_btn.config(state="normal" if kind == "remix" and app.undo else "disabled")
-        if self.preview and self.preview["sel"] != app.sel:
+            self.tool.set("terrain" if kind == "patch" else "objects")
+        self.undo_btn.config(state="normal" if kind == "remix" and app.undo and not self.pending else "disabled")
+        if self.preview and (self.view or self.preview["sel"] != app.sel):
             self.preview = None
         self.build_overlays()
         self.refresh_panel()
         self.request()
 
-    def selected_pos(self, sel):
-        """Current (edited) position of a selection, from the editor."""
+    def sync_controls(self):
+        """Title, level selector, capability line, tool and command states from what is shown (G6-P68). A view-only
+        level disables every command that edits, saves, validates, exports or installs."""
+        self._sync_controls_shown()
+        if self.pending:                               # G6-P69: the shown level stays; editing pauses until it is replaced
+            lv = self.pending["level"]
+            self.level_var.set(view_label(lv))
+            for key in self.cmd_btns:
+                self.cmd_btns[key].config(state="disabled")
+            self.undo_btn.config(state="disabled")
+            self.top.title(f"Experimental 3D Level Viewer - loading {lv} (VIEW ONLY)")
+            self.cap_lbl.config(text=f"LOADING {lv} (VIEW ONLY) - the level shown stays until it is ready; editing "
+                                     "commands are paused.", fg=STATUS_FG["view"])
+
+    def _sync_controls_shown(self):
         app = self.app
+        kind, level = self.level_key()
+        if kind == "view":
+            self.top.title(f"Experimental 3D Level Viewer - {level} - VIEW ONLY")
+            self.level_var.set(view_label(level))
+            m = self.view["model"]
+            for key, b in self.tool_btns.items():
+                b.config(state="normal" if key != "terrain" and m is not None else "disabled")
+            for b in self.cmd_btns.values():
+                b.config(state="disabled")
+            ident = {"measured": "", "differs": " Your files differ from the measured copy: the picture is untested.",
+                     "uncatalogued": " This level was not measured."}.get(getattr(m, "identity", ""), "")
+            self.cap_lbl.config(text=f"VIEW ONLY - nothing on this level can be changed, exported or installed."
+                                     f"{ident}", fg=STATUS_FG["view"])
+            return
+        name = app.path.name if app.path else "unsaved project"
+        self.top.title(f"Experimental 3D Level Viewer - {level} - {name}{' *' if app.dirty else ''}")
+        self.level_var.set(app.current_choice()[2])
+        for key, b in self.tool_btns.items():
+            ok = (key != "terrain") if kind == "remix" else (key == "terrain")
+            b.config(state="normal" if ok else "disabled")
+        for b in self.cmd_btns.values():
+            b.config(state="normal")
+        dev = kind == "remix" and core.is_dev_level(level)
+        self.cap_lbl.config(text="EDITABLE - DEVELOPMENT ONLY level (not verified in game)" if dev else "EDITABLE",
+                            fg=STATUS_FG["experimental"] if dev else STATUS_FG["verified"])
+
+    def selected_pos(self, sel):
+        """Current (edited) position of a selection, from the editor; the file's position on a view-only level."""
+        app = self.app
+        if self.view:
+            return self.original_pos(sel)
         if sel[0] in ("actor", "rwp"):
             p = app.remix_position(sel)
             return tuple(p) if p else None
@@ -341,6 +729,17 @@ class Editor3D:
         return None
 
     def original_pos(self, sel):
+        if self.view:
+            m = self.view["model"]
+            if m is None:
+                return None
+            if sel[0] == "actor" and sel[1] in m.actors:
+                return tuple(m.actors[sel[1]]["position"])
+            if sel[0] == "rwp" and sel[1][:3] in m.graphs:
+                nodes = m.graphs[sel[1][:3]]["nodes"]
+                nd = nodes[sel[1][3]] if sel[1][3] < len(nodes) else None
+                return tuple(nd["position"]) if nd else None
+            return None
         it = self.app.remix_item(sel) if sel[0] in ("actor", "rwp") else None
         if it:
             return tuple(it[0])
@@ -353,29 +752,33 @@ class Editor3D:
             return
         app, tool = self.app, self.tool.get()
         pts, lines, picks = [], [], []
-        m = app.rmodel if self.level_key()[0] == "remix" else None
+        m = self.cur_model() if self.level_key()[0] in ("remix", "view") else None
+        view = bool(self.view)
+        where = (lambda s: self.original_pos(s)) if view else (lambda s: tuple(app.remix_position(s)))  # noqa: E731
+        cur = self.cur_sel()
         if tool == "objects" and m:
             for ident, a in m.actors.items():
                 sel = ("actor", ident)
-                p = tuple(app.remix_position(sel))
-                pts.append((p, sg.STATUS_RGB.get(a["status"], (1, 1, 1)), sel))
+                p = where(sel)
+                pts.append((p, VIEW_RGB if view else sg.STATUS_RGB.get(a["status"], (1, 1, 1)), sel))
                 picks.append((p, sel))
                 if math.dist(p, a["position"]) > 1e-6:          # where an edited object came from
                     lines.append((a["position"], p, (0.8, 0.8, 0.8), 1.0, True, False))
         elif tool == "paths" and m:
-            cur_g = app.sel[1][:3] if app.sel and app.sel[0] == "rwp" else None
+            cur_g = cur[1][:3] if cur and cur[0] == "rwp" else None
             for gid, g in m.graphs.items():
-                rgb = sg.STATUS_RGB.get(g["status"], (1, 1, 1))
+                rgb = VIEW_RGB if view else sg.STATUS_RGB.get(g["status"], (1, 1, 1))
                 strong = gid == cur_g
                 pos = {}
                 for nd in g["nodes"]:
                     if not nd:
                         continue
                     sel = ("rwp", gid + (nd["node"],))
-                    p = tuple(app.remix_position(sel))
+                    p = where(sel)
                     pos[nd["node"]] = p
                     editable = g["status"] not in ed.REFUSED and not nd["why"]
-                    pts.append((p, (rgb if strong else dim(rgb, 0.8)) if editable else sg.STATUS_RGB["locked"], sel))
+                    shown = (rgb if strong else dim(rgb, 0.8)) if editable or view else sg.STATUS_RGB["locked"]
+                    pts.append((p, shown, sel))
                     picks.append((p, sel))
                     if math.dist(p, nd["position"]) > 1e-6:      # original place of an edited waypoint
                         lines.append((nd["position"], p, (0.8, 0.8, 0.8), 1.0, True, False))
@@ -385,8 +788,8 @@ class Editor3D:
                                       False, True))
             owner = (cur_g[0], cur_g[1]) if cur_g else None
             if owner in m.actors:                              # the selected route's storage owner (not pickable)
-                pts.append((tuple(app.remix_position(("actor", owner))), (1.0, 1.0, 1.0), None))
-        elif tool == "terrain" and app.model:
+                pts.append((where(("actor", owner)), (1.0, 1.0, 1.0), None))
+        elif tool == "terrain" and app.model and not view:
             terr = {int(k): v for k, v in app.project["terrain"].items()}
             verts = app.model.edited_verts(terr)
             region = app.model.regions[app.project["region"]]["vertices"]
@@ -401,7 +804,7 @@ class Editor3D:
                 ix = app.model.tris[t]
                 for a_, b_ in ((0, 1), (1, 2), (2, 0)):
                     lines.append((tuple(verts[ix[a_]]), tuple(verts[ix[b_]]), (0.95, 0.9, 0.4), 1.5, False, False))
-        sel = app.sel if app.sel and TOOL_FOR_KIND.get(app.sel[0]) == tool else None
+        sel = cur if cur and TOOL_FOR_KIND.get(cur[0]) == tool else None
         self.r.overlays.update(points=pts, lines=lines, selected=self.selected_pos(sel) if sel else None, ghost=None)
         if self.preview and sel == self.preview["sel"]:
             self.r.overlays["ghost"] = (self.selected_pos(sel), self.preview_pos())
@@ -420,10 +823,24 @@ class Editor3D:
     def item_info(self, sel):
         """(title, status key, plain detail lines, editable, limit text) of a selection."""
         app = self.app
+        if self.view:                                         # G6-P68: never editable
+            m = self.view["model"]
+            if m and sel[0] == "actor" and sel[1] in m.actors:
+                a = m.actors[sel[1]]
+                return (f"{friendly(a['name'])} #{a['instance']}", "view",
+                        [f"Model {a['name']}", "Shown where the level file places it; the game may move it."],
+                        False, "")
+            if m and sel[0] == "rwp" and sel[1][:3] in m.graphs:
+                g = m.graphs[sel[1][:3]]
+                return (f"Route point {sel[1][3]}", "view",
+                        [f"Route of {friendly(g['name'])} #{sel[1][1]} ({len(g['nodes'])} points)"], False, "")
+            return ("", None, [], False, "")
         if sel[0] == "actor":
             a = app.rmodel.actors[sel[1]]
             return (f"{friendly(a['name'])} #{a['instance']}", a["status"], [], a["status"] not in ed.REFUSED,
-                    f"may move up to {core.MAX_ACTOR_MOVE:g} units (the largest move tested in game)")
+                    f"may move up to {getattr(app.rmodel, 'max_actor_move', core.MAX_ACTOR_MOVE):g} units"
+                    + (" (development-only level)" if getattr(app.rmodel, "dev", False)
+                       else " (the largest move tested in game)"))
         if sel[0] == "rwp":
             gid, n = sel[1][:3], sel[1][3]
             g = app.rmodel.graphs[gid]
@@ -444,7 +861,8 @@ class Editor3D:
 
     def refresh_panel(self):
         app, tool = self.app, self.tool.get()
-        sel = app.sel if app.sel and TOOL_FOR_KIND.get(app.sel[0]) == tool else None
+        cur = self.cur_sel()
+        sel = cur if cur and TOOL_FOR_KIND.get(cur[0]) == tool else None
         titles = {"objects": "Selected object", "paths": "Selected route point", "terrain": "Selected floor point"}
         self.insp.config(text=titles[tool])
         if tool == "terrain" and self.level_key()[0] == "patch":
@@ -458,8 +876,17 @@ class Editor3D:
                                "3D models.",
                     "paths": "Click a route point. Arrows show the direction of travel; the selected route is bright.",
                     "terrain": "Click a green floor point (the start floor of intro_20)."}[tool]
+            if self.view:
+                hint = {"objects": "Click a marker to inspect an object. Markers are viewer symbols, not the "
+                                   "objects' 3D models.",
+                        "paths": "Click a route point to inspect it. Routes are shown as the level file stores them.",
+                        "terrain": ""}[tool]
             self.status_lbl.config(text=hint, fg="#555555")
-            self.detail_lbl.config(text=WHY_DISABLED[self.level_key()[0]])
+            why = WHY_DISABLED[self.level_key()[0]]
+            if self.view:
+                why += "\n\n" + VIEW_LIMITS + (f"\n\nObjects and routes could not be read: {self.view['error']}"
+                                                if self.view["error"] else "")
+            self.detail_lbl.config(text=why)
             for b in (self.apply_btn, self.cancel_btn, self.revert_btn, self.focus_btn):
                 b.config(state="disabled")
         else:
@@ -493,16 +920,20 @@ class Editor3D:
         if self.r:
             lines.append(f"textures {self.r.stats['textures']} ({self.r.stats['texels']} texels), "
                          f"hidden runtime-placed {self.r.stats['hidden_runtime_placed']}")
+            if self.r.stats["texture_errors"]:
+                lines.append(f"textures not shown: {len(self.r.stats['texture_errors'])}")
         if self.ctx:
             lines.append(f"GL {self.ctx.info['renderer']}")
         lines.append(f"load {self.timing['load_seconds']} s; frame {self.timing['last_ms']} ms "
                      f"(max {round(self.timing['max_ms'], 2)}) over {self.timing['frames']} frames")
         if sel and sel[0] == "actor":
-            a = self.app.rmodel.actors[sel[1]]
+            a = self.cur_model().actors[sel[1]]
             lines += [f"key {a['key']}", f"instance {a['instance']} status {a['status']}",
                       f"matrix {str(a.get('matrix_sha256'))[:16]}..", f"why: {a['why']}"]
+            if "compiler_status" in a:
+                lines.append(f"compiler (not offered here): {a['compiler_status']}")
         elif sel and sel[0] == "rwp":
-            g = self.app.rmodel.graphs[sel[1][:3]]
+            g = self.cur_model().graphs[sel[1][:3]]
             nd = g["nodes"][sel[1][3]]
             lines += [f"graph {g['key']} inst {sel[1][1]} var {sel[1][2]} node {sel[1][3]}",
                       f"status {g['status']}; graph at {g['graph_offset']:#x}",
@@ -539,6 +970,12 @@ class Editor3D:
         self.vp.focus_set()
         hit = self.pick(e.x, e.y)
         self.drag = {"kind": "orbit", "x": e.x, "y": e.y, "hit": hit, "moved": False}
+        if self.pending and not self.view:                    # G6-P69: no move starts while a level loads
+            return
+        if self.view:                                         # G6-P68: select to inspect, never move
+            if hit is not None and hit == self.vsel:
+                self.msg.config(text="View only: nothing on this level can be moved.", fg="#2e6db4")
+            return
         if hit is not None and hit == self.app.sel:
             if not self.editable(hit):
                 self.msg.config(text="This cannot be moved here.", fg="#c0392b")
@@ -561,7 +998,7 @@ class Editor3D:
                 d["x"], d["y"] = e.x, e.y
                 self.request()
             return
-        if d["kind"] != "move" or not d["moved"] or not self.mats:
+        if d["kind"] != "move" or not d["moved"] or not self.mats or self.view or self.pending:
             return
         sel = self.app.sel
         proj, view, w, h = self.mats
@@ -591,7 +1028,8 @@ class Editor3D:
     def limit(self, sel, p):
         """The place the editor would keep: within the tested bound around the original (shown, never hidden)."""
         orig = self.original_pos(sel)
-        mx = core.MAX_ACTOR_MOVE if sel[0] == "actor" else core.MAX_WAYPOINT_MOVE
+        mx = getattr(self.app.rmodel, "max_actor_move", core.MAX_ACTOR_MOVE) if sel[0] == "actor" \
+            else core.MAX_WAYPOINT_MOVE
         dv = [a - b for a, b in zip(p, orig)]
         ln = math.sqrt(sum(c * c for c in dv))
         if ln > mx:
@@ -609,6 +1047,10 @@ class Editor3D:
     def select(self, sel):
         self.preview = None
         self.msg.config(text="")
+        if self.view:                                         # the viewer's own selection; the editor is untouched
+            self.vsel = sel
+            self.sync()
+            return
         self.app.select(sel)                                  # the editor's selection and its own inspector
 
     def start_aux(self, e, kind):
@@ -695,11 +1137,12 @@ class Editor3D:
     def fit_content(self):
         """The editable content of the current project: the central 80 % of actor positions, or the terrain area."""
         app = self.app
-        if self.level_key()[0] == "remix" and app.rmodel and app.rmodel.actors:
-            cols = [sorted(a["position"][k] for a in app.rmodel.actors.values()) for k in range(3)]
+        m = self.cur_model()
+        if self.level_key()[0] in ("remix", "view") and m and m.actors:
+            cols = [sorted(a["position"][k] for a in m.actors.values()) for k in range(3)]
             q = lambda v, f: v[min(len(v) - 1, int(f * len(v)))]   # noqa: E731
             lo, hi = [q(c, 0.1) for c in cols], [q(c, 0.9) for c in cols]
-        elif app.model:
+        elif app.model and not self.view:
             vs = [app.model.verts[v] for v in app.model.regions[app.project["region"]]["vertices"]]
             lo = [min(p[k] for p in vs) - 6 for k in range(3)]
             hi = [max(p[k] for p in vs) + 6 for k in range(3)]
@@ -710,7 +1153,7 @@ class Editor3D:
         self.request()
 
     def focus_selection(self):
-        sel = self.app.sel
+        sel = self.cur_sel()
         p = (self.preview_pos() or self.selected_pos(sel)) if sel else None
         if p:
             self.cam.target, self.cam.dist = list(p), 12.0
@@ -720,12 +1163,33 @@ class Editor3D:
     def tool_changed(self):
         app = self.app
         self.preview = None
-        if app.sel and TOOL_FOR_KIND.get(app.sel[0]) != self.tool.get():
+        if self.view:
+            if self.vsel and TOOL_FOR_KIND.get(self.vsel[0]) != self.tool.get():
+                self.vsel = None
+            self.sync()
+        elif app.sel and TOOL_FOR_KIND.get(app.sel[0]) != self.tool.get():
             app.select(None)
         else:
             self.sync()
 
+    def refuse_view(self, what):
+        """G6-P68: every edit, save, validation, export and import is refused on a view-only level. G6-P69: and while a
+        view-only level loads (whatever is shown), so no command overlaps the switch."""
+        if self.pending:
+            self.preview = None
+            self.status(f"{what} is not available while {self.pending['level']} (VIEW ONLY) loads. Choose an "
+                        "editable level under Level to cancel the load.", True)
+            return True
+        if not self.view:
+            return False
+        self.preview = None
+        self.status(f"{what} is not available: {self.view['level']} is VIEW ONLY. Choose an editable level under "
+                    "Level.", True)
+        return True
+
     def apply(self):
+        if self.refuse_view("Applying a change"):
+            return
         p, app = self.preview, self.app
         if not p or p["sel"] != app.sel:
             return
@@ -748,29 +1212,88 @@ class Editor3D:
             self.sync()
 
     def revert(self):
+        if self.refuse_view("Reverting"):
+            return
         if self.app.sel:
             self.preview = None
             self.app.revert_selected()
             self.sync()
 
     def undo(self):
+        if self.refuse_view("Undo"):
+            return
         if self.app.mode == "remix":
             self.preview = None
             self.app.cmd_undo()
 
     def choose_level(self, label):
+        view = next((lv for lv in self.view_levels if view_label(lv) == label), None)
+        if view is not None:
+            self.enter_view(view)
+            return
         c = next(c for c in ed.CHOICES if c[2] == label)
+        cancelled = self.cancel_pending()              # G6-P69: an editor level supersedes a pending view-only load
         if c[:2] == self.app.current_choice()[:2]:
+            if self.view:                              # back to the kept project, unchanged
+                self.leave_view()
+            elif cancelled:
+                self.sync()
             return
         if self.asks() and self.app.dirty and not messagebox.askyesno(
                 "Unsaved changes", "Discard the unsaved changes?",
                                                       parent=self.top):
-            self.level_var.set(self.app.current_choice()[2])
+            self.level_var.set(view_label(self.view["level"]) if self.view else self.app.current_choice()[2])
             return
         self.preview = None
+        self.view = self.vsel = None
         self.app.set_mode(c[0], c[1])
 
+    def enter_view(self, level):
+        """G6-P68: show a catalogued level VIEW ONLY. The editor's project (and its unsaved changes) stays as it is; no
+        project, model or file of the viewed level is given to the editor."""
+        if level not in self.view_levels:
+            self.status(f"{level} is not offered by the viewer.", True)
+            return False
+        if self._closing:
+            return False
+        if self.pending and self.pending["level"] == level:
+            return True                                # already loading
+        if self.view and self.view["level"] == level:
+            if self.cancel_pending():                  # back to the level still shown: the newer load is dropped
+                self.sync()
+            return True
+        # G6-P69: the CPU work runs on the loader thread; the level shown stays (and can be navigated) meanwhile.
+        self.preview, self.drag = None, None
+        self.stop_fly()
+        self._start_pending(level)
+        self.status(f"Loading {level} (view only) from your game files... The level shown stays until it is ready.")
+        self.sync_controls()
+        if not self.view:                              # an editor level is shown: drop its preview overlay at once
+            self.build_overlays()
+            self.refresh_panel()
+            self.request()
+        self._submit_pending()                         # widgets first: they are updated before the CPU work starts
+        return True
+
+    def leave_view(self):
+        self.preview, self.vsel, self.view = None, None, None
+        self.sync()
+
+    def open(self):
+        """G6-P63: a project file or an exported editor mod (reopened as a new unsaved project)."""
+        if self.refuse_view("Opening a project"):
+            return
+        if self.asks() and self.app.dirty and not messagebox.askyesno(
+                "Unsaved changes", "Discard the unsaved changes?", parent=self.top):
+            return
+        f = filedialog.askopenfilename(parent=self.top, filetypes=ed.OPEN_TYPES)
+        if f:
+            self.preview = None
+            self.app.open_project(f)   # its messages reach this window through the flash wrapper (D-294)
+
     def save(self):
+        if self.refuse_view("Saving"):
+            return
         app = self.app
         path = app.path or filedialog.asksaveasfilename(parent=self.top, defaultextension=".r3hdmap.json",
                                                         filetypes=ed.PROJECT_TYPES)
@@ -779,22 +1302,30 @@ class Editor3D:
             self.status(f"Saved {Path(path).name}.")
 
     def validate(self):
+        if self.refuse_view("Validation"):
+            return
         self.app.validate_now()
         self.status(self.app.status_var.get(), "REFUSED" in self.app.status_var.get())
 
     def export(self):
+        if self.refuse_view("Exporting a mod"):
+            return
         d = filedialog.askdirectory(parent=self.top, title="New or empty folder for the mod (mod.json)")
         if d:
             self.app.export_mod(d)
             self.status(self.app.status_var.get(), "REFUSED" in self.app.status_var.get())
 
     def import_mod(self):
+        if self.refuse_view("Importing a mod"):
+            return
         d = filedialog.askdirectory(parent=self.top, title="Exported mod folder (contains mod.json)")
         if d:
-            self.app.import_mod(d)
+            self.app.import_mod_asking(d, self.top)   # G6-P63: replacing an installed mod needs a person's yes
             self.status(self.app.status_var.get(), "NOT IMPORTED" in self.app.status_var.get())
 
     def show_2d(self):
+        if self.refuse_view("The classic 2D editor"):
+            return
         self.app.root.deiconify()
         self.app.root.lift()
 
@@ -804,19 +1335,23 @@ def open_editor(root, game_dir=None, project=None, level=None, show=True):
     (tests: nothing is mapped, handlers are called directly)."""
     app = ed.EditorApp(root, game_dir, project)
     root.withdraw()
+    view_only = level is not None and level not in core.remix_level_names()   # G6-P68: a view-only start
     if project is None:
-        app.set_mode("remix", level or "intro_20")
+        app.set_mode("remix", "intro_20" if view_only or not level else level)
     top = tk.Toplevel(root)
     if not show:
         top.withdraw()
     view = Editor3D(app, top)
     root.protocol("WM_DELETE_WINDOW", view.close)
+    if view_only:
+        view.enter_view(level)
     return app, view
 
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("level", nargs="?", choices=sorted(core.REMIX_LEVELS))
+    ap.add_argument("level", nargs="?", choices=sorted(core.remix_level_names()) + core.view_level_names(),
+                    help="an editable level, or a catalogued level shown VIEW ONLY (G6-P68)")
     ap.add_argument("--project")
     ap.add_argument("--game-dir")
     ap.add_argument("--home", help="installation or portable folder: its data/content and mod folders are used")
@@ -835,7 +1370,8 @@ def main(argv=None) -> int:
 
 
 def standalone(game, level):
-    return main(["--game-dir", str(game)] + ([level] if level in core.REMIX_LEVELS else []))
+    ok = level in core.remix_level_names() or level in core.view_level_names()
+    return main(["--game-dir", str(game)] + ([level] if ok else []))
 
 
 if __name__ == "__main__":

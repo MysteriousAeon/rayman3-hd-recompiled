@@ -2,6 +2,8 @@
 """E-527 (D-294) G6-P38: acceptance of the integrated textured 3D editor (V1-V8).
 
     python tools/experiments/modding_feasibility/g6p38_editor_check.py check [--out DIR] [--skip-stage]
+                                                                            [--identity X] [--bin DIR]
+V8's binary row checks the identity chosen by build_identity.py (default `development`; G6-P64, D-313).
 
 Reads the person's own extracted game tree and the retained intro_15 draw traces (read only). Writes only under DIR
 (default private/work/g6p38): offscreen pictures (one readback each, framebuffer objects of never-shown windows), a
@@ -38,6 +40,9 @@ INSIDE20 = {"target": [-62.0, -56.0, -20.0], "yaw": -150.0, "pitch": 18.0, "dist
 INSIDE15 = {"target": [60.36, 51.81, 18.29], "yaw": -120.0, "pitch": 22.0, "dist": 18.0}
 STAGE_MANIFEST = ROOT / "private" / "work" / "e525" / "stage" / "payload" / "payload.json"
 BIN = ROOT / "private" / "work" / "rex" / "out" / "build" / "win-amd64-release"
+sys.path.insert(0, str(HERE))
+import build_identity as bi  # noqa: E402
+IDENT, IDENT_BIN = "development", None     # G6-P64 (D-313): check --identity release|D-292 [--bin DIR]
 TECH = re.compile(r"0x[0-9a-fA-F]+|[0-9a-f]{16,}|\\\\|\.lvl|sha256")
 
 
@@ -429,12 +434,19 @@ def check(out: Path, skip_stage=False):
     diff = subprocess.run(["git", "diff", "--quiet", "HEAD", "--", "tools/r3hd_level_editor.py",
                            "tools/r3hd_level_editor_core.py", "tools/r3hd_mods.py"], cwd=ROOT)
     R["V8 editor, editor core and mod compiler byte-identical to HEAD"] = diff.returncode == 0
-    if STAGE_MANIFEST.is_file():
-        files = json.loads(STAGE_MANIFEST.read_text(encoding="utf-8"))["files"]
-        cur = {n: sha(BIN / n) for n in ("r3hd.exe", "rexruntime.dll", "rexgpu-xenos.dll")}
-        R["V8 live production binaries equal the G6-P36 validated stage manifest (old checks pin 6635d232...)"] = all(
-            files[f"bin/{n}"]["sha256"] == h for n, h in cur.items())
-        det["production"] = {n: h[:16] for n, h in cur.items()}
+    # G6-P64 (D-313): the row compared the live build with the G6-P36 stage manifest, a pin that went stale at the
+    # D-299 rebuild, and vanished when that manifest was missing. It now always reports and checks the chosen identity
+    # (build_identity.py): `development` on the live build, or a historical one at its retained folder; for D-292 the
+    # record must also still equal the G6-P36 stage manifest it came from.
+    id_ok, id_label, id_det = bi.verify(IDENT, bi.NAMES, IDENT_BIN)
+    if IDENT == "D-292":
+        man = json.loads(STAGE_MANIFEST.read_text(encoding="utf-8"))["files"] if STAGE_MANIFEST.is_file() else {}
+        rec = bi.entry("D-292")["binaries"]
+        id_det["stage_manifest_agrees"] = bool(man) and all(
+            man.get(f"bin/{n}", {}).get("sha256") == rec[n] for n in bi.NAMES)
+        id_ok = id_ok and id_det["stage_manifest_agrees"]
+    R["V8 production binaries equal the build identity (G6-P64 build_identity; was the G6-P36 stage manifest)"] = id_ok
+    det["production"] = dict(id_det, label=id_label)
     det["seconds"] = round(time.perf_counter() - t0, 1)
     ok = sum(1 for x in R.values() if x)
     report = {"results": R, "details": det, "passed": ok, "total": len(R),
@@ -448,7 +460,8 @@ def check(out: Path, skip_stage=False):
 
 
 def main():
-    args = sys.argv[1:]
+    global IDENT, IDENT_BIN
+    args, IDENT, IDENT_BIN = bi.parse(sys.argv[1:])
     if not args or args[0] != "check":
         print(__doc__)
         return 2

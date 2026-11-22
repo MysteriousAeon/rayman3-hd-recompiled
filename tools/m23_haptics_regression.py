@@ -223,6 +223,21 @@ check(xma.count("r3hd_ds_speaker::OnXmaBuffer(") == 1 and "Post(m->request)" in 
       "controller speaker: pickup, warning and expiry come only from the game's own XMA buffer start")
 check("r3hd_ds_speaker_sdl.h" in read(SDK / "src/audio/sdl/sdl_audio_driver.cpp"),
       "controller speaker: device side compiled in the SDL audio driver")
+# G6-P75 (D-324): the close-time motor stop is an installed header (not in the .cpp scan above): one zero request, behind
+# the policy, reached from the SDL driver only through CloseMotorsLocked.
+pm = read(TOOLS / "r3hd_pad_motors_sdl.h")
+check(read(SDK / "include/rex/r3hd_pad_motors_sdl.h") == pm and
+      read(SDK / "include/rex/r3hd_pad_motors.h") == read(TOOLS / "r3hd_pad_motors.h"),
+      "r3hd_pad_motors*.h: installed copies equal tools/")
+pm_code = code_only(pm)
+check(len(re.findall(r"SDL_RumbleGamepad\w*\(|SDL_RumbleJoystick\w*\(|SDL_SendGamepadEffect\(|SDL_SetGamepad\w*\(", pm_code)) == 1
+      and pm_code.count("SDL_RumbleGamepad(pad.sdl, 0, 0, 0)") == 1,
+      "pad motors: the one device call is a zero rumble request")
+check("if (m23haptics::Suppressed()) {" in pm_code and
+      pm_code.index("m23haptics::Suppressed()") < pm_code.index("SDL_RumbleGamepad("),
+      "pad motors: hidden runs return before the device call")
+check(code_only(sdl).count("r3hd_motors::CloseSdl(") == 1 and "void SDLInputDriver::CloseMotorsLocked(" in sdl,
+      "pad motors: the SDL driver reaches the helper only through CloseMotorsLocked")
 check("python tools\\r3hd_dualsense_patch.py" in bat and bat.index("m50_runtime_patch.py") < bat.index("r3hd_dualsense_patch.py")
       < bat.index("cmake --build external"), "build replays the DualSense patch last, before the SDK build")
 check("python tools\\m23_haptics_patch.py" in bat, "build replays the haptics patch")

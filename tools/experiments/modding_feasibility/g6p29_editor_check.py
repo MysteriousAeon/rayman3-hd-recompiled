@@ -5,6 +5,7 @@
                                   end-to-end example, E5 refusal and safety
 The GUI runs with its root window withdrawn (never shown); clicks and drags are delivered to the editor's own event
 handlers. Outputs: private/work/e518/ (numbers only). No game process, build or gate change.
+`check` also takes --identity X / --bin DIR for its build identity row (build_identity.py; G6-P64, D-313).
 """
 import copy
 import json
@@ -360,8 +361,10 @@ def check():
     e5["original game files unchanged"] = before == after
     st = subprocess.run([sys.executable, str(HERE / "g5p1_dev_gate.py"), "status"], cwd=ROOT, capture_output=True,
                         text=True).stdout.strip()
-    e5["development gate production; binaries = the production identity"] = st == "production" and {
-        n: rm.sha256_bytes((g24.BIN / n).read_bytes()) for n in g24.PROD} == g24.PROD
+    id_ok, id_label, id_det = g24.bi.verify(g24.IDENT, g24.PROD, g24.IDENT_BIN)
+    det["identity"] = dict(id_det, label=id_label)
+    e5["development gate production; binaries = the build identity (G6-P64 build_identity)"] = (
+        st == "production" and id_ok)
     E["E5"] = e5
     gate(None)
 
@@ -372,6 +375,6 @@ def check():
 
 
 if __name__ == "__main__":
-    if sys.argv[1:] == ["check"]:
+    if g24.take_identity(sys.argv[1:]) == ["check"]:
         sys.exit(check())
     raise SystemExit(__doc__)

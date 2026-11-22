@@ -36,11 +36,13 @@ def main() -> int:
     chain = [ln.strip() for ln in bat if ln.strip().startswith("python tools\\") and "_patch.py" in ln]
     # D-219: the beam overlay runs after every step whose anchors it must not move; D-220 adds the D3D12
     # display V-Sync step after it (D3D12 presenter files only, no anchor shared with an earlier step).
-    # D-221 adds the lock-on colour read overlay last (host file read path and one D3D12 mode line only).
-    tail = [c.split("\\")[1].split()[0] for c in chain[-7:]]
+    # D-221 adds the lock-on colour read overlay (host file read path and one D3D12 mode line only).
+    # D-324 adds the controller-motor stop (input / SDL driver files and ReXApp::OnClosing only).
+    # D-328 adds the test-only profile handoff prototype last (XAM user / input / UI files only).
+    tail = [c.split("\\")[1].split()[0] for c in chain[-9:]]
     if tail != ["r3hd_thread_teardown_patch.py", "r3hd_vulkan_parity_patch.py", "r3hd_xex_case_patch.py",
                 "r3hd_button_prompts_patch.py", "r3hd_beam_runtime_patch.py", "r3hd_display_vsync_patch.py",
-                "r3hd_lockon_runtime_patch.py"]:
+                "r3hd_lockon_runtime_patch.py", "r3hd_pad_motors_patch.py", "g6p79_profile_handoff_patch.py"]:
         fails.append(f"chain tail {tail}")
     for _, after in V.red_edits():
         if vk.count(after) != 1:

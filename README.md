@@ -2,7 +2,7 @@
 
 A native Windows and Linux port of **Rayman 3 HD** for Xbox 360. The game's code has been statically recompiled to run directly on a PC, without an emulator.
 
-Setup uses your own Xbox 360 game package. Windows v1.2.0 offers an installer and a portable ZIP; Linux uses a portable archive, currently available as an experimental pre-release (v1.1.0). Downloads are on the project's [Releases page](https://github.com/MysteriousAeon/rayman3-hd-recompiled/releases).
+Setup uses your own Xbox 360 game package. Windows v1.3.0 offers an installer and a portable ZIP; Linux uses a portable archive, currently available as an experimental pre-release (v1.1.0). Downloads are on the project's [Releases page](https://github.com/MysteriousAeon/rayman3-hd-recompiled/releases).
 
 **No game files are included.** You need your own, legally obtained copy of Rayman 3 HD for Xbox 360.
 
@@ -164,6 +164,10 @@ The panel provides quick access to commonly used options without requiring you t
 
 For the complete set of options, use the separate Settings application.
 
+### Hiding the score (F5)
+
+For cleaner screenshots and recordings, enable **Settings → Corrections → Score HUD toggle (F5)**. Press **F5** during gameplay to hide or show the score and Combo Meter without affecting the rest of the HUD. This option is disabled by default.
+
 ## Game profiles: Vanilla, HD+, and Custom
 
 Choose a profile under Settings → Game profile:
@@ -191,6 +195,12 @@ Individual corrections can be configured under **Settings → Corrections** when
 Existing Custom choices are preserved during updates. New corrections without a saved preference follow the base profile selected for Custom.
 
 Changing the game profile does not reset display, control, or advanced settings. Changes take effect the next time the game starts.
+
+### Rendering resolution
+
+Under **Settings → Display → Rendering resolution**, choose **Auto** (default), **720p (1x, original)**, **1440p (2x)**, or **2160p (3x)**.
+
+Auto selects the smallest supported resolution that covers the game's visible 16:9 picture, excluding black bars on other aspect ratios. For example, in fullscreen on a 1080p display, Auto selects 1440p. You can manually select 720p if performance is poor.
 
 ### V-Sync
 
@@ -317,7 +327,7 @@ See the `README.md` included in the converter ZIP for command-line usage (Python
 
 **Keyboard controls are different from expected.** Check Settings → Controls. Existing key bindings are preserved during upgrades.
 
-**The game closes unexpectedly.** Diagnostic files are stored under `sessions\<date-time>\` in the installation folder. Include the relevant session logs when reporting a bug, after checking them for information you do not wish to share.
+**The game closes unexpectedly.** Diagnostic files are stored under `sessions\<date-time>\` in the installation folder. On Windows, each play session also writes `support_report.txt` there; attach it to your bug report. Check it before sharing: automatic redaction may not remove all personal information.
 
 **Achievements are not unlocking.** A mod that changes gameplay, such as a level remix, is enabled. Disable it in Settings → Mods.
 
@@ -337,7 +347,7 @@ See the `README.md` included in the converter ZIP for command-line usage (Python
 - Button prompts are chosen when the game starts and do not switch while it is running.
 - The level remix tools are experimental, Windows-only, and limited to three levels; see the section above.
 - The PC save converter is experimental and optional. It has been tested with a small number of PC saves; compatibility with every PC save is not established.
-- The Linux pre-release remains at v1.1.0 and does not include the v1.2.0 changes.
+- The Linux pre-release remains at v1.1.0 and does not include the changes introduced in later Windows releases.
 
 The HD+ Robo-Pirate statue texture correction has been checked in gameplay.
 
