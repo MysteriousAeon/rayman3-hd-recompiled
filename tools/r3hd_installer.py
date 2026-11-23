@@ -1555,8 +1555,42 @@ SUPPORT_EXIT_CODES = {
     "C0000409": "fail-fast / stack buffer overrun", "C000013A": "closed with Ctrl+C or console close",
     "80000003": "breakpoint", "E06D7363": "unhandled C++ exception", "40010004": "terminated by another process",
 }
-SUPPORT_SETTINGS = ("preset", "license_mode", "display", "window", "render_scale", "render_target", "pacing",
+SUPPORT_SETTINGS = ("preset", "license_mode", "display", "window", "render_scale", "render_scale_option", "render_target", "pacing",
                     "display_vsync", "diagnostics", "game_language", "controller_prompts", "mods", "dev_overlay")
+
+
+def _format_draw_scale_diagnostics(info: dict, log: dict) -> list:
+    """G6-P96: surface requested vs actual renderer draw_scale and automatic device fallback in support_report.txt."""
+    req_raw = info.get("render_scale")
+    req = req_raw if (isinstance(req_raw, int) and not isinstance(req_raw, bool) and 1 <= req_raw <= 16) else None
+    opt_raw = info.get("render_scale_option")
+    mode = "auto" if opt_raw == "auto" else ("manual" if str(opt_raw) in ("1", "2", "3") else None)
+    has_ds = "draw_scale" in log and log["draw_scale"] is not None
+    if not has_ds:
+        return ["draw_scale: not recorded"] if req is not None else []
+    ds = log["draw_scale"]
+    if not isinstance(ds, dict):
+        return ["draw_scale: unavailable (malformed diagnostic event)"]
+    x, y, as_req = ds.get("x"), ds.get("y"), ds.get("as_requested")
+    valid = (isinstance(x, int) and not isinstance(x, bool) and 1 <= x <= 16
+             and isinstance(y, int) and not isinstance(y, bool) and 1 <= y <= 16
+             and isinstance(as_req, bool))
+    if not valid:
+        return ["draw_scale: unavailable (malformed diagnostic event)"]
+    actual_res = f"{1280 * x}x{720 * y}"
+    req_part = ""
+    if req is not None:
+        req_part = f"requested {req}x{req}" + (f" via {mode}" if mode else "") + ", "
+    out = [f"draw_scale: {x}x{y} ({actual_res}; {req_part}as_requested={'true' if as_req else 'false'})"]
+    fallback = (not as_req) or (req is not None and (x != req or y != req))
+    if fallback:
+        if req is not None:
+            req_desc = f"requested scale {req}x{req} ({1280 * req}x{720 * req}" + (f", {mode}" if mode else "") + ")"
+        else:
+            req_desc = "the requested rendering scale"
+        out.append(f"draw_scale_fallback: automatic reduction -- graphics device did not support {req_desc}; "
+                   f"renderer used {x}x{y} ({actual_res})")
+    return out
 
 
 def _support_redactor(home: Path, posix: bool = False, env=None):
@@ -1651,6 +1685,7 @@ def support_report(home: Path, session: str = "", env=None) -> Path:
     if log:
         lines += ["", "[log summary]"] + [f"{k}: {log[k]}" for k in ("lines", "warning", "error", "critical",
                                                                     "stub_imports") if k in log]
+        lines += _format_draw_scale_diagnostics(info, log)
         if log.get("host_fault_codes"):
             lines.append("host_fault_codes: " + ", ".join(map(str, log["host_fault_codes"])))
     crash = folder / "r3hd_crash.txt"

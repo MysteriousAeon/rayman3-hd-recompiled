@@ -435,20 +435,20 @@ def check():
 
     # ------------------------------------------------------------------ A6 regressions
     a6 = {}
-    r = subprocess.run([sys.executable, "-I", str(HERE / "g6p33_remix_check.py"), "check", *bi.forward(IDENT, IDENT_BIN)], cwd=ROOT,
-                       capture_output=True, text=True, timeout=1500)
+    r = subprocess.run([sys.executable, "-I", "-X", "utf8", str(HERE / "g6p33_remix_check.py"), "check", *bi.forward(IDENT, IDENT_BIN)], cwd=ROOT,
+                       capture_output=True, text=True, encoding="utf-8", timeout=1500)
     last = [x for x in r.stdout.splitlines() if x.startswith("G6-P33 ")]
     det["g6p33"] = last
     a6["G6-P33 check 78 / 78 (includes G6-P29 editor acceptance and the packaged G6-P33 run)"] = (
         r.returncode == 0 and last == ["G6-P33 PASS 78 / 78"])
-    r = subprocess.run([sys.executable, "-I", str(TOOLS / "r3hd_mods.py"), "selftest"], cwd=ROOT,
-                       capture_output=True, text=True, timeout=1500)
+    r = subprocess.run([sys.executable, "-I", "-X", "utf8", str(TOOLS / "r3hd_mods.py"), "selftest"], cwd=ROOT,
+                       capture_output=True, text=True, encoding="utf-8", timeout=1500)
     tail = (r.stdout.strip().splitlines() or [""])[-1]
     det["selftest"] = tail
     a6["r3hd_mods selftest PASS (compiler and mod manager)"] = r.returncode == 0 and "PASS" in tail
     for t in ("m33_regression.py", "m36_regression.py", "m38_regression.py"):
-        r = subprocess.run([sys.executable, "-I", str(TOOLS / t)], cwd=ROOT, capture_output=True, text=True,
-                           timeout=900)
+        r = subprocess.run([sys.executable, "-I", "-X", "utf8", str(TOOLS / t)], cwd=ROOT, capture_output=True,
+                           text=True, encoding="utf-8", timeout=900)
         tail = (r.stdout.strip().splitlines() or [""])[-1]
         det[t] = tail
         a6[f"{t} passes"] = r.returncode == 0
@@ -457,8 +457,8 @@ def check():
     # ------------------------------------------------------------------ A7 packaged runtime
     a7 = {}
     if STAGE_PY.is_file():
-        rt = subprocess.run([str(STAGE_PY), "-I", "-B", str(Path(__file__).resolve()), "runtime", str(TOOLS),
-                             str(GAME), str(WORK / "rt")], cwd=ROOT, capture_output=True, text=True, timeout=900)
+        rt = subprocess.run([str(STAGE_PY), "-I", "-B", "-X", "utf8", str(Path(__file__).resolve()), "runtime", str(TOOLS),
+                             str(GAME), str(WORK / "rt")], cwd=ROOT, capture_output=True, text=True, encoding="utf-8", timeout=900)
         line = next((x for x in rt.stdout.splitlines() if x.startswith("RUNTIME ")), "RUNTIME {}")
         out = json.loads(line[8:])
         det["packaged_runtime"] = out
@@ -481,8 +481,8 @@ def check():
     now_state = (real_mods / "state.json").read_bytes() if (real_mods / "state.json").is_file() else None
     a8["the person's mods folder state is unchanged (tests used private test folders)"] = now_state == real_state
     a8["no window shown, no desktop input (withdrawn roots; handlers called directly); no game process"] = True
-    st = subprocess.run([sys.executable, str(HERE / "g5p1_dev_gate.py"), "status"], cwd=ROOT, capture_output=True,
-                        text=True).stdout.strip()
+    st = subprocess.run([sys.executable, "-X", "utf8", str(HERE / "g5p1_dev_gate.py"), "status"], cwd=ROOT, capture_output=True,
+                        text=True, encoding="utf-8").stdout.strip()
     id_ok, id_label, id_det = bi.verify(IDENT, PROD, IDENT_BIN)
     det["identity"] = dict(id_det, label=id_label)
     a8["development gate production; r3hd.exe = the build identity (G6-P64 build_identity); variable absent"] = (

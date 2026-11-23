@@ -5,10 +5,11 @@ against a stale, incremental or development-gated build. They read `config/relea
 
   --identity development   (default) the record's `development` entry: the binaries of the last authoritative full
                            replay, named with its source commit and build log. The build folder must hold exactly
-                           those bytes, the log must end `M8_BUILD_OK` / rc 0 with every binary written inside the
-                           log's lifetime, and the source commit must be an ancestor of HEAD.
-  --identity release       the record's `current` entry (D-299, the published Windows v1.2.0 binaries).
-  --identity D-292 / ...   a `history` entry by decision.
+                           those bytes, the log must end `M8_BUILD_OK` (or wrapped `BUILD_SCRIPT_ENDED rc=0`) with
+                           every binary written inside the log's lifetime, and the source commit must be an ancestor
+                           of HEAD.
+  --identity release       the record's `current` entry (the latest published Windows release binaries).
+  --identity D-299 / ...   a `history` entry by decision.
 
 A historical identity checks the retained artifact folder its record names, never the live build in its place; with
 no retained folder it is UNAVAILABLE, which fails. `--bin DIR` checks another folder against the chosen identity
@@ -71,6 +72,16 @@ def _birth(st):
     return getattr(st, "st_birthtime", st.st_ctime if os.name == "nt" else None)
 
 
+def _log_ok(tail):
+    """Accept a direct build_milestone8.bat log ending with M8_BUILD_OK, or a wrapped log ending BUILD_SCRIPT_ENDED rc=0."""
+    lines = [ln.strip() for ln in tail.splitlines() if ln.strip()]
+    if not lines or "M8_BUILD_OK" not in lines:
+        return False
+    if any(ln.startswith("BUILD_SCRIPT_ENDED") for ln in lines):
+        return lines[-1].startswith("BUILD_SCRIPT_ENDED rc=0")
+    return lines[-1] == "M8_BUILD_OK"
+
+
 def verify(ident, names=NAMES, bdir=None, record=None, root=ROOT):
     """(ok, label, detail): the named binaries in the identity's folder equal the identity's hashes."""
     try:
@@ -107,7 +118,7 @@ def verify(ident, names=NAMES, bdir=None, record=None, root=ROOT):
         inside = start is not None and all(start <= os.stat(bdir / n).st_mtime <= end for n in names)
         anc = subprocess.run(["git", "merge-base", "--is-ancestor", e["source_commit"], "HEAD"], cwd=root,
                              capture_output=True).returncode == 0
-        det.update(log_ok="M8_BUILD_OK" in tail and "BUILD_SCRIPT_ENDED rc=0" in tail, written_in_replay=inside,
+        det.update(log_ok=_log_ok(tail), written_in_replay=inside,
                    source_commit=e["source_commit"][:12], commit_in_history=anc)
         ok = det["log_ok"] and inside and anc
     return ok, label, det

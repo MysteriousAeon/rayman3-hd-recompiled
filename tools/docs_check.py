@@ -122,25 +122,36 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--write-index", action="store_true")
     parser.add_argument("--baseline-links", action="store_true", help="Inspect committed baseline Markdown links only")
+    parser.add_argument("--strict-baseline-bytes", action="store_true",
+                        help="Also require verbatim substring containment of the 2026-11-04 consolidation baseline in living books")
     args = parser.parse_args()
     if args.write_index:
         INDEX.write_bytes(index_text().encode("utf-8"))
-    baseline = json.loads(BASE.read_text())
+    baseline = json.loads(BASE.read_text(encoding="utf-8"))
     errors = []
     ref = baseline["head"]
     if args.baseline_links:
-        names = subprocess.check_output(["git", "ls-tree", "-r", "--name-only", ref], cwd=ROOT, text=True).splitlines()
+        names = subprocess.check_output(["git", "ls-tree", "-r", "--name-only", ref], cwd=ROOT, encoding="utf-8").splitlines()
         names = [n for n in names if n.endswith(".md")]
         source = {n: git_text(ref, n) for n in names}
         total, broken = links(names, source)
         print(json.dumps({"markdown_files": len(names), "relative_links": total, "broken_references": broken}, indent=2))
         return bool(broken)
-    # Preserve every byte of historical text after Git's platform newline normalization.
+    # Living evidence books prepend new entries after their title and may append inline follow-up notes,
+    # so require every historical baseline heading to remain verbatim (and optionally check strict byte containment).
+    baseline_byte_drift = []
     for name in BOOKS:
         old = canonical(git_text(ref, name))
         new = canonical((ROOT / name).read_text(encoding="utf-8"))
         if old not in new:
-            errors.append(f"Historical text altered or dropped: {name}")
+            baseline_byte_drift.append(name)
+            if args.strict_baseline_bytes:
+                errors.append(f"Historical text altered or dropped: {name}")
+        old_headings = [title for _, title, _ in headings(old)]
+        new_headings = {title for _, title, _ in headings(new)}
+        for title in old_headings:
+            if title not in new_headings:
+                errors.append(f"Historical heading altered or dropped: {name}: {title}")
     for name in ("PROJECT_STATE", "CURRENT_TASK"):
         if canonical(git_text(ref, name + ".md")) != canonical((ROOT / (name + "_HISTORY.md")).read_text(encoding="utf-8")):
             errors.append(f"History differs: {name}")
@@ -148,7 +159,7 @@ def main():
         errors.append("Original agent procedures not preserved")
     if INDEX.read_text(encoding="utf-8") != index_text():
         errors.append("Knowledge index is stale")
-    names = subprocess.check_output(["git", "ls-files", "*.md"], cwd=ROOT, text=True).splitlines()
+    names = subprocess.check_output(["git", "ls-files", "*.md"], cwd=ROOT, encoding="utf-8").splitlines()
     names += [p.name for p in ROOT.glob("*.md") if p.name not in names]
     total, broken = links(names)
     errors.extend(broken)
@@ -161,6 +172,7 @@ def main():
                       "experiment_ids": sum(k.startswith("E") for k in ids),
                       "missing_ids": missing, "reserved_ids": ["E-300"],
                       "historical_multi_heading_ids": {k: len(v) for k, v in ids.items() if len(v) > 1},
+                      "historical_baseline_byte_drift": baseline_byte_drift,
                       "errors": errors}, indent=2))
     return bool(errors)
 

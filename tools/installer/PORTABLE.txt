@@ -1,4 +1,4 @@
-Rayman 3 HD Recompiled - Portable Edition 1.3.0
+Rayman 3 HD Recompiled - Portable Edition 1.3.1
 
 Extract the whole ZIP into a new writable folder. Start Play.cmd or Settings.cmd.
 Level Editor.cmd opens the Level Remix Editor: it remixes the existing levels intro_10,

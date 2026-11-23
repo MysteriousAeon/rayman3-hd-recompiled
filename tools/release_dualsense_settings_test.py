@@ -133,6 +133,11 @@ def engine_checks(reg, t):
     check('upgrade_defaults leaves schema 1 files alone', engine.upgrade_defaults({'schema': 1, 'preset': 'vanilla'}) is None)
 
 
+def ui_detail(code, log, extra=None):
+    note = 'private desktop unavailable (CreateDesktopW/SetThreadDesktop exit 3)' if code == 3 else f'launcher exit {code}'
+    return (note, log, extra) if extra is not None else (note, log)
+
+
 def ui_checks(reg, t):
     for language in ('en', 'tr'):
         lt = t / language
@@ -152,7 +157,8 @@ def ui_checks(reg, t):
                     f'page advanced\nset {key} {value}\nclick save\nreload\ndump saved\nshot saved\nclick close\n')
                 v = values(reg, home)
                 check(f'{language}: {key}={value} through the window, the other option untouched',
-                      code == 0 and v[key] == value and v[other] == 'on' and launcher.layout_ok(dumps['saved']), log)
+                      code == 0 and v[key] == value and v[other] == 'on' and launcher.layout_ok(dumps['saved']),
+                      ui_detail(code, log))
         for pct in ('0', '100', '57', '30'):
             code, dumps, log, _ = launcher.ui(home, lt, f'strength_{pct}',
                 f'page advanced\nset {STRENGTH} {pct}\nclick save\nreload\npage advanced\ndump saved\nshot saved\n'
@@ -162,13 +168,14 @@ def ui_checks(reg, t):
             check(f'{language}: slider {pct}: saved, shown as {shown}, labelled, layout clean',
                   code == 0 and values(reg, home)[STRENGTH] == pct and d.get(f'setting.{STRENGTH}') == f'{pct} enabled=1'
                   and d.get(f'slider.{STRENGTH}') == f'pos={pct} max=100 visible=1 value={shown} label={label}'
-                  and launcher.layout_ok(d), (log, {k: v for k, v in d.items() if 'slider' in k or 'controls' in k}))
+                  and launcher.layout_ok(d),
+                  ui_detail(code, log, {k: v for k, v in d.items() if 'slider' in k or 'controls' in k}))
         engine.set_option(home, 'dualsense_trigger', 'off')
         code, dumps, log, _ = launcher.ui(home, lt, 'strength_disabled',
             f'page advanced\ndump off\nset {STRENGTH} 80\ndump tried\nclick close\n')
         check(f'{language}: R2 option off: slider disabled, the stored strength kept',
               dumps.get('off', {}).get(f'setting.{STRENGTH}') == '30 enabled=0' and 'control disabled' in log
-              and values(reg, home)[STRENGTH] == '30', (log, dumps.get('off')))
+              and values(reg, home)[STRENGTH] == '30', ui_detail(code, log, dumps.get('off')))
         engine.set_option(home, 'dualsense_trigger', 'on')
 
 

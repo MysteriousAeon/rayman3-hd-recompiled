@@ -2,7 +2,7 @@
   "schema": 1,
   "note": "M29 (D-066): definition of the PRIVATE installer payload that tools/r3hd_stage.py builds. The payload is a prebuilt application for the user-supplied-data model (D-065): the runtime binaries of the current verified build (r3hd.exe, rexruntime.dll, rexgpu-xenos.dll and, since M46, the LGPL DLLs ffmpeg.dll / mspack.dll), the installer engine and launcher, the configs they read, and a private Python runtime; D-203 includes the nine visually accepted native PS3 glyph PNGs plus an own manifest as exact binary resources; the unchanged payload audit and R-01 gates still apply; never full game data, saves, captures, debug symbols or test executables. It contains translated game code and a runtime with the public XEX keys compiled in: it is NOT publishable until the gates of D-065 / D-066 are met. Text files are copied with LF line endings so the payload does not depend on the checkout's core.autocrlf. G6-P31 (D-287): the constrained intro_20 level editor (app/tools/r3hd_level_editor*.py) and the Tk runtime of the same pinned CPython build (config/release/python_tk.json) are part of the payload. G6-P39 (D-295): the 3D Level Remix Editor (app/tools/r3hd_scene_view.py, r3hd_scene_gl.py, r3hd_level_scene.py) and its narrow OpenGL bridge app/python/_r3hd_scene_gl.pyd (\"scene_gl\": this project's own extension, built reproducibly from tools/scene_gl and pinned by hash) are part of the payload; the runtime still has no ctypes / _ctypes / libffi.",
   "product": "Rayman 3 HD Recompiled",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "publishable": false,
   "binaries": {
     "build_dir": "private/work/rex/out/build/win-amd64-release",

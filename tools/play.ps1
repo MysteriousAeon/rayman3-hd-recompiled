@@ -498,6 +498,7 @@ function Get-LogCensus([string]$Session) {
     $census = [ordered]@{ lines = 0; warning = 0; error = 0; critical = 0; stub_imports = 0; guest_license_masks = @(); last_lines = @() }
     $masks = New-Object 'System.Collections.Generic.SortedSet[string]'
     $tail = New-Object 'System.Collections.Generic.Queue[string]'
+    $drawScale = $null
     foreach ($file in (Get-LogFiles $Session)) {
         foreach ($line in [System.IO.File]::ReadLines($file)) {
             $census.lines++
@@ -506,10 +507,18 @@ function Get-LogCensus([string]$Session) {
             elseif ($line.Contains('] [critical] ')) { $census.critical++ }
             if ($line.Contains(' stub=true count=1 ')) { $census.stub_imports++ }
             if ($line.Contains('M6 license ') -and $line -match ' mask=([0-9A-Fa-f]{8})') { [void]$masks.Add($Matches[1].ToUpperInvariant()) }
+            # G6-P96: M15 draw_scale records the actual renderer scale after device capability clamping (early in the log).
+            if ($line.Contains('M15 draw_scale ') -and $line -match '\bM15 draw_scale x=(\d{1,2}) y=(\d{1,2}) as_requested=(true|false)\b') {
+                $dx = 0; $dy = 0
+                if ([int]::TryParse($Matches[1], [ref]$dx) -and [int]::TryParse($Matches[2], [ref]$dy) -and $dx -ge 1 -and $dx -le 16 -and $dy -ge 1 -and $dy -le 16) {
+                    $drawScale = [ordered]@{ x = $dx; y = $dy; as_requested = ($Matches[3] -eq 'true') }
+                }
+            }
             $tail.Enqueue($line); if ($tail.Count -gt 15) { [void]$tail.Dequeue() }
         }
     }
     $census.guest_license_masks = @($masks)
+    if ($drawScale) { $census.draw_scale = $drawScale }
     # M11: first-chance host exceptions seen by the vectored handler (m2_faults.log). Thread naming (406D1388)
     # and the guest-raise transport (E0473458) are routine; any other code is listed, because fail-fast codes
     # such as C0000374 never reach the last-chance crash record. Symbolise with tools/m11_symbolize.py.
@@ -545,7 +554,7 @@ if ($Summarize) {
     $census = Get-LogCensus (Resolve-Path -LiteralPath $Summarize).Path
     $census.Remove('last_lines')
     $census.crash_report = (Test-Path -LiteralPath (Join-Path $Summarize 'r3hd_crash.txt'))
-    $census | ConvertTo-Json
+    $census | ConvertTo-Json -Depth 4
     exit 0
 }
 
@@ -994,6 +1003,7 @@ if ($startError) {
         display = $Display
         window = $window
         render_scale = $scale
+        render_scale_option = $RenderScale
         render_target = $target
         diagnostics = $Diagnostics
         controller_prompts = $ButtonPrompts
@@ -1026,6 +1036,7 @@ if ($startError) {
         display = $Display
         window = $window
         render_scale = $scale
+        render_scale_option = $RenderScale
         render_target = $target
         diagnostics = $Diagnostics
         keyboard = $keyText
@@ -1095,6 +1106,9 @@ if ($startError) {
 Write-Host "Session $stamp ended after $($result.seconds) s, exit code $exitCode (0x$($result.exit_hex))."
 Write-Host "Licence mode: $License (configured mask $licenseMask; the title received: $(if ($census.guest_license_masks.Count) { $census.guest_license_masks -join ', ' } else { 'no query logged' }))."
 Write-Host "Log: $($census.lines) lines, $($census.warning) warnings, $($census.error) errors, $($census.critical) critical, $($census.stub_imports) stubbed imports first reached."
+if ($census.draw_scale -and $census.draw_scale.as_requested -eq $false) {
+    Write-Host "Rendering resolution: graphics device did not support requested scale ${scale}x${scale} ($(1280 * $scale)x$(720 * $scale), -RenderScale $RenderScale); renderer used $($census.draw_scale.x)x$($census.draw_scale.y) ($(1280 * $census.draw_scale.x)x$(720 * $census.draw_scale.y))."
+}
 if ($result.crash_report) { Write-Host 'CRASH RECORD:'; Get-Content -LiteralPath $crash | ForEach-Object { Write-Host "  $_" } }
 elseif ($exitCode -ne 0) { Write-Host 'Abnormal exit without a crash record; the last log lines are in session.json.' }
 if ($census.host_fault_codes.Count) { Write-Host "Host exceptions recorded in m2_faults.log: $($census.host_fault_codes -join ', ')" }

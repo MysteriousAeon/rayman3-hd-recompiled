@@ -68,9 +68,36 @@ public sealed class M6ForegroundEvent {
     public string ProcessName { get; set; }
 }
 
+public sealed class M6DesktopContext {
+    public bool ThreadDesktopOk { get; set; }
+    public bool ThreadDesktopIo { get; set; }
+    public string ThreadDesktopName { get; set; }
+    public bool InputDesktopOk { get; set; }
+    public bool InputDesktopIo { get; set; }
+    public string InputDesktopName { get; set; }
+}
+
+public sealed class M6BaselineDecision {
+    public bool Allowed { get; set; }
+    public string Mode { get; set; }
+    public bool DesktopIsolationVerified { get; set; }
+    public string RejectReason { get; set; }
+}
+
 public static class M6Focus {
     [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
     [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr h, out uint p);
+    [DllImport("kernel32.dll")] private static extern uint GetCurrentThreadId();
+    [DllImport("user32.dll", SetLastError = true)] private static extern IntPtr GetThreadDesktop(uint threadId);
+    [DllImport("user32.dll", SetLastError = true)] private static extern IntPtr OpenInputDesktop(uint flags, bool inherit, uint desiredAccess);
+    [DllImport("user32.dll", SetLastError = true)] private static extern bool CloseDesktop(IntPtr desktop);
+    [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    private static extern bool GetUserObjectInformationW(IntPtr obj, int index, System.Text.StringBuilder info, int length, out int needed);
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool GetUserObjectInformationW(IntPtr obj, int index, out int info, int length, out int needed);
+    private const int UOI_NAME = 2;
+    private const int UOI_IO = 6;
+    private const uint DESKTOP_READOBJECTS = 0x0001;
     private delegate void EventProc(IntPtr hook, uint evt, IntPtr hwnd, int obj, int child, uint thread, uint time);
     [DllImport("user32.dll")] private static extern IntPtr SetWinEventHook(uint first, uint last, IntPtr mod, EventProc proc, uint pid, uint thread, uint flags);
     [DllImport("user32.dll")] private static extern bool UnhookWinEvent(IntPtr hook);
@@ -79,6 +106,86 @@ public static class M6Focus {
         public uint time; public int x, y; public uint priv;
     }
     [DllImport("user32.dll")] private static extern bool PeekMessage(out Msg msg, IntPtr hwnd, uint first, uint last, uint remove);
+
+    private static bool TryGetDesktopInfo(IntPtr desktop, out bool ioActive, out string name) {
+        ioActive = true;
+        name = null;
+        if (desktop == IntPtr.Zero) return false;
+        int ioVal = 0;
+        int needed = 0;
+        if (!GetUserObjectInformationW(desktop, UOI_IO, out ioVal, 4, out needed)) return false;
+        var sb = new System.Text.StringBuilder(256);
+        if (!GetUserObjectInformationW(desktop, UOI_NAME, sb, sb.Capacity * 2, out needed)) return false;
+        ioActive = (ioVal != 0);
+        name = sb.ToString();
+        return !string.IsNullOrEmpty(name);
+    }
+
+    public static M6DesktopContext QueryDesktopContext() {
+        var ctx = new M6DesktopContext();
+        bool tIo;
+        string tName;
+        IntPtr threadDesk = GetThreadDesktop(GetCurrentThreadId());
+        if (TryGetDesktopInfo(threadDesk, out tIo, out tName)) {
+            ctx.ThreadDesktopOk = true;
+            ctx.ThreadDesktopIo = tIo;
+            ctx.ThreadDesktopName = tName;
+        }
+        IntPtr inputDesk = OpenInputDesktop(0, false, DESKTOP_READOBJECTS);
+        if (inputDesk != IntPtr.Zero) {
+            try {
+                bool iIo;
+                string iName;
+                if (TryGetDesktopInfo(inputDesk, out iIo, out iName)) {
+                    ctx.InputDesktopOk = true;
+                    ctx.InputDesktopIo = iIo;
+                    ctx.InputDesktopName = iName;
+                }
+            } finally {
+                CloseDesktop(inputDesk);
+            }
+        }
+        return ctx;
+    }
+
+    public static bool IsThreadDesktopInputActive() {
+        bool ioActive;
+        string name;
+        IntPtr threadDesk = GetThreadDesktop(GetCurrentThreadId());
+        if (!TryGetDesktopInfo(threadDesk, out ioActive, out name)) return true; // fail closed
+        return ioActive;
+    }
+
+    public static M6BaselineDecision EvaluateBaseline(IntPtr initialWindow, M6DesktopContext ctx) {
+        bool isolated = ctx != null
+            && ctx.ThreadDesktopOk && !ctx.ThreadDesktopIo
+            && ctx.InputDesktopOk && ctx.InputDesktopIo
+            && !string.IsNullOrEmpty(ctx.ThreadDesktopName)
+            && !string.IsNullOrEmpty(ctx.InputDesktopName)
+            && !string.Equals(ctx.ThreadDesktopName, ctx.InputDesktopName, StringComparison.OrdinalIgnoreCase);
+        if (initialWindow != IntPtr.Zero) {
+            return new M6BaselineDecision {
+                Allowed = true,
+                Mode = "foreground_window",
+                DesktopIsolationVerified = isolated,
+                RejectReason = null
+            };
+        }
+        if (isolated) {
+            return new M6BaselineDecision {
+                Allowed = true,
+                Mode = "isolated_non_input_desktop",
+                DesktopIsolationVerified = true,
+                RejectReason = null
+            };
+        }
+        return new M6BaselineDecision {
+            Allowed = false,
+            Mode = "rejected",
+            DesktopIsolationVerified = false,
+            RejectReason = "No active application available for focus verification"
+        };
+    }
 
     public static readonly ConcurrentQueue<M6ForegroundEvent> Events = new ConcurrentQueue<M6ForegroundEvent>();
     public static volatile uint GamePid;
@@ -196,6 +303,9 @@ $failureInfo = $null
 $exitCode = $null
 $initialForeground = $null
 $finalForeground = $null
+$desktopContext = $null
+$baselineDecision = $null
+$desktopBecameActive = $false
 $gameFocusEvents = 0
 $gameFocusSamples = 0
 $sampleCount = 0
@@ -304,8 +414,10 @@ try {
     [System.IO.File]::WriteAllText($frameRequestPath, "0`n", [System.Text.Encoding]::ASCII)
 
     $initialWindow = [M6Focus]::GetForegroundWindow()
-    if ($initialWindow -eq [IntPtr]::Zero) { throw 'No active application available for focus verification' }
-    $initialForeground = Get-ForegroundIdentity $initialWindow
+    $desktopContext = [M6Focus]::QueryDesktopContext()
+    $baselineDecision = [M6Focus]::EvaluateBaseline($initialWindow, $desktopContext)
+    if (-not $baselineDecision.Allowed) { throw $baselineDecision.RejectReason }
+    if ($initialWindow -ne [IntPtr]::Zero) { $initialForeground = Get-ForegroundIdentity $initialWindow }
     $monitorStartAttempted = $true
     [M6Focus]::Start()
     $monitorStarted = $true
@@ -347,9 +459,9 @@ try {
         elapsed_ms = 0.0
         utc = $runtimeStarted.ToString('o')
         kind = 'baseline'
-        hwnd = $initialForeground.hwnd
-        pid = $initialForeground.pid
-        process = $initialForeground.process
+        hwnd = $(if ($initialForeground) { $initialForeground.hwnd } else { 0 })
+        pid = $(if ($initialForeground) { $initialForeground.pid } else { [uint32]0 })
+        process = $(if ($initialForeground) { $initialForeground.process } else { $null })
     })
     $sampleCount++
     $gameProcess = [System.Diagnostics.Process]::Start($startInfo)
@@ -380,6 +492,13 @@ try {
         $sampleCount++
         $pollCount++
         if ($identity.pid -eq $gameProcess.Id) { $gameFocusSamples++ }
+        if ($baselineDecision.Mode -eq 'isolated_non_input_desktop' -and [M6Focus]::IsThreadDesktopInputActive()) {
+            $desktopBecameActive = $true
+            if ($null -eq $failureInfo) {
+                $failureInfo = [ordered]@{ message = 'NONINTRUSIVE FAILURE: isolated thread desktop became active input desktop'; kind = 'desktop_became_active' }
+            }
+            break
+        }
         Start-Sleep -Milliseconds 100
         $gameProcess.Refresh()
     }
@@ -394,7 +513,7 @@ try {
             [void]$gameProcess.WaitForExit(5000)
         }
     } elseif (-not $gameProcess.HasExited) {
-        $failureInfo = [ordered]@{ message = 'Game exceeded the bounded runtime deadline'; kind = 'timeout' }
+        if ($null -eq $failureInfo) { $failureInfo = [ordered]@{ message = 'Game exceeded the bounded runtime deadline'; kind = 'timeout' } }
         try { $closeRequested = $gameProcess.CloseMainWindow() } catch { $closeRequested = $false }
         if ($closeRequested) { [void]$gameProcess.WaitForExit(5000) }
         $gameProcess.Refresh()
@@ -476,6 +595,11 @@ try {
             initial_foreground = $initialForeground
             final_foreground = $finalForeground
             initial_foreground_unchanged = ($null -ne $initialForeground -and $null -ne $finalForeground -and $initialForeground.hwnd -eq $finalForeground.hwnd -and $initialForeground.pid -eq $finalForeground.pid)
+            focus_baseline_mode = $(if ($baselineDecision) { $baselineDecision.Mode } else { $null })
+            desktop_isolation_verified = $(if ($baselineDecision) { $baselineDecision.DesktopIsolationVerified } else { $false })
+            thread_desktop_io = $(if ($desktopContext -and $desktopContext.ThreadDesktopOk) { $desktopContext.ThreadDesktopIo } else { $null })
+            input_desktop_accessible = $(if ($desktopContext) { $desktopContext.InputDesktopOk } else { $false })
+            desktop_became_active = $desktopBecameActive
             foreground_events = $focusEvents
             foreground_intervals = $intervals
             foreground_samples = $samples.ToArray()

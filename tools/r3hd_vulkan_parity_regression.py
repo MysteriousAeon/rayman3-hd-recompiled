@@ -38,11 +38,14 @@ def main() -> int:
     # display V-Sync step after it (D3D12 presenter files only, no anchor shared with an earlier step).
     # D-221 adds the lock-on colour read overlay (host file read path and one D3D12 mode line only).
     # D-324 adds the controller-motor stop (input / SDL driver files and ReXApp::OnClosing only).
-    # D-328 adds the test-only profile handoff prototype last (XAM user / input / UI files only).
-    tail = [c.split("\\")[1].split()[0] for c in chain[-9:]]
+    # D-328 adds the test-only profile handoff prototype (XAM user / input / UI files only).
+    # D-345 adds the SDL_DefaultAudioDeviceChanged prev-pointer fix (thirdparty/sdl3/src/audio/SDL_audio.c only).
+    # D-346 adds the AudioSystem client-lifetime fix last (include/rex/audio/audio_system.h and src/audio/audio_system.cpp only).
+    tail = [c.split("\\")[1].split()[0] for c in chain[-11:]]
     if tail != ["r3hd_thread_teardown_patch.py", "r3hd_vulkan_parity_patch.py", "r3hd_xex_case_patch.py",
                 "r3hd_button_prompts_patch.py", "r3hd_beam_runtime_patch.py", "r3hd_display_vsync_patch.py",
-                "r3hd_lockon_runtime_patch.py", "r3hd_pad_motors_patch.py", "g6p79_profile_handoff_patch.py"]:
+                "r3hd_lockon_runtime_patch.py", "r3hd_pad_motors_patch.py", "g6p79_profile_handoff_patch.py",
+                "g6p106_sdl_audio_migration_patch.py", "g6p109_audio_client_lifetime_patch.py"]:
         fails.append(f"chain tail {tail}")
     for _, after in V.red_edits():
         if vk.count(after) != 1:
