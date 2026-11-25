@@ -1293,10 +1293,10 @@ int Layout() {
     cy += gh + S(4);
     int pl = Measure(g.correctionsProfile, g.body, full);
     put(g.correctionsProfile, margin, cy, full, pl);
-    cy += pl + S(12);
+    cy += pl + S(8);
     for (auto& s : g.model.settings) {
       if (s.Shown() != L"corrections") continue;
-      int ch = std::max(Measure(s.control, g.body, full - S(22)), rowH - S(4));
+      int ch = std::max(Measure(s.control, g.body, full - S(22)), rowH - S(6));
       put(s.control, margin, cy, full, ch);
       cy += ch;
       if (s.helpText) {
@@ -1304,7 +1304,7 @@ int Layout() {
         put(s.helpText, margin + S(22), cy, full - S(22), hh2);
         cy += hh2;
       }
-      cy += S(6);  // D-221: tighter, so the corrections still fit at 150 % on a 1080p screen (D-161)
+      cy += S(3);  // D-221, D-363: tighter, so ten corrections still fit at 150 % on a 1080p screen (D-161)
     }
     bottom = cy;
   } else {

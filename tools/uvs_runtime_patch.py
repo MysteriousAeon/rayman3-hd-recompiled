@@ -20,6 +20,7 @@ M23_FIRST = '  // M23 (D-052): optional two-layer surface correction (off unless
 SUBSTITUTE = '''  // Lit UV scroll (E-353, D-157): optional (off unless R3HD_LIT_UV_SCROLL=applied; rex/uvs_lit_scroll.h). The
   // title's `1t_d_lighting` vertex shader is replaced by an edited copy that adds the UV offset c10.xy; a shader
   // that is not exactly the expected one is drawn as issued.
+  const bool uvs_is_1t_d_lighting = vertex_shader->ucode_data_hash() == uvslit::kVertexShaderHash;
   if (uvslit::Enabled() && vertex_shader->ucode_data_hash() == uvslit::kVertexShaderHash) {
     static const std::vector<uint32_t> uvs_vs =
         uvslit::Corrected(vertex_shader->ucode_data(), uvslit::kVertexPlan);
@@ -34,6 +35,27 @@ SUBSTITUTE = '''  // Lit UV scroll (E-353, D-157): optional (off unless R3HD_LIT
       uvs_logged = true;
       REXGPU_INFO("UVS lit_uv_scroll shader={} vs={:016X} edited={:016X}", !uvs_vs.empty() ? "applied" : "refused",
                   uvs_original, vertex_shader->ucode_data_hash());
+    }
+  }
+  // G6-P121 (D-356, diagnostic-only, off unless R3HD_TEST_LIT_NORMAL_SIGN=negate|negate_opaque): composes
+  // cleanly after lit_uv_scroll on `1t_d_lighting` (dwords 48..71 are disjoint from UVS dwords 75..77).
+  const uvslit::L4NormalMode l4_mode = uvslit::TestNormalMode();
+  if (l4_mode != uvslit::L4NormalMode::kOff && uvs_is_1t_d_lighting &&
+      uvslit::TestNormalMatches(l4_mode, pixel_shader ? pixel_shader->ucode_data_hash() : 0ull)) {
+    static const std::vector<uint32_t> l4_vs =
+        uvslit::Corrected(vertex_shader->ucode_data(), uvslit::kL4NormalNegatePlan);
+    static bool l4_logged = false;
+    const uint64_t l4_input = vertex_shader->ucode_data_hash();
+    if (!l4_vs.empty()) {
+      vertex_shader = pipeline_cache_->LoadShader(xenos::ShaderType::kVertex, l4_vs.data(),
+                                                  uint32_t(l4_vs.size()));
+      pipeline_cache_->AnalyzeShaderUcode(*vertex_shader);
+    }
+    if (!l4_logged) {
+      l4_logged = true;
+      REXGPU_INFO("L4_DIAG lit_normal_sign mode={} shader={} in_vs={:016X} edited={:016X}",
+                  uvslit::TestNormalModeName(l4_mode), !l4_vs.empty() ? "applied" : "refused",
+                  l4_input, vertex_shader->ucode_data_hash());
     }
   }
 

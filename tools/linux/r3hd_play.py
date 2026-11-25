@@ -41,7 +41,7 @@ SETTING_PARAMS = {
     "Revisit": "revisit", "Pacing": "pacing", "Display": "display", "Cursor": "cursor", "SaveClock": "save_clock",
     "GameLanguage": "game_language", "RenderScale": "render_scale", "LayerCoords": "layer_coords",
     "TextureOrient": "texture_orient", "RedCorrection": "red_correction", "SkyClear": "sky_clear",
-    "LitUvScroll": "lit_uv_scroll", "PowerSwirl": "power_swirl", "BeamColor": "beam_color", "LockonColor": "lockon_far_color", "VSync": "display_vsync", "WindowSize": "window_size", "ComboClose": "combo_close",
+    "LitUvScroll": "lit_uv_scroll", "PowerSwirl": "power_swirl", "BeamColor": "beam_color", "LockonColor": "lockon_far_color", "CrownCutout": "crown_cutout", "VSync": "display_vsync", "WindowSize": "window_size", "ComboClose": "combo_close",
     "Diagnostics": "diagnostics", "GameplaySubtitles": "gameplay_subtitles", "HudToggle": "hud_toggle", "DiscordPresence": "discord_presence",
     "DualSenseLight": "dualsense_light", "DualSenseTrigger": "dualsense_trigger",
     "DualSenseTriggerStrength": "dualsense_trigger_strength", "DualSenseSpeaker": "dualsense_speaker",
@@ -56,7 +56,7 @@ ENV_FROM_PARAM = {
     "R3HD_DS_TRIGGER_STRENGTH": "DualSenseTriggerStrength", "R3HD_DS_SPEAKER": "DualSenseSpeaker",
     "R3HD_DS_SPEAKER_VOLUME": "DualSenseSpeakerVolume", "R3HD_REVISIT": "Revisit", "R3HD_LAYER_COORDS": "LayerCoords",
     "R3HD_TEXTURE_ORIENT": "TextureOrient", "R3HD_RED_CORRECTION": "RedCorrection", "R3HD_SKY_CLEAR": "SkyClear",
-    "R3HD_LIT_UV_SCROLL": "LitUvScroll", "R3HD_POWER_SWIRL": "PowerSwirl", "R3HD_BEAM_COLOR": "BeamColor", "R3HD_LOCKON_COLOR": "LockonColor", "R3HD_DISPLAY_VSYNC": "VSync", "R3HD_COMBO_CLOSE": "ComboClose",
+    "R3HD_LIT_UV_SCROLL": "LitUvScroll", "R3HD_POWER_SWIRL": "PowerSwirl", "R3HD_BEAM_COLOR": "BeamColor", "R3HD_LOCKON_COLOR": "LockonColor", "R3HD_CROWN_CUTOUT": "CrownCutout", "R3HD_DISPLAY_VSYNC": "VSync", "R3HD_COMBO_CLOSE": "ComboClose",
     "R3HD_GAMEPLAY_SUBTITLES": "GameplaySubtitles", "R3HD_HUD_TOGGLE": "HudToggle",
     "R3HD_BUTTON_PROMPTS": "ButtonPrompts",
 }
@@ -65,7 +65,7 @@ GAME_LANGUAGE_ID = {"en": 1, "fr": 4, "es": 5, "it": 6, "de": 3}  # play.ps1 $ga
 TEST_ONLY = ("R3HD_NONINTRUSIVE", "R3HD_TEST_SECONDS", "R3HD_INPUT_SCHEDULE", "R3HD_INPUT_FOLLOW", "R3HD_M5_CAPTURE",
              "R3HD_FRAME_REQUEST", "R3HD_AUDIO_CAPTURE", "R3HD_AUDIO_AFTER", "R3HD_M5_VB_RESIDENCY_CACHE", "R3HD_PLAY",
              "R3HD_TRIAL", "R3HD_FRAME_TRACE", "R3HD_VBLANK_SPIN_US", "R3HD_TEST_WORLD_END", "R3HD_TEST_COMBO_CLOSE",
-             "R3HD_TEST_COMBO_PLAYTEST", "R3HD_TEST_COMBO_CAPTURE", "R3HD_TEST_SKY_CLEAR", "R3HD_SAVE_FAULT",
+             "R3HD_TEST_COMBO_PLAYTEST", "R3HD_TEST_COMBO_CAPTURE", "R3HD_TEST_SKY_CLEAR", "R3HD_TEST_CROWN_BLEND", "R3HD_TEST_G6P89_SCALE_3_2", "R3HD_SAVE_FAULT",
              "R3HD_SAVE_COMMIT", "R3HD_CURSOR", "R3HD_TIMEZONE", "R3HD_M22_DRAW_TRACE", "R3HD_M22_AUDIO",
              "R3HD_AUDIO_AUDIBLE", "R3HD_M24_EVENTS", "R3HD_DIAGNOSTICS", "R3HD_KEYMAP_TEST", "R3HD_PADMAP_TEST",
              "R3HD_PAD_MAP", "R3HD_DISCORD", "R3HD_DS_LIGHT", "R3HD_DS_TRIGGER", "R3HD_DS_TRIGGER_STRENGTH",
@@ -134,6 +134,8 @@ def display_mode():
 
 
 def render_scale(setting, target):
+    if setting == "1.5":
+        return 1
     if setting != "auto":
         return int(setting)
     import math

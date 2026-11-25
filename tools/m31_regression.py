@@ -104,8 +104,8 @@ def settings_checks():
           and S["window_size"]["values"] == ["auto", "1280x720", "1600x900", "1920x1080", "2560x1440"])
     check("registry: diagnostics standard | detailed, default standard",
           S["diagnostics"]["values"] == ["standard", "detailed"] and S["diagnostics"]["vanilla"] == "standard")
-    check("registry: no 1080p rendering resolution (fractional scale not supported, D-068)",
-          S["render_scale"]["values"] == ["auto", "1", "2", "3"])
+    check("registry: rendering resolutions include native 1080p (1.5x, D-371) alongside auto/1/2/3",
+          S["render_scale"]["values"] == ["auto", "1", "1.5", "2", "3"])
     with tempfile.TemporaryDirectory() as tmp:
         t = Path(tmp)
         base = json.loads((ROOT / "config" / "settings" / "registry.json").read_text(encoding="utf-8"))

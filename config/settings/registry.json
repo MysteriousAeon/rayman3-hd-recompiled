@@ -73,17 +73,17 @@
     },
     "render_scale": {
       "label": "Rendering resolution",
-      "help": "Auto selects the smallest supported rendering resolution that covers the 16:9 game picture on your screen or window, not counting black bars, up to 2160p. In Fullscreen on a 1080p display, the game renders at 1440p. If performance is poor, manually selecting 720p can help.",
+      "help": "Auto selects 720p, 1440p, or 2160p to cover the 16:9 game picture on your screen or window, not counting black bars. On a 1080p display, Auto renders at 1440p; you can select 1920x1080 (1.5x) manually on Windows (D3D12), or 720p if performance is poor.",
       "group": "display",
       "category": "enhancement",
       "scope": "preference",
-      "values": ["auto", "1", "2", "3"],
-      "value_labels": {"auto": "Auto", "1": "720p (1x, original)", "2": "1440p (2x)", "3": "2160p (3x)"},
+      "values": ["auto", "1", "1.5", "2", "3"],
+      "value_labels": {"auto": "Auto", "1": "720p (1x, original)", "1.5": "1920x1080 (1.5x)", "2": "1440p (2x)", "3": "2160p (3x)"},
       "vanilla": "auto",
       "hdplus": "auto",
       "launcher": "RenderScale",
-      "decision": "D-042",
-      "why": "the same 1280x720 frame drawn at a larger internal size; 1 is the original resolution"
+      "decision": "D-042, D-370, D-371",
+      "why": "the same 1280x720 frame drawn at a larger internal size; 1 is the original resolution, 1.5 is native 1920x1080 on Windows D3D12"
     },
     "display_vsync": {
       "label": "V-Sync",
@@ -225,6 +225,20 @@
       "decision": "D-209, D-210, D-217, D-221",
       "validation": "Windows human visual PASS: restored blue out-of-range indicator (E-453). Page ago_targetfar identified by draw trace in knaar_69 (E-451/E-452); hash-gated endpoint recolor keeps the HD eight-dash art; hidden off/on run verifies screen ownership. Other levels, Linux runtime and full replay qualification remain limited.",
       "why": "The HD release redrew the original blue PC out-of-range indicator as an orange eight-dash ring; the normal lock-on ring and arrows are separate pages and stay as they are."
+    },
+    "crown_cutout": {
+      "label": "Correct Grand Minimus's Crown",
+      "help": "Renders the Teensie King crown as a solid cutout so rear faces no longer show through the front.",
+      "group": "corrections",
+      "category": "hd_correction",
+      "values": ["original", "cutout"],
+      "value_labels": {"original": "Off (as on Xbox 360)", "cutout": "On"},
+      "vanilla": "original",
+      "hdplus": "cutout",
+      "launcher": "CrownCutout",
+      "decision": "D-360, D-361, D-362, D-363",
+      "validation": "G6-P127 Windows human visual PASS on menu_00 (D-363); all 10 verified teensy_cour.dds bundles (menu_00 + 9 resource-equivalent levels, visual acceptance pending on the other 9) hash-gated fail-closed before M33 mods.",
+      "why": "In the Xbox 360 HD release, the double-sided Teensie King crown material (charact\\teensy_cour.dds) uses alpha-blended blend_byte 0x03 with depth writes disabled instead of cutout 0x08, letting rear crown faces overwrite the front gold band."
     },
     "gameplay_subtitles": {
       "label": "Gameplay subtitles",

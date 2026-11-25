@@ -74,7 +74,7 @@ param(
     # changes the guest video mode (m31_runtime_patch.py) or the rendering resolution. -Width / -Height (logical
     # pixels, developer use) win over it.
     [ValidateSet('auto', '1280x720', '1600x900', '1920x1080', '2560x1440')][string]$WindowSize = 'auto',
-    [ValidateSet('auto', '1', '2', '3')][string]$RenderScale = 'auto',
+    [ValidateSet('auto', '1', '1.5', '2', '3')][string]$RenderScale = 'auto',
     # M31 (D-068): 'standard' bounds what a session records: at most two rotated runtime logs (5 MB each) beside the
     # current one, repetitive known runtime lines sampled (R3HD_PLAY sessions), and in an installed home the 10
     # newest session folders (save_history is never touched). 'detailed' = the M30 behaviour (20 rotations, every
@@ -143,6 +143,8 @@ param(
     [ValidateSet('original', 'restored')][string]$BeamColor = 'original',
     # D-221: HD+ out-of-range lock-on indicator colour (one fix page, exact read overlay). Off here (the vanilla column).
     [ValidateSet('original', 'restored')][string]$LockonColor = 'original',
+    # D-363: HD+ Grand Minimus crown cutout (blend_byte 0x03 -> 0x08 across 10 verified .lvl bundles, exact read overlay). Off here (the vanilla column).
+    [ValidateSet('original', 'cutout')][string]$CrownCutout = 'original',
     # D-220: host display V-Sync (D3D12 Present sync interval 1, launch-time preference). Not the SDK's `vsync`
     # cvar (guest vblank scheduling, E-265). Off keeps the pinned Present(0) with tearing allowed.
     [ValidateSet('off', 'on')][string]$VSync = 'off',
@@ -507,12 +509,18 @@ function Get-LogCensus([string]$Session) {
             elseif ($line.Contains('] [critical] ')) { $census.critical++ }
             if ($line.Contains(' stub=true count=1 ')) { $census.stub_imports++ }
             if ($line.Contains('M6 license ') -and $line -match ' mask=([0-9A-Fa-f]{8})') { [void]$masks.Add($Matches[1].ToUpperInvariant()) }
-            # G6-P96: M15 draw_scale records the actual renderer scale after device capability clamping (early in the log).
+            # G6-P96 / G6-P141: M15 draw_scale records the actual renderer scale after device capability clamping (early in the log).
             if ($line.Contains('M15 draw_scale ') -and $line -match '\bM15 draw_scale x=(\d{1,2}) y=(\d{1,2}) as_requested=(true|false)\b') {
                 $dx = 0; $dy = 0
                 if ([int]::TryParse($Matches[1], [ref]$dx) -and [int]::TryParse($Matches[2], [ref]$dy) -and $dx -ge 1 -and $dx -le 16 -and $dy -ge 1 -and $dy -le 16) {
                     $drawScale = [ordered]@{ x = $dx; y = $dy; as_requested = ($Matches[3] -eq 'true') }
                 }
+            }
+            if ($line.Contains('G6P89 active=1')) {
+                if ($drawScale) { $drawScale.den = 2 }
+                else { $drawScale = [ordered]@{ x = 3; y = 3; den = 2; as_requested = $true } }
+            } elseif ($line.Contains('G6P89 active=0 requested=1')) {
+                if ($drawScale) { $drawScale.as_requested = $false }
             }
             $tail.Enqueue($line); if ($tail.Count -gt 15) { [void]$tail.Dequeue() }
         }
@@ -541,7 +549,7 @@ if ($Profile -notmatch '^[A-Za-z0-9_-]+$') { throw 'Profile must be a simple nam
 foreach ($extra in $ExtraArgs) {
     if ($extra -notmatch '^--[a-z0-9_]+=') { throw "Extra arguments look like --name=value: $extra" }
     if ($extra -match '^--(game_data_root|user_data_root|cache_root|log_file|gpu_plugin)=') { throw "Set by the launcher: $extra" }
-    if ($extra -match '^--(resolution_scale|draw_resolution_scale_x|draw_resolution_scale_y)=') { throw 'The rendering resolution is chosen with -RenderScale auto|1|2|3, not through -ExtraArgs' }
+    if ($extra -match '^--(resolution_scale|draw_resolution_scale_x|draw_resolution_scale_y)=') { throw 'The rendering resolution is chosen with -RenderScale auto|1|1.5|2|3, not through -ExtraArgs' }
     if ($extra -match '^--license_mask=') { throw 'The licence mode is chosen with -License full|trial, not through -ExtraArgs' }
     if ($extra -match '^--user_language=') { throw 'Choose the game language with -GameLanguage en|fr|es|it|de or Settings.' }
     if ($extra -match '^--cl=') { throw 'The guest command line (developer options such as -level:) is for hidden test runs only: tools\run_milestone6.ps1 -TestLevel' }
@@ -594,7 +602,7 @@ $controller = $null
 # -SettingsFile its preset values are the parameter defaults above (m27_settings_regression.py keeps them equal).
 if ($true) {
     $settingParams = [ordered]@{ Revisit = 'revisit'; Pacing = 'pacing'; Display = 'display'; Cursor = 'cursor'; SaveClock = 'save_clock'; GameLanguage = 'game_language';
-        RenderScale = 'render_scale'; LayerCoords = 'layer_coords'; TextureOrient = 'texture_orient'; RedCorrection = 'red_correction'; SkyClear = 'sky_clear'; LitUvScroll = 'lit_uv_scroll'; PowerSwirl = 'power_swirl'; BeamColor = 'beam_color'; LockonColor = 'lockon_far_color'; VSync = 'display_vsync'; WindowSize = 'window_size'; ComboClose = 'combo_close';
+        RenderScale = 'render_scale'; LayerCoords = 'layer_coords'; TextureOrient = 'texture_orient'; RedCorrection = 'red_correction'; SkyClear = 'sky_clear'; LitUvScroll = 'lit_uv_scroll'; PowerSwirl = 'power_swirl'; BeamColor = 'beam_color'; LockonColor = 'lockon_far_color'; CrownCutout = 'crown_cutout'; VSync = 'display_vsync'; WindowSize = 'window_size'; ComboClose = 'combo_close';
         Diagnostics = 'diagnostics'; GameplaySubtitles = 'gameplay_subtitles'; HudToggle = 'hud_toggle'; DiscordPresence = 'discord_presence'; DualSenseLight = 'dualsense_light'; DualSenseTrigger = 'dualsense_trigger';
         DualSenseTriggerStrength = 'dualsense_trigger_strength'; DualSenseSpeaker = 'dualsense_speaker'; DualSenseSpeakerVolume = 'dualsense_speaker_volume'; MouseCamera = 'mouse_camera'; MouseSensitivity = 'mouse_sensitivity'; MouseButtons = 'mouse_buttons'; ButtonPrompts = 'controller_prompts' }
     $resolverArgs = @((Join-Path $PSScriptRoot 'r3hd_settings.py'), 'resolve')
@@ -701,12 +709,16 @@ $windowText = if ($window) { "$($window.width)x$($window.height) ($($window.note
 # M31 (D-068): an installed home keeps its 10 newest sessions (this one included); a repository keeps all.
 $sessionLimit = 10
 $prune = if ($installed) { @(Get-SessionsToPrune $sessions ($sessionLimit - 1)) } else { @() }
-if ($RenderScale -eq 'auto') { $scale = Get-AutoRenderScale $target.width $target.height } else { $scale = [int]$RenderScale }
+$scale32 = $false
+if ($RenderScale -eq 'auto') { $scale = Get-AutoRenderScale $target.width $target.height } elseif ($RenderScale -eq '1.5') { $scale = 1; $scale32 = $true } else { $scale = [int]$RenderScale }
 $arguments += "--resolution_scale=$scale"
 $arguments += $keyArgs
 $gameLanguageId = @{ en = 1; fr = 4; es = 5; it = 6; de = 3 }[$GameLanguage]
 $arguments += "--user_language=$gameLanguageId"
-$renderText = "$(1280 * $scale)x$(720 * $scale) internal image (scale $scale, -RenderScale $RenderScale), shown in $($target.width)x$($target.height) ($($target.source))"
+$renderW = if ($scale32) { 1920 } else { 1280 * $scale }
+$renderH = if ($scale32) { 1080 } else { 720 * $scale }
+$scaleRecord = if ($scale32) { 1.5 } else { $scale }
+$renderText = "${renderW}x${renderH} internal image (scale $scaleRecord, -RenderScale $RenderScale), shown in $($target.width)x$($target.height) ($($target.source))"
 $arguments += $ExtraArgs
 # The host sets licence bit 0 by default (D-032); trial mode is requested through R3HD_TRIAL. No mask is passed here.
 $licenseMask = if ($License -eq 'full') { 1 } else { 0 }
@@ -777,6 +789,7 @@ if ($DryRun) {
     Write-Host "display    : $Display"
     Write-Host "window     : $windowText"
     Write-Host "rendering  : $renderText"
+    if ($scale32) { Write-Host "scale 3:2  : R3HD_RENDER_SCALE_3_2=1" }
     Write-Host "diagnostics: $Diagnostics; sessions kept: $(if ($installed) { "$sessionLimit newest (would remove $($prune.Count))" } else { 'all (not an installed home)' })"
     Write-Host "revisit    : $Revisit"
     Write-Host "cursor     : $Cursor"
@@ -791,6 +804,7 @@ if ($DryRun) {
     Write-Host "power swirl: $PowerSwirl"
     Write-Host "beam color : $BeamColor"
     Write-Host "lockon far : $LockonColor"
+    Write-Host "crown cut  : $CrownCutout"
     Write-Host "v-sync     : $VSync"
     Write-Host "gameplay sub: $GameplaySubtitles"
     Write-Host "hud toggle  : $HudToggle"
@@ -818,11 +832,11 @@ foreach ($old in $prune) { try { Remove-Item -LiteralPath $old.FullName -Recurse
 Move-DevConfig $devConfig
 New-Item -ItemType Directory -Path $session, $user, $cache -Force | Out-Null
 # Written before the launch so the selected licence mode is on record even if this script is interrupted.
-[ordered]@{ session = $stamp; profile = $Profile; preset = $presetLabel; settings_file = $SettingsFile; license_mode = $License; license_mask = $licenseMask; display = $Display; window = $window; render_scale = $scale; render_scale_option = $RenderScale; pacing = $Pacing; revisit = $Revisit; cursor = $Cursor; save_clock = $SaveClock; game_language = $GameLanguage; layer_coords = $LayerCoords; texture_orient = $TextureOrient; red_correction = $RedCorrection; sky_clear = $SkyClear; lit_uv_scroll = $LitUvScroll; power_swirl = $PowerSwirl; beam_color = $BeamColor; lockon_far_color = $LockonColor; display_vsync = $VSync; combo_close = $ComboClose; gameplay_subtitles = $GameplaySubtitles; hud_toggle = $HudToggle; diagnostics = $Diagnostics; dualsense_light = $DualSenseLight; dualsense_trigger = $DualSenseTrigger; dualsense_trigger_strength = $DualSenseTriggerStrength; dualsense_speaker = $DualSenseSpeaker; dualsense_speaker_volume = $DualSenseSpeakerVolume; mouse_camera = $MouseCamera; mouse_sensitivity = $MouseSensitivity; mouse_buttons = $MouseButtons; keyboard = $keyText; controller = $padText; controller_prompts = $ButtonPrompts; mods = $modsText; mods_notes = $modsNotes; dev_overlay = $devText; sessions_removed = $pruned; render_target = $target; arguments = $arguments } |
+[ordered]@{ session = $stamp; profile = $Profile; preset = $presetLabel; settings_file = $SettingsFile; license_mode = $License; license_mask = $licenseMask; display = $Display; window = $window; render_scale = $scaleRecord; render_scale_option = $RenderScale; pacing = $Pacing; revisit = $Revisit; cursor = $Cursor; save_clock = $SaveClock; game_language = $GameLanguage; layer_coords = $LayerCoords; texture_orient = $TextureOrient; red_correction = $RedCorrection; sky_clear = $SkyClear; lit_uv_scroll = $LitUvScroll; power_swirl = $PowerSwirl; beam_color = $BeamColor; lockon_far_color = $LockonColor; crown_cutout = $CrownCutout; display_vsync = $VSync; combo_close = $ComboClose; gameplay_subtitles = $GameplaySubtitles; hud_toggle = $HudToggle; diagnostics = $Diagnostics; dualsense_light = $DualSenseLight; dualsense_trigger = $DualSenseTrigger; dualsense_trigger_strength = $DualSenseTriggerStrength; dualsense_speaker = $DualSenseSpeaker; dualsense_speaker_volume = $DualSenseSpeakerVolume; mouse_camera = $MouseCamera; mouse_sensitivity = $MouseSensitivity; mouse_buttons = $MouseButtons; keyboard = $keyText; controller = $padText; controller_prompts = $ButtonPrompts; mods = $modsText; mods_notes = $modsNotes; dev_overlay = $devText; sessions_removed = $pruned; render_target = $target; arguments = $arguments } |
     ConvertTo-Json -Depth 3 | Set-Content -LiteralPath (Join-Path $session 'launch.json') -Encoding UTF8
 $testOnly = 'R3HD_NONINTRUSIVE', 'R3HD_TEST_SECONDS', 'R3HD_INPUT_SCHEDULE', 'R3HD_INPUT_FOLLOW', 'R3HD_M5_CAPTURE',
     'R3HD_FRAME_REQUEST', 'R3HD_AUDIO_CAPTURE', 'R3HD_AUDIO_AFTER', 'R3HD_M5_VB_RESIDENCY_CACHE', 'R3HD_PLAY', 'R3HD_TRIAL',
-    'R3HD_FRAME_TRACE', 'R3HD_VBLANK_SPIN_US', 'R3HD_TEST_WORLD_END', 'R3HD_TEST_COMBO_CLOSE', 'R3HD_TEST_COMBO_PLAYTEST', 'R3HD_TEST_COMBO_CAPTURE', 'R3HD_TEST_SKY_CLEAR',
+    'R3HD_FRAME_TRACE', 'R3HD_VBLANK_SPIN_US', 'R3HD_TEST_WORLD_END', 'R3HD_TEST_COMBO_CLOSE', 'R3HD_TEST_COMBO_PLAYTEST', 'R3HD_TEST_COMBO_CAPTURE', 'R3HD_TEST_SKY_CLEAR', 'R3HD_TEST_CROWN_BLEND', 'R3HD_TEST_G6P89_SCALE_3_2',
     'R3HD_SAVE_FAULT', 'R3HD_SAVE_COMMIT', 'R3HD_CURSOR', 'R3HD_TIMEZONE',
     'R3HD_M22_DRAW_TRACE', 'R3HD_M22_AUDIO', 'R3HD_AUDIO_AUDIBLE', 'R3HD_M24_EVENTS', 'R3HD_DIAGNOSTICS', 'R3HD_KEYMAP_TEST', 'R3HD_PADMAP_TEST', 'R3HD_PAD_MAP', 'R3HD_DISCORD', 'R3HD_DS_LIGHT', 'R3HD_DS_TRIGGER', 'R3HD_DS_TRIGGER_STRENGTH', 'R3HD_DS_SPEAKER', 'R3HD_DS_SPEAKER_VOLUME', 'R3HD_ACH_TEXT',
     'R3HD_PCSET_TEST', 'R3HD_PCSET_HOME', 'R3HD_PCSET_PYTHON', 'R3HD_PCSET_TOOLS', 'R3HD_PCSET_SESSION', 'R3HD_PCSET_SETTINGS_APP', 'R3HD_BUTTON_PROMPTS', 'R3HD_BUTTON_PROMPTS_PLAN', 'R3HD_BUTTON_PROMPTS_TEST', 'R3HD_BUTTON_PROMPTS_EFFECTIVE'
@@ -880,6 +894,8 @@ $savedBeamColor = $env:R3HD_BEAM_COLOR
 $env:R3HD_BEAM_COLOR = $BeamColor
 $savedLockonColor = $env:R3HD_LOCKON_COLOR
 $env:R3HD_LOCKON_COLOR = $LockonColor
+$savedCrownCutout = $env:R3HD_CROWN_CUTOUT
+$env:R3HD_CROWN_CUTOUT = $CrownCutout
 $savedDisplayVSync = $env:R3HD_DISPLAY_VSYNC
 $env:R3HD_DISPLAY_VSYNC = $VSync
 $savedComboClose = $env:R3HD_COMBO_CLOSE
@@ -888,6 +904,8 @@ $savedGameplaySubs = $env:R3HD_GAMEPLAY_SUBTITLES
 $env:R3HD_GAMEPLAY_SUBTITLES = $GameplaySubtitles
 $savedHudToggle = $env:R3HD_HUD_TOGGLE
 $env:R3HD_HUD_TOGGLE = $HudToggle
+$savedRenderScale32 = $env:R3HD_RENDER_SCALE_3_2
+$env:R3HD_RENDER_SCALE_3_2 = $(if ($scale32) { '1' } else { $null })
 # M33: the verified mod plan, or none (a value from the caller's environment never reaches a playtest).
 $savedModsPlan = $env:R3HD_MODS_PLAN
 $env:R3HD_MODS_PLAN = $(if ($modsPlan) { $modsPlan } else { $null })
@@ -976,10 +994,12 @@ try {
     $env:R3HD_POWER_SWIRL = $savedPowerSwirl
     $env:R3HD_BEAM_COLOR = $savedBeamColor
     $env:R3HD_LOCKON_COLOR = $savedLockonColor
+    $env:R3HD_CROWN_CUTOUT = $savedCrownCutout
     $env:R3HD_DISPLAY_VSYNC = $savedDisplayVSync
     $env:R3HD_COMBO_CLOSE = $savedComboClose
     $env:R3HD_GAMEPLAY_SUBTITLES = $savedGameplaySubs
     $env:R3HD_HUD_TOGGLE = $savedHudToggle
+    $env:R3HD_RENDER_SCALE_3_2 = $savedRenderScale32
     $env:R3HD_MODS_PLAN = $savedModsPlan
 }
 $ended = Get-Date
@@ -1002,7 +1022,7 @@ if ($startError) {
         license_mask = $licenseMask
         display = $Display
         window = $window
-        render_scale = $scale
+        render_scale = $scaleRecord
         render_scale_option = $RenderScale
         render_target = $target
         diagnostics = $Diagnostics
@@ -1035,7 +1055,7 @@ if ($startError) {
         license_note = 'configured runtime setting; not an entitlement or ownership check'
         display = $Display
         window = $window
-        render_scale = $scale
+        render_scale = $scaleRecord
         render_scale_option = $RenderScale
         render_target = $target
         diagnostics = $Diagnostics
@@ -1054,6 +1074,7 @@ if ($startError) {
         power_swirl = $PowerSwirl
         beam_color = $BeamColor
         lockon_far_color = $LockonColor
+        crown_cutout = $CrownCutout
         display_vsync = $VSync
         combo_close = $ComboClose
         gameplay_subtitles = $GameplaySubtitles

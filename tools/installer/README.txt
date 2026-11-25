@@ -1,4 +1,4 @@
-Rayman 3 HD Recompiled 1.3.1
+Rayman 3 HD Recompiled 1.4.0
 ============================
 
 Portable edition: use the top-level Play.cmd and Settings.cmd, and follow PORTABLE.txt
@@ -13,7 +13,7 @@ Settings:          Start menu "Rayman 3 HD Recompiled - Settings" (or app\r3hd_l
                                     HD+     = Vanilla plus fixes for visual mistakes of the Xbox 360 release;
                                     Custom  = pick each correction yourself.
                      Corrections    Combo Meter Animation: Vanilla Off, HD+ On, Custom On or Off.
-                     Display        window or fullscreen; rendering resolution (Auto, 720p, 1440p, 2160p).
+                     Display        window or fullscreen; rendering resolution (Auto, 720p, 1080p, 1440p, 2160p).
                      Controls       keyboard keys (Modern or Original PC keys; any key can be changed). Hold Walk
                                     (Ctrl in Modern, Shift in Original PC) while moving to walk slowly.
                      Mods           turn installed mods on or off, change their order, install a mod .zip,

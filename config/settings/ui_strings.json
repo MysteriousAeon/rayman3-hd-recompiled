@@ -14,6 +14,8 @@
     "Restores the purple beam and rings of power-up cans from the original PC release instead of orange.": {"en": "Restores the purple beam and rings of power-up cans from the original PC release instead of orange.", "tr": "Güç kutularının ışın ve halkalarını, özgün PC sürümündeki gibi turuncu yerine mor renkte gösterir."},
     "Restore Out-of-Range Lock-On Color": {"en": "Restore Out-of-Range Lock-On Color", "tr": "Menzil Dışı Kilitlenme Rengini Geri Getir"},
     "Shows the lock-on indicator for a target beyond your fist's reach in blue, as in the original PC release, instead of orange.": {"en": "Shows the lock-on indicator for a target beyond your fist's reach in blue, as in the original PC release, instead of orange.", "tr": "Yumruğun ulaşamayacağı uzaklıktaki hedef göstergesinin rengini, özgün PC sürümündeki gibi maviye çevirir."},
+    "Correct Grand Minimus's Crown": {"en": "Correct Grand Minimus's Crown", "tr": "Büyük Minimus'un Tacını Düzelt"},
+    "Renders the Teensie King crown as a solid cutout so rear faces no longer show through the front.": {"en": "Renders the Teensie King crown as a solid cutout so rear faces no longer show through the front.", "tr": "Büyük Minimus'un tacında arka yüzeylerin önden görünmesini önler."},
     "V-Sync": {"en": "V-Sync", "tr": "V-Sync (Dikey Eşitleme)"},
     "Prevents screen tearing; can add slight input delay. Graphics driver settings may override it. Windows only.": {"en": "Prevents screen tearing; can add slight input delay. Graphics driver settings may override it. Windows only.", "tr": "Ekran yırtılmasını önler ancak giriş gecikmesini biraz artırabilir. Ekran kartı sürücüsü ayarları bu seçeneği geçersiz kılabilir. Yalnızca Windows'ta kullanılabilir."},
     "Choose which controller button icons appear in-game. Auto identifies the primary or sole controller at launch; unknown or ambiguous controllers use Xbox. Restart after changing controllers.": {"en": "Choose which controller button icons appear in-game. Auto identifies the primary or sole controller at launch; unknown or ambiguous controllers use Xbox. Restart after changing controllers.", "tr": "Oyun içinde hangi kumanda düğme simgelerinin gösterileceğini seçin. Otomatik, başlangıçta birincil veya tek kumandayı tanır; bilinmeyen veya belirsiz kumandalarda Xbox kullanılır. Kumanda değiştirdikten sonra oyunu yeniden başlatın."},
@@ -136,9 +138,13 @@
       "en": "Rendering resolution",
       "tr": "Görüntü çözünürlüğü"
     },
-    "Auto selects the smallest supported rendering resolution that covers the 16:9 game picture on your screen or window, not counting black bars, up to 2160p. In Fullscreen on a 1080p display, the game renders at 1440p. If performance is poor, manually selecting 720p can help.": {
-      "en": "Auto selects the smallest supported rendering resolution that covers the 16:9 game picture on your screen or window, not counting black bars, up to 2160p. In Fullscreen on a 1080p display, the game renders at 1440p. If performance is poor, manually selecting 720p can help.",
-      "tr": "Otomatik, ekranın ya da pencerenin tamamına değil, siyah çubuklar dışında kalan 16:9 oyun görüntüsüne uygun en düşük desteklenen görüntü çözünürlüğünü seçer (en fazla 2160p). Örneğin, 1080p ekranda tam ekran oynarken oyun 1440p çözünürlükte işlenir. Performans sorunu yaşıyorsanız 720p seçeneğini deneyebilirsiniz."
+    "Auto selects 720p, 1440p, or 2160p to cover the 16:9 game picture on your screen or window, not counting black bars. On a 1080p display, Auto renders at 1440p; you can select 1920x1080 (1.5x) manually on Windows (D3D12), or 720p if performance is poor.": {
+      "en": "Auto selects 720p, 1440p, or 2160p to cover the 16:9 game picture on your screen or window, not counting black bars. On a 1080p display, Auto renders at 1440p; you can select 1920x1080 (1.5x) manually on Windows (D3D12), or 720p if performance is poor.",
+      "tr": "Oyunun işleneceği çözünürlüğü belirler. Otomatik, ekranınıza uygun bir çözünürlük seçer. 1080p seçeneği yalnızca Windows'ta kullanılabilir."
+    },
+    "1920x1080 (1.5x)": {
+      "en": "1920x1080 (1.5x)",
+      "tr": "1920x1080 (1.5x)"
     },
     "Auto": {
       "en": "Auto",

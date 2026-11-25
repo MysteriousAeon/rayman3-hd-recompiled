@@ -47,6 +47,9 @@
   {"origin": "project", "licence": "MIT (LICENSE)",
    "detail": "reports and run records (hashes, addresses, statistics; no code bytes, no asset contents)",
    "paths": ["reports/*"]},
+  {"origin": "project", "licence": "MIT (LICENSE)", "optional": true,
+   "detail": "Local developer agent configuration excluded from public source exports (config/release/public_export.json)",
+   "paths": [".claude/settings.json", ".codex/config.toml"]},
   {"origin": "project", "licence": "MIT (LICENSE)",
    "detail": "project records, public documentation and agent definitions",
    "paths": ["*.md", ".claude/agents/*", "docs/*", ".gitignore", ".gitattributes", "LICENSE*"]}

@@ -31,6 +31,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import m12_fault_classifier as fault_clf  # noqa: E402
 SAVES = ROOT / "private" / "saves"
 RUNS = ROOT / "private" / "work" / "m6_runs"
 PROFILES = ROOT / "private" / "work" / "m9_profiles"
@@ -169,6 +171,10 @@ def evaluate_run(run_name: str, level_key: str, reference_sha: str | None, forbi
             reasons.append(f"driver error {error.get('type')}")
     if meta.get("game_foreground_events") != 0 or meta.get("game_foreground_samples") != 0:
         reasons.append(f"foreground events={meta.get('game_foreground_events')} samples={meta.get('game_foreground_samples')}")
+    if meta.get("desktop_became_active") is True:
+        reasons.append("desktop_became_active")
+    if "safety_status" in meta and meta.get("safety_status") != "verified_isolated":
+        reasons.append(f"safety_status={meta.get('safety_status')}")
 
     level_open = re.compile(rf"vfs_open path=.*?[\\/]{re.escape(level_key)}[\\/]{re.escape(level_key)}\.lvl "
                             r"result=00000000", re.IGNORECASE)
@@ -185,16 +191,29 @@ def evaluate_run(run_name: str, level_key: str, reference_sha: str | None, forbi
     traps = sum(bool(TRAP.search(line)) for line in lines)
     invalid = sum(bool(INVALID_TARGET.search(line)) for line in lines)
     frames = len(list(run.glob("m3_frame_*.bmp")))
-    codes = fault_codes(run)
-    other_codes = {c: n for c, n in codes.items() if c not in ROUTINE_FAULTS}
+    run_clean_handled = (
+        meta.get("exit_code") == 0
+        and not meta.get("forced_termination")
+        and meta.get("error") is None
+        and fatal == 0
+    )
+    fault_summary = fault_clf.classify_fault_log(run, run_clean_handled=run_clean_handled)
+    codes = fault_summary["raw_codes"]
     facts.update(stub_import_lines=stubs, fatal_lines=fatal, trap_lines=traps, invalid_target_lines=invalid,
-                 frames_saved=frames, fault_codes=codes)
+                 frames_saved=frames, fault_codes=codes, fault_classification=fault_summary)
     for label, count in (("stubbed import lines", stubs), ("fatal/critical lines", fatal), ("trap lines", traps),
                          ("invalid-target lines", invalid), ("frame captures", frames)):
         if count:
             reasons.append(f"{label}={count}")
-    if other_codes:
-        reasons.append("exception codes " + ",".join(f"{c}x{n}" for c, n in sorted(other_codes.items())))
+    if fault_summary["actionable"]:
+        parts: list[str] = []
+        if fault_summary["guest_or_unknown_count"] > 0:
+            parts.append(f"GUEST_OR_UNKNOWNx{fault_summary['guest_or_unknown_count']}")
+        for c, n in sorted(fault_summary["actionable_other_codes"].items()):
+            parts.append(f"{c}x{n}")
+        if fault_summary["malformed_lines"] and not parts:
+            parts.append(f"MALFORMEDx{len(fault_summary['malformed_lines'])}")
+        reasons.append("exception codes " + ",".join(parts))
 
     profile = working_profile(meta, run_name)
     saves = find_saves(profile) if profile.is_dir() else []

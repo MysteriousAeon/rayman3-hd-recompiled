@@ -97,4 +97,14 @@ def edits():
 
 
 if __name__ == '__main__':
+    path = SDK / VULKAN
+    text = path.read_text(encoding='utf-8')
+    # Replace an existing LX-3 UVS/M23 block span in place when the D3D12 block evolves (e.g. G6-P121),
+    # because M2 resets D3D12 command_processor.cpp but not Vulkan command_processor.cpp.
+    if HEADER in text and ANCHOR in text:
+        start = text.index(HEADER)
+        end = text.index(ANCHOR, start)
+        desired = HEADER + shared_block()
+        if text[start:end] != desired:
+            path.write_text(text[:start] + desired + text[end:], encoding='utf-8')
     patch_once(VULKAN, edits() + red_edits())

@@ -256,13 +256,17 @@ class Static(unittest.TestCase):
         # D-324: the controller-motor stop (input / SDL driver files and ReXApp::OnClosing only) follows;
         # D-328: the test-only profile handoff prototype (XAM user / input / UI files only) follows;
         # D-345: the SDL_DefaultAudioDeviceChanged prev-pointer fix (thirdparty/sdl3/src/audio/SDL_audio.c only) follows;
-        # D-346: the AudioSystem client-lifetime fix (audio_system.h/cpp only) is last.
-        self.assertEqual(chain[-6:], ["python tools\\r3hd_display_vsync_patch.py || exit /b 1",
+        # D-346: the AudioSystem client-lifetime fix (audio_system.h/cpp only) follows;
+        # D-362: the Grand Minimus crown blend_byte overlay (host_path_file.cpp and one D3D12 mode line) follows;
+        # D-370: native 3:2 (1.5x) D3D12 renderer (g6p89_scale32_patch.py) is last.
+        self.assertEqual(chain[-8:], ["python tools\\r3hd_display_vsync_patch.py || exit /b 1",
                                       "python tools\\r3hd_lockon_runtime_patch.py || exit /b 1",
                                       "python tools\\r3hd_pad_motors_patch.py || exit /b 1",
                                       "python tools\\g6p79_profile_handoff_patch.py || exit /b 1",
                                       "python tools\\g6p106_sdl_audio_migration_patch.py || exit /b 1",
-                                      "python tools\\g6p109_audio_client_lifetime_patch.py || exit /b 1"])
+                                      "python tools\\g6p109_audio_client_lifetime_patch.py || exit /b 1",
+                                      "python tools\\g6p127_crown_blend_patch.py || exit /b 1",
+                                      "python tools\\g6p89_scale32_patch.py || exit /b 1"])
         self.assertLess(bat.index("r3hd_display_vsync_patch.py"), bat.index("cmake -S external"))
         self.assertIn("call tools\\build_display_vsync_test.bat || exit /b 1\n"
                       "call tools\\build_lockon_test.bat || exit /b 1\n"
@@ -270,7 +274,9 @@ class Static(unittest.TestCase):
                       "python tools\\g6p79_handoff_regression.py || exit /b 1\n"
                       "python tools\\g6p82_signin_notify_regression.py || exit /b 1\n"
                       "python tools\\g6p106_sdl_audio_migration_regression.py || exit /b 1\n"
-                      "python tools\\g6p108_audio_client_lifetime_regression.py || exit /b 1\necho M8_BUILD_OK",  # D-346
+                      "python tools\\g6p108_audio_client_lifetime_regression.py || exit /b 1\n"
+                      "python tools\\g6p127_crown_blend_regression.py || exit /b 1\n"
+                      "python tools\\g6p89_scale32_regression.py || exit /b 1\npython tools\\g6p141_scale32_acceptance.py || exit /b 1\necho M8_BUILD_OK",  # D-370, D-371
                       bat.replace("\r\n", "\n"))
 
     def test_header_has_no_dxgi_dependency(self):

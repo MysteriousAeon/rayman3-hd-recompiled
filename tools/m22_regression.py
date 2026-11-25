@@ -14,6 +14,8 @@ ROOT = Path(__file__).resolve().parents[1]
 SDK = ROOT / "external" / "rexglue-sdk"
 TOOLS = ROOT / "tools"
 RUNS = ROOT / "private" / "work" / "m6_runs"
+sys.path.insert(0, str(TOOLS))
+from r3hd_run_metadata import load_run_metadata  # noqa: E402
 checks = failures = 0
 
 
@@ -33,18 +35,40 @@ def code_only(text: str) -> str:
     return "\n".join(line.split("//", 1)[0] for line in text.splitlines())
 
 
-def judge_run(name: str) -> None:
-    run = RUNS / name
+def judge_run(name: str, run_dir: Path | None = None) -> None:
+    run = run_dir if run_dir is not None else (RUNS / name)
     log = "\n".join(read(p) for p in sorted(run.glob("runtime*.log")))
     check("M22 audio hidden_mute=1" in log or "audio endpoint" not in log, f"{name}: hidden run muted")
     check("M22 audio hidden_mute=0" not in log, f"{name}: no audible render client")
-    # A run that was asked for instrumentation says so in its name (m22_*, m23_*, *_trace, *_probe): the hidden
-    # runner does not record the environment.
-    if not (name.startswith(("m22_", "m23_")) or name.endswith(("_trace", "_probe"))):
-        check(not list(run.glob("m22_draws_*.bin")), f"{name}: no draw trace without a request")
-        check(not (run / "m22_audio.txt").exists(), f"{name}: no audio probe file without a request")
-    check(len(list(run.glob("m22_draws_*.bin"))) <= len(list(run.glob("m3_frame_*.bmp"))),
-          f"{name}: at most one trace per explicit frame")
+
+    traces = list(run.glob("m22_draws_*.bin"))
+    bmps = list(run.glob("m3_frame_*.bmp"))
+    audio_probe_exists = (run / "m22_audio.txt").exists()
+
+    meta_state, meta, rc, meta_err = load_run_metadata(run)
+    if meta_state == "malformed":
+        check(False, f"{name}: malformed runtime_config metadata ({meta_err})")
+    elif meta_state == "valid" and rc is not None:
+        if meta is not None and "safety_status" in meta:
+            check(meta.get("safety_status") == "verified_isolated",
+                  f"{name}: safety_status verified_isolated (got {meta.get('safety_status')!r})")
+        check(rc["desktop_isolation"]["verified"] is True,
+              f"{name}: runtime_config desktop_isolation.verified is True")
+        if rc["m22_draw_trace"]["enabled"]:
+            check(bool(traces), f"{name}: draw trace enabled in runtime_config but no m22_draws_*.bin produced")
+        else:
+            check(not traces, f"{name}: no draw trace when disabled in runtime_config")
+        if rc["m22_audio_probe"]["enabled"]:
+            check(audio_probe_exists, f"{name}: audio probe enabled in runtime_config but m22_audio.txt absent")
+        else:
+            check(not audio_probe_exists, f"{name}: no audio probe file when disabled in runtime_config")
+    else:
+        # Legacy runs (pre-G6-P132 run.json without runtime_config): retain strict naming heuristic.
+        if not (name.startswith(("m22_", "m23_")) or name.endswith(("_trace", "_probe"))):
+            check(not traces, f"{name}: no draw trace without a request (legacy heuristic)")
+            check(not audio_probe_exists, f"{name}: no audio probe file without a request (legacy heuristic)")
+
+    check(len(traces) <= len(bmps), f"{name}: at most one trace per explicit frame")
 
 
 if "--run" in sys.argv:

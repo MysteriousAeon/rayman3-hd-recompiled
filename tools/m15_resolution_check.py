@@ -43,19 +43,30 @@ def size(text: str):
     return int(w), int(re.match(r"\d+", h).group())
 
 
+def parse_scale(text: str):
+    t = str(text).strip().lower()
+    if t in ("0", ""):
+        return (0, 1)
+    if t in ("1.5", "3:2", "3/2"):
+        return (3, 2)
+    return (int(t), 1)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("run_dir", type=Path)
-    ap.add_argument("--scale", type=int, default=0)
+    ap.add_argument("--scale", type=parse_scale, default=(0, 1))
     ap.add_argument("--json", type=Path)
     a = ap.parse_args()
     logs = sorted(a.run_dir.glob("runtime*.log"))
     if not logs:
         print(f"no runtime log in {a.run_dir}")
         return 2
-    window = swapchains = draw_scale = None
+    window = draw_scale = None
     swapchains, targets, viewports, swaps, presents, warnings = [], [], [], {}, [], 0
     swap_count = 0
+    scale32_active = False
+    scale32_refusals = 0
     for log in logs:
         with log.open(errors="replace") as handle:
             for line in handle:
@@ -65,6 +76,10 @@ def main() -> int:
                     swapchains.append(size(fields(line)["size"]))
                 elif "M15 draw_scale" in line:
                     draw_scale = fields(line)
+                elif "G6P89 active=1" in line:
+                    scale32_active = True
+                elif "G6P89 REFUSE" in line:
+                    scale32_refusals += 1
                 elif "M15 rt_create" in line:
                     f = fields(line)
                     targets.append({"kind": f["kind"], "msaa": int(f["msaa"]), "samples": int(f["samples"]),
@@ -94,16 +109,19 @@ def main() -> int:
         print("no M15 draw_scale line: the run predates the M15 instrumentation")
         return 2
     sx, sy = int(draw_scale["x"]), int(draw_scale["y"])
-    checks["scale"] = sx == sy and draw_scale["as_requested"] == "true" and warnings == 0 and \
-        (not a.scale or a.scale == sx)
+    den = 2 if scale32_active else 1
+    req_num, req_den = a.scale
+    checks["scale"] = sx == sy and draw_scale["as_requested"] == "true" and warnings == 0 and scale32_refusals == 0 and \
+        (req_num == 0 or (sx == req_num and den == req_den))
     checks["targets"] = bool(targets) and all(
-        t["host"] == (t["guest"][0] * sx, t["guest"][1] * sy) for t in targets)
+        t["host"][0] * den == t["guest"][0] * sx and t["host"][1] * den == t["guest"][1] * sy for t in targets)
+    want_w, want_h = (GUEST_W * sx) // den, (GUEST_H * sy) // den
     main_views = [v for v in viewports if v["pitch"] == GUEST_W and v["msaa"] == 0]
-    checks["main_3d"] = any(v["viewport"][2:] == [GUEST_W * sx, GUEST_H * sy] for v in main_views)
+    checks["main_3d"] = any(v["viewport"][2:] == [want_w, want_h] for v in main_views)
     checks["scissors"] = bool(main_views) and all(
-        v["scissor"][0] + v["scissor"][2] <= GUEST_W * sx and v["scissor"][1] + v["scissor"][3] <= GUEST_H * sy
+        v["scissor"][0] + v["scissor"][2] <= want_w and v["scissor"][1] + v["scissor"][3] <= want_h
         for v in main_views)
-    want = f"{GUEST_W * sx}x{GUEST_H * sy}"
+    want = f"{want_w}x{want_h}"
     checks["swap"] = bool(swaps) and all(
         k[0] == f"{GUEST_W}x{GUEST_H}" and k[1] == want and k[2] == want for k in swaps)
     present_ok, native = bool(presents), bool(presents)
@@ -116,7 +134,7 @@ def main() -> int:
 
     result = {
         "run": a.run_dir.name, "window": window, "swap_chains": swapchains,
-        "draw_scale": [sx, sy], "render_targets": targets,
+        "draw_scale": [sx, sy] if den == 1 else [sx, sy, den], "render_targets": targets,
         "viewports_1280_pitch": main_views, "viewports_other": [v for v in viewports if v not in main_views],
         "swaps": [{"packet": k[0], "source": k[1], "guest_output": k[2], "display": k[3], "logged": n}
                   for k, n in swaps.items()],
@@ -134,7 +152,8 @@ def main() -> int:
               f"{window.get('exclusive_mode')}")
         print(f"display mode   {window.get('desktop_mode')} Hz, pixel density {window.get('pixel_density')}")
     print(f"swap chain     {', '.join(f'{w}x{h}' for w, h in swapchains) or 'none logged'}")
-    print(f"draw scale     {sx}x{sy} (as requested: {draw_scale['as_requested']})")
+    scale_label = f"{sx}/{den}x{sy}/{den}" if den != 1 else f"{sx}x{sy}"
+    print(f"draw scale     {scale_label} (as requested: {draw_scale['as_requested']})")
     print("render targets (guest -> host):")
     seen = set()
     for t in targets:

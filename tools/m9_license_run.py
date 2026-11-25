@@ -57,6 +57,8 @@ def main() -> int:
                              "every call (runner -SigninNotifyLegacy); default: only on an owner change")
     parser.add_argument("--audio-after", type=int, default=0,
                         help="M12: start the bounded 10 s float capture this many seconds after start-up")
+    parser.add_argument("--force-private-desktop", action="store_true",
+                        help="G6-P133: pass -ForcePrivateDesktop to run_milestone6.ps1 (exercises created_private path)")
     args = parser.parse_args()
     if not re.fullmatch(r"[A-Za-z0-9_-]+", args.run) or not 1 <= args.seconds <= 1500:
         parser.error("invalid bounded run")
@@ -110,6 +112,8 @@ def main() -> int:
         command.append("-UserEvents")
     if args.signin_notify_legacy:
         command.append("-SigninNotifyLegacy")
+    if args.force_private_desktop:
+        command.append("-ForcePrivateDesktop")
     with launch_log.open("w", encoding="utf-8") as output:
         launch = subprocess.Popen(command, cwd=ROOT, stdout=output, stderr=subprocess.STDOUT)
         try:

@@ -59,7 +59,7 @@ for rel, needle in (("src/ui/window_sdl.cpp", '"M15 window '), ("src/graphics/d3
     check(needle in (SDK / rel).read_text(errors="replace"), f"SDK: {needle.strip()} line present in {rel}")
 
 # Launcher.
-check("[ValidateSet('auto', '1', '2', '3')][string]$RenderScale = 'auto'" in play, "launcher: -RenderScale auto|1|2|3, default auto")
+check("[ValidateSet('auto', '1', '1.5', '2', '3')][string]$RenderScale = 'auto'" in play, "launcher: -RenderScale auto|1|1.5|2|3, default auto")
 check(play.count('"--resolution_scale=$scale"') == 1, "launcher: the scale is passed in exactly one place")
 
 
@@ -94,8 +94,8 @@ def play_function(name: str) -> str:
 helper = play_function("Get-AutoRenderScale")
 check(bool(helper), "launcher: Get-AutoRenderScale helper exists")
 check(play.count("Get-AutoRenderScale $target.width $target.height") == 1
-      and "if ($RenderScale -eq 'auto') { $scale = Get-AutoRenderScale $target.width $target.height } else { $scale = [int]$RenderScale }" in play,
-      "launcher: Auto is computed once, by the helper, on the one target (fullscreen display mode or window); explicit 1|2|3 pass through")
+      and "if ($RenderScale -eq 'auto') { $scale = Get-AutoRenderScale $target.width $target.height } elseif ($RenderScale -eq '1.5') { $scale = 1; $scale32 = $true } else { $scale = [int]$RenderScale }" in play,
+      "launcher: Auto is computed once, by the helper, on the one target (fullscreen display mode or window); explicit 1|1.5|2|3 pass through")
 check("[Math]::Ceiling($target.width / 1280.0)" not in play, "launcher: the whole-target Auto formula is gone")
 check(re.search(r"(?i)nvidia|amd|intel|adapter|vendor|gpu", helper.split("{", 1)[1]) is None,
       "launcher: Auto depends on the target size only (no GPU / adapter input)")

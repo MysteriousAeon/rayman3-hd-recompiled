@@ -31,7 +31,11 @@ param(
     # G6-P83 (D-332): select the legacy XamShowSigninUI notification (XN_SYS_SIGNINCHANGED on every call) for an A/B
     # (R3HD_SIGNIN_NOTIFY=legacy, g6p82_signin_notify.h). Off unless given: the run gets the state-change-aware default
     # and an inherited R3HD_SIGNIN_NOTIFY is cleared.
-    [switch]$SigninNotifyLegacy
+    [switch]$SigninNotifyLegacy,
+    # G6-P133: explicitly exercise the D-342 created_private desktop path (CreateDesktopW + SetThreadDesktop +
+    # CreateProcessW lpDesktop) even when the caller already runs on an inherited isolated desktop. Fails closed
+    # with zero fallback if private desktop creation, kernel verification, or monitor attachment fails.
+    [switch]$ForcePrivateDesktop
 )
 $ErrorActionPreference = 'Stop'
 
@@ -84,20 +88,93 @@ public sealed class M6BaselineDecision {
     public string RejectReason { get; set; }
 }
 
+public sealed class M6DesktopSession {
+    public bool Allowed { get; set; }
+    public string Mode { get; set; }
+    public string Source { get; set; }
+    public string SafetyStatus { get; set; }
+    public bool DesktopIsolationVerified { get; set; }
+    public string RejectReason { get; set; }
+    public int LastWin32Error { get; set; }
+    public IntPtr CreatedDesktopHandle { get; set; }
+    public string LaunchDesktopSpec { get; set; }
+    public M6DesktopContext EffectiveContext { get; set; }
+}
+
+public sealed class M6LaunchedProcess {
+    public Process Process { get; set; }
+    public IntPtr ProcessHandle { get; set; }
+}
+
 public static class M6Focus {
     [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
     [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr h, out uint p);
     [DllImport("kernel32.dll")] private static extern uint GetCurrentThreadId();
+    [DllImport("user32.dll", SetLastError = true)] private static extern IntPtr GetProcessWindowStation();
     [DllImport("user32.dll", SetLastError = true)] private static extern IntPtr GetThreadDesktop(uint threadId);
     [DllImport("user32.dll", SetLastError = true)] private static extern IntPtr OpenInputDesktop(uint flags, bool inherit, uint desiredAccess);
+    [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    private static extern IntPtr CreateDesktopW(string desktop, string device, IntPtr devmode, uint flags, uint desiredAccess, IntPtr lpsa);
+    [DllImport("user32.dll", SetLastError = true)] private static extern bool SetThreadDesktop(IntPtr desktop);
     [DllImport("user32.dll", SetLastError = true)] private static extern bool CloseDesktop(IntPtr desktop);
     [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
     private static extern bool GetUserObjectInformationW(IntPtr obj, int index, System.Text.StringBuilder info, int length, out int needed);
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool GetUserObjectInformationW(IntPtr obj, int index, out int info, int length, out int needed);
+    [DllImport("kernel32.dll", SetLastError = true)] private static extern bool CloseHandle(IntPtr handle);
+    [DllImport("kernel32.dll", SetLastError = true)] private static extern bool GetExitCodeProcess(IntPtr hProcess, out uint lpExitCode);
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    private struct STARTUPINFO {
+        public int cb;
+        public string lpReserved;
+        public string lpDesktop;
+        public string lpTitle;
+        public int dwX;
+        public int dwY;
+        public int dwXSize;
+        public int dwYSize;
+        public int dwXCountChars;
+        public int dwYCountChars;
+        public int dwFillAttribute;
+        public int dwFlags;
+        public short wShowWindow;
+        public short cbReserved2;
+        public IntPtr lpReserved2;
+        public IntPtr hStdInput;
+        public IntPtr hStdOutput;
+        public IntPtr hStdError;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct PROCESS_INFORMATION {
+        public IntPtr hProcess;
+        public IntPtr hThread;
+        public int dwProcessId;
+        public int dwThreadId;
+    }
+
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    private static extern bool CreateProcessW(
+        string lpApplicationName,
+        System.Text.StringBuilder lpCommandLine,
+        IntPtr lpProcessAttributes,
+        IntPtr lpThreadAttributes,
+        bool bInheritHandles,
+        uint dwCreationFlags,
+        IntPtr lpEnvironment,
+        string lpCurrentDirectory,
+        ref STARTUPINFO lpStartupInfo,
+        out PROCESS_INFORMATION lpProcessInformation);
+
     private const int UOI_NAME = 2;
     private const int UOI_IO = 6;
     private const uint DESKTOP_READOBJECTS = 0x0001;
+    private const uint DESKTOP_GENERIC_ALL = 0x10000000;
+    private const int STARTF_USESHOWWINDOW = 0x00000001;
+    private const short SW_HIDE = 0;
+    private const uint CREATE_UNICODE_ENVIRONMENT = 0x00000400;
+    private const uint STILL_ACTIVE = 259;
     private delegate void EventProc(IntPtr hook, uint evt, IntPtr hwnd, int obj, int child, uint thread, uint time);
     [DllImport("user32.dll")] private static extern IntPtr SetWinEventHook(uint first, uint last, IntPtr mod, EventProc proc, uint pid, uint thread, uint flags);
     [DllImport("user32.dll")] private static extern bool UnhookWinEvent(IntPtr hook);
@@ -107,6 +184,16 @@ public static class M6Focus {
     }
     [DllImport("user32.dll")] private static extern bool PeekMessage(out Msg msg, IntPtr hwnd, uint first, uint last, uint remove);
 
+    private static bool TryGetObjectName(IntPtr obj, out string name) {
+        name = null;
+        if (obj == IntPtr.Zero) return false;
+        int needed = 0;
+        var sb = new System.Text.StringBuilder(256);
+        if (!GetUserObjectInformationW(obj, UOI_NAME, sb, sb.Capacity * 2, out needed)) return false;
+        name = sb.ToString();
+        return !string.IsNullOrEmpty(name);
+    }
+
     private static bool TryGetDesktopInfo(IntPtr desktop, out bool ioActive, out string name) {
         ioActive = true;
         name = null;
@@ -114,19 +201,16 @@ public static class M6Focus {
         int ioVal = 0;
         int needed = 0;
         if (!GetUserObjectInformationW(desktop, UOI_IO, out ioVal, 4, out needed)) return false;
-        var sb = new System.Text.StringBuilder(256);
-        if (!GetUserObjectInformationW(desktop, UOI_NAME, sb, sb.Capacity * 2, out needed)) return false;
+        if (!TryGetObjectName(desktop, out name)) return false;
         ioActive = (ioVal != 0);
-        name = sb.ToString();
-        return !string.IsNullOrEmpty(name);
+        return true;
     }
 
-    public static M6DesktopContext QueryDesktopContext() {
+    public static M6DesktopContext QueryDesktopContextForHandle(IntPtr targetDesk) {
         var ctx = new M6DesktopContext();
         bool tIo;
         string tName;
-        IntPtr threadDesk = GetThreadDesktop(GetCurrentThreadId());
-        if (TryGetDesktopInfo(threadDesk, out tIo, out tName)) {
+        if (TryGetDesktopInfo(targetDesk, out tIo, out tName)) {
             ctx.ThreadDesktopOk = true;
             ctx.ThreadDesktopIo = tIo;
             ctx.ThreadDesktopName = tName;
@@ -148,6 +232,18 @@ public static class M6Focus {
         return ctx;
     }
 
+    public static M6DesktopContext QueryDesktopContext() {
+        return QueryDesktopContextForHandle(GetThreadDesktop(GetCurrentThreadId()));
+    }
+
+    public static bool IsDesktopInputActive(IntPtr desktop) {
+        bool ioActive;
+        string name;
+        IntPtr target = desktop != IntPtr.Zero ? desktop : GetThreadDesktop(GetCurrentThreadId());
+        if (!TryGetDesktopInfo(target, out ioActive, out name)) return true; // fail closed
+        return ioActive;
+    }
+
     public static bool IsThreadDesktopInputActive() {
         bool ioActive;
         string name;
@@ -163,14 +259,6 @@ public static class M6Focus {
             && !string.IsNullOrEmpty(ctx.ThreadDesktopName)
             && !string.IsNullOrEmpty(ctx.InputDesktopName)
             && !string.Equals(ctx.ThreadDesktopName, ctx.InputDesktopName, StringComparison.OrdinalIgnoreCase);
-        if (initialWindow != IntPtr.Zero) {
-            return new M6BaselineDecision {
-                Allowed = true,
-                Mode = "foreground_window",
-                DesktopIsolationVerified = isolated,
-                RejectReason = null
-            };
-        }
         if (isolated) {
             return new M6BaselineDecision {
                 Allowed = true,
@@ -183,14 +271,189 @@ public static class M6Focus {
             Allowed = false,
             Mode = "rejected",
             DesktopIsolationVerified = false,
-            RejectReason = "No active application available for focus verification"
+            RejectReason = "D-342 isolated non-input desktop could not be verified before launch; unattended hidden runs refuse to fall back to the active user desktop. Use an approved execution mode that supports an isolated non-input desktop."
         };
+    }
+
+    public static M6DesktopSession EvaluateDesktopPreflight(
+        M6DesktopContext inheritedCtx,
+        bool createAttempted,
+        bool createSucceeded,
+        int createWin32Error,
+        M6DesktopContext createdCtx,
+        bool winstaNameOk,
+        bool attachSucceeded,
+        string attachError) {
+        var inheritedDecision = EvaluateBaseline(IntPtr.Zero, inheritedCtx);
+        if (inheritedDecision.Allowed) {
+            if (!attachSucceeded) {
+                return new M6DesktopSession {
+                    Allowed = false,
+                    Mode = "rejected",
+                    Source = "inherited",
+                    SafetyStatus = "fail_closed_monitor_start_failed",
+                    DesktopIsolationVerified = false,
+                    RejectReason = string.IsNullOrEmpty(attachError)
+                        ? "D-342 pre-launch safety gate: foreground monitor attachment failed on inherited isolated desktop."
+                        : attachError,
+                    EffectiveContext = inheritedCtx
+                };
+            }
+            return new M6DesktopSession {
+                Allowed = true,
+                Mode = "isolated_non_input_desktop",
+                Source = "inherited",
+                SafetyStatus = "verified_isolated",
+                DesktopIsolationVerified = true,
+                RejectReason = null,
+                EffectiveContext = inheritedCtx
+            };
+        }
+        if (!createAttempted || !createSucceeded) {
+            return new M6DesktopSession {
+                Allowed = false,
+                Mode = "rejected",
+                Source = "none",
+                SafetyStatus = "fail_closed_desktop_create_denied",
+                DesktopIsolationVerified = false,
+                LastWin32Error = createWin32Error,
+                RejectReason = "D-342 pre-launch safety gate: CreateDesktopW failed (Win32 error " + createWin32Error + "); refusing to launch on the active user desktop. Use an approved execution mode that supports an isolated non-input desktop.",
+                EffectiveContext = inheritedCtx
+            };
+        }
+        var createdDecision = EvaluateBaseline(IntPtr.Zero, createdCtx);
+        if (!createdDecision.Allowed || !winstaNameOk) {
+            return new M6DesktopSession {
+                Allowed = false,
+                Mode = "rejected",
+                Source = "none",
+                SafetyStatus = "fail_closed_isolation_unverifiable",
+                DesktopIsolationVerified = false,
+                RejectReason = "D-342 pre-launch safety gate: created private desktop failed kernel isolation verification (UOI_IO / distinct input desktop / window station); refusing to launch.",
+                EffectiveContext = createdCtx ?? inheritedCtx
+            };
+        }
+        if (!attachSucceeded) {
+            return new M6DesktopSession {
+                Allowed = false,
+                Mode = "rejected",
+                Source = "none",
+                SafetyStatus = "fail_closed_desktop_attach_failed",
+                DesktopIsolationVerified = false,
+                RejectReason = string.IsNullOrEmpty(attachError)
+                    ? "D-342 pre-launch safety gate: failed to attach foreground monitor to created private desktop; refusing to launch."
+                    : attachError,
+                EffectiveContext = createdCtx
+            };
+        }
+        return new M6DesktopSession {
+            Allowed = true,
+            Mode = "isolated_non_input_desktop",
+            Source = "created_private",
+            SafetyStatus = "verified_isolated",
+            DesktopIsolationVerified = true,
+            RejectReason = null,
+            EffectiveContext = createdCtx
+        };
+    }
+
+    public static M6DesktopSession PrepareIsolatedDesktop(M6DesktopContext inheritedCtx) {
+        return PrepareIsolatedDesktop(inheritedCtx, false);
+    }
+
+    public static M6DesktopSession PrepareIsolatedDesktop(M6DesktopContext inheritedCtx, bool forcePrivateDesktop) {
+        if (!forcePrivateDesktop) {
+            var inheritedDecision = EvaluateBaseline(IntPtr.Zero, inheritedCtx);
+            if (inheritedDecision.Allowed) {
+                return new M6DesktopSession {
+                    Allowed = true,
+                    Mode = "isolated_non_input_desktop",
+                    Source = "inherited",
+                    SafetyStatus = "verified_isolated",
+                    DesktopIsolationVerified = true,
+                    RejectReason = null,
+                    CreatedDesktopHandle = IntPtr.Zero,
+                    LaunchDesktopSpec = null,
+                    EffectiveContext = inheritedCtx
+                };
+            }
+        }
+        M6DesktopContext evalInheritedCtx = forcePrivateDesktop ? null : inheritedCtx;
+        string winstaName;
+        bool winstaOk = TryGetObjectName(GetProcessWindowStation(), out winstaName);
+        string deskName = "r3hd_m6_" + Guid.NewGuid().ToString("N").Substring(0, 12);
+        IntPtr createdDesk = CreateDesktopW(deskName, null, IntPtr.Zero, 0, DESKTOP_GENERIC_ALL, IntPtr.Zero);
+        if (createdDesk == IntPtr.Zero) {
+            int err = Marshal.GetLastWin32Error();
+            var denied = EvaluateDesktopPreflight(evalInheritedCtx, true, false, err, null, winstaOk, false, null);
+            if (denied.EffectiveContext == null) denied.EffectiveContext = inheritedCtx;
+            return denied;
+        }
+        M6DesktopContext createdCtx = QueryDesktopContextForHandle(createdDesk);
+        var preflight = EvaluateDesktopPreflight(evalInheritedCtx, true, true, 0, createdCtx, winstaOk, true, null);
+        if (!preflight.Allowed) {
+            CloseDesktop(createdDesk);
+            if (preflight.EffectiveContext == null) preflight.EffectiveContext = inheritedCtx;
+            return preflight;
+        }
+        preflight.CreatedDesktopHandle = createdDesk;
+        preflight.LaunchDesktopSpec = winstaName + "\\" + createdCtx.ThreadDesktopName;
+        return preflight;
+    }
+
+    public static bool SafeCloseDesktop(IntPtr desktop) {
+        if (desktop == IntPtr.Zero) return true;
+        return CloseDesktop(desktop);
+    }
+
+    public static M6LaunchedProcess StartProcessOnDesktop(string exePath, string quotedArguments, string workingDirectory, string desktopSpec) {
+        if (string.IsNullOrEmpty(desktopSpec)) {
+            throw new InvalidOperationException("StartProcessOnDesktop requires a verified non-empty desktopSpec");
+        }
+        var si = new STARTUPINFO();
+        si.cb = Marshal.SizeOf(typeof(STARTUPINFO));
+        si.lpDesktop = desktopSpec;
+        si.dwFlags = STARTF_USESHOWWINDOW;
+        si.wShowWindow = SW_HIDE;
+        PROCESS_INFORMATION pi;
+        string fullCmd = "\"" + exePath + "\"" + (string.IsNullOrEmpty(quotedArguments) ? "" : " " + quotedArguments);
+        var cmdBuilder = new System.Text.StringBuilder(fullCmd);
+        if (!CreateProcessW(exePath, cmdBuilder, IntPtr.Zero, IntPtr.Zero, false, CREATE_UNICODE_ENVIRONMENT, IntPtr.Zero, workingDirectory, ref si, out pi)) {
+            int err = Marshal.GetLastWin32Error();
+            throw new InvalidOperationException("CreateProcessW on isolated private desktop failed (Win32 error " + err + ")");
+        }
+        if (pi.hThread != IntPtr.Zero) CloseHandle(pi.hThread);
+        try {
+            return new M6LaunchedProcess {
+                Process = Process.GetProcessById(pi.dwProcessId),
+                ProcessHandle = pi.hProcess
+            };
+        } catch {
+            if (pi.hProcess != IntPtr.Zero) CloseHandle(pi.hProcess);
+            throw;
+        }
+    }
+
+    public static bool TryGetProcessExitCode(IntPtr processHandle, out int exitCode) {
+        exitCode = 0;
+        if (processHandle == IntPtr.Zero) return false;
+        uint code = 0;
+        if (!GetExitCodeProcess(processHandle, out code) || code == STILL_ACTIVE) return false;
+        exitCode = unchecked((int)code);
+        return true;
+    }
+
+    public static bool SafeCloseHandle(IntPtr handle) {
+        if (handle == IntPtr.Zero) return true;
+        return CloseHandle(handle);
     }
 
     public static readonly ConcurrentQueue<M6ForegroundEvent> Events = new ConcurrentQueue<M6ForegroundEvent>();
     public static volatile uint GamePid;
     public static volatile bool HookReady;
     public static volatile bool HookEverReady;
+    public static volatile bool AttachFailed;
+    public static long LatestMonitoredHwnd;
     public static string StartupError;
     public static string StopError;
     private static readonly ManualResetEvent Ready = new ManualResetEvent(false);
@@ -198,6 +461,10 @@ public static class M6Focus {
     private static volatile bool stop;
     private static EventProc callback;
     private static readonly Stopwatch Clock = new Stopwatch();
+
+    public static IntPtr GetMonitoredForegroundWindow() {
+        return new IntPtr(Interlocked.Read(ref LatestMonitoredHwnd));
+    }
 
     public static string ProcessName(uint processId) {
         if (processId == 0) return null;
@@ -221,11 +488,17 @@ public static class M6Focus {
     }
 
     public static void Start() {
+        Start(IntPtr.Zero);
+    }
+
+    public static void Start(IntPtr targetDesktop) {
         M6ForegroundEvent discarded;
         while (Events.TryDequeue(out discarded)) { }
         GamePid = 0;
         HookReady = false;
         HookEverReady = false;
+        AttachFailed = false;
+        Interlocked.Exchange(ref LatestMonitoredHwnd, 0);
         StartupError = null;
         StopError = null;
         stop = false;
@@ -234,6 +507,14 @@ public static class M6Focus {
         worker = new Thread(delegate() {
             IntPtr hook = IntPtr.Zero;
             try {
+                if (targetDesktop != IntPtr.Zero && !SetThreadDesktop(targetDesktop)) {
+                    int err = Marshal.GetLastWin32Error();
+                    AttachFailed = true;
+                    StartupError = "SetThreadDesktop failed on isolated private desktop (Win32 error " + err + ")";
+                    Ready.Set();
+                    return;
+                }
+                Interlocked.Exchange(ref LatestMonitoredHwnd, GetForegroundWindow().ToInt64());
                 callback = OnEvent;
                 hook = SetWinEventHook(3, 3, IntPtr.Zero, callback, 0, 0, 0);
                 if (hook == IntPtr.Zero) {
@@ -247,6 +528,7 @@ public static class M6Focus {
                 while (!stop) {
                     Msg msg;
                     while (PeekMessage(out msg, IntPtr.Zero, 0, 0, 1)) { }
+                    Interlocked.Exchange(ref LatestMonitoredHwnd, GetForegroundWindow().ToInt64());
                     Thread.Sleep(5);
                 }
             } catch (Exception ex) {
@@ -291,6 +573,7 @@ $licenseMode = if ($LicenseMask -eq 1) { 'full' } else { 'trial' }
 $frameRequestPath = Join-Path $work 'frame.request'
 $runtimeStarted = $null
 $gameProcess = $null
+$gameProcessHandle = [IntPtr]::Zero
 $monitorStarted = $false
 $monitorStartAttempted = $false
 $runDirectoryCreated = $false
@@ -304,7 +587,10 @@ $exitCode = $null
 $initialForeground = $null
 $finalForeground = $null
 $desktopContext = $null
-$baselineDecision = $null
+$desktopSession = $null
+$createdDesktopHandle = [IntPtr]::Zero
+$safetyStatus = 'fail_closed_preflight'
+$runtimeConfig = $null
 $desktopBecameActive = $false
 $gameFocusEvents = 0
 $gameFocusSamples = 0
@@ -316,6 +602,57 @@ $watch = [System.Diagnostics.Stopwatch]::new()
 $names = @('R3HD_NONINTRUSIVE', 'R3HD_TEST_SECONDS', 'R3HD_INPUT_SCHEDULE', 'R3HD_M5_CAPTURE', 'R3HD_FRAME_REQUEST', 'R3HD_AUDIO_CAPTURE', 'R3HD_AUDIO_AFTER', 'R3HD_PLAY', 'R3HD_TRIAL', 'R3HD_TEST_INPUT_USER', 'R3HD_PROFILE_TRACE', 'R3HD_TEST_PROFILE_HANDOFF', 'R3HD_TEST_USER_EVENTS', 'R3HD_SIGNIN_NOTIFY')
 $saved = @{}
 foreach ($name in $names) { $saved[$name] = [Environment]::GetEnvironmentVariable($name) }
+
+function Get-SanitizedRuntimeConfig([bool]$IsolationVerified, [string]$IsolationSource) {
+    # Read-only snapshot of the effective process environment for bounded runtime judges (G6-P132).
+    # Never dumps arbitrary environment variables, private paths, tokens, or raw untrusted values.
+    $drawTracePresent = ($null -ne [Environment]::GetEnvironmentVariable('R3HD_M22_DRAW_TRACE'))
+    $audioProbePresent = ($null -ne [Environment]::GetEnvironmentVariable('R3HD_M22_AUDIO'))
+    $lcVal = [Environment]::GetEnvironmentVariable('R3HD_LAYER_COORDS')
+    $wlVal = [Environment]::GetEnvironmentVariable('R3HD_WATER_LAYERS')
+    if ($null -ne $lcVal) {
+        $lcEffective = if ($lcVal -ceq 'separate') { 'separate' } else { 'original' }
+        $lcSource = 'R3HD_LAYER_COORDS'
+    } elseif ($null -ne $wlVal) {
+        $lcEffective = if ($wlVal -ceq 'separate') { 'separate' } else { 'original' }
+        $lcSource = 'R3HD_WATER_LAYERS'
+    } else {
+        $lcEffective = 'original'
+        $lcSource = 'default'
+    }
+    $nonIntrusive = ([Environment]::GetEnvironmentVariable('R3HD_NONINTRUSIVE') -eq '1')
+    $audioAudible = ($null -ne [Environment]::GetEnvironmentVariable('R3HD_AUDIO_AUDIBLE'))
+    $m5Cap = ($null -ne [Environment]::GetEnvironmentVariable('R3HD_M5_CAPTURE'))
+    $frameReq = ($null -ne [Environment]::GetEnvironmentVariable('R3HD_FRAME_REQUEST'))
+    return [ordered]@{
+        execution_mode = 'unattended_hidden'
+        nonintrusive = $nonIntrusive
+        hidden_window = $true
+        audio_hidden_mute = ($nonIntrusive -and -not $audioAudible)
+        m22_draw_trace = [ordered]@{
+            enabled = $drawTracePresent
+            source = $(if ($drawTracePresent) { 'R3HD_M22_DRAW_TRACE' } else { 'unset' })
+        }
+        m22_audio_probe = [ordered]@{
+            enabled = $audioProbePresent
+            source = $(if ($audioProbePresent) { 'R3HD_M22_AUDIO' } else { 'unset' })
+        }
+        layer_coords = [ordered]@{
+            effective = $lcEffective
+            source = $lcSource
+        }
+        desktop_isolation = [ordered]@{
+            requested = 'isolated_non_input_desktop'
+            verified = $IsolationVerified
+            source = $(if ($IsolationSource) { $IsolationSource } else { 'none' })
+        }
+        bounded_capture = [ordered]@{
+            frame_request_enabled = $frameReq
+            m5_capture_enabled = $m5Cap
+            max_readbacks = 8
+        }
+    }
+}
 
 function ConvertTo-WindowsArgument([string]$Value) {
     # Encode one argv token using the CommandLineToArgvW backslash/quote rules.
@@ -413,14 +750,41 @@ try {
     Copy-Item -LiteralPath $schedulePath -Destination $scheduleCopy
     [System.IO.File]::WriteAllText($frameRequestPath, "0`n", [System.Text.Encoding]::ASCII)
 
-    $initialWindow = [M6Focus]::GetForegroundWindow()
-    $desktopContext = [M6Focus]::QueryDesktopContext()
-    $baselineDecision = [M6Focus]::EvaluateBaseline($initialWindow, $desktopContext)
-    if (-not $baselineDecision.Allowed) { throw $baselineDecision.RejectReason }
-    if ($initialWindow -ne [IntPtr]::Zero) { $initialForeground = Get-ForegroundIdentity $initialWindow }
+    # G6-P132 / D-342: Canonical pre-launch fail-closed desktop isolation gate.
+    # Unattended hidden tests require a kernel-verified isolated non-input desktop before game process creation.
+    $inheritedDesktopContext = [M6Focus]::QueryDesktopContext()
+    $desktopSession = [M6Focus]::PrepareIsolatedDesktop($inheritedDesktopContext, [bool]$ForcePrivateDesktop)
+    $desktopContext = $desktopSession.EffectiveContext
+    $safetyStatus = $desktopSession.SafetyStatus
+    if ($desktopSession.CreatedDesktopHandle -ne [IntPtr]::Zero) {
+        $createdDesktopHandle = $desktopSession.CreatedDesktopHandle
+    }
+    if (-not $desktopSession.Allowed) {
+        $failureInfo = [ordered]@{
+            message = $desktopSession.RejectReason
+            kind = 'desktop_isolation_unavailable'
+            safety_status = $desktopSession.SafetyStatus
+            win32_error = $desktopSession.LastWin32Error
+        }
+        throw $desktopSession.RejectReason
+    }
+
     $monitorStartAttempted = $true
-    [M6Focus]::Start()
-    $monitorStarted = $true
+    try {
+        [M6Focus]::Start($createdDesktopHandle)
+        $monitorStarted = $true
+    } catch {
+        $safetyStatus = if ([M6Focus]::AttachFailed) { 'fail_closed_desktop_attach_failed' } else { 'fail_closed_monitor_start_failed' }
+        $failureInfo = [ordered]@{
+            message = $_.Exception.Message
+            kind = 'desktop_isolation_unavailable'
+            safety_status = $safetyStatus
+        }
+        throw
+    }
+
+    $initialWindow = if ($desktopSession.Source -eq 'created_private') { [M6Focus]::GetMonitoredForegroundWindow() } else { [M6Focus]::GetForegroundWindow() }
+    if ($initialWindow -ne [IntPtr]::Zero) { $initialForeground = Get-ForegroundIdentity $initialWindow }
 
     $env:R3HD_NONINTRUSIVE = '1'
     $env:R3HD_TEST_SECONDS = "$Seconds"
@@ -437,6 +801,8 @@ try {
     if ($UserEvents) { $env:R3HD_TEST_USER_EVENTS = '1' } else { [Environment]::SetEnvironmentVariable('R3HD_TEST_USER_EVENTS', $null) }
     if ($SigninNotifyLegacy) { $env:R3HD_SIGNIN_NOTIFY = 'legacy' } else { [Environment]::SetEnvironmentVariable('R3HD_SIGNIN_NOTIFY', $null) }
     $logLevel = if ($Play) { 'info' } else { 'debug' }
+
+    $runtimeConfig = Get-SanitizedRuntimeConfig ([bool]$desktopSession.DesktopIsolationVerified) ([string]$desktopSession.Source)
 
     $arguments = @(
         "--game_data_root=$(if ($env:R3HD_GAME_DIR) { $env:R3HD_GAME_DIR } else { Join-Path $repo 'private/extracted/5841123F' })",
@@ -464,7 +830,13 @@ try {
         process = $(if ($initialForeground) { $initialForeground.process } else { $null })
     })
     $sampleCount++
-    $gameProcess = [System.Diagnostics.Process]::Start($startInfo)
+    if ($desktopSession.Source -eq 'created_private') {
+        $launchedProcess = [M6Focus]::StartProcessOnDesktop($exe, $quotedArguments, $work, $desktopSession.LaunchDesktopSpec)
+        $gameProcess = $launchedProcess.Process
+        $gameProcessHandle = $launchedProcess.ProcessHandle
+    } else {
+        $gameProcess = [System.Diagnostics.Process]::Start($startInfo)
+    }
     if ($null -eq $gameProcess) { throw 'Game process creation returned null' }
 
     [M6Focus]::GamePid = [uint32]$gameProcess.Id
@@ -478,7 +850,7 @@ try {
             $cancelRequested = $true
             break
         }
-        $window = [M6Focus]::GetForegroundWindow()
+        $window = if ($desktopSession.Source -eq 'created_private') { [M6Focus]::GetMonitoredForegroundWindow() } else { [M6Focus]::GetForegroundWindow() }
         $identity = Get-ForegroundIdentity $window
         $sample = [pscustomobject]@{
             elapsed_ms = [Math]::Round($watch.Elapsed.TotalMilliseconds, 1)
@@ -492,10 +864,11 @@ try {
         $sampleCount++
         $pollCount++
         if ($identity.pid -eq $gameProcess.Id) { $gameFocusSamples++ }
-        if ($baselineDecision.Mode -eq 'isolated_non_input_desktop' -and [M6Focus]::IsThreadDesktopInputActive()) {
+        if ([M6Focus]::IsDesktopInputActive($createdDesktopHandle)) {
             $desktopBecameActive = $true
+            $safetyStatus = 'fail_closed_desktop_became_active'
             if ($null -eq $failureInfo) {
-                $failureInfo = [ordered]@{ message = 'NONINTRUSIVE FAILURE: isolated thread desktop became active input desktop'; kind = 'desktop_became_active' }
+                $failureInfo = [ordered]@{ message = 'NONINTRUSIVE FAILURE: isolated thread desktop became active input desktop'; kind = 'desktop_became_active'; safety_status = $safetyStatus }
             }
             break
         }
@@ -524,17 +897,24 @@ try {
         }
     }
     $gameProcess.Refresh()
-    if ($gameProcess.HasExited) { $exitCode = $gameProcess.ExitCode }
+    if ($gameProcessHandle -ne [IntPtr]::Zero) {
+        [int]$nativeExitCode = 0
+        if ([M6Focus]::TryGetProcessExitCode($gameProcessHandle, [ref]$nativeExitCode)) { $exitCode = $nativeExitCode }
+    } elseif ($gameProcess.HasExited) {
+        $exitCode = $gameProcess.ExitCode
+    }
     if ($null -ne $exitCode -and $exitCode -ne 0 -and $null -eq $failureInfo) {
         $failureInfo = [ordered]@{ message = "Game process exited with code $exitCode"; kind = 'runtime_exit' }
     }
 } catch {
-    $failureInfo = [ordered]@{
-        message = $_.Exception.Message
-        kind = 'exception'
-        type = $_.Exception.GetType().FullName
-        error_id = $_.FullyQualifiedErrorId
-        script_stack = $_.ScriptStackTrace
+    if ($null -eq $failureInfo) {
+        $failureInfo = [ordered]@{
+            message = $_.Exception.Message
+            kind = 'exception'
+            type = $_.Exception.GetType().FullName
+            error_id = $_.FullyQualifiedErrorId
+            script_stack = $_.ScriptStackTrace
+        }
     }
 } finally {
     if ($null -ne $gameProcess) {
@@ -551,31 +931,57 @@ try {
                 }
             }
             $gameProcess.Refresh()
-            if ($gameProcess.HasExited) { $exitCode = $gameProcess.ExitCode }
+            if ($gameProcessHandle -ne [IntPtr]::Zero) {
+                [int]$nativeExitCode = 0
+                if ([M6Focus]::TryGetProcessExitCode($gameProcessHandle, [ref]$nativeExitCode)) { $exitCode = $nativeExitCode }
+            } elseif ($gameProcess.HasExited) {
+                $exitCode = $gameProcess.ExitCode
+            }
         } catch {
             if ($null -eq $failureInfo) {
                 $failureInfo = [ordered]@{ message = $_.Exception.Message; kind = 'cleanup_exception'; type = $_.Exception.GetType().FullName }
             }
         }
     }
+    if ($gameProcessHandle -ne [IntPtr]::Zero) {
+        [void][M6Focus]::SafeCloseHandle($gameProcessHandle)
+        $gameProcessHandle = [IntPtr]::Zero
+    }
     if ($monitorStarted) {
         $hookStopClean = [M6Focus]::Stop()
         $focusEvents = @([M6Focus]::Events.ToArray())
         if ($gameProcess) { $gameFocusEvents = @($focusEvents | Where-Object { $_.Pid -eq $gameProcess.Id }).Count }
-        if ($gameFocusEvents -gt 0 -and $null -eq $failureInfo) {
-            $failureInfo = [ordered]@{ message = 'NONINTRUSIVE FAILURE: a foreground event belonged to the game process'; kind = 'game_foreground' }
+        if ($gameFocusEvents -gt 0) {
+            $safetyStatus = 'fail_closed_game_foreground'
+            if ($null -eq $failureInfo) {
+                $failureInfo = [ordered]@{ message = 'NONINTRUSIVE FAILURE: a foreground event belonged to the game process'; kind = 'game_foreground'; safety_status = $safetyStatus }
+            }
         }
-        if ($gameFocusSamples -gt 0 -and $null -eq $failureInfo) {
-            $failureInfo = [ordered]@{ message = 'NONINTRUSIVE FAILURE: a 100 ms foreground sample belonged to the game process'; kind = 'game_foreground' }
+        if ($gameFocusSamples -gt 0) {
+            $safetyStatus = 'fail_closed_game_foreground'
+            if ($null -eq $failureInfo) {
+                $failureInfo = [ordered]@{ message = 'NONINTRUSIVE FAILURE: a 100 ms foreground sample belonged to the game process'; kind = 'game_foreground'; safety_status = $safetyStatus }
+            }
         }
+    }
+    if ($createdDesktopHandle -ne [IntPtr]::Zero) {
+        [void][M6Focus]::SafeCloseDesktop($createdDesktopHandle)
+        $createdDesktopHandle = [IntPtr]::Zero
     }
     if ($watch.IsRunning) { $watch.Stop() }
     if ($runDirectoryCreated) {
-        $finalWindow = [M6Focus]::GetForegroundWindow()
+        $finalWindow = if ($desktopSession -and $desktopSession.Source -eq 'created_private') { [M6Focus]::GetMonitoredForegroundWindow() } else { [M6Focus]::GetForegroundWindow() }
         if ($finalWindow -ne [IntPtr]::Zero) { $finalForeground = Get-ForegroundIdentity $finalWindow }
         $endUtc = [DateTime]::UtcNow.ToString('o')
         $endElapsedMs = $watch.Elapsed.TotalMilliseconds
         $intervals = Build-ForegroundIntervals $samples $endElapsedMs $endUtc
+        $isolationVerifiedFinal = ($null -ne $desktopSession -and [bool]$desktopSession.DesktopIsolationVerified -and -not $desktopBecameActive -and $safetyStatus -eq 'verified_isolated')
+        $isolationSourceFinal = if ($desktopSession -and $desktopSession.Source) { [string]$desktopSession.Source } else { 'none' }
+        if ($null -eq $runtimeConfig) {
+            $runtimeConfig = Get-SanitizedRuntimeConfig $isolationVerifiedFinal $isolationSourceFinal
+        } else {
+            $runtimeConfig.desktop_isolation.verified = $isolationVerifiedFinal
+        }
         $result = [ordered]@{
             mode = 'hidden-XAM'
             play_profile = [bool]$Play
@@ -595,8 +1001,13 @@ try {
             initial_foreground = $initialForeground
             final_foreground = $finalForeground
             initial_foreground_unchanged = ($null -ne $initialForeground -and $null -ne $finalForeground -and $initialForeground.hwnd -eq $finalForeground.hwnd -and $initialForeground.pid -eq $finalForeground.pid)
-            focus_baseline_mode = $(if ($baselineDecision) { $baselineDecision.Mode } else { $null })
-            desktop_isolation_verified = $(if ($baselineDecision) { $baselineDecision.DesktopIsolationVerified } else { $false })
+            focus_baseline_mode = $(if ($desktopSession) { $desktopSession.Mode } else { $null })
+            desktop_isolation_requested = 'isolated_non_input_desktop'
+            desktop_isolation_verified = $isolationVerifiedFinal
+            desktop_isolation_source = $isolationSourceFinal
+            safety_status = $safetyStatus
+            runtime_config_schema_version = 1
+            runtime_config = $runtimeConfig
             thread_desktop_io = $(if ($desktopContext -and $desktopContext.ThreadDesktopOk) { $desktopContext.ThreadDesktopIo } else { $null })
             input_desktop_accessible = $(if ($desktopContext) { $desktopContext.InputDesktopOk } else { $false })
             desktop_became_active = $desktopBecameActive

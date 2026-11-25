@@ -1,31 +1,126 @@
 {
   "schema": 1,
-  "note": "G6-P109 (D-346 / E-592): 'current' holds the latest published Windows production release binaries (v1.3.0, D-335 / E-579, retained at private/work/v130rc/bin and verified byte-identical to Rayman3HDRecompiled-1.3.0-portable.zip). 'development' holds the current authoritative non-experimental development build (D-313 policy; G6-P109 full replay, D-346 / E-592, AudioSystem client-lifetime fix + G6-P106 SDL migration fix) in private/work/rex/out/build/win-amd64-release, compared by default by modding / editor live-state checks (tools/experiments/modding_feasibility/build_identity.py). 'history' preserves earlier published releases (v1.2.0 D-299, G6-P36 D-292, G6-P30 D-286), superseded development builds (G6-P106 D-345, G6-P100 D-343, G6-P83 D-332, G6-P77 D-313), and isolated experimental builds; their retained runtime evidence stays tied to them and is not transferred. Replace 'development' only after a full tools/build_milestone8.bat replay ends M8_BUILD_OK with exit 0, naming that replay's log and source commit.",
+  "note": "G6-P144 (D-374 / E-625): 'current' holds the latest published Windows production release binaries (v1.3.1, D-353 / E-599, retained at private/work/v131rc/bin and verified byte-identical to Rayman3HDRecompiled-1.3.1-portable.zip). 'development' holds the current authoritative development / local Windows v1.4.0-rc1 build (D-313 policy; G6-P144 full replay at BELOW_NORMAL_PRIORITY_CLASS / R3HD_JOBS=4, D-374 / E-625, with v1.4.0 version cut, D-297 controller_prompts.json rebind, and r3hd_launcher.exe 1.4.0 PE version resources, packaged as unpublished local RC v1.4.0-rc1 in private/work/v140rc/candidate/dist, preserving Auto Policy A + G6-P143 + G6-P141 + G6-P140 + G6-P128 + G6-P121 + G6-P109 + G6-P106) in private/work/rex/out/build/win-amd64-release, compared by default by modding / editor live-state checks (tools/experiments/modding_feasibility/build_identity.py). 'history' preserves earlier published releases (v1.3.0 D-335, v1.2.0 D-299, G6-P36 D-292, G6-P30 D-286), superseded development builds (G6-P143 D-373, G6-P141 D-371, G6-P140 D-370, G6-P128 D-363, G6-P127 D-362, G6-P122 D-357, G6-P109 D-346, G6-P106 D-345, G6-P100 D-343, G6-P83 D-332, G6-P77 D-313), and isolated experimental builds; their retained runtime evidence stays tied to them and is not transferred. Replace 'development' only after a full tools/build_milestone8.bat replay ends M8_BUILD_OK with exit 0, naming that replay's log and source commit.",
   "development": {
     "decision": "D-313",
-    "note": "G6-P109 authoritative non-experimental full replay (D-346 / E-592, 2026-11-23) of commit 6b103c39 on codex/post-v130-development (M8_BUILD_OK, exit 0, 08:17:41-08:32:34 local). Includes g6p109_audio_client_lifetime_patch.py and g6p106_sdl_audio_migration_patch.py on pinned SDK c94f5eb / SDL3 8bf3b72; zero experimental 1.5x renderer code; verified by maintainer-approved hidden smoke g6p109_smoke (exit 0, M21/M22/M23/haptics PASS). Distinct from published v1.3.0. Replaces the G6-P106 replay (r3hd.exe 70a52dbc, source 6b6b3b8a; moved to history as D-345, no retained binary copy).",
-    "source_commit": "6b103c391c977439255233ef52b545d4503591f0",
-    "build_log": "private/work/g6p109/build.log",
+    "note": "G6-P144 authoritative Windows v1.4.0-rc1 full replay (D-374 / E-625, 2026-11-25) of commit fc1df115 on release/v1.4.0-rc (M8_BUILD_OK, exit 0, BELOW_NORMAL_PRIORITY_CLASS 0x4000, R3HD_JOBS=4, private/work/v140rc/build.log; post-build regressions resumed from m20_regression.py outside AppContainer). Incorporates v1.4.0 version cut (including r3hd_launcher.exe 1.4.0 PE version resources and D-297 controller_prompts.json rebind); binaries snapshotted to private/work/v140rc/bin and packaged into unpublished local RC v1.4.0-rc1. Distinct from published v1.3.1 (D-353). Replaces the G6-P143 replay (r3hd.exe 6e0ffaf7, source ba17003e; retained at private/work/g6p143_rc/bin and moved to history as D-373).",
+    "source_commit": "fc1df1159722a8ee4240ade9c8807b5c1386a3ac",
+    "build_log": "private/work/v140rc/build.log",
     "build_dir": "private/work/rex/out/build/win-amd64-release",
     "binaries": {
-      "r3hd.exe": "c1a36e41e09eeb61215176ee0a59f2feec2928dd5913fd0497f3d18dc59b3a8b",
-      "rexruntime.dll": "ff0807b65482430e75aa2984fd62508a4ebddfd512179cfe5a6fe657f9717835",
-      "rexgpu-xenos.dll": "a061124c489cf859f68d51f94f2e46f76681c147d8f60b39073e6b163f78a7bf"
+      "r3hd.exe": "ee86ab375ea4cc8f4bf5d188aec413f755630777829f9eaf7632a3f65575bef1",
+      "rexruntime.dll": "bf253ef0372a22d024ba0849095cb45ea6f9f71457ca42bd8d1a8df10a48dadf",
+      "rexgpu-xenos.dll": "cab897a4a7754458077501133510637436bbc4c88c04348bed4c4bc5f68f90b3"
     }
   },
   "current": {
-    "decision": "D-335",
-    "note": "Published Windows v1.3.0 production release (2026-11-22, E-579, release/v1.3.0-rc from production cut cf2f15f, public commit 6520006, tag v1.3.0). Full replay M8_BUILD_OK / rc=0 (private/work/v130rc/build.log). Retained at private/work/v130rc/bin and verified byte-identical to bin/* inside private/work/v130final/dist/Rayman3HDRecompiled-1.3.0-portable.zip. Distinct from the non-reproducibly rebuilt G6-P100 development binaries.",
-    "source_commit": "cf2f15f283a1e7e52c3be2e3314147d9febbd47c",
-    "build_log": "private/work/v130rc/build.log",
-    "artifact": "private/work/v130rc/bin",
+    "decision": "D-353",
+    "note": "Published Windows v1.3.1 production maintenance release (2026-11-23, E-599, release/v1.3.1-rc source cut 37fe6602 / RC build 01168a3c, public commit 27b3df22, annotated tag v1.3.1 8efde8d4, GitHub release id 455912153). Full replay M8_BUILD_OK / rc=0 (private/work/v131rc/build.log). Retained at private/work/v131rc/bin and verified byte-identical to bin/* inside private/work/v131rc/candidate/dist/Rayman3HDRecompiled-1.3.1-portable.zip and the published GitHub download.",
+    "source_commit": "37fe6602ea28848c1f9dbe8f3199feedee1c0ddd",
+    "build_log": "private/work/v131rc/build.log",
+    "artifact": "private/work/v131rc/bin",
     "binaries": {
-      "r3hd.exe": "81a112322985016dd007a083eaabb1b7390f8e30bfc84650fa2e72936021b7ee",
-      "rexruntime.dll": "99f4dd91d3f657a99a0d547b6bae3d39d3413ae720e99184d779d9b479feead0",
-      "rexgpu-xenos.dll": "882fdfd75ac711af05af51b2b0be3b63d5793ec377064f7a3a7b7263d6c969bc"
+      "r3hd.exe": "32bbbd25ed70902715db03dfee4a096288e20cf07e3d0cf7ffaa134d753124e7",
+      "rexruntime.dll": "90d8d0296f443d9224cdbca1c21257912a89e4ff1310d64766209de5ff874dcb",
+      "rexgpu-xenos.dll": "1b184fd7ce4fa8b03e30df8213aa096538a3da7d81393821d5cef749bcb0aebd"
     }
   },
   "history": [
+    {
+      "decision": "D-373",
+      "note": "Previous development identity (G6-P143 internal Windows 1080p RC full replay, D-373 / E-624, 2026-11-25) of commit ba17003e on codex/post-v131-development (M8_BUILD_OK, exit 0, BELOW_NORMAL_PRIORITY_CLASS 0x4000, R3HD_JOBS=4, private/work/g6p143_rc/build.log). Superseded as 'development' by the G6-P144 Windows v1.4.0-rc1 replay (D-374 / E-625); binaries retained at private/work/g6p143_rc/bin.",
+      "source_commit": "ba17003ec6637cc4c3b6750598ec754bd2bd4b26",
+      "build_log": "private/work/g6p143_rc/build.log",
+      "artifact": "private/work/g6p143_rc/bin",
+      "binaries": {
+        "r3hd.exe": "6e0ffaf74cd7a344284747199164cc03f7fce614a4ec8384298992401ae39ec5",
+        "rexruntime.dll": "ca03f89fe8d9d085da482dc92426ea9663c4325b09bd32a223a48d9cf7ad6c57",
+        "rexgpu-xenos.dll": "5eb1b9753b2773cd5a6f2d429de2a6a7504983041aa9dc5fbee9b9f8c8b96563"
+      }
+    },
+    {
+      "decision": "D-371",
+      "note": "Previous development identity (G6-P141 authoritative development full replay, D-371 / E-622, 2026-11-25) of commit a496d05f on codex/post-v131-development (M8_BUILD_OK, exit 0, private/work/g6p141/build.log). Verified across G6-P141 6-run and G6-P142 8-run D-342 1.5x campaign sweeps. Superseded as 'development' by the G6-P143 Windows RC replay (D-373 / E-624); binaries retained at private/work/g6p141/bin.",
+      "source_commit": "a496d05f842d6faac74298ff5926290e7f8ae942",
+      "build_log": "private/work/g6p141/build.log",
+      "artifact": "private/work/g6p141/bin",
+      "binaries": {
+        "r3hd.exe": "35e6b7fc1a450c26f5a6d81353ec0aef36c1e0384fd0e2def8b27cb1360f3b5c",
+        "rexruntime.dll": "08e29ba213193a0b54c763224210b21d7384f354d6474a43747fd33c3c842d87",
+        "rexgpu-xenos.dll": "4d5709f7592f777a2fab5f40b19d68517b2e08c9028c08cbd9737a0144b4ef3a"
+      }
+    },
+    {
+      "decision": "D-370",
+      "note": "Previous development identity (G6-P140 authoritative development full replay, D-370 / E-621, 2026-11-25) of commit 9d58259f on codex/post-v131-development (M8_BUILD_OK, exit 0, private/work/g6p140/build.log). Superseded as 'development' by the G6-P141 replay (D-371 / E-622); live binaries were overwritten in-place and not separately retained (UNAVAILABLE by design).",
+      "source_commit": "9d58259fbafa7fb153ab0c2dc930507065690440",
+      "build_log": "private/work/g6p140/build.log",
+      "binaries": {
+        "r3hd.exe": "e820a9b0fff71178ed483471b482c461541cd577c786f848e41ff2a583dacdb5",
+        "rexruntime.dll": "0012b80ef1eb25ed6f9b1d580bedc3097b5e0ff88cf2d023ec77227d785162ee",
+        "rexgpu-xenos.dll": "c2940d82286055c0cf140f4742063c5545635c543f10be5391c81e9e2315190f"
+      }
+    },
+    {
+      "decision": "D-363",
+      "note": "Previous development identity (G6-P128 authoritative non-experimental full replay, D-363 / E-609, 2026-11-24) of commit 79a039ad on codex/post-v131-development (M8_BUILD_OK, exit 0, private/work/g6p128/build.log). Superseded as 'development' by the G6-P140 replay (D-370 / E-621); binaries retained at private/work/g6p128/bin.",
+      "source_commit": "79a039ad84925e7c66ec95b555667abcef18a4ef",
+      "build_log": "private/work/g6p128/build.log",
+      "artifact": "private/work/g6p128/bin",
+      "binaries": {
+        "r3hd.exe": "37911e79d04c20d560f42930f247fba7d8dd289bb7188adf7a10e2dcf19cc26b",
+        "rexruntime.dll": "d0cd54d6cf7602f541df998b2b4fd705463bbe07c0d4173d8ccc4c3e75daa69d",
+        "rexgpu-xenos.dll": "1222e8b93314683683a54e201334af27b7703f27fa523228ee48013fd3af5118"
+      }
+    },
+    {
+      "decision": "D-362",
+      "note": "Previous development identity (G6-P127 authoritative non-experimental full replay, D-362 / E-608, 2026-11-24) of commit 9789b1c5 on codex/post-v131-development (M8_BUILD_OK, exit 0, private/work/g6p127/build.log). Superseded as 'development' by the G6-P128 replay (D-363 / E-609); binaries retained at private/work/g6p127/bin.",
+      "source_commit": "9789b1c58bbc5f292f221c9bf95cdd7a04940d5e",
+      "build_log": "private/work/g6p127/build.log",
+      "artifact": "private/work/g6p127/bin",
+      "binaries": {
+        "r3hd.exe": "01898082b3e89416e38f9fd0d1ee1a63ab5752bd7ca47be65e8a512f011a4dcf",
+        "rexruntime.dll": "30641b3a79c89bc56a052c33611a6021d770e5fa8b4f7b8abae36bb3f874e6a0",
+        "rexgpu-xenos.dll": "5cc0ea9cf0098bf143e8f5c2bdb99399f1cc724c796a2b7e856cf4faf15cfaff"
+      }
+    },
+    {
+      "decision": "D-357",
+      "note": "Previous development identity (G6-P122 authoritative non-experimental full replay, D-357 / E-603, 2026-11-24) of commit 94fc7270 on codex/post-v131-development (M8_BUILD_OK, exit 0, private/work/g6p122/build.log). Superseded as 'development' by the G6-P127 replay (D-362 / E-608); binaries retained at private/work/g6p122/bin.",
+      "source_commit": "94fc727065ef5c2b27724e2e9c0c1b480ae7e557",
+      "build_log": "private/work/g6p122/build.log",
+      "artifact": "private/work/g6p122/bin",
+      "binaries": {
+        "r3hd.exe": "305d6e0e68ff7b8e1fac5b06007e244b7bbd92b9f5103a698decd19045c878ae",
+        "rexruntime.dll": "17f09d1014129bee361039c2904326d9b27ca5a8f13e0f48479068a8d560ecd9",
+        "rexgpu-xenos.dll": "48caca7b93fa0f4fae98e2a2e102499d8e82a24e353414d173f61371c9201e83"
+      }
+    },
+    {
+      "decision": "D-335",
+      "note": "Published Windows v1.3.0 production release (2026-11-22, E-579, release/v1.3.0-rc from production cut cf2f15f, public commit 6520006, tag v1.3.0). Full replay M8_BUILD_OK / rc=0 (private/work/v130rc/build.log). Superseded as 'current' by published Windows v1.3.1 (D-353); retained at private/work/v130rc/bin and verified byte-identical to bin/* inside private/work/v130final/dist/Rayman3HDRecompiled-1.3.0-portable.zip.",
+      "source_commit": "cf2f15f283a1e7e52c3be2e3314147d9febbd47c",
+      "build_log": "private/work/v130rc/build.log",
+      "artifact": "private/work/v130rc/bin",
+      "binaries": {
+        "r3hd.exe": "81a112322985016dd007a083eaabb1b7390f8e30bfc84650fa2e72936021b7ee",
+        "rexruntime.dll": "99f4dd91d3f657a99a0d547b6bae3d39d3413ae720e99184d779d9b479feead0",
+        "rexgpu-xenos.dll": "882fdfd75ac711af05af51b2b0be3b63d5793ec377064f7a3a7b7263d6c969bc"
+      }
+    },
+    {
+      "decision": "D-346",
+      "note": "Previous development identity (G6-P109 authoritative non-experimental full replay, D-346 / E-592, 2026-11-23) of commit 6b103c39 on codex/post-v130-development (M8_BUILD_OK, exit 0, 08:17:41-08:32:34 local; private/work/g6p109/build.log). Superseded as 'development' by the G6-P122 replay (D-357 / E-603); binaries retained at private/work/g6p109/bin.",
+      "source_commit": "6b103c391c977439255233ef52b545d4503591f0",
+      "build_log": "private/work/g6p109/build.log",
+      "artifact": "private/work/g6p109/bin",
+      "binaries": {
+        "r3hd.exe": "c1a36e41e09eeb61215176ee0a59f2feec2928dd5913fd0497f3d18dc59b3a8b",
+        "rexruntime.dll": "ff0807b65482430e75aa2984fd62508a4ebddfd512179cfe5a6fe657f9717835",
+        "rexgpu-xenos.dll": "a061124c489cf859f68d51f94f2e46f76681c147d8f60b39073e6b163f78a7bf"
+      }
+    },
     {
       "decision": "D-345",
       "note": "Previous development identity (G6-P106 authoritative non-experimental full replay, D-345 / E-589, 2026-11-23; reconciled in G6-P107 / E-590) of commit 6b6b3b8a on codex/post-v130-development (M8_BUILD_OK, exit 0, 06:03:21-06:18:05 local; private/work/g6p106/build.log). Superseded as 'development' by the G6-P109 replay (D-346 / E-592); live binaries were overwritten in-place and not separately retained (UNAVAILABLE by design).",

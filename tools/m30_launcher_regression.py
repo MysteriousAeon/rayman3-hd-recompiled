@@ -263,7 +263,7 @@ def static_checks():
     pallow = json.loads((ROOT / "config" / "release" / "payload_allowlist.json").read_text(encoding="utf-8"))
     check("payload: the launcher is staged to app/r3hd_launcher.exe with the launcher_native role",
           defn["launcher"]["dest"] == engine.LAUNCHER == "app/r3hd_launcher.exe"
-          and pallow["binaries"].get("app/r3hd_launcher.exe") == "launcher_native" and defn["version"].startswith(("0.30.0", "0.31.0", "0.32.0", "0.33.0", "0.34.0", "0.35.0", "0.36.0", "0.49.0", "0.50.0", "1.0.0", "1.0.1", "1.0.2", "1.0.3", "1.1.0", "1.2.0", "1.3.0", "1.3.1")))
+          and pallow["binaries"].get("app/r3hd_launcher.exe") == "launcher_native" and defn["version"].startswith(("0.30.0", "0.31.0", "0.32.0", "0.33.0", "0.34.0", "0.35.0", "0.36.0", "0.49.0", "0.50.0", "1.0.0", "1.0.1", "1.0.2", "1.0.3", "1.1.0", "1.2.0", "1.3.0", "1.3.1", "1.4.0")))
     bat = (TOOLS / "build_milestone8.bat").read_text(encoding="utf-8")
     check("build: launcher built before the regressions, this regression in the build",
           "call tools\\launcher\\build_launcher.bat || exit /b 1" in bat and "python tools\\m30_launcher_regression.py || exit /b 1" in bat
@@ -447,16 +447,16 @@ def launcher_checks(keep, skip_runtime=False):
                       and order[:4] == ["profile", "controller_prompts", "hud_toggle", "display"]
                       and d["c1"].get("setting.hud_toggle") == "off enabled=1" and "render_scale" in order and "gameplay_subtitles" in order
                       and "mouse_camera" in order and not {"combo_close", "red_correction", "sky_clear", "lit_uv_scroll", "power_swirl", "beam_color",
-                                    "lockon_far_color"} & set(order)
+                                    "lockon_far_color", "crown_cutout"} & set(order)
                       and order.index("display") < order.index("render_scale") < order.index("gameplay_subtitles")
                       < order.index("mouse_camera"), d["c1"].get("settings_tab_order"))
                 k1 = d.get("k1", {})
                 korder = k1.get("corrections_tab_order", "").split(",")
-                check("UI (D-161, D-218, D-219, D-221): the Corrections page: Tab walks the nine corrections in order; focus on the first; "
+                check("UI (D-161, D-218, D-219, D-221, D-363): the Corrections page: Tab walks the ten corrections in order; focus on the first; "
                       "it names the Custom profile and its base; the charge trail is on (HD+ base); layout holds at 96 and 144 DPI",
                       k1.get("page") == "corrections"
                       and korder == ["combo_close", "layer_coords", "red_correction", "texture_orient", "sky_clear", "lit_uv_scroll",
-                                     "power_swirl", "beam_color", "lockon_far_color"]
+                                     "power_swirl", "beam_color", "lockon_far_color", "crown_cutout"]
                       and k1.get("setting.lit_uv_scroll") == "applied enabled=1" and k1.get("focus") == "combo_close"
                       and k1.get("corrections_profile", "").startswith("Active profile: Custom, starting from HD+.")
                       and all(layout_ok(d.get(k, {})) and d.get(k, {}).get("text_clipped") == "0" for k in ("k1", "k144")),

@@ -60,10 +60,12 @@ def test_source_invariants() -> None:
     check("!ctx.ThreadDesktopIo" in ps and "ctx.InputDesktopIo" in ps, "runner requires thread non-input and input active")
     check("OrdinalIgnoreCase" in ps and "!string.Equals(ctx.ThreadDesktopName, ctx.InputDesktopName" in ps,
           "runner requires distinct thread and input desktop names")
-    check("IsThreadDesktopInputActive()" in ps and "desktop_became_active" in ps,
+    check("IsDesktopInputActive(" in ps and "desktop_became_active" in ps,
           "runner re-checks UOI_IO in 100 ms poll loop and fails closed if desktop becomes active")
     check("if (!TryGetDesktopInfo(threadDesk, out ioActive, out name)) return true;" in ps,
           "IsThreadDesktopInputActive fails closed on query error")
+    check("PrepareIsolatedDesktop(" in ps and "desktop_isolation_unavailable" in ps,
+          "runner enforces G6-P132 pre-launch fail-closed isolation gate")
     check("SetWinEventHook(3, 3," in ps and "$gameFocusEvents -gt 0" in ps and "$gameFocusSamples -gt 0" in ps,
           "WinEvent hook and 100 ms game-foreground checks remain unconditionally active")
     check("$env:R3HD_NONINTRUSIVE = '1'" in ps and "ProcessWindowStyle]::Hidden" in ps,
@@ -137,18 +139,19 @@ $hookStop = [M6Focus]::Stop()
     data = json.loads(p.stdout)
     c = data["cases"]
 
-    check(c["non_null_default"]["Allowed"] is True and c["non_null_default"]["Mode"] == "foreground_window"
+    # G6-P132 hardened D-342: EvaluateBaseline NEVER falls back to foreground_window when isolation is unverified.
+    check(c["non_null_default"]["Allowed"] is False and c["non_null_default"]["Mode"] == "rejected"
           and c["non_null_default"]["DesktopIsolationVerified"] is False,
-          "non-NULL foreground on active Default -> foreground_window")
-    check(c["non_null_isolated"]["Allowed"] is True and c["non_null_isolated"]["Mode"] == "foreground_window"
+          "non-NULL foreground on active Default -> rejected (no foreground_window fallback)")
+    check(c["non_null_isolated"]["Allowed"] is True and c["non_null_isolated"]["Mode"] == "isolated_non_input_desktop"
           and c["non_null_isolated"]["DesktopIsolationVerified"] is True,
-          "non-NULL foreground on isolated desktop -> foreground_window + isolation verified")
+          "non-NULL foreground on verified isolated desktop -> isolated_non_input_desktop")
     for neg in ("null_active_default", "null_exebox_name_but_io_true", "null_input_desk_denied",
                 "null_input_desk_io_false", "null_same_desk_case_insensitive", "null_thread_desk_failed",
                 "null_ctx_null", "null_empty_name"):
         check(c[neg]["Allowed"] is False and c[neg]["Mode"] == "rejected"
               and c[neg]["DesktopIsolationVerified"] is False
-              and c[neg]["RejectReason"] == "No active application available for focus verification",
+              and c[neg]["RejectReason"] is not None and "isolated non-input desktop" in c[neg]["RejectReason"],
               f"negative control fails closed: {neg}")
     check(c["null_valid_isolated"]["Allowed"] is True
           and c["null_valid_isolated"]["Mode"] == "isolated_non_input_desktop"
@@ -162,9 +165,8 @@ $hookStop = [M6Focus]::Stop()
     if live["thread_io"]:
         check(live["is_active"] is True, "live active input desktop: IsThreadDesktopInputActive is True")
         check(live["null_eval"]["Allowed"] is False, "live active input desktop: NULL foreground fails closed")
-        if not live["fg_is_zero"]:
-            check(live["real_eval"]["Allowed"] is True and live["real_eval"]["Mode"] == "foreground_window",
-                  "live active input desktop: real foreground window allowed")
+        check(live["real_eval"]["Allowed"] is False and live["real_eval"]["Mode"] == "rejected",
+              "live active input desktop: EvaluateBaseline fails closed without foreground_window fallback")
     else:
         check(live["is_active"] is False, "live non-input desktop: IsThreadDesktopInputActive is False")
         if live["input_ok"] and live["input_io"] and live["names_differ"]:
@@ -254,7 +256,9 @@ def test_runner_synthetic_e2e(live: dict) -> None:
                       and "controller-vibration safeguard" in rj["error"]["message"],
                       "missing M23 marker fails closed before launch with run.json recorded")
 
-            # 2. Clean silent stand-in exe with M23 marker passes cleanly.
+            # 2. Clean silent stand-in exe with M23 marker:
+            #    - On an isolated desktop (or environment where CreateDesktopW succeeds), passes on isolated_non_input_desktop.
+            #    - In a sandbox where CreateDesktopW is denied on an active desktop, fails closed BEFORE launch!
             silent = tdir / "silent" / "r3hd_synth_silent.exe"
             ok = build_standin_exe(silent, include_m23=True, activate_window=False)
             check(ok, "compile synthetic silent stand-in with M23 marker")
@@ -269,15 +273,29 @@ def test_runner_synthetic_e2e(live: dict) -> None:
                     capture_output=True, text=True, env=env, cwd=str(ROOT), timeout=30,
                 )
                 rj = json.loads((M6_RUNS / rn / "run.json").read_text(encoding="utf-8-sig"))
-                expected_mode = "foreground_window" if not live.get("fg_is_zero") else "isolated_non_input_desktop"
-                check(p.returncode == 0 and rj["exit_code"] == 0 and rj["error"] is None,
-                      f"silent stand-in passes end-to-end (rc={p.returncode}, err={rj.get('error')})")
-                check(rj["focus_baseline_mode"] == expected_mode,
-                      f"focus_baseline_mode matches context ({rj.get('focus_baseline_mode')} == {expected_mode})")
-                check(rj["game_foreground_events"] == 0 and rj["game_foreground_samples"] == 0
-                      and rj["desktop_became_active"] is False and rj["monitor_hook_ready"] is True
-                      and rj["monitor_stop_clean"] is True,
-                      "silent stand-in records zero focus theft, clean hook stop, desktop inactive")
+                if rj.get("safety_status") == "fail_closed_desktop_create_denied":
+                    check(p.returncode != 0 and rj["exit_code"] is None
+                          and rj["focus_baseline_mode"] == "rejected"
+                          and rj["desktop_isolation_verified"] is False
+                          and rj["error"] is not None
+                          and rj["error"].get("kind") == "desktop_isolation_unavailable",
+                          "sandboxed active desktop with CreateDesktopW denied fails closed before launch")
+                    check(not (M6_RUNS / rn / "process.json").exists(),
+                          "failed preflight never creates process.json or launches stand-in")
+                    check(rj.get("runtime_config_schema_version") == 1
+                          and rj["runtime_config"]["desktop_isolation"]["verified"] is False,
+                          "failed preflight still records sanitized runtime_config metadata")
+                else:
+                    check(p.returncode == 0 and rj["exit_code"] == 0 and rj["error"] is None,
+                          f"silent stand-in passes end-to-end (rc={p.returncode}, err={rj.get('error')})")
+                    check(rj["focus_baseline_mode"] == "isolated_non_input_desktop"
+                          and rj["desktop_isolation_verified"] is True
+                          and rj["safety_status"] == "verified_isolated",
+                          f"silent stand-in verified isolated_non_input_desktop (got {rj.get('focus_baseline_mode')}, {rj.get('safety_status')})")
+                    check(rj["game_foreground_events"] == 0 and rj["game_foreground_samples"] == 0
+                          and rj["desktop_became_active"] is False and rj["monitor_hook_ready"] is True
+                          and rj["monitor_stop_clean"] is True,
+                          "silent stand-in records zero focus theft, clean hook stop, desktop inactive")
 
             # 3. Unexpected foreground activation negative control (ONLY on verified isolated non-input desktop).
             if live and not live.get("thread_io") and live.get("input_ok") and live.get("input_io") and live.get("names_differ"):

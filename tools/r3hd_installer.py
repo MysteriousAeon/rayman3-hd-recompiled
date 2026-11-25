@@ -1560,11 +1560,12 @@ SUPPORT_SETTINGS = ("preset", "license_mode", "display", "window", "render_scale
 
 
 def _format_draw_scale_diagnostics(info: dict, log: dict) -> list:
-    """G6-P96: surface requested vs actual renderer draw_scale and automatic device fallback in support_report.txt."""
+    """G6-P96 / G6-P141: surface requested vs actual renderer draw_scale and automatic device fallback in support_report.txt."""
     req_raw = info.get("render_scale")
-    req = req_raw if (isinstance(req_raw, int) and not isinstance(req_raw, bool) and 1 <= req_raw <= 16) else None
+    req_is_15 = (isinstance(req_raw, (int, float)) and not isinstance(req_raw, bool) and abs(float(req_raw) - 1.5) < 1e-6) or str(req_raw) == "1.5"
+    req = 1.5 if req_is_15 else (req_raw if (isinstance(req_raw, int) and not isinstance(req_raw, bool) and 1 <= req_raw <= 16) else None)
     opt_raw = info.get("render_scale_option")
-    mode = "auto" if opt_raw == "auto" else ("manual" if str(opt_raw) in ("1", "2", "3") else None)
+    mode = "auto" if opt_raw == "auto" else ("manual" if str(opt_raw) in ("1", "1.5", "2", "3") else None)
     has_ds = "draw_scale" in log and log["draw_scale"] is not None
     if not has_ds:
         return ["draw_scale: not recorded"] if req is not None else []
@@ -1572,24 +1573,34 @@ def _format_draw_scale_diagnostics(info: dict, log: dict) -> list:
     if not isinstance(ds, dict):
         return ["draw_scale: unavailable (malformed diagnostic event)"]
     x, y, as_req = ds.get("x"), ds.get("y"), ds.get("as_requested")
+    den = ds.get("den", 1)
     valid = (isinstance(x, int) and not isinstance(x, bool) and 1 <= x <= 16
              and isinstance(y, int) and not isinstance(y, bool) and 1 <= y <= 16
+             and isinstance(den, int) and not isinstance(den, bool) and den in (1, 2)
              and isinstance(as_req, bool))
     if not valid:
         return ["draw_scale: unavailable (malformed diagnostic event)"]
-    actual_res = f"{1280 * x}x{720 * y}"
+    actual_res = f"{(1280 * x) // den}x{(720 * y) // den}"
+    actual_lbl = f"{x}/{den}x{y}/{den}" if den != 1 else f"{x}x{y}"
     req_part = ""
     if req is not None:
-        req_part = f"requested {req}x{req}" + (f" via {mode}" if mode else "") + ", "
-    out = [f"draw_scale: {x}x{y} ({actual_res}; {req_part}as_requested={'true' if as_req else 'false'})"]
-    fallback = (not as_req) or (req is not None and (x != req or y != req))
+        req_lbl = "1.5x" if req == 1.5 else f"{req}x{req}"
+        req_part = f"requested {req_lbl}" + (f" via {mode}" if mode else "") + ", "
+    out = [f"draw_scale: {actual_lbl} ({actual_res}; {req_part}as_requested={'true' if as_req else 'false'})"]
+    if req == 1.5:
+        fallback = (not as_req) or (den != 2 or x != 3 or y != 3)
+    else:
+        fallback = (not as_req) or (req is not None and (den != 1 or x != req or y != req))
     if fallback:
         if req is not None:
-            req_desc = f"requested scale {req}x{req} ({1280 * req}x{720 * req}" + (f", {mode}" if mode else "") + ")"
+            if req == 1.5:
+                req_desc = "requested scale 1.5x (1920x1080" + (f", {mode}" if mode else "") + ")"
+            else:
+                req_desc = f"requested scale {req}x{req} ({1280 * req}x{720 * req}" + (f", {mode}" if mode else "") + ")"
         else:
             req_desc = "the requested rendering scale"
         out.append(f"draw_scale_fallback: automatic reduction -- graphics device did not support {req_desc}; "
-                   f"renderer used {x}x{y} ({actual_res})")
+                   f"renderer used {actual_lbl} ({actual_res})")
     return out
 
 
@@ -2133,7 +2144,7 @@ def selftest() -> int:
                   and s["overrides"] == {"combo_close": "delayed", "layer_coords": "separate",
                                          "red_correction": "bypass", "texture_orient": "corrected", "sky_clear": "background",
                                          "lit_uv_scroll": "applied", "power_swirl": "restored", "beam_color": "restored",
-                                         "lockon_far_color": "restored"}  # Enter keeps HD+ values (D-218, D-219, D-221)
+                                         "lockon_far_color": "restored", "crown_cutout": "cutout"}  # Enter keeps HD+ values (D-218, D-219, D-221, D-363)
                   and s["preferences"] == {"cursor": "visible", "render_scale": "2", "dualsense_light": "off",
                                            "dualsense_trigger": "off"})  # D-108: a named DualSense option is kept
             configure(home, ask=lambda _: "", say=quiet)
@@ -2341,7 +2352,7 @@ def selftest() -> int:
             check("describe-options lists the shown adjustable settings only (M31: cursor and save clock hidden)",
                   [o["key"] for o in describe_options()] == ["display", "window_size", "render_scale", "display_vsync", "combo_close", "layer_coords",
                                                              "red_correction", "texture_orient", "sky_clear", "lit_uv_scroll",
-                                                             "power_swirl", "beam_color", "lockon_far_color",  # D-218 / D-219 / D-221
+                                                             "power_swirl", "beam_color", "lockon_far_color", "crown_cutout",  # D-218 / D-219 / D-221 / D-363
                                                              "gameplay_subtitles", "hud_toggle", "controller_prompts", "mouse_camera", "mouse_sensitivity",
                                                              "mouse_buttons", "game_language", "discord_presence",
                                                              "dualsense_light", "dualsense_trigger",

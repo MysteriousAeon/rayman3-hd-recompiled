@@ -20,7 +20,7 @@ def main():
 
     rec = json.loads(bi.RECORD.read_text(encoding="utf-8"))
     check("schema is 1", rec.get("schema") == 1)
-    check("current is v1.3.0 (D-335)", rec["current"].get("decision") == "D-335")
+    check("current is v1.3.1 (D-353)", rec["current"].get("decision") == "D-353")
     check("development is D-313 policy", rec["development"].get("decision") == "D-313")
     check(
         "current and development hashes are distinct",
@@ -29,7 +29,7 @@ def main():
 
     hist_decisions = [h.get("decision") for h in rec.get("history", [])]
     check("history decisions are unique", len(hist_decisions) == len(set(hist_decisions)))
-    for d in ("D-332", "D-299", "D-313", "D-331", "D-329", "D-328", "D-292", "D-286"):
+    for d in ("D-335", "D-345", "D-343", "D-332", "D-299", "D-313", "D-331", "D-329", "D-328", "D-292", "D-286"):
         check(f"history retains {d}", d in hist_decisions)
 
     # Live development and retained release/historical checks
@@ -39,9 +39,9 @@ def main():
         ok_dev and det_dev.get("log_ok") and det_dev.get("written_in_replay") and det_dev.get("commit_in_history"),
     )
     ok_rel, _, _ = bi.verify("release")
-    check("release identity (v1.3.0) passes on retained artifact", ok_rel)
+    check("release identity (v1.3.1) passes on retained artifact", ok_rel)
 
-    for d in ("D-332", "D-299", "D-313", "D-331", "D-329", "D-328", "D-292"):
+    for d in ("D-335", "D-332", "D-299", "D-313", "D-331", "D-329", "D-328", "D-292"):
         ok_h, _, _ = bi.verify(d)
         check(f"historical identity {d} passes on retained artifact", ok_h)
 
@@ -52,7 +52,7 @@ def main():
     dev_dir = ROOT / rec["development"]["build_dir"]
     rel_dir = ROOT / rec["current"]["artifact"]
     check("release rejects live development binaries", not bi.verify("release", bdir=dev_dir)[0])
-    check("development rejects v1.3.0 release binaries", not bi.verify("development", bdir=rel_dir)[0])
+    check("development rejects v1.3.1 release binaries", not bi.verify("development", bdir=rel_dir)[0])
     check("unknown identity rejected", not bi.verify("D-9999")[0])
 
     # _log_ok positive and negative controls

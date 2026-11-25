@@ -713,8 +713,8 @@ def load_payload_rules(allow_path, def_path):
                 pins[path] = pin["sha256"]
                 pins[path + ":size"] = pin["size"]
             # D-297: public-format Windows candidates only. Actual publication still requires approval.
-            if record.get("public_candidate_version") == "1.3.1" and definition.get("version") == "1.3.1":
-                pins["controller_prompt_public_candidate_version"] = "1.3.1"
+            if record.get("public_candidate_version") == "1.4.0" and definition.get("version") == "1.4.0":
+                pins["controller_prompt_public_candidate_version"] = "1.4.0"
         except (OSError, ValueError, KeyError, TypeError) as e:
             raise ConfigError("cannot load exact controller prompt policy: %s" % e)
     return allow, binaries, pins

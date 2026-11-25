@@ -88,12 +88,12 @@ class Plans(unittest.TestCase):
         self.assertEqual((e["R3HD_COMBO_CLOSE"], e["R3HD_LAYER_COORDS"], e["R3HD_RED_CORRECTION"], e["R3HD_SKY_CLEAR"],
                           e["R3HD_LIT_UV_SCROLL"]), ("delayed", "separate", "bypass", "background", "applied"))
         self.assertEqual(e["R3HD_VBLANK"], "deadline")
-        # Windows v1.2.0 HD+ corrections (D-218, D-219, D-221) reach the Linux launch as on Windows.
-        self.assertEqual((e["R3HD_POWER_SWIRL"], e["R3HD_BEAM_COLOR"], e["R3HD_LOCKON_COLOR"]),
-                         ("restored", "restored", "restored"))
+        # Windows v1.2.0 / post-v1.3.1 HD+ corrections (D-218, D-219, D-221, D-363) reach the Linux launch as on Windows.
+        self.assertEqual((e["R3HD_POWER_SWIRL"], e["R3HD_BEAM_COLOR"], e["R3HD_LOCKON_COLOR"], e["R3HD_CROWN_CUTOUT"]),
+                         ("restored", "restored", "restored", "cutout"))
         v = plan(("preset", "vanilla"))["env"]
-        self.assertEqual((v["R3HD_POWER_SWIRL"], v["R3HD_BEAM_COLOR"], v["R3HD_LOCKON_COLOR"]),
-                         ("original", "original", "original"))
+        self.assertEqual((v["R3HD_POWER_SWIRL"], v["R3HD_BEAM_COLOR"], v["R3HD_LOCKON_COLOR"], v["R3HD_CROWN_CUTOUT"]),
+                         ("original", "original", "original", "original"))
 
     def test_hud_toggle_and_prompts_reach_the_launch(self):
         e = plan(("set", ["hud_toggle=f5", "controller_prompts=playstation"]))["env"]

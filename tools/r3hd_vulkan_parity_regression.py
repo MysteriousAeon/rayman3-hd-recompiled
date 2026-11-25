@@ -40,12 +40,15 @@ def main() -> int:
     # D-324 adds the controller-motor stop (input / SDL driver files and ReXApp::OnClosing only).
     # D-328 adds the test-only profile handoff prototype (XAM user / input / UI files only).
     # D-345 adds the SDL_DefaultAudioDeviceChanged prev-pointer fix (thirdparty/sdl3/src/audio/SDL_audio.c only).
-    # D-346 adds the AudioSystem client-lifetime fix last (include/rex/audio/audio_system.h and src/audio/audio_system.cpp only).
-    tail = [c.split("\\")[1].split()[0] for c in chain[-11:]]
+    # D-346 adds the AudioSystem client-lifetime fix (include/rex/audio/audio_system.h and src/audio/audio_system.cpp only).
+    # D-362 adds the test-only Grand Minimus crown blend_byte diagnostic (host_path_file.cpp and one D3D12 mode line only).
+    # D-370 integrates the native 3:2 (1.5x) D3D12 renderer last (g6p89_scale32_patch.py; D3D12/shared scale sites only).
+    tail = [c.split("\\")[1].split()[0] for c in chain[-13:]]
     if tail != ["r3hd_thread_teardown_patch.py", "r3hd_vulkan_parity_patch.py", "r3hd_xex_case_patch.py",
                 "r3hd_button_prompts_patch.py", "r3hd_beam_runtime_patch.py", "r3hd_display_vsync_patch.py",
                 "r3hd_lockon_runtime_patch.py", "r3hd_pad_motors_patch.py", "g6p79_profile_handoff_patch.py",
-                "g6p106_sdl_audio_migration_patch.py", "g6p109_audio_client_lifetime_patch.py"]:
+                "g6p106_sdl_audio_migration_patch.py", "g6p109_audio_client_lifetime_patch.py",
+                "g6p127_crown_blend_patch.py", "g6p89_scale32_patch.py"]:
         fails.append(f"chain tail {tail}")
     for _, after in V.red_edits():
         if vk.count(after) != 1:

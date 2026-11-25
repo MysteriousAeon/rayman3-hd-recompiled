@@ -2,7 +2,7 @@
 
 A native Windows and Linux port of **Rayman 3 HD** for Xbox 360. The game's code has been statically recompiled to run directly on a PC, without an emulator.
 
-Setup uses your own Xbox 360 game package. Windows v1.3.1 offers an installer and a portable ZIP; Linux uses a portable archive, currently available as an experimental pre-release (v1.1.0). Downloads are on the project's [Releases page](https://github.com/MysteriousAeon/rayman3-hd-recompiled/releases).
+Setup uses your own Xbox 360 game package. Windows v1.4.0 offers an installer and a portable ZIP; Linux uses a portable archive, currently available as an experimental pre-release (v1.1.0). Downloads are on the project's [Releases page](https://github.com/MysteriousAeon/rayman3-hd-recompiled/releases).
 
 **No game files are included.** You need your own, legally obtained copy of Rayman 3 HD for Xbox 360.
 
@@ -19,8 +19,9 @@ Rayman 3 was one of my favorite games growing up, and I wanted my wife to experi
 ## Features
 
 - **Native Windows and Linux support:** Play the Xbox 360 HD version without running an emulator.
-- **HD+ enhancements:** Optional fixes for lighting, sky colors, charge effects, power-up effects, lock-on colors, texture rendering, and Combo Meter animation, alongside Vanilla and Custom profiles.
+- **HD+ enhancements:** Optional fixes for lighting, sky colors, charge effects, power-up effects, lock-on colors, texture rendering, Grand Minimus’s crown, and Combo Meter animation, alongside Vanilla and Custom profiles.
 - **Mouse and keyboard support:** Optional mouse camera and button controls, mouse-controlled Look Mode, two keyboard layouts, and customizable bindings.
+- **Rendering resolution:** On Windows, choose 720p, native 1080p (1.5x), 1440p, or 2160p rendering, or leave resolution selection on Auto.
 - **In-game PC Settings:** Press F4 to adjust common settings without leaving the game.
 - **Controller support:** Customizable controller button mapping, including support for Xbox-compatible controllers and native DualSense controllers, with Xbox or PlayStation button prompts.
 - **DualSense enhancements:** Dynamic lightbar colors, adjustable adaptive trigger resistance, and optional controller-speaker effects.
@@ -189,6 +190,7 @@ HD+ includes the following corrections:
 | Restore Power-Up Spiral | Restores the original PC swirl around Rayman when a power-up starts. |
 | Restore Power-Up Canister Colors | Restores the purple beam and the colored rings of power-up canisters. |
 | Restore Out-of-Range Lock-On Color | Restores the blue color of the lock-on indicator for distant targets. |
+| Correct Grand Minimus’s Crown | Prevents the back of Grand Minimus’s crown from showing through the front. |
 
 Individual corrections can be configured under **Settings → Corrections** when using Custom.
 
@@ -198,9 +200,11 @@ Changing the game profile does not reset display, control, or advanced settings.
 
 ### Rendering resolution
 
-Under **Settings → Display → Rendering resolution**, choose **Auto** (default), **720p (1x, original)**, **1440p (2x)**, or **2160p (3x)**.
+Under **Settings → Display → Rendering resolution**, choose **Auto** (default), **720p (1x, original)**, **1080p (1.5x)**, **1440p (2x)**, or **2160p (3x)**.
 
-Auto selects the smallest supported resolution that covers the game's visible 16:9 picture, excluding black bars on other aspect ratios. For example, in fullscreen on a 1080p display, Auto selects 1440p. You can manually select 720p if performance is poor.
+**1080p (1.5x)** renders the game natively at 1920x1080 on Windows with Direct3D 12. It is a manual option, available independently of the Vanilla, HD+, and Custom profiles. On Linux, this option is not supported and falls back to 720p (1x).
+
+Auto selects the smallest supported integer-scale resolution that covers the game's visible 16:9 picture, excluding black bars on other aspect ratios. For example, in fullscreen on a 1080p display, Auto still selects 1440p. You can manually select 1080p for native 1080p rendering on Windows, or 720p if performance is poor.
 
 ### V-Sync
 
@@ -347,6 +351,7 @@ See the `README.md` included in the converter ZIP for command-line usage (Python
 - Button prompts are chosen when the game starts and do not switch while it is running.
 - The level remix tools are experimental, Windows-only, and limited to three levels; see the section above.
 - The PC save converter is experimental and optional. It has been tested with a small number of PC saves; compatibility with every PC save is not established.
+- Native 1080p (1.5x) rendering is currently Windows Direct3D 12-only. Some uncommon rendering operations are not yet supported at 1.5x; if encountered, the game stops rather than rendering them incorrectly. This mode has passed representative tests across the campaign but has not been verified through a separate complete playthrough.
 - The Linux pre-release remains at v1.1.0 and does not include the changes introduced in later Windows releases.
 
 The HD+ Robo-Pirate statue texture correction has been checked in gameplay.

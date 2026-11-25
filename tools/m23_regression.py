@@ -23,6 +23,8 @@ ROOT = Path(__file__).resolve().parents[1]
 SDK = ROOT / "external" / "rexglue-sdk"
 TOOLS = ROOT / "tools"
 RUNS = ROOT / "private" / "work" / "m6_runs"
+sys.path.insert(0, str(TOOLS))
+from r3hd_run_metadata import load_run_metadata  # noqa: E402
 VS, PS = 0x08E9BEDB27BDDEEE, 0x27336DBAE47E8650
 VS_LINE, PS_LINE = "add o3.xy__, r3.xyyy, c11.xyyy", "tfetch2D r6, r3.xy, tf1"
 checks = failures = 0
@@ -40,17 +42,46 @@ def read(path: Path) -> str:
     return path.read_text(encoding="utf-8-sig", errors="replace")
 
 
-def run_log(name: str) -> str:
-    return "\n".join(read(p) for p in sorted((RUNS / name).glob("runtime*.log")))
+def run_log(name: str, run_dir: Path | None = None) -> str:
+    target = run_dir if run_dir is not None else (RUNS / name)
+    return "\n".join(read(p) for p in sorted(target.glob("runtime*.log")))
 
 
-def judge_run(name: str) -> None:
-    log = run_log(name)
+def judge_run(name: str, run_dir: Path | None = None) -> None:
+    target = run_dir if run_dir is not None else (RUNS / name)
+    log = run_log(name, run_dir=target)
     # `water_layers` is the label of builds before D-054; run directories of both kinds are judged.
     mode = re.findall(r"M23 (?:layer_coords|water_layers)=(\w+)", log)
     pair = re.findall(r"M23 (?:layer_coords|water_layers) pair=(\w+)", log)
+
+    meta_state, meta, rc, meta_err = load_run_metadata(target)
+    if meta_state == "malformed":
+        check(False, f"{name}: malformed runtime_config metadata ({meta_err})")
+        return
+    if meta_state == "valid" and rc is not None:
+        if meta is not None and "safety_status" in meta:
+            check(meta.get("safety_status") == "verified_isolated",
+                  f"{name}: safety_status verified_isolated (got {meta.get('safety_status')!r})")
+        check(rc["desktop_isolation"]["verified"] is True,
+              f"{name}: runtime_config desktop_isolation.verified is True")
+        expected_lc = rc["layer_coords"]["effective"]
+        if expected_lc == "separate":
+            check(mode and set(mode) == {"separate"},
+                  f"{name}: correction selected per runtime_config (got {sorted(set(mode))})")
+            if name.endswith("_separate"):
+                check(pair == ["corrected"], f"{name}: the pair was found once and corrected (got {pair})")
+            else:
+                check(pair in ([], ["corrected"]),
+                      f"{name}: valid pair state for layer_coords=separate (got {pair})")
+        else:
+            check(mode and set(mode) == {"original"},
+                  f"{name}: the title's behaviour per runtime_config (got {sorted(set(mode))})")
+            check(not pair, f"{name}: no pair line without the switch (got {pair})")
+        return
+
+    # Legacy runs (pre-G6-P132 run.json without runtime_config): retain naming heuristic.
     if name.endswith("_separate"):
-        check(mode and set(mode) == {"separate"}, f"{name}: correction selected")
+        check(mode and set(mode) == {"separate"}, f"{name}: correction selected (legacy heuristic)")
         check(pair == ["corrected"], f"{name}: the pair was found once and corrected (got {pair})")
     else:
         check(mode and set(mode) == {"original"}, f"{name}: the title's behaviour (got {sorted(set(mode))})")
@@ -151,7 +182,10 @@ check("$savedLayers = $env:R3HD_LAYER_COORDS" in play and "$env:R3HD_LAYER_COORD
 check("$savedWater = $env:R3HD_WATER_LAYERS" in play and "$env:R3HD_WATER_LAYERS = $null" in play
       and "$env:R3HD_WATER_LAYERS = $savedWater" in play, "play.ps1: the first name's variable is cleared for the session and restored")
 check(play.count("layer_coords = $LayerCoords") == 2 and "$WaterLayers" not in play, "play.ps1: the mode is recorded with the session")
-check("R3HD_WATER_LAYERS" not in hidden and "R3HD_LAYER_COORDS" not in hidden, "hidden runner: never selects the correction by itself")
+check("$env:R3HD_WATER_LAYERS" not in hidden and "$env:R3HD_LAYER_COORDS" not in hidden
+      and "SetEnvironmentVariable('R3HD_WATER_LAYERS'" not in hidden
+      and "SetEnvironmentVariable('R3HD_LAYER_COORDS'" not in hidden,
+      "hidden runner: never sets or selects the correction by itself (read-only metadata snapshot only)")
 
 # Build chain.
 check("python tools\\m23_runtime_patch.py" in bat and "python tools\\m23_prepare.py" in bat, "build replays the M23 patch")

@@ -149,7 +149,8 @@ def run_scenario(tag: str, name: str, spec: dict) -> dict:
                                                       "rev_world", "backup")},
             "checks": {label: ok for label, ok in checks}, "reasons": reasons,
             "executable_sha256": facts.get("executable_sha256"), "exit_code": facts.get("exit_code"),
-            "fault_codes": facts.get("fault_codes"), "guest_swap": facts.get("guest_swap")}
+            "fault_codes": facts.get("fault_codes"), "fault_classification": facts.get("fault_classification"),
+            "guest_swap": facts.get("guest_swap")}
 
 
 def guarded_trees() -> dict:

@@ -105,6 +105,10 @@ rem G6-P106 (D-345): fix SDL_DefaultAudioDeviceChanged logical_devices->prev cor
 python tools\g6p106_sdl_audio_migration_patch.py || exit /b 1
 rem G6-P109 (D-346): fix AudioSystem client lifetime (in-flight callback pinning, deferred teardown, slot reservation, bounds/null guards).
 python tools\g6p109_audio_client_lifetime_patch.py || exit /b 1
+rem G6-P127 / G6-P128 (D-362, D-363): HD+ Grand Minimus crown cutout (off unless R3HD_CROWN_CUTOUT=cutout, or diagnostic fallback R3HD_TEST_CROWN_BLEND=cutout when unset; 10 verified .lvl bundles, before M33).
+python tools\g6p127_crown_blend_patch.py || exit /b 1
+rem G6-P140 (D-370): native 3:2 (1.5x, 1920x1080) D3D12 renderer (recovered from G6-P89/P92; off by default).
+python tools\g6p89_scale32_patch.py || exit /b 1
 rem M29 (D-066): the binaries carry no absolute path of the build machine. Source paths (__FILE__, debug info) are
 rem written relative to the repository and the PDB reference is the file name only. A repository path with a space
 rem cannot be one compiler argument inside CMAKE_*_FLAGS, so there the map is left out (the binaries then keep it).
@@ -246,5 +250,8 @@ python tools\g6p79_handoff_regression.py || exit /b 1
 python tools\g6p82_signin_notify_regression.py || exit /b 1
 python tools\g6p106_sdl_audio_migration_regression.py || exit /b 1
 python tools\g6p108_audio_client_lifetime_regression.py || exit /b 1
+python tools\g6p127_crown_blend_regression.py || exit /b 1
+python tools\g6p89_scale32_regression.py || exit /b 1
+python tools\g6p141_scale32_acceptance.py || exit /b 1
 echo M8_BUILD_OK
 exit /b 0
