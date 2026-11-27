@@ -88,7 +88,7 @@ The one top-level directory is `Rayman3HDRecompiled-Portable/`:
 
 ```text
 Play.cmd                    Settings.cmd              PORTABLE.txt
-portable.json               payload.json
+portable.json               payload.json              recomplauncher.json
 app/                        bin/
 r3hd-lgpl-source-<application-version>.zip
 ```

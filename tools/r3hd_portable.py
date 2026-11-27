@@ -163,7 +163,24 @@ def check_files(home):
     return engine.load_payload(home, verify=False)
 
 
-def prepare(home, source=None, *, releases=None, ask=False, log=print, preset=None):
+def launcher_progress():
+    """--progress (RecompLauncher): the engine's progress as `progress <0-1> <text>` lines on stdout."""
+    label = [""]
+
+    def emit(line):
+        kind, _, rest = line.partition(" ")
+        if kind == "R3HD_STEP":
+            label[0] = engine.LABELS.get(rest.split(" ", 1)[0], rest)
+        elif kind == "R3HD_PROGRESS":
+            print(f"progress {int(rest.split(' ', 1)[0]) / 1000:.3f} {label[0]}", flush=True)
+    return engine.Progress(emit=emit)
+
+
+def prepare(home, source=None, *, releases=None, ask=False, log=print, preset=None, update_in_place=False,
+            progress=None):
+    """update_in_place (--in-place-update): the program files of this folder were replaced by a newer or older
+    release in place (RecompLauncher's update); after the same checks as every start, record that release instead of
+    refusing. progress (--progress): an engine.Progress for the extraction."""
     home = home.resolve()
     # User-data junctions could silently share saves with another copy. Refuse rather than follow them.
     pending = [home / name for name in (*engine.USER_ITEMS, "data", "app", "bin")]
@@ -188,10 +205,15 @@ def prepare(home, source=None, *, releases=None, ask=False, log=print, preset=No
         engine.recover(home, log)
         previous = engine.read_state(home)
         if previous and (previous.get("distribution") != "portable" or
-                         previous["payload_id"] != payload["payload_id"]):
+                         previous["payload_id"] != payload["payload_id"] and not update_in_place):
             raise engine.Refusal("PORTABLE_UPDATE_REQUIRED", "Extract a fresh ZIP into a new folder; copy user files explicitly")
+        updated = bool(previous) and previous["payload_id"] != payload["payload_id"]
+        if updated:
+            log(f"program files replaced in place: {previous['version']} -> {payload['version']}")
         releases = releases if releases is not None else engine.load_releases()
         release = engine.required_release(payload, releases)
+        if progress is not None:
+            print("progress 0.000 Checking your game data", flush=True)
         # Hash all game files, including same-size corruption, before any launch.
         data = engine.data_state(home, release, full=True)
         if data["state"] != "ok" and source is None and ask:
@@ -208,7 +230,7 @@ def prepare(home, source=None, *, releases=None, ask=False, log=print, preset=No
             preset = ask_preset(log) if LINUX and ask and s["state"] == "missing" else "vanilla"
         settings = engine.presets.load_settings_file(home / "settings.json") if s["state"] == "ok" else \
             engine.settings_from_args(preset, "vanilla" if preset == "custom" else None, (), False, home, fresh=True)
-        if previous and data["state"] == "ok" and s["state"] == "ok":
+        if previous and data["state"] == "ok" and s["state"] == "ok" and not updated:
             if LINUX:
                 engine.write_play_icon(home)  # E-379: kept when present; made while the package is still there
             return {"home": str(home), "data": "verified", "version": payload["version"]}
@@ -220,7 +242,13 @@ def prepare(home, source=None, *, releases=None, ask=False, log=print, preset=No
                 src = engine.check_source(Path(source), releases)
                 if src["release"] != release["id"]:
                     raise engine.Refusal("RELEASE_MISMATCH", "Package does not match this application")
-                record = engine.stage_data(src, staging / "data", release, releases, log)
+                if progress is not None:
+                    content = release["content"]
+                    progress.plan(([("extract", content["bytes"], content["files"])] if src["kind"] == "package" else
+                                   [("check", content["bytes"], content["files"]),
+                                    ("copy", content["bytes"], content["files"])]) +
+                                  [("verify", content["bytes"], content["files"])])
+                record = engine.stage_data(src, staging / "data", release, releases, log, progress)
                 items.append("data")
             else:
                 record = engine.read_json(home / "data" / "intake.json")
@@ -250,9 +278,14 @@ def prepare(home, source=None, *, releases=None, ask=False, log=print, preset=No
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("action", choices=("play", "settings", "prepare", "level-editor"))
-    ap.add_argument("--source", type=Path)
+    ap.add_argument("--source", "--game", dest="source", type=Path)
     ap.add_argument("--no-input", action="store_true")
     ap.add_argument("--console", action="store_true", help="Linux: the console questions, not the Settings window")
+    # RecompLauncher (recomplauncher.json); without these options nothing changes.
+    ap.add_argument("--progress", action="store_true", help="prepare: print 'progress <0-1> <text>' lines")
+    ap.add_argument("--in-place-update", action="store_true",
+                    help="prepare: accept program files replaced in this folder by another release (launcher update)")
+    ap.add_argument("--wait", action="store_true", help="Windows play: return when the game has ended")
     a = ap.parse_args()
     home = Path(__file__).resolve().parents[2]
     try:
@@ -270,7 +303,9 @@ def main():
         terminal = not LINUX or sys.stdin is not None and sys.stdin.isatty()
         action, window = a.action, False
         try:
-            result = prepare(home, a.source, ask=not a.no_input and terminal and gui is None)
+            result = prepare(home, a.source, ask=not a.no_input and terminal and gui is None,
+                             update_in_place=a.in_place_update and a.action == "prepare",
+                             progress=launcher_progress() if a.progress and a.action == "prepare" else None)
         except engine.Refusal as e:
             if not (LINUX and e.code == "PACKAGE_REQUIRED" and a.action != "prepare" and not a.no_input):
                 raise
@@ -315,12 +350,18 @@ def main():
             args = [str(home / "app" / "r3hd_launcher.exe")]
             if a.action == "play":
                 args.append("--play")
+                if a.wait:
+                    args.append("--wait")
             elif a.action == "level-editor":  # G6-P31 (D-287): the same entry as the installed Start menu item
                 args.append("--level-editor")
             return subprocess.call(args, cwd=home)
+        if a.progress:
+            print("progress 1.000 Ready to play", flush=True)
         return 0
     except (engine.Refusal, OSError, ValueError, EOFError) as e:
         print(f"Portable startup stopped: {e}\nUse a writable extracted folder. No installed-copy data was changed.", file=sys.stderr)
+        if a.progress and isinstance(e, engine.Refusal) and e.code in engine.ADVICE:
+            print(engine.ADVICE[e.code], file=sys.stderr)  # the launcher shows the last lines: the reason last
         return 2
 
 
