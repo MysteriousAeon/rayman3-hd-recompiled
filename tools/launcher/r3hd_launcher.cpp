@@ -30,6 +30,7 @@
 //         r3hd_launcher.exe --play          start the game with the saved settings, without a window
 //         r3hd_launcher.exe --level-editor  start the level editor
 //         r3hd_launcher.exe --level-editor-3d  start the 3D Level Remix Editor (G6-P39)
+//         r3hd_launcher.exe --play --wait   RecompLauncher: exit when the game has ended (0, or 1 if it did not end cleanly)
 // test only (tools/m30_launcher_regression.py; synthetic homes):
 //         --home H --python P --tools T [--releases F]   paths instead of the installation's own
 //         --play --dry-run --no-ui          play.ps1 -DryRun; the result on stdout, never a message box
@@ -569,7 +570,8 @@ std::wstring PlayFailure(const std::string& raw) {
 }
 
 // play.ps1 -UserHome HOME, hidden. Returns when the game has started, play.ps1 has ended, or after a timeout.
-Launch StartGame(const Paths& p, bool dryRun, std::wstring& detail, void (*idle)() = nullptr) {
+// waited (--wait, RecompLauncher): after a start, return only when play.ps1 has ended too, with its exit code here.
+Launch StartGame(const Paths& p, bool dryRun, std::wstring& detail, void (*idle)() = nullptr, DWORD* waited = nullptr) {
   HANDLE busy = CreateMutexW(nullptr, TRUE, kPlayMutex);
   if (busy && GetLastError() == ERROR_ALREADY_EXISTS) { CloseHandle(busy); return Launch::Busy; }
   struct Release { HANDLE h; ~Release() { if (h) { ReleaseMutex(h); CloseHandle(h); } } } release{busy};
@@ -622,6 +624,12 @@ Launch StartGame(const Paths& p, bool dryRun, std::wstring& detail, void (*idle)
       detail = T(L"The game is taking longer to start. Check cache/launcher_play.log.");
       break;
     }
+  }
+  if (waited && result == Launch::Started) {
+    // The start is over: another one is refused as running (the game), not as busy.
+    if (busy) { ReleaseMutex(busy); CloseHandle(busy); release.h = nullptr; }
+    WaitForSingleObject(pi.hProcess, INFINITE);
+    if (!GetExitCodeProcess(pi.hProcess, waited)) *waited = 1;
   }
   CloseHandle(pi.hProcess);
   CloseHandle(pi.hThread);
@@ -3543,7 +3551,7 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE, PWSTR, int) {
   p.home = Parent(appDir);
   p.python = appDir + L"\\python\\python.exe";
   p.tools = appDir + L"\\tools";
-  bool play = false, dryRun = false, noUi = false, editor = false, editor3d = false;
+  bool play = false, dryRun = false, noUi = false, editor = false, editor3d = false, wait = false;
   std::wstring uiScript, outDir;
   for (int i = 1; i < argc; ++i)  // the test modes never show a message box, whatever else is wrong
     noUi |= wcscmp(argv[i], L"--no-ui") == 0 || wcscmp(argv[i], L"--ui-test") == 0;
@@ -3554,6 +3562,7 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE, PWSTR, int) {
     if (a == L"--play") play = true;
     else if (a == L"--level-editor") editor = true;
     else if (a == L"--level-editor-3d") editor = editor3d = true;  // G6-P39 (D-295)
+    else if (a == L"--wait") wait = true;
     else if (a == L"--dry-run") dryRun = true;
     else if (a == L"--no-ui") noUi = true;
     else if (a == L"--home") p.home = next();
@@ -3594,13 +3603,15 @@ int WINAPI wWinMain(HINSTANCE inst, HINSTANCE, PWSTR, int) {
   if (play) {
     if (!quiet) { Model initial; std::wstring error; LoadModel(p, initial, error); }
     std::wstring detail;
-    Launch r = StartGame(p, dryRun, detail);
+    DWORD waited = 0;
+    Launch r = StartGame(p, dryRun, detail, nullptr, wait ? &waited : nullptr);
     const wchar_t* name = r == Launch::Started ? L"STARTED" : r == Launch::Ended ? L"ENDED" : r == Launch::Failed ? L"FAILED"
                         : r == Launch::AlreadyRunning ? L"ALREADY_RUNNING" : r == Launch::Slow ? L"SLOW" : L"BUSY";
     Report(std::wstring(L"R3HD_LAUNCHER PLAY ") + name);
     if (!detail.empty()) Report(Trim(detail));
     int code = r == Launch::Started || r == Launch::Ended ? 0 : 2;
-    if (code && !quiet) {
+    if (wait && r == Launch::Started && waited != 0) code = 1;  // the game ran; its session did not end cleanly
+    if (code == 2 && !quiet) {
       std::wstring text = r == Launch::AlreadyRunning ? T(L"Rayman 3 HD is already running.")
                         : r == Launch::Busy ? T(L"Rayman 3 HD is already being started.")
                         : r == Launch::Slow ? detail
