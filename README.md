@@ -1,5 +1,7 @@
 # Rayman 3 HD Recompiled
 
+<a href="https://recomplauncher.com/game/rayman3-hd-recompiled"><picture><source media="(prefers-color-scheme: dark)" srcset="https://recomplauncher.com/assets/press/launcher/badge-light.svg"><img alt="Get it on RecompLauncher" src="https://recomplauncher.com/assets/press/launcher/badge-dark.svg" height="48"></picture></a>
+
 A native Windows and Linux port of **Rayman 3 HD** for Xbox 360. The game's code has been statically recompiled to run directly on a PC, without an emulator.
 
 Setup uses your own Xbox 360 game package. Windows v1.4.0 offers an installer and a portable ZIP; Linux uses a portable archive, currently available as an experimental pre-release (v1.1.0). Downloads are on the project's [Releases page](https://github.com/MysteriousAeon/rayman3-hd-recompiled/releases).
