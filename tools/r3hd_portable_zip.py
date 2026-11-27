@@ -112,6 +112,8 @@ def build(stage, out, development_id, crt_dir, public_release=False):
     files.update({"Play.cmd": command("play"), "Settings.cmd": command("settings"),
                   "Level Editor.cmd": command("level-editor"),
                   "PORTABLE.txt": (ROOT / "tools/installer/PORTABLE.txt").read_bytes().replace(b"\r\n", b"\n"),
+                  # RecompLauncher reads it at the top of the ZIP (its install folder is this portable home)
+                  "recomplauncher.json": (ROOT / "recomplauncher.json").read_bytes().replace(b"\r\n", b"\n"),
                   lgpl.name: lgpl.read_bytes()})
     files["portable.json"] = encoded({"schema": 1, "data_model": "beside-application", "publishable": public_release,
         **({"release_version": mf["version"]} if public_release else {"development_id": development_id}),
@@ -156,7 +158,8 @@ def check(path):
                 raise ValueError("Public portable metadata differs from the approved payload")
         if set(payload["files"]) != defined_members() - {"app/play.cmd", "app/settings.cmd"}:
             raise ValueError("Archive payload differs from the exact release definition")
-        additions = {"Play.cmd", "Settings.cmd", "Level Editor.cmd", "PORTABLE.txt", "payload.json", "app/tools/r3hd_portable.py",
+        additions = {"Play.cmd", "Settings.cmd", "Level Editor.cmd", "PORTABLE.txt", "recomplauncher.json", "payload.json",
+                     "app/tools/r3hd_portable.py",
                      "app/python/vcruntime140.dll", "app/licenses/PORTABLE-CRT.txt", "app/licenses/portable_crt.json",
                      f"r3hd-lgpl-source-{payload['version']}.zip"}
         crt = json.loads((ROOT / "config/release/portable_crt.json").read_bytes())
